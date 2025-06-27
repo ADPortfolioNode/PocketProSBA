@@ -1,0 +1,16 @@
+flask
+flask-cors
+flask-socketio
+eventlet
+chromadb==0.4.22
+numpy<2.0
+requests
+python-dotenv
+gunicorn
+google-generativeai
+sentence-transformers
+pypdf2
+python-docx
+markdown
+redis
+pydantic

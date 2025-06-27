@@ -1,0 +1,461 @@
+# PocketPro:SBA Edition - .gitignore
+
+# ==============================================================================
+# Environment Variables & Secrets
+# ==============================================================================
+.env
+.env.local
+.env.production
+.env.development
+*.env
+
+# API Keys and secrets
+*secret*
+*key*
+*token*
+config/production.json
+
+# ==============================================================================
+# Python
+# ==============================================================================
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+
+# Virtual environments
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+.venv/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# ==============================================================================
+# Node.js & React
+# ==============================================================================
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+*.lcov
+
+# nyc test coverage
+.nyc_output
+
+# Grunt intermediate storage
+.grunt
+
+# Bower dependency directory
+bower_components
+
+# node-waf configuration
+.lock-wscript
+
+# Compiled binary addons
+build/Release
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# parcel-bundler cache
+.cache
+.parcel-cache
+
+# Next.js build output
+.next
+
+# Nuxt.js build / generate output
+.nuxt
+dist
+
+# Gatsby files
+.cache/
+public
+
+# Storybook build outputs
+.out
+.storybook-out
+
+# React build outputs
+frontend/build/
+frontend/dist/
+
+# ==============================================================================
+# Docker
+# ==============================================================================
+# Docker volumes and data
+**/chromadb_data/
+**/uploads/
+**/logs/
+
+# Docker Compose override files
+docker-compose.override.yml
+docker-compose.override.yaml
+
+# Docker machine
+.docker/
+
+# ==============================================================================
+# ChromaDB & Vector Database
+# ==============================================================================
+# ChromaDB data directories
+chromadb_data/
+chroma_data/
+vector_db/
+embeddings/
+*.sqlite3
+*.duckdb
+*.parquet
+
+# Vector store backups
+*.backup
+*.bak
+
+# ==============================================================================
+# Application Specific
+# ==============================================================================
+# File uploads
+uploads/
+upload_temp/
+documents/
+files/
+
+# Logs
+logs/
+*.log
+log/
+
+# Temporary files
+temp/
+tmp/
+.tmp/
+
+# Cache directories
+.cache/
+cache/
+
+# Session data
+sessions/
+
+# Error dumps
+crash.log
+error.log
+
+# ==============================================================================
+# AI/ML Models & Data
+# ==============================================================================
+# Large model files
+*.bin
+*.onnx
+*.pkl
+*.joblib
+*.h5
+*.pb
+
+# Model directories
+models/
+checkpoints/
+pretrained/
+
+# Training data
+data/
+datasets/
+*.csv
+*.json
+*.jsonl
+*.txt
+
+# Except configuration files
+!config/*.json
+!config/*.yaml
+!config/*.yml
+
+# ==============================================================================
+# IDEs & Editors
+# ==============================================================================
+# VSCode
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# PyCharm
+.idea/
+*.iws
+*.iml
+*.ipr
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+*.swp
+*.swo
+*~
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# ==============================================================================
+# Operating System
+# ==============================================================================
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+
+# Thumbnails
+._*
+
+# Files that might appear in the root of a volume
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# Directories potentially created on remote AFP share
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# Linux
+*~
+
+# ==============================================================================
+# Cloud & Deployment
+# ==============================================================================
+# AWS
+.aws/
+*.pem
+
+# Google Cloud
+.gcloud/
+gcloud-service-key.json
+
+# Azure
+.azure/
+
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+
+# Kubernetes
+*.kubeconfig
+
+# ==============================================================================
+# Backup & Archive Files
+# ==============================================================================
+*.bak
+*.backup
+*.old
+*.orig
+*.rej
+*.save
+*.swp
+*.tmp
+
+# Archive files
+*.7z
+*.dmg
+*.gz
+*.iso
+*.jar
+*.rar
+*.tar
+*.zip
+
+# ==============================================================================
+# Test & Development
+# ==============================================================================
+# Test databases
+test.db
+test.sqlite
+test_*.db
+
+# Development data
+dev_data/
+test_data/
+sample_data/
+
+# Profiling data
+*.prof
+
+# ==============================================================================
+# Documentation Build
+# ==============================================================================
+# Sphinx documentation
+docs/_build/
+site/
+
+# MkDocs
+site/
+
+# ==============================================================================
+# Monitoring & Analytics
+# ==============================================================================
+# Application performance monitoring
+newrelic.ini
+
+# Error tracking
+.sentry-dsn
+
+# ==============================================================================
+# Security & Certificates
+# ==============================================================================
+# SSL certificates
+*.crt
+*.key
+*.pem
+*.p12
+*.pfx
+
+# SSH keys
+id_rsa
+id_dsa
+*.ppk
+
+# GPG keys
+*.gpg
+*.asc
+
+# ==============================================================================
+# Project Specific Exclusions
+# ==============================================================================
+# Keep certain config files
+!.env.template
+!.env.example
+!config.example.json
+
+# Keep certain directories but ignore their contents
+chromadb_data/.gitkeep
+uploads/.gitkeep
+logs/.gitkeep
+
+# Keep Docker files
+!Dockerfile*
+!docker-compose*.yml
+!docker-compose*.yaml
+!.dockerignore
+
+# Keep scripts
+!scripts/
+!*.sh
+!*.bat
+
+# Keep documentation
+!README.md
+!INSTRUCTIONS.md
+!docs/
+
+# Keep requirements and package files
+!requirements.txt
+!package.json
+!package-lock.json
