@@ -34,11 +34,7 @@ class ChromaService:
             if chroma_host != 'localhost' or config.FLASK_ENV == 'production':
                 # Use HTTP client for containerized deployment
                 print(f"Connecting to ChromaDB at {chroma_host}:{chroma_port}")
-                # Use the new client initialization approach - no settings needed
-                self.client = chromadb.HttpClient(
-                    host=chroma_host, 
-                    port=chroma_port
-                )
+                self.client = chromadb.HttpClient(host=chroma_host, port=chroma_port)
             else:
                 # Use persistent client for local development
                 os.makedirs(config.CHROMA_DB_PATH, exist_ok=True)
@@ -46,24 +42,42 @@ class ChromaService:
                 self.client = chromadb.PersistentClient(path=config.CHROMA_DB_PATH)
                 
             print("ChromaDB client initialized successfully")
+            self._chroma_available = True
+            
         except Exception as e:
             print(f"Error initializing ChromaDB client: {e}")
-            raise
+            self.client = None
+            self._chroma_available = False
+            print("ChromaDB will not be available - continuing without vector storage")
         
-        # Initialize embedding function
-        self.embedding_function = embedding_functions.SentenceTransformerEmbeddingFunction(
-            model_name=config.EMBEDDING_MODEL
-        )
-        
-        # Get or create collection
-        try:
-            self.collection = self.client.get_collection(
-                name=config.CHROMA_COLLECTION_NAME
-            )
-        except Exception:
-            self.collection = self.client.create_collection(
-                name=config.CHROMA_COLLECTION_NAME
-            )
+        # Only initialize embedding function and collection if client is available
+        if self.client is not None:
+            try:
+                # Initialize embedding function
+                self.embedding_function = embedding_functions.SentenceTransformerEmbeddingFunction(
+                    model_name=config.EMBEDDING_MODEL
+                )
+                
+                # Get or create collection
+                try:
+                    self.collection = self.client.get_collection(
+                        name=config.CHROMA_COLLECTION_NAME
+                    )
+                except Exception:
+                    self.collection = self.client.create_collection(
+                        name=config.CHROMA_COLLECTION_NAME
+                    )
+                
+                self._chroma_available = True
+                print(f"ChromaDB collection '{config.CHROMA_COLLECTION_NAME}' ready")
+                
+            except Exception as e:
+                print(f"Error setting up ChromaDB collection: {e}")
+                self._chroma_available = False
+        else:
+            self._chroma_available = False
+            self.collection = None
+            self.embedding_function = None
         
         self._initialized = True
     
@@ -72,6 +86,10 @@ class ChromaService:
                      metadatas: List[Dict[str, Any]], 
                      ids: List[str]) -> bool:
         """Add documents to the collection."""
+        if not getattr(self, '_chroma_available', False) or self.collection is None:
+            print("ChromaDB not available - skipping document addition")
+            return False
+            
         try:
             self.collection.add(
                 documents=documents,
@@ -85,9 +103,17 @@ class ChromaService:
     
     def query_documents(self, 
                        query_text: str, 
-                       n_results: int = None,
+                       n_results: Optional[int] = None,
                        where: Optional[Dict] = None) -> Dict[str, Any]:
         """Query documents from the collection."""
+        if not getattr(self, '_chroma_available', False) or self.collection is None:
+            print("ChromaDB not available - returning empty results")
+            return {
+                "success": False,
+                "error": "ChromaDB not available",
+                "results": {"documents": [[]], "metadatas": [[]], "distances": [[]]}
+            }
+            
         try:
             if n_results is None:
                 n_results = config.DEFAULT_TOP_K
@@ -112,6 +138,13 @@ class ChromaService:
     
     def get_collection_stats(self) -> Dict[str, Any]:
         """Get statistics about the collection."""
+        if not getattr(self, '_chroma_available', False) or self.collection is None:
+            return {
+                "success": False,
+                "error": "ChromaDB not available",
+                "document_count": 0
+            }
+            
         try:
             count = self.collection.count()
             return {
@@ -129,6 +162,10 @@ class ChromaService:
     
     def delete_documents(self, ids: List[str]) -> bool:
         """Delete documents from the collection."""
+        if not getattr(self, '_chroma_available', False) or self.collection is None:
+            print("ChromaDB not available - skipping document deletion")
+            return False
+            
         try:
             self.collection.delete(ids=ids)
             return True
@@ -141,6 +178,10 @@ class ChromaService:
                         documents: List[str], 
                         metadatas: List[Dict[str, Any]]) -> bool:
         """Update existing documents in the collection."""
+        if not getattr(self, '_chroma_available', False) or self.collection is None:
+            print("ChromaDB not available - skipping document update")
+            return False
+            
         try:
             self.collection.update(
                 ids=ids,
