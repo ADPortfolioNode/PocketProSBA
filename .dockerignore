@@ -1,0 +1,32 @@
+# Git
+.git
+.gitignore
+
+# Docker
+Dockerfile*
+docker-compose.yml
+
+# Environment
+.env*
+.env.template
+venv/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Node
+node_modules/
+npm-debug.log
+build/
+dist/
+
+# IDE / Editor
+.vscode/
+.idea/
+
+# Data and Logs
+chromadb_data/
+logs/

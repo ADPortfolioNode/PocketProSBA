@@ -4,6 +4,7 @@ LLM Factory for managing different language model implementations.
 import google.generativeai as genai
 from typing import Dict, Any, Optional, List
 from src.utils.config import config
+from src.services.model_discovery import get_model_discovery_service
 
 
 class LLMFactory:
@@ -17,24 +18,79 @@ class LLMFactory:
         if cls._llm_instance is None:
             cls._llm_instance = GeminiLLM()
         return cls._llm_instance
+    
+    @classmethod
+    def refresh_available_models(cls):
+        """Refresh the list of available models."""
+        model_service = get_model_discovery_service()
+        models = model_service.discover_available_models(force_refresh=True)
+        print(f"Refreshed model list: {len(models)} models available")
+        return models
+    
+    @classmethod
+    def list_available_models(cls) -> List[str]:
+        """Get list of available model names."""
+        model_service = get_model_discovery_service()
+        return model_service.list_available_models()
 
 
 class GeminiLLM:
-    """Google Gemini LLM implementation."""
+    """Google Gemini LLM implementation with dynamic model selection."""
     
     def __init__(self):
-        """Initialize Gemini LLM with API key."""
+        """Initialize Gemini LLM with API key and model discovery."""
         if not config.GEMINI_API_KEY:
             raise ValueError("GEMINI_API_KEY is required for Gemini LLM")
         
         genai.configure(api_key=config.GEMINI_API_KEY)
-        self.model = genai.GenerativeModel(config.LLM_MODEL)
+        
+        # Use model discovery service to find the best available model
+        self.model_service = get_model_discovery_service()
+        self._initialize_model()
         
         # Generation configuration
         self.generation_config = genai.types.GenerationConfig(
             temperature=config.LLM_TEMPERATURE,
             max_output_tokens=config.LLM_MAX_TOKENS,
         )
+    
+    def _initialize_model(self):
+        """Initialize the model using the best available option."""
+        try:
+            # First, validate the configured model
+            configured_model = config.LLM_MODEL
+            
+            if self.model_service.validate_model(configured_model):
+                model_name = configured_model
+                print(f"Using configured model: {model_name}")
+            else:
+                print(f"Configured model '{configured_model}' not available")
+                model_name = self.model_service.get_best_model("general")
+                print(f"Using best available model: {model_name}")
+            
+            # Ensure model name has proper format
+            if not model_name.startswith('models/'):
+                if '/' not in model_name:
+                    model_name = f"models/{model_name}"
+            
+            self.model_name = model_name
+            self.model = genai.GenerativeModel(model_name)
+            
+            # Log model info
+            model_info = self.model_service.get_model_info(model_name)
+            if model_info:
+                print(f"Model initialized: {model_info.get('display_name', model_name)}")
+                print(f"  Description: {model_info.get('description', 'N/A')}")
+                print(f"  Input limit: {model_info.get('input_token_limit', 'N/A')} tokens")
+                print(f"  Output limit: {model_info.get('output_token_limit', 'N/A')} tokens")
+            
+        except Exception as e:
+            print(f"Error initializing model: {e}")
+            # Fallback to a known working model
+            fallback_model = "models/gemini-1.5-flash"
+            print(f"Falling back to: {fallback_model}")
+            self.model_name = fallback_model
+            self.model = genai.GenerativeModel(fallback_model)
     
     def generate_response(self, 
                          prompt: str, 
@@ -55,7 +111,9 @@ class GeminiLLM:
             
         except Exception as e:
             print(f"Error generating response with Gemini: {e}")
-            return f"I apologize, but I encountered an error while processing your request: {str(e)}"
+            print(f"Error type: {type(e)}")
+            print(f"Full prompt was: {full_prompt[:200]}...")
+            return f"I apologize, but I encountered an error while processing your request. Error details: {str(e)}"
     
     def classify_intent(self, message: str, conversation_history: Optional[List] = None) -> str:
         """Classify user message intent."""

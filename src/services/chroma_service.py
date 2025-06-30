@@ -25,48 +25,75 @@ class ChromaService:
         if hasattr(self, '_initialized') and self._initialized:
             return
         
-        # Initialize ChromaDB client (new approach for v0.4.22)
+        self.client = None
+        self.collection = None
+        self.embedding_function = None
+        self._chroma_available = False
+        
         chroma_host = config.CHROMA_HOST
         chroma_port = config.CHROMA_PORT
         
+        print(f"INFO: Attempting to connect to ChromaDB at http://{chroma_host}:{chroma_port}")
+
         try:
-            # Check if we should use HTTP client (for containerized ChromaDB)
-            if chroma_host != 'localhost' or config.FLASK_ENV == 'production':
-                # Use HTTP client for containerized deployment
-                print(f"Connecting to ChromaDB at {chroma_host}:{chroma_port}")
-                self.client = chromadb.HttpClient(host=chroma_host, port=chroma_port)
-            else:
-                # Use persistent client for local development
-                os.makedirs(config.CHROMA_DB_PATH, exist_ok=True)
-                print(f"Using persistent ChromaDB at {config.CHROMA_DB_PATH}")
-                self.client = chromadb.PersistentClient(path=config.CHROMA_DB_PATH)
-                
-            print("ChromaDB client initialized successfully")
+            # For ChromaDB >= 0.5.0, HttpClient is the standard way to connect to a remote server.
+            # The host is determined by the CHROMA_HOST env var, which is 'chromadb' in docker-compose.
+            self.client = chromadb.HttpClient(
+                host=chroma_host,
+                port=chroma_port,
+                # Adding headers can sometimes help, though not strictly required by default.
+                # headers={"Content-Type": "application/json"} 
+            )
+            
+            # A more robust check than just heartbeat
+            self.client.list_collections()
+            print("INFO: ✓ ChromaDB connection successful. Client is functional.")
             self._chroma_available = True
             
         except Exception as e:
-            print(f"Error initializing ChromaDB client: {e}")
+            print(f"ERROR: Failed to connect to ChromaDB: {e}")
+            print("WARN: ChromaDB will not be available. Continuing without vector storage.")
             self.client = None
             self._chroma_available = False
-            print("ChromaDB will not be available - continuing without vector storage")
         
         # Only initialize embedding function and collection if client is available
         if self.client is not None:
             try:
-                # Initialize embedding function
-                self.embedding_function = embedding_functions.SentenceTransformerEmbeddingFunction(
-                    model_name=config.EMBEDDING_MODEL
-                )
+                # Get or create collection with conditional embedding
+                collection_kwargs = {"name": config.CHROMA_COLLECTION_NAME}
                 
-                # Get or create collection
+                # Setup embedding function consistently
+                self.embedding_function = None
+                openai_api_key = os.getenv('OPENAI_API_KEY')
+                
                 try:
+                    # First try to get existing collection
                     self.collection = self.client.get_collection(
                         name=config.CHROMA_COLLECTION_NAME
                     )
+                    print(f"Retrieved existing collection '{config.CHROMA_COLLECTION_NAME}'")
+                    
+                    # Get the existing collection's embedding function for consistency
+                    # Note: ChromaDB 0.5.15 doesn't expose embedding function details,
+                    # so we'll use no custom embedding to ensure compatibility
+                    print("Using collection's existing embedding configuration")
+                    
                 except Exception:
-                    self.collection = self.client.create_collection(
-                        name=config.CHROMA_COLLECTION_NAME
-                    )
+                    # Create new collection - only use OpenAI if available
+                    collection_kwargs = {"name": config.CHROMA_COLLECTION_NAME}
+                    
+                    if openai_api_key:
+                        print("OpenAI API key found - creating collection with OpenAI embeddings")
+                        self.embedding_function = embedding_functions.OpenAIEmbeddingFunction(
+                            api_key=openai_api_key,
+                            model_name="text-embedding-ada-002"
+                        )
+                        collection_kwargs["embedding_function"] = self.embedding_function
+                    else:
+                        print("No OpenAI API key - creating collection with default embeddings")
+                    
+                    self.collection = self.client.create_collection(**collection_kwargs)
+                    print(f"Created new collection '{config.CHROMA_COLLECTION_NAME}'")
                 
                 self._chroma_available = True
                 print(f"ChromaDB collection '{config.CHROMA_COLLECTION_NAME}' ready")
@@ -84,11 +111,15 @@ class ChromaService:
     def add_documents(self, 
                      documents: List[str], 
                      metadatas: List[Dict[str, Any]], 
-                     ids: List[str]) -> bool:
+                     ids: List[str]) -> Dict[str, Any]:
         """Add documents to the collection."""
         if not getattr(self, '_chroma_available', False) or self.collection is None:
             print("ChromaDB not available - skipping document addition")
-            return False
+            return {
+                "success": False,
+                "error": "ChromaDB not available or collection not initialized",
+                "count": 0
+            }
             
         try:
             self.collection.add(
@@ -96,10 +127,19 @@ class ChromaService:
                 metadatas=metadatas,
                 ids=ids
             )
-            return True
+            print(f"Successfully added {len(documents)} documents to ChromaDB")
+            return {
+                "success": True,
+                "count": len(documents),
+                "message": f"Added {len(documents)} documents"
+            }
         except Exception as e:
             print(f"Error adding documents to ChromaDB: {e}")
-            return False
+            return {
+                "success": False,
+                "error": str(e),
+                "count": 0
+            }
     
     def query_documents(self, 
                        query_text: str, 
@@ -192,6 +232,84 @@ class ChromaService:
         except Exception as e:
             print(f"Error updating documents in ChromaDB: {e}")
             return False
+    
+    def get_collection(self):
+        """Get the ChromaDB collection."""
+        if not getattr(self, '_chroma_available', False) or self.collection is None:
+            raise RuntimeError("ChromaDB not available or collection not initialized")
+        return self.collection
+    
+    def test_connection(self) -> Dict[str, Any]:
+        """Test ChromaDB connection and return status."""
+        try:
+            if not hasattr(self, 'client') or self.client is None:
+                return {
+                    "success": False,
+                    "error": "ChromaDB client not initialized",
+                    "available": False
+                }
+            
+            # Test heartbeat
+            heartbeat = self.client.heartbeat()
+            
+            # Test collection access
+            if hasattr(self, 'collection') and self.collection:
+                collection_count = self.collection.count()
+                return {
+                    "success": True,
+                    "available": True,
+                    "heartbeat": heartbeat,
+                    "collection_count": collection_count,
+                    "collection_name": config.CHROMA_COLLECTION_NAME
+                }
+            else:
+                return {
+                    "success": True,
+                    "available": True,
+                    "heartbeat": heartbeat,
+                    "collection_count": 0,
+                    "collection_name": config.CHROMA_COLLECTION_NAME,
+                    "note": "Collection not initialized"
+                }
+                
+        except Exception as e:
+            return {
+                "success": False,
+                "error": str(e),
+                "available": False
+            }
+    
+    def _ensure_embedding_compatibility(self) -> bool:
+        """
+        Ensure embedding compatibility for existing collections.
+        Returns True if embeddings are compatible, False otherwise.
+        """
+        if not self.collection:
+            return False
+            
+        try:
+            # For existing collections, we can't easily detect the embedding function
+            # ChromaDB 0.5.15 doesn't expose this information directly
+            # So we'll use a defensive approach: always use the collection as-is
+            # and let ChromaDB handle embedding consistency internally
+            
+            # Test if we can perform basic operations
+            current_count = self.collection.count()
+            print(f"Collection has {current_count} documents, embeddings appear compatible")
+            return True
+            
+        except Exception as e:
+            print(f"Embedding compatibility check failed: {e}")
+            return False
+    
+    def get_embedding_info(self) -> Dict[str, Any]:
+        """Get information about the current embedding configuration."""
+        return {
+            "has_custom_embedding": self.embedding_function is not None,
+            "embedding_type": "OpenAI" if self.embedding_function else "ChromaDB Default",
+            "collection_exists": self.collection is not None,
+            "compatible": self._ensure_embedding_compatibility()
+        }
 
 
 def get_chroma_service_instance() -> ChromaService:

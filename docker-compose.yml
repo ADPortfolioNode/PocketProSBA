@@ -30,7 +30,7 @@ services:
       - app-network
 
   chromadb:
-    image: ghcr.io/chroma-core/chroma:latest
+    image: ghcr.io/chroma-core/chroma:0.6.0
     ports:
       - "8000:8000"
     volumes:
