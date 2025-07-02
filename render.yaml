@@ -1,33 +1,44 @@
 services:
-  # ChromaDB Vector Database Service
+  # Backend API Service (Primary Application)
   - type: web
-    name: pocketpro-chromadb
-    env: docker
-    dockerfilePath: ./Dockerfile.chromadb
+    name: pocketpro-sba-backend
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn --bind 0.0.0.0:$PORT --workers 1 --timeout 120 --worker-class gevent run:app
     plan: starter
     envVars:
-      - key: CHROMA_HOST
-        value: 0.0.0.0
-      - key: CHROMA_PORT
-        value: 8000
-    disk:
-      name: chromadb-data
-      mountPath: /chroma/chroma
-      sizeGB: 1
-
-  # Backend API Service  
-  - type: web
-    name: pocketpro-backend
-    env: docker
-    dockerfilePath: ./Dockerfile.backend.prod
-    plan: starter
-    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.4
       - key: FLASK_ENV
         value: production
+      - key: FLASK_APP
+        value: run.py
       - key: GEMINI_API_KEY
-        fromSecret: GEMINI_API_KEY
+        sync: false
       - key: SECRET_KEY
         generateValue: true
+      - key: PYTHONPATH
+        value: /opt/render/project/src:/opt/render/project
+      - key: PORT
+        value: 10000
+    healthCheckPath: /health
+    autoDeploy: true
+
+  # Frontend Static Site
+  - type: web
+    name: pocketpro-sba-frontend
+    runtime: static
+    buildCommand: cd frontend && npm install --legacy-peer-deps && npm run build
+    staticPublishPath: frontend/build
+    pullRequestPreviewsEnabled: false
+    envVars:
+      - key: NODE_VERSION
+        value: 18.17.0
+      - key: REACT_APP_BACKEND_URL
+        fromService:
+          type: web
+          name: pocketpro-sba-backend
+          property: host
       - key: CHROMA_HOST
         fromService:
           type: web
