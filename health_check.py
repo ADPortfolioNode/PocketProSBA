@@ -2,25 +2,28 @@
 """
 Health check and verification script for PocketPro:SBA Edition
 """
-import requests
+import urllib.request
+import urllib.error
+import socket
 import sys
 import time
+import json
 
 def check_service(name, url, timeout=10):
     """Check if a service is responding."""
     try:
         print(f"Checking {name} at {url}...")
-        response = requests.get(url, timeout=timeout)
-        if response.status_code == 200:
+        response = urllib.request.urlopen(url, timeout=timeout)
+        if response.getcode() == 200:
             print(f"✅ {name}: OK")
             return True
         else:
-            print(f"❌ {name}: HTTP {response.status_code}")
+            print(f"❌ {name}: HTTP {response.getcode()}")
             return False
-    except requests.exceptions.ConnectionError:
-        print(f"❌ {name}: Connection refused")
+    except urllib.error.URLError as e:
+        print(f"❌ {name}: Connection refused - {e.reason}")
         return False
-    except requests.exceptions.Timeout:
+    except socket.timeout:
         print(f"❌ {name}: Timeout")
         return False
     except Exception as e:
@@ -30,16 +33,16 @@ def check_service(name, url, timeout=10):
 def check_backend_health():
     """Check backend health endpoint."""
     try:
-        response = requests.get("http://localhost:5000/health", timeout=10)
-        if response.status_code == 200:
-            data = response.json()
+        response = urllib.request.urlopen("http://localhost:5000/health", timeout=10)
+        if response.getcode() == 200:
+            data = json.loads(response.read().decode('utf-8'))
             print(f"✅ Backend Health: {data.get('status', 'unknown')}")
             services = data.get('services', {})
             for service, status in services.items():
                 print(f"  - {service}: {status}")
             return True
         else:
-            print(f"❌ Backend Health: HTTP {response.status_code}")
+            print(f"❌ Backend Health: HTTP {response.getcode()}")
             return False
     except Exception as e:
         print(f"❌ Backend Health: Error - {e}")

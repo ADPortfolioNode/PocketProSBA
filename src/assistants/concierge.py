@@ -254,9 +254,112 @@ class Concierge(BaseAssistant):
             
         except Exception as e:
             return self.report_failure(f"Error generating response: {str(e)}")
+    
+    def process_application_edit(self, edit_request, target_file='', proposed_changes=''):
+        """
+        Process a request to edit the RAG application.
+        
+        Args:
+            edit_request (str): Description of the edit requested
+            target_file (str): Path to the file to be edited
+            proposed_changes (str): The proposed code changes
+            
+        Returns:
+            dict: Response containing edit status and details
+        """
+        try:
+            # First, validate if this is a reasonable edit request
+            validation_prompt = f"""
+            I need to evaluate if the following RAG application edit request is safe and reasonable to implement:
+            
+            EDIT REQUEST: {edit_request}
+            TARGET FILE: {target_file}
+            
+            PROPOSED CHANGES:
+            ```
+            {proposed_changes}
+            ```
+            
+            Evaluate this request based on the following criteria:
+            1. Security: Does this introduce security vulnerabilities?
+            2. Safety: Could this damage the application or system?
+            3. Scope: Is this a reasonable change for a concierge to make?
+            4. Validity: Does the code appear syntactically valid?
+            
+            Return your evaluation as JSON with these fields:
+            - safe_to_implement (boolean)
+            - concerns (array of strings)
+            - suggestions (array of strings)
+            - reason (string explaining decision)
+            """
+            
+            # Get LLM validation of the edit request
+            validation_result = self.llm.generate_structured_output(
+                prompt=validation_prompt,
+                output_format="json"
+            )
+            
+            # If it's not safe to implement, return the validation result
+            if not validation_result.get('safe_to_implement', False):
+                return {
+                    "changes_applied": False,
+                    "reason": validation_result.get('reason', 'The requested changes were deemed unsafe'),
+                    "concerns": validation_result.get('concerns', []),
+                    "suggestions": validation_result.get('suggestions', [])
+                }
+            
+            # If no target file is specified but proposed_changes contains code
+            if not target_file and proposed_changes:
+                # Ask LLM to suggest appropriate target file
+                file_suggestion_prompt = f"""
+                Based on the following edit request and code changes, suggest an appropriate file path 
+                where these changes should be applied within a Flask RAG application:
+                
+                EDIT REQUEST: {edit_request}
+                
+                CODE CHANGES:
+                ```
+                {proposed_changes}
+                ```
+                
+                Return just the suggested file path relative to the application root.
+                """
+                
+                suggested_file = self.llm.generate_response(file_suggestion_prompt).strip()
+                if suggested_file:
+                    target_file = suggested_file
+            
+            # If we have a target file, try to apply the changes
+            if target_file:
+                import os
+                
+                # Resolve the path relative to the application directory
+                app_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+                
+                try:
+                    file_path = os.path.join(app_root, target_file)
+                    if os.path.exists(file_path):
+                        response_text += f"\n\n📁 Target file: {target_file}"
+                        response_text += f"\n📝 Proposed changes ready for implementation."
+                    else:
+                        response_text += f"\n\n❌ Target file not found: {target_file}"
+                except Exception as e:
+                    response_text += f"\n\n❌ Error accessing file: {str(e)}"
+            
+            return {
+                "text": response_text,
+                "suggested_agent_type": agent_type,
+                "target_file": target_file,
+                "proposed_changes": proposed_changes
+            }
+            
+        except Exception as e:
+            return {
+                "text": f"❌ Error processing request: {str(e)}",
+                "suggested_agent_type": "concierge",
+                "error": str(e)
+            }
 
-
-# Factory function for creating Concierge instances
-def create_concierge() -> Concierge:
-    """Create a new Concierge assistant instance."""
+def create_concierge():
+    """Factory function to create a Concierge instance."""
     return Concierge()

@@ -1,0 +1,13 @@
+version: '3'
+
+services:
+  frontend:
+    environment:
+      - CI=false
+      - ESLINT_NO_DEV_ERRORS=true
+      - NODE_OPTIONS=--max-old-space-size=4096
+
+  # If you need to set CHROMA_PORT, it should be in an environment section
+  nginx:
+    environment:
+      - CHROMA_PORT=8000

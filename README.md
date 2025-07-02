@@ -106,6 +106,39 @@ Key environment variables:
 
 ## Troubleshooting
 
+If you encounter connection issues between the frontend and backend, try these steps:
+
+1. **Check if the backend is running:**
+   ```
+   .\check-backend.ps1
+   ```
+   or
+   ```
+   check-backend.bat
+   ```
+
+2. **Run the connection diagnostics:**
+   ```
+   .\diagnose-connection.ps1
+   ```
+   or
+   ```
+   diagnose-connection.bat
+   ```
+
+3. **Ensure the frontend is configured correctly:**
+   - Make sure there's a `.env` file in the `frontend` directory with `REACT_APP_BACKEND_URL=http://localhost:5000`
+   - Check that `package.json` has a proxy entry: `"proxy": "http://localhost:5000"`
+
+4. **Start both backend and frontend together:**
+   ```
+   .\start-dev-full.ps1
+   ```
+   or
+   ```
+   start-dev-full.bat
+   ```
+
 ### Connection Issues
 
 1. **Backend not responding**: Check if ChromaDB is running
@@ -158,6 +191,48 @@ PocketProSBA/
 1. **New Assistant Types**: Extend `BaseAssistant` class
 2. **Document Formats**: Add processors in `DocumentProcessor`
 3. **API Endpoints**: Add routes in `app.py`
+
+## Enhanced Frontend
+
+The frontend interface now provides a comprehensive RAG workflow visualization and SBA resource navigation:
+
+### RAG Workflow Interface
+
+The frontend includes a dedicated RAG Workflow interface that visually guides users through the entire RAG process:
+
+1. **Document Upload** - Upload and process documents
+2. **Indexing** - Create vector embeddings of document chunks
+3. **Query** - Ask questions about your documents
+4. **Retrieval** - Find relevant context from indexed documents
+5. **Generation** - Generate AI response using the context
+
+This workflow-based approach helps users understand how RAG works and makes the process more intuitive.
+
+### SBA Navigation
+
+The enhanced SBA navigation organizes resources into three main categories:
+
+- **SBA Programs** - Explore loan programs, government contracting, disaster assistance, etc.
+- **Business Lifecycle** - Resources for planning, launching, managing, and growing a business
+- **Local Resources** - Find local assistance through SBDCs, SCORE, Women's Business Centers, etc.
+
+### Running the Frontend Separately
+
+To start just the frontend during development:
+
+#### Using PowerShell:
+
+```powershell
+# Start the frontend
+.\start-frontend.ps1
+```
+
+#### Using Command Prompt:
+
+```cmd
+# Start the frontend
+start-frontend.bat
+```
 
 ## License
 

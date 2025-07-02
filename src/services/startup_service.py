@@ -6,6 +6,7 @@ import hashlib
 from typing import List, Dict, Any
 from src.services.chroma_service import get_chroma_service_instance
 from src.services.document_processor import DocumentProcessor
+from src.services.model_discovery import get_model_discovery_service
 from src.utils.config import config
 
 
@@ -15,6 +16,7 @@ class StartupService:
     def __init__(self):
         self.chroma_service = get_chroma_service_instance()
         self.document_processor = DocumentProcessor()
+        self.model_discovery = get_model_discovery_service()
         self.uploads_dir = config.UPLOAD_FOLDER
         
     def initialize_application(self) -> Dict[str, Any]:
@@ -27,12 +29,19 @@ class StartupService:
         results = {
             "startup_completed": False,
             "chromadb_status": "unknown",
+            "model_discovery_status": "unknown",
+            "available_models": [],
+            "selected_model": None,
             "files_loaded": 0,
             "files_skipped": 0,
             "errors": []
         }
         
         try:
+            # Initialize model discovery first
+            model_results = self._initialize_model_discovery()
+            results.update(model_results)
+            
             # Check ChromaDB status
             if hasattr(self.chroma_service, '_chroma_available') and self.chroma_service._chroma_available:
                 results["chromadb_status"] = "available"
@@ -47,6 +56,11 @@ class StartupService:
                 print("⚠️  ChromaDB is not available - skipping file loading")
                 results["errors"].append("ChromaDB not available")
             
+            # Initialize RAG operations
+            rag_results = self.initialize_rag_operations()
+            results["rag_status"] = rag_results["rag_status"]
+            results["rag_errors"] = rag_results["errors"]
+            
             results["startup_completed"] = True
             print("✅ Application initialization completed")
             
@@ -56,6 +70,49 @@ class StartupService:
             results["errors"].append(error_msg)
             
         return results
+    
+    def _initialize_model_discovery(self) -> Dict[str, Any]:
+        """
+        Initialize model discovery and select best available model.
+        Returns model discovery status information.
+        """
+        model_results = {
+            "model_discovery_status": "unknown",
+            "available_models": [],
+            "selected_model": None
+        }
+        
+        try:
+            print("🔍 Discovering available models...")
+            
+            # Force refresh to get latest available models
+            available_models = self.model_discovery.discover_available_models(force_refresh=True)
+            
+            if available_models:
+                model_results["model_discovery_status"] = "success"
+                model_results["available_models"] = [model["name"] for model in available_models]
+                
+                # Get the best model for general use
+                best_model = self.model_discovery.get_best_model("general")
+                model_results["selected_model"] = best_model
+                
+                print(f"✓ Found {len(available_models)} available models")
+                print(f"✓ Selected best model: {best_model}")
+                
+                # Update config with the selected model (for this session)
+                config.LLM_MODEL = best_model
+                
+            else:
+                model_results["model_discovery_status"] = "no_models_found"
+                print("⚠️  No available models found - using fallback")
+                model_results["errors"] = ["No available models found"]
+                
+        except Exception as e:
+            model_results["model_discovery_status"] = "error"
+            model_results["errors"] = [f"Model discovery error: {str(e)}"]
+            print(f"❌ Error during model discovery: {e}")
+            
+        return model_results
     
     def _load_default_files(self) -> Dict[str, Any]:
         """
@@ -229,7 +286,279 @@ class StartupService:
         except Exception as e:
             print(f"❌ Error processing file '{filename}': {e}")
             return False
-
+    
+    def initialize_rag_operations(self) -> Dict[str, Any]:
+        """
+        Initialize and validate all RAG operations.
+        Returns comprehensive status of RAG capabilities.
+        """
+        rag_results = {
+            "rag_status": "unknown",
+            "document_operations": {},
+            "query_operations": {},
+            "embedding_operations": {},
+            "collection_info": {},
+            "supported_operations": [],
+            "errors": []
+        }
+        
+        try:
+            print("🔧 Initializing RAG operations...")
+            
+            # Test document CRUD operations
+            doc_ops = self._test_document_operations()
+            rag_results["document_operations"] = doc_ops
+            
+            # Test query operations
+            query_ops = self._test_query_operations()
+            rag_results["query_operations"] = query_ops
+            
+            # Test embedding operations
+            embed_ops = self._test_embedding_operations()
+            rag_results["embedding_operations"] = embed_ops
+            
+            # Get collection information
+            collection_info = self._get_collection_information()
+            rag_results["collection_info"] = collection_info
+            
+            # Determine supported operations
+            supported_ops = self._determine_supported_operations(doc_ops, query_ops, embed_ops)
+            rag_results["supported_operations"] = supported_ops
+            
+            # Overall RAG status
+            if doc_ops.get("success") and query_ops.get("success"):
+                rag_results["rag_status"] = "fully_operational"
+                print("✅ RAG operations fully operational")
+            elif doc_ops.get("success") or query_ops.get("success"):
+                rag_results["rag_status"] = "partially_operational" 
+                print("⚠️  RAG operations partially operational")
+            else:
+                rag_results["rag_status"] = "unavailable"
+                print("❌ RAG operations unavailable")
+                
+        except Exception as e:
+            rag_results["rag_status"] = "error"
+            rag_results["errors"].append(f"RAG initialization error: {str(e)}")
+            print(f"❌ Error initializing RAG operations: {e}")
+            
+        return rag_results
+    
+    def _test_document_operations(self) -> Dict[str, Any]:
+        """Test all document CRUD operations."""
+        test_results = {
+            "success": False,
+            "operations": {
+                "add": False,
+                "query": False,
+                "update": False,
+                "delete": False,
+                "list": False
+            },
+            "errors": []
+        }
+        
+        try:
+            # Test document addition
+            test_doc_id = "test_doc_startup_validation"
+            test_content = "This is a test document for RAG validation during startup."
+            test_metadata = {
+                "filename": "test_validation.txt",
+                "type": "test",
+                "created_at": "startup_test"
+            }
+            
+            # Test ADD operation
+            try:
+                add_result = self.chroma_service.add_documents(
+                    documents=[test_content],
+                    metadatas=[test_metadata],
+                    ids=[test_doc_id]
+                )
+                test_results["operations"]["add"] = add_result.get("success", False)
+            except Exception as e:
+                test_results["errors"].append(f"Add operation failed: {str(e)}")
+            
+            # Test QUERY operation
+            try:
+                query_result = self.chroma_service.query_documents(
+                    query_text="test document validation",
+                    n_results=1
+                )
+                test_results["operations"]["query"] = query_result.get("success", False)
+            except Exception as e:
+                test_results["errors"].append(f"Query operation failed: {str(e)}")
+            
+            # Test LIST operation (get collection stats)
+            try:
+                stats_result = self.chroma_service.get_collection_stats()
+                test_results["operations"]["list"] = stats_result.get("success", False)
+            except Exception as e:
+                test_results["errors"].append(f"List operation failed: {str(e)}")
+            
+            # Test UPDATE operation
+            try:
+                updated_content = "This is an updated test document."
+                updated_metadata = {**test_metadata, "updated": True}
+                update_result = self.chroma_service.update_documents(
+                    ids=[test_doc_id],
+                    documents=[updated_content],
+                    metadatas=[updated_metadata]
+                )
+                test_results["operations"]["update"] = update_result
+            except Exception as e:
+                test_results["errors"].append(f"Update operation failed: {str(e)}")
+            
+            # Test DELETE operation (cleanup test document)
+            try:
+                delete_result = self.chroma_service.delete_documents(ids=[test_doc_id])
+                test_results["operations"]["delete"] = delete_result
+            except Exception as e:
+                test_results["errors"].append(f"Delete operation failed: {str(e)}")
+            
+            # Overall success if basic operations work
+            test_results["success"] = (
+                test_results["operations"]["add"] and 
+                test_results["operations"]["query"] and
+                test_results["operations"]["list"]
+            )
+            
+        except Exception as e:
+            test_results["errors"].append(f"Document operations test failed: {str(e)}")
+        
+        return test_results
+    
+    def _test_query_operations(self) -> Dict[str, Any]:
+        """Test various query operations and capabilities."""
+        query_results = {
+            "success": False,
+            "capabilities": {
+                "semantic_search": False,
+                "filtered_search": False,
+                "similarity_scoring": False,
+                "multi_result": False
+            },
+            "performance": {},
+            "errors": []
+        }
+        
+        try:
+            # Test basic semantic search
+            try:
+                basic_query = self.chroma_service.query_documents(
+                    query_text="document content information",
+                    n_results=3
+                )
+                query_results["capabilities"]["semantic_search"] = basic_query.get("success", False)
+                
+                if basic_query.get("success"):
+                    results = basic_query.get("results", {})
+                    documents = results.get("documents", [[]])
+                    distances = results.get("distances", [[]])
+                    
+                    query_results["capabilities"]["multi_result"] = len(documents[0]) > 0
+                    query_results["capabilities"]["similarity_scoring"] = len(distances[0]) > 0
+                    
+            except Exception as e:
+                query_results["errors"].append(f"Semantic search test failed: {str(e)}")
+            
+            # Test filtered search (if documents exist)
+            try:
+                stats = self.chroma_service.get_collection_stats()
+                if stats.get("success") and stats.get("document_count", 0) > 0:
+                    filtered_query = self.chroma_service.query_documents(
+                        query_text="content",
+                        n_results=2,
+                        where={"source": {"$ne": "nonexistent"}}
+                    )
+                    query_results["capabilities"]["filtered_search"] = filtered_query.get("success", False)
+            except Exception as e:
+                query_results["errors"].append(f"Filtered search test failed: {str(e)}")
+            
+            query_results["success"] = query_results["capabilities"]["semantic_search"]
+            
+        except Exception as e:
+            query_results["errors"].append(f"Query operations test failed: {str(e)}")
+        
+        return query_results
+    
+    def _test_embedding_operations(self) -> Dict[str, Any]:
+        """Test embedding-related operations."""
+        embed_results = {
+            "success": False,
+            "embedding_info": {},
+            "compatibility": False,
+            "errors": []
+        }
+        
+        try:
+            # Get embedding information
+            embed_info = self.chroma_service.get_embedding_info()
+            embed_results["embedding_info"] = embed_info
+            
+            # Test embedding compatibility
+            compatibility = self.chroma_service._ensure_embedding_compatibility()
+            embed_results["compatibility"] = compatibility
+            
+            embed_results["success"] = embed_info.get("compatible", False)
+            
+        except Exception as e:
+            embed_results["errors"].append(f"Embedding operations test failed: {str(e)}")
+        
+        return embed_results
+    
+    def _get_collection_information(self) -> Dict[str, Any]:
+        """Get comprehensive collection information."""
+        collection_info = {
+            "exists": False,
+            "stats": {},
+            "configuration": {},
+            "errors": []
+        }
+        
+        try:
+            # Check if collection exists and get stats
+            stats = self.chroma_service.get_collection_stats()
+            collection_info["stats"] = stats
+            collection_info["exists"] = stats.get("success", False)
+            
+            # Get configuration information
+            if hasattr(self.chroma_service, 'collection') and self.chroma_service.collection:
+                collection_info["configuration"] = {
+                    "name": getattr(self.chroma_service.collection, 'name', 'unknown'),
+                    "embedding_function": str(type(self.chroma_service.embedding_function)) if self.chroma_service.embedding_function else "default"
+                }
+            
+        except Exception as e:
+            collection_info["errors"].append(f"Collection info error: {str(e)}")
+        
+        return collection_info
+    
+    def _determine_supported_operations(self, doc_ops: Dict, query_ops: Dict, embed_ops: Dict) -> List[str]:
+        """Determine which RAG operations are supported based on test results."""
+        supported = []
+        
+        if doc_ops.get("success"):
+            if doc_ops["operations"].get("add"):
+                supported.append("document_upload")
+            if doc_ops["operations"].get("delete"):
+                supported.append("document_deletion")
+            if doc_ops["operations"].get("update"):
+                supported.append("document_update")
+            if doc_ops["operations"].get("list"):
+                supported.append("document_listing")
+        
+        if query_ops.get("success"):
+            if query_ops["capabilities"].get("semantic_search"):
+                supported.append("semantic_search")
+            if query_ops["capabilities"].get("filtered_search"):
+                supported.append("filtered_search")
+            if query_ops["capabilities"].get("similarity_scoring"):
+                supported.append("relevance_scoring")
+        
+        if embed_ops.get("success"):
+            supported.append("embedding_operations")
+        
+        return supported
 
 def initialize_app_on_startup() -> Dict[str, Any]:
     """
