@@ -36,16 +36,21 @@ class ChromaService:
         print(f"INFO: Attempting to connect to ChromaDB at http://{chroma_host}:{chroma_port}")
 
         try:
-            # For ChromaDB >= 0.5.0, HttpClient is the standard way to connect to a remote server.
-            # The host is determined by the CHROMA_HOST env var, which is 'chromadb' in docker-compose.
-            self.client = chromadb.HttpClient(
-                host=chroma_host,
-                port=chroma_port,
-                # Adding headers can sometimes help, though not strictly required by default.
-                # headers={"Content-Type": "application/json"} 
-            )
+            # Try HttpClient first for remote connections (docker/production)
+            if chroma_host != "localhost" and chroma_host != "127.0.0.1":
+                self.client = chromadb.HttpClient(
+                    host=chroma_host,
+                    port=chroma_port,
+                )
+                print(f"INFO: Using HttpClient for remote ChromaDB at {chroma_host}:{chroma_port}")
+            else:
+                # For local development, use PersistentClient
+                persist_directory = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "chromadb_data")
+                os.makedirs(persist_directory, exist_ok=True)
+                self.client = chromadb.PersistentClient(path=persist_directory)
+                print(f"INFO: Using PersistentClient with directory: {persist_directory}")
             
-            # A more robust check than just heartbeat
+            # Test the connection
             self.client.list_collections()
             print("INFO: ✓ ChromaDB connection successful. Client is functional.")
             self._chroma_available = True

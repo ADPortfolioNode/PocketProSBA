@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=65.5.0", "wheel>=0.38.4", "pip>=22.0"]
+requires = ["setuptools>=68.0.0", "wheel>=0.42.0", "pip>=23.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -21,6 +21,8 @@ classifiers = [
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
 ]
 
 [project.urls]

@@ -36,9 +36,10 @@ $env:FLASK_ENV = "production"
 $env:PYTHONPATH = "$PWD\src;$PWD"
 
 try {
-    $importTest = python -c "import run; print('✅ Application imports successfully')" 2>&1
+    $testScript = "import run; print('App import successful')"
+    $importTest = python -c $testScript 2>&1
     if ($LASTEXITCODE -eq 0) {
-        Write-Host $importTest -ForegroundColor Green
+        Write-Host "✅ Application imports successfully" -ForegroundColor Green
     } else {
         Write-Host "⚠️  Import test failed, but fallback should work" -ForegroundColor Yellow
     }
@@ -68,7 +69,7 @@ Write-Host "6. ✅ Deploy!" -ForegroundColor White
 Write-Host ""
 Write-Host "🎯 Frontend deployment:" -ForegroundColor Cyan
 Write-Host "- Create Static Site service" -ForegroundColor White
-Write-Host "- Build: cd frontend && npm install --legacy-peer-deps && npm run build" -ForegroundColor Gray
+Write-Host "- Build: cd frontend; npm install --legacy-peer-deps; npm run build" -ForegroundColor Gray
 Write-Host "- Publish: frontend/build" -ForegroundColor Gray
 Write-Host ""
 Write-Host "🌐 Your app will be available at: https://your-service-name.onrender.com" -ForegroundColor Green

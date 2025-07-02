@@ -3,12 +3,12 @@ services:
   - type: web
     name: pocketpro-sba-backend
     runtime: python
-    buildCommand: pip install -r requirements.txt
+    buildCommand: pip install --upgrade pip setuptools wheel && pip install -r requirements-render.txt
     startCommand: gunicorn --bind 0.0.0.0:$PORT --workers 1 --timeout 120 --worker-class gevent run:app
     plan: starter
     envVars:
       - key: PYTHON_VERSION
-        value: 3.11.4
+        value: 3.13
       - key: FLASK_ENV
         value: production
       - key: FLASK_APP

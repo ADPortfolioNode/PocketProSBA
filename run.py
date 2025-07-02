@@ -67,24 +67,45 @@ except ImportError as e:
     print("🔄 Creating fallback application...")
     application = create_fallback_app()
     app = application
+    socketio = None
     print("✅ Fallback application created")
 
 if __name__ == '__main__':
-    # Validate configuration
-    if not config.validate_config():
-        print("Configuration validation failed. Please check your environment variables.")
-        sys.exit(1)
+    # Try to import config, fallback to environment variables
+    try:
+        from src.utils.config import config
+        # Validate configuration
+        if not config.validate_config():
+            print("Configuration validation failed. Please check your environment variables.")
+            sys.exit(1)
+        
+        # Ensure required directories exist
+        config.ensure_directories()
+        
+        HOST = config.HOST
+        PORT = config.PORT
+        FLASK_ENV = config.FLASK_ENV
+    except ImportError:
+        print("⚠️  Config module not available, using environment variables")
+        HOST = os.environ.get('HOST', '0.0.0.0')
+        PORT = int(os.environ.get('PORT', 5000))
+        FLASK_ENV = os.environ.get('FLASK_ENV', 'production')
     
-    # Ensure required directories exist
-    config.ensure_directories()
-    
-    print(f"Starting PocketPro:SBA Edition on {config.HOST}:{config.PORT}")
-    print(f"Environment: {config.FLASK_ENV}")
+    print(f"Starting PocketPro:SBA Edition on {HOST}:{PORT}")
+    print(f"Environment: {FLASK_ENV}")
     
     # Run the application
-    socketio.run(
-        app, 
-        host=config.HOST, 
-        port=config.PORT, 
-        debug=(config.FLASK_ENV == 'development')
-    )
+    if socketio:
+        socketio.run(
+            app, 
+            host=HOST, 
+            port=PORT, 
+            debug=(FLASK_ENV == 'development')
+        )
+    else:
+        # Run with basic Flask
+        app.run(
+            host=HOST,
+            port=PORT,
+            debug=(FLASK_ENV == 'development')
+        )
