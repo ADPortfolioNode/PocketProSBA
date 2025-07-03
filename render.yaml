@@ -4,7 +4,7 @@ services:
     name: pocketpro-sba-backend
     runtime: python
     buildCommand: pip install --upgrade pip setuptools wheel && pip install -r requirements-render-minimal.txt
-    startCommand: gunicorn --bind 0.0.0.0:$PORT --workers 1 --worker-class sync --timeout 120 wsgi:application
+    startCommand: gunicorn --config gunicorn.conf.py wsgi:application
     plan: starter
     envVars:
       - key: PYTHON_VERSION

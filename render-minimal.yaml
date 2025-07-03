@@ -4,7 +4,7 @@ services:
     name: pocketpro-sba-backend
     runtime: python
     buildCommand: pip install --upgrade pip setuptools wheel && pip install flask flask-cors gunicorn
-    startCommand: gunicorn --bind 0.0.0.0:$PORT --workers 1 --worker-class sync --timeout 60 minimal_app:application
+    startCommand: gunicorn --bind 0.0.0.0:$PORT --workers 1 --worker-class sync --timeout 300 --keep-alive 65 minimal_app:application
     plan: starter
     envVars:
       - key: PYTHON_VERSION
