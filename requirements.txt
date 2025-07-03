@@ -1,10 +1,10 @@
-# Core Flask dependencies - Render.com optimized for Python 3.11+
+# Core Flask dependencies - Render.com optimized for Python 3.11+ (NO GEVENT)
 flask==3.0.0
 flask-cors==4.0.0
 flask-socketio==5.3.6
 gunicorn==21.2.0
-gevent==23.9.1
-gevent-websocket==0.10.1
+# gevent==23.9.1  # REMOVED: Causes compilation errors on Python 3.13
+# gevent-websocket==0.10.1  # REMOVED: Depends on gevent
 
 # AI and Vector Database
 chromadb==0.4.24
