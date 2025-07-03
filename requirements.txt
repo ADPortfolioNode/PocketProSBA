@@ -1,30 +1,42 @@
-# Core Flask dependencies - Render.com optimized for Python 3.11+ (NO GEVENT)
+# Render.com optimized requirements - Python 3.13 compatible
+# Minimal dependencies to avoid Rust compilation issues
+
+# Core Flask dependencies (essential)
 flask==3.0.0
 flask-cors==4.0.0
 flask-socketio==5.3.6
 gunicorn==21.2.0
-# gevent==23.9.1  # REMOVED: Causes compilation errors on Python 3.13
-# gevent-websocket==0.10.1  # REMOVED: Depends on gevent
 
-# AI and Vector Database
-chromadb==0.4.24
-google-generativeai==0.3.2
-sentence-transformers==2.2.2
+# AI/LLM - Core only (no ChromaDB for now)
+google-generativeai==0.4.0
 
-# Utilities
+# Essential utilities
 python-dotenv==1.0.0
 requests==2.31.0
 numpy==1.26.2
 
-# Document processing
+# Document processing (lightweight)
 pypdf2==3.0.1
 python-docx==1.1.0
 markdown==3.5.1
 
-# Additional dependencies for Render
-pydantic==2.5.0
+# Core system dependencies
+pydantic==2.5.2
 urllib3>=1.26.0,<3.0.0
 setuptools>=68.0.0
 wheel>=0.42.0
 werkzeug==3.0.1
-wheel>=0.38.4
+
+# Python 3.13 compatibility
+typing-extensions>=4.8.0
+importlib-metadata>=6.0.0
+
+# Additional dependencies for production
+click>=8.0.0
+itsdangerous>=2.0.0
+jinja2>=3.0.0
+markupsafe>=2.0.0
+
+# Temporarily removed due to Rust compilation issues on Render.com:
+# chromadb==0.4.24  # Requires Rust compilation
+# sentence-transformers==2.2.2  # Heavy dependency, can cause issues
