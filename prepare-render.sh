@@ -1,16 +1,56 @@
 #!/bin/bash
 # Render.com deployment preparation script
 
+# CRITICAL: Detect if script is being run with Python instead of bash
+if [[ -n "$PYTHONPATH" ]] && [[ "$0" == *".py" ]] || [[ "$#" -eq 0 && "$BASH_VERSION" == "" ]]; then
+    echo "🚨 CRITICAL ERROR: This is a BASH script, not a Python script!"
+    echo ""
+    echo "❌ You ran: python prepare-render.sh"
+    echo "✅ You should run: bash prepare-render.sh"
+    echo ""
+    echo "🔧 How to fix:"
+    echo "1. Open Git Bash, PowerShell, or Command Prompt"
+    echo "2. Navigate to: cd 'E:\\2024 RESET\\PocketProSBA'"
+    echo "3. Run: bash prepare-render.sh"
+    echo ""
+    exit 1
+fi
+
 echo "🚀 Preparing PocketPro:SBA for Render deployment..."
 echo "🎯 Target: Python 3.11 (recommended for best compatibility)"
 
+# Check if running on Windows and provide instructions
+if [[ "$OSTYPE" == "msys" ]] || [[ -n "$WINDIR" ]] || [[ "$OS" == "Windows_NT" ]]; then
+    echo "🪟 Windows environment detected"
+    echo ""
+    echo "⚠️  ERROR: You tried to run this with Python!"
+    echo "❌ DON'T RUN: python prepare-render.sh"
+    echo ""
+    echo "✅ CORRECT WAYS TO RUN THIS SCRIPT:"
+    echo "   • Git Bash: bash prepare-render.sh"
+    echo "   • WSL: wsl bash prepare-render.sh"
+    echo "   • PowerShell: bash ./prepare-render.sh"
+    echo "   • Command Prompt: bash prepare-render.sh"
+    echo ""
+    echo "💡 If bash is not available, install Git for Windows which includes Git Bash"
+fi
+
 # Check Python version
-python_version=$(python3 --version 2>&1)
+if command -v python3 >/dev/null 2>&1; then
+    python_cmd="python3"
+elif command -v python >/dev/null 2>&1; then
+    python_cmd="python"
+else
+    echo "❌ Python not found. Please install Python first."
+    exit 1
+fi
+
+python_version=$($python_cmd --version 2>&1)
 echo "🐍 Python version: $python_version"
 
 # Extract Python version number for compatibility checks
-python_major=$(python3 -c "import sys; print(sys.version_info.major)")
-python_minor=$(python3 -c "import sys; print(sys.version_info.minor)")
+python_major=$($python_cmd -c "import sys; print(sys.version_info.major)")
+python_minor=$($python_cmd -c "import sys; print(sys.version_info.minor)")
 
 # Function to suggest compatible package versions
 suggest_compatible_versions() {
@@ -168,7 +208,7 @@ done
 
 # Test requirements installation with better error handling
 echo "🔧 Testing requirements installation..."
-pip_output=$(python3 -m pip install --dry-run -r requirements.txt 2>&1)
+pip_output=$($python_cmd -m pip install --dry-run -r requirements.txt 2>&1)
 pip_exit_code=$?
 
 if [[ $pip_exit_code -eq 0 ]]; then
@@ -219,7 +259,7 @@ echo "🧪 Testing application imports..."
 export FLASK_ENV=production
 export PYTHONPATH=$PWD/src:$PWD
 
-if python3 -c "import run; print('✅ Application imports successfully')" 2>/dev/null; then
+if $python_cmd -c "import run; print('✅ Application imports successfully')" 2>/dev/null; then
     echo "✅ Import test passed"
 else
     echo "⚠️  Import test failed, but fallback should work"
@@ -272,7 +312,7 @@ echo "🚀 Testing Application Startup Sequence:"
 
 # Test 1: Import validation
 echo "1️⃣ Testing module imports..."
-python3 -c "
+$python_cmd -c "
 import sys
 sys.path.insert(0, '.')
 sys.path.insert(0, 'src')
@@ -298,7 +338,7 @@ except ImportError as e:
 
 # Test 2: Flask app configuration
 echo "2️⃣ Testing Flask app configuration..."
-python3 -c "
+$python_cmd -c "
 import sys
 sys.path.insert(0, '.')
 sys.path.insert(0, 'src')
@@ -324,8 +364,13 @@ echo "3️⃣ Testing Gunicorn compatibility..."
 if command -v gunicorn >/dev/null 2>&1; then
     echo "✅ Gunicorn is available"
     
-    # Test gunicorn can load the app
-    timeout 10s gunicorn --check-config --bind 0.0.0.0:$PORT run:app 2>/dev/null
+    # Test gunicorn can load the app (skip timeout on Windows)
+    if [[ "$OSTYPE" == "msys" ]] || [[ -n "$WINDIR" ]]; then
+        gunicorn --check-config --bind 0.0.0.0:$PORT run:app >/dev/null 2>&1
+    else
+        timeout 10s gunicorn --check-config --bind 0.0.0.0:$PORT run:app >/dev/null 2>&1
+    fi
+    
     if [[ $? -eq 0 ]]; then
         echo "✅ Gunicorn can load the application"
     else
@@ -382,5 +427,15 @@ echo "   ✅ Bind to 0.0.0.0:\$PORT for container networking"
 echo ""
 echo "🐳 Docker Command (for local testing):"
 echo "   docker run -p $PORT:$PORT -e PORT=$PORT -e GEMINI_API_KEY=your_key your_image"
+echo ""
+echo "🚀 EXECUTION REMINDER:"
+echo "❌ NEVER RUN: python prepare-render.sh"
+echo "✅ ALWAYS RUN: bash prepare-render.sh"
+echo ""
+echo "📋 Quick Setup for Windows:"
+echo "1. Install Git for Windows (includes bash)"
+echo "2. Open Git Bash or PowerShell"
+echo "3. Navigate to project folder: cd 'E:\\2024 RESET\\PocketProSBA'"
+echo "4. Run script: bash prepare-render.sh"
 echo ""
 echo "📞 Support: If issues persist, this configuration is battle-tested!"
