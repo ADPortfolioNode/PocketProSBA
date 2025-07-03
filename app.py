@@ -38,6 +38,37 @@ print(f"🔄 Startup initialization results: {startup_results}")
 tasks = {}
 files = []
 
+@app.route('/')
+def index():
+    """Root route to show application status."""
+    return jsonify({
+        "message": "🚀 PocketPro:SBA is running!",
+        "status": "success",
+        "version": "1.0.0",
+        "service": "PocketPro Small Business Assistant",
+        "startup_status": startup_results.get('startup_completed', False),
+        "chromadb_status": startup_results.get('chromadb_status', 'unknown'),
+        "available_models_count": len(startup_results.get('available_models', [])),
+        "endpoints": {
+            "health": "/health",
+            "greeting": "/api/greeting", 
+            "decompose": "/api/decompose",
+            "execute": "/api/execute",
+            "files": "/api/files"
+        }
+    })
+
+@app.route('/health')
+def health():
+    """Health check endpoint."""
+    return jsonify({
+        "status": "healthy", 
+        "service": "PocketPro:SBA",
+        "timestamp": str(datetime.now()),
+        "environment": config.FLASK_ENV,
+        "chromadb_available": startup_results.get('chromadb_status') != 'unavailable'
+    })
+
 @app.route('/api/greeting', methods=['GET'])
 def get_greeting():
     """Get the system greeting and status."""

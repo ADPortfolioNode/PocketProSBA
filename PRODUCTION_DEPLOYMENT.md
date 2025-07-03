@@ -187,7 +187,7 @@ python simple_health_check.py
 
 # Test specific endpoints
 curl http://localhost:5000/health
-curl http://localhost:8000/api/v1/heartbeat
+curl http://localhost:8000/api/v2/heartbeat
 curl http://localhost/
 ```
 
@@ -201,7 +201,7 @@ docker stats
 docker-compose -f docker-compose.prod.yml logs --tail=100 -f
 
 # Monitor ChromaDB metrics
-curl http://localhost:8000/api/v1/heartbeat
+curl http://localhost:8000/api/v2/heartbeat
 ```
 
 ## Maintenance

@@ -53,7 +53,7 @@ def main():
     print("=== PocketPro:SBA Edition Health Check ===\n")
     
     services = [
-        ("ChromaDB", "http://localhost:8000/api/v1/heartbeat"),
+        ("ChromaDB", "http://localhost:8000/api/v2/heartbeat"),
         ("Backend API", "http://localhost:5000/health"),
         ("Frontend", "http://localhost:10000")
     ]

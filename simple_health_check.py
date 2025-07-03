@@ -44,7 +44,7 @@ def check_frontend():
 
 def check_chroma():
     """Check if ChromaDB is available."""
-    return check_service("ChromaDB", "http://localhost:8000/api/v1/heartbeat")
+    return check_service("ChromaDB", "http://localhost:8000/api/v2/heartbeat")
 
 def main():
     """Run health checks for all services."""
