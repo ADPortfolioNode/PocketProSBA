@@ -1,11 +1,25 @@
 """
 Model Discovery Service for dynamically finding available Gemini models.
 """
-import google.generativeai as genai
+try:
+    import google.generativeai as genai
+    GOOGLE_AI_AVAILABLE = True
+except ImportError:
+    # Fallback for when google-generativeai is not available
+    genai = None
+    GOOGLE_AI_AVAILABLE = False
+
 from typing import List, Dict, Any, Optional
-from src.utils.config import config
 import json
 import os
+
+try:
+    from src.utils.config import config
+except ImportError:
+    # Fallback config
+    class Config:
+        GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', '')
+    config = Config()
 
 
 class ModelDiscoveryService:
@@ -42,6 +56,11 @@ class ModelDiscoveryService:
         """
         if not force_refresh and self._available_models is not None:
             return self._available_models
+        
+        # Check if Google AI library is available
+        if not GOOGLE_AI_AVAILABLE:
+            print("Google Generative AI library not available - using default model list")
+            return self._get_default_models()
         
         try:
             if not config.GEMINI_API_KEY:

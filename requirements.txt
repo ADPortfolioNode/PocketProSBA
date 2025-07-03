@@ -1,42 +1,22 @@
-# Render.com optimized requirements - Python 3.13 compatible
-# Minimal dependencies to avoid Rust compilation issues
+# SUPER minimal requirements - Render.com emergency fix
+# Only absolutely essential packages for basic Flask functionality
 
-# Core Flask dependencies (essential)
 flask==3.0.0
 flask-cors==4.0.0
-flask-socketio==5.3.6
 gunicorn==21.2.0
-
-# AI/LLM - Core only (no ChromaDB for now)
-google-generativeai==0.4.0
-
-# Essential utilities
 python-dotenv==1.0.0
 requests==2.31.0
-numpy==1.26.2
-
-# Document processing (lightweight)
-pypdf2==3.0.1
-python-docx==1.1.0
-markdown==3.5.1
-
-# Core system dependencies
-pydantic==2.5.2
 urllib3>=1.26.0,<3.0.0
 setuptools>=68.0.0
 wheel>=0.42.0
 werkzeug==3.0.1
-
-# Python 3.13 compatibility
-typing-extensions>=4.8.0
-importlib-metadata>=6.0.0
-
-# Additional dependencies for production
 click>=8.0.0
 itsdangerous>=2.0.0
 jinja2>=3.0.0
 markupsafe>=2.0.0
 
-# Temporarily removed due to Rust compilation issues on Render.com:
-# chromadb==0.4.24  # Requires Rust compilation
-# sentence-transformers==2.2.2  # Heavy dependency, can cause issues
+# TEMPORARILY REMOVED to isolate Rust compilation issues:
+# google-generativeai==0.4.0  # May have dependencies with Rust
+# pypdf2==3.0.1  # Remove document processing temporarily
+# python-docx==1.1.0  # Remove document processing temporarily
+# markdown==3.5.1  # Remove document processing temporarily

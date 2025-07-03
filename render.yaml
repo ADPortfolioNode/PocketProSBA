@@ -3,7 +3,7 @@ services:
   - type: web
     name: pocketpro-sba-backend
     runtime: python
-    buildCommand: pip install --upgrade pip setuptools wheel && pip install -r requirements-render-minimal.txt
+    buildCommand: pip install --upgrade pip setuptools wheel && pip install -r requirements.txt
     startCommand: gunicorn --config gunicorn.conf.py wsgi:application
     plan: starter
     envVars:
