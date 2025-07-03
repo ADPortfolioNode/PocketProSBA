@@ -44,11 +44,27 @@ def main():
     print()
     print("🚀 DEPLOYMENT STATUS: READY FOR RENDER.COM")
     print()
-    print("NEXT STEPS:")
+    print("🚨 BAD GATEWAY ERROR TROUBLESHOOTING:")
+    print("If you're seeing a 'Bad Gateway' error, check these immediately:")
+    print("1. 🔍 Render Dashboard → Your Service → Logs")
+    print("2. 🔍 Look for build errors or import failures")
+    print("3. 🔍 Verify GEMINI_API_KEY environment variable is set")
+    print("4. 🔍 Check if health endpoint is responding")
+    print("5. 🔍 Monitor memory usage during startup")
+    print()
+    print("🔧 EMERGENCY FIXES:")
+    print("• Try minimal deployment: Use render-minimal.yaml")
+    print("• Clear build cache and redeploy")
+    print("• Test with minimal_app.py first")
+    print("• Verify Python 3.13 compatibility")
+    print("• Check for any missing imports")
+    print()
+    print("📞 NEXT STEPS:")
     print("1. Commit all changes to git")
     print("2. Push to your repository")
     print("3. Deploy to Render.com")
-    print("4. The ChromaDB v2 API issue should be resolved")
+    print("4. If Bad Gateway persists, check Render logs immediately")
+    print("5. Use minimal deployment if main app fails")
     
     print()
     print("FILES MODIFIED FOR RENDER.COM:")
@@ -62,7 +78,11 @@ def main():
         "requirements.txt (removed gevent)",
         "requirements-render.txt (removed gevent)",
         "requirements-render-minimal.txt (NEW - no Rust deps)",
-        "render.yaml (sync workers, minimal requirements)"
+        "render.yaml (sync workers, minimal requirements)",
+        "wsgi.py (NEW - proper Gunicorn entry point)",
+        "minimal_app.py (NEW - emergency fallback)",
+        "render-minimal.yaml (NEW - emergency deployment config)",
+        "render_troubleshooting.py (NEW - debugging guide)"
     ]
     
     for file in files:

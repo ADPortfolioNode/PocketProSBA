@@ -4,7 +4,7 @@ services:
     name: pocketpro-sba-backend
     runtime: python
     buildCommand: pip install --upgrade pip setuptools wheel && pip install -r requirements-render-minimal.txt
-    startCommand: gunicorn --bind 0.0.0.0:$PORT --workers 1 --timeout 120 run:app
+    startCommand: gunicorn --bind 0.0.0.0:$PORT --workers 1 --worker-class sync --timeout 120 wsgi:application
     plan: starter
     envVars:
       - key: PYTHON_VERSION
@@ -12,22 +12,27 @@ services:
       - key: FLASK_ENV
         value: production
       - key: FLASK_APP
-        value: run.py
+        value: app.py
       - key: GEMINI_API_KEY
         sync: false
       - key: SECRET_KEY
         generateValue: true
       - key: PYTHONPATH
         value: /opt/render/project/src:/opt/render/project
-      - key: PORT
-        value: 10000
+      - key: CHROMA_HOST
+        value: localhost
+      - key: CHROMA_PORT
+        value: 8000
+      - key: UPLOAD_FOLDER
+        value: /opt/render/project/uploads
+      - key: CORS_ORIGINS
+        value: "*"
     healthCheckPath: /health
     autoDeploy: true
 
   # Frontend Static Site
-  - type: web
+  - type: static
     name: pocketpro-sba-frontend
-    runtime: static
     buildCommand: cd frontend && npm install --legacy-peer-deps && npm run build
     staticPublishPath: frontend/build
     pullRequestPreviewsEnabled: false
@@ -38,26 +43,4 @@ services:
         fromService:
           type: web
           name: pocketpro-sba-backend
-          property: host
-      - key: CHROMA_HOST
-        fromService:
-          type: web
-          name: pocketpro-chromadb
-          property: host
-      - key: CHROMA_PORT
-        value: 8000
-      - key: CORS_ORIGINS
-        value: "*"
-    healthCheckPath: /health
-
-  # Frontend Static Site
-  - type: static
-    name: pocketpro-frontend
-    buildCommand: cd frontend && npm install && npm run build
-    staticPublishPath: frontend/build
-    envVars:
-      - key: REACT_APP_BACKEND_URL
-        fromService:
-          type: web
-          name: pocketpro-backend
           property: host
