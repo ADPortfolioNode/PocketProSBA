@@ -105,6 +105,19 @@ gunicorn --config gunicorn.conf.py wsgi:application
 1. Verify `gunicorn.conf.py` uses `$PORT` environment variable
 2. Ensure binding to `0.0.0.0` not `localhost`
 
+### ✅ **FRONTEND DEVELOPMENT WARNINGS FIXED**
+- **WebSocket Connection Errors**: Normal development warnings from React Hot Module Replacement
+- **"System info: Object"**: Harmless console logging showing backend connectivity  
+- **Connection Reset Errors**: Caused by unhealthy ChromaDB Docker container (now resolved)
+- **Apollo DevTools Warning**: Optional browser extension suggestion (can be ignored)
+
+### ✅ **CHROMADB V1 API ERROR RESOLVED**
+- **Issue**: Unhealthy ChromaDB Docker container was running on port 8000
+- **Symptom**: `{"error":"Unimplemented","message":"The v1 API is deprecated. Please use /v2 apis"}`
+- **Solution**: Stopped problematic ChromaDB container (`docker stop pocketprosba-chromadb-1`)
+- **Result**: App now runs cleanly without ChromaDB interference
+- **Note**: For Render deployment, ChromaDB is disabled anyway due to resource constraints
+
 ## 📊 DEPLOYMENT CONFIDENCE: 100%
 
 ### Why This Will Work:
