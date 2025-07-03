@@ -40,34 +40,114 @@ files = []
 
 @app.route('/')
 def index():
-    """Root route to show application status."""
-    return jsonify({
-        "message": "🚀 PocketPro:SBA is running!",
-        "status": "success",
-        "version": "1.0.0",
-        "service": "PocketPro Small Business Assistant",
-        "startup_status": startup_results.get('startup_completed', False),
-        "chromadb_status": startup_results.get('chromadb_status', 'unknown'),
-        "available_models_count": len(startup_results.get('available_models', [])),
-        "endpoints": {
-            "health": "/health",
-            "greeting": "/api/greeting", 
-            "decompose": "/api/decompose",
-            "execute": "/api/execute",
-            "files": "/api/files"
-        }
-    })
+    """Root route to show application status with models and documents summary."""
+    try:
+        # Get quick stats
+        from src.services.model_discovery import get_model_discovery_service
+        from src.services.llm_factory import LLMFactory
+        
+        model_service = get_model_discovery_service()
+        available_models = model_service.discover_available_models()
+        llm = LLMFactory.get_llm()
+        
+        # Get document count
+        chroma_stats = rag_manager.get_collection_stats()
+        document_count = chroma_stats.get("document_count", 0)
+        
+        # Get current model info
+        current_model_info = model_service.get_model_info(llm.model_name)
+        
+        return jsonify({
+            "message": "🚀 PocketPro:SBA is running!",
+            "status": "success",
+            "version": "1.0.0",
+            "service": "PocketPro Small Business Assistant",
+            "startup_status": startup_results.get('startup_completed', False),
+            "chromadb_status": startup_results.get('chromadb_status', 'unknown'),
+            "summary": {
+                "models": {
+                    "current": current_model_info.get('display_name', llm.model_name) if current_model_info else llm.model_name,
+                    "available_count": len(available_models)
+                },
+                "documents": {
+                    "total_count": document_count,
+                    "chromadb_available": chroma_stats.get("success", False)
+                },
+                "services": {
+                    "llm_configured": bool(config.GEMINI_API_KEY),
+                    "chromadb_connected": chroma_stats.get("success", False)
+                }
+            },
+            "endpoints": {
+                "health": "/health",
+                "status": "/api/status",
+                "info": "/api/info",
+                "models": "/api/models",
+                "documents": "/api/documents",
+                "greeting": "/api/greeting", 
+                "decompose": "/api/decompose",
+                "execute": "/api/execute",
+                "files": "/api/files"
+            }
+        })
+    except Exception as e:
+        # Fallback to basic info if detailed info fails
+        return jsonify({
+            "message": "🚀 PocketPro:SBA is running!",
+            "status": "success",
+            "version": "1.0.0",
+            "service": "PocketPro Small Business Assistant",
+            "startup_status": startup_results.get('startup_completed', False),
+            "chromadb_status": startup_results.get('chromadb_status', 'unknown'),
+            "available_models_count": len(startup_results.get('available_models', [])),
+            "error": f"Could not load detailed info: {str(e)}",
+            "endpoints": {
+                "health": "/health",
+                "status": "/api/status",
+                "info": "/api/info",
+                "greeting": "/api/greeting", 
+                "decompose": "/api/decompose",
+                "execute": "/api/execute",
+                "files": "/api/files"
+            }
+        })
 
 @app.route('/health')
 def health():
-    """Health check endpoint."""
-    return jsonify({
-        "status": "healthy", 
-        "service": "PocketPro:SBA",
-        "timestamp": str(datetime.now()),
-        "environment": config.FLASK_ENV,
-        "chromadb_available": startup_results.get('chromadb_status') != 'unavailable'
-    })
+    """Health check endpoint with quick system summary."""
+    try:
+        # Get basic stats
+        chroma_stats = rag_manager.get_collection_stats()
+        
+        # Try to get model count
+        try:
+            from src.services.model_discovery import get_model_discovery_service
+            model_service = get_model_discovery_service()
+            model_count = len(model_service.discover_available_models())
+        except:
+            model_count = len(startup_results.get('available_models', []))
+        
+        return jsonify({
+            "status": "healthy", 
+            "service": "PocketPro:SBA",
+            "timestamp": str(datetime.now()),
+            "environment": config.FLASK_ENV,
+            "chromadb_available": startup_results.get('chromadb_status') != 'unavailable',
+            "quick_stats": {
+                "documents": chroma_stats.get("document_count", 0),
+                "models_available": model_count,
+                "llm_configured": bool(config.GEMINI_API_KEY)
+            }
+        })
+    except Exception as e:
+        return jsonify({
+            "status": "healthy", 
+            "service": "PocketPro:SBA",
+            "timestamp": str(datetime.now()),
+            "environment": config.FLASK_ENV,
+            "chromadb_available": startup_results.get('chromadb_status') != 'unavailable',
+            "error": f"Could not load stats: {str(e)}"
+        })
 
 @app.route('/api/greeting', methods=['GET'])
 def get_greeting():
@@ -1236,14 +1316,53 @@ def get_search_filters():
 
 @app.route('/api/status', methods=['GET'])
 def get_status():
-    """Get comprehensive system status."""
+    """Get comprehensive system status with detailed models and documents info."""
     try:
         # Get all service statuses
         chroma_stats = rag_manager.get_collection_stats()
         
         from src.services.model_discovery import get_model_discovery_service
+        from src.services.llm_factory import LLMFactory
+        
         model_service = get_model_discovery_service()
         available_models = model_service.discover_available_models()
+        llm = LLMFactory.get_llm()
+        
+        # Get current model info
+        current_model_info = model_service.get_model_info(llm.model_name)
+        
+        # Get document information
+        documents_info = []
+        total_documents = 0
+        total_chunks = 0
+        
+        if hasattr(rag_manager.chroma_service, 'collection') and rag_manager.chroma_service.collection:
+            try:
+                # Get all documents
+                results = rag_manager.chroma_service.collection.get()
+                
+                if results and 'metadatas' in results and 'ids' in results:
+                    # Group by file_hash to get unique documents
+                    unique_docs = {}
+                    for i, metadata in enumerate(results['metadatas']):
+                        if metadata and 'file_hash' in metadata:
+                            file_hash = metadata['file_hash']
+                            if file_hash not in unique_docs:
+                                unique_docs[file_hash] = {
+                                    'id': file_hash,
+                                    'filename': metadata.get('filename', 'unknown'),
+                                    'source': metadata.get('source', 'unknown'),
+                                    'chunk_count': 0,
+                                    'created_at': metadata.get('created_at', ''),
+                                    'type': metadata.get('chunk_type', 'content')
+                                }
+                            unique_docs[file_hash]['chunk_count'] += 1
+                    
+                    documents_info = list(unique_docs.values())
+                    total_documents = len(documents_info)
+                    total_chunks = len(results['ids'])
+            except Exception as e:
+                print(f"Warning: Could not retrieve document details: {e}")
         
         # Get startup results if available
         global startup_results
@@ -1256,25 +1375,55 @@ def get_status():
             "services": {
                 "chromadb": {
                     "status": "connected" if chroma_stats.get("success") else "disconnected",
-                    "document_count": chroma_stats.get("document_count", 0),
-                    "collection_name": config.CHROMA_COLLECTION_NAME
+                    "document_count": total_documents,
+                    "chunk_count": total_chunks,
+                    "collection_name": config.CHROMA_COLLECTION_NAME,
+                    "available": getattr(rag_manager.chroma_service, '_chroma_available', False)
                 },
                 "llm": {
                     "status": "connected" if config.GEMINI_API_KEY else "not_configured",
-                    "current_model": config.LLM_MODEL,
-                    "available_models": len(available_models)
+                    "current_model": {
+                        "name": llm.model_name,
+                        "display_name": current_model_info.get('display_name', 'Unknown') if current_model_info else 'Unknown',
+                        "description": current_model_info.get('description', '') if current_model_info else ''
+                    },
+                    "available_models_count": len(available_models),
+                    "api_key_configured": bool(config.GEMINI_API_KEY)
                 },
                 "model_discovery": {
                     "status": "active",
-                    "models_found": len(available_models)
+                    "models_found": len(available_models),
+                    "last_refresh": "cached" if hasattr(model_service, '_available_models') and model_service._available_models else "live"
                 }
+            },
+            "documents": {
+                "total_documents": total_documents,
+                "total_chunks": total_chunks,
+                "recent_documents": documents_info[:5] if documents_info else [],  # Show last 5 documents
+                "supported_formats": list(config.ALLOWED_EXTENSIONS),
+                "max_file_size": config.MAX_CONTENT_LENGTH
+            },
+            "models": {
+                "current_model": {
+                    "name": llm.model_name,
+                    "display_name": current_model_info.get('display_name', 'Unknown') if current_model_info else 'Unknown'
+                },
+                "available_count": len(available_models),
+                "top_models": [
+                    {
+                        "name": model['name'],
+                        "display_name": model['display_name']
+                    }
+                    for model in available_models[:5]  # Show top 5 models
+                ] if available_models else []
             },
             "capabilities": {
                 "document_upload": True,
                 "semantic_search": chroma_stats.get("success", False),
                 "rag_query": bool(config.GEMINI_API_KEY),
                 "assistant_chat": True,
-                "file_processing": True
+                "file_processing": True,
+                "model_switching": bool(config.GEMINI_API_KEY)
             },
             "startup_results": startup_results if 'startup_results' in globals() else None
         }

@@ -23,7 +23,10 @@ def main():
         "✅ requirements.txt and requirements-render.txt cleaned",
         "✅ RUST COMPILATION FIX - Created minimal requirements",
         "✅ ChromaDB temporarily removed to avoid Rust build issues",
-        "✅ App handles ChromaDB unavailable gracefully"
+        "✅ App handles ChromaDB unavailable gracefully",
+        "✅ STATUS ENDPOINTS ENHANCED - Models and documents info site-wide",
+        "✅ Root route now shows model and document summaries",
+        "✅ Health endpoint includes quick stats"
     ]
     
     print("FIXES APPLIED:")
