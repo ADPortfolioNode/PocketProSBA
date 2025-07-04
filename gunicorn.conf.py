@@ -52,7 +52,6 @@ limit_request_fields = 100
 limit_request_field_size = 8190
 
 # Preload and memory management
-preload_app = True
 max_worker_connections = 1000
 
 # Logging configuration for debugging
@@ -72,5 +71,6 @@ def post_worker_init(worker):
     worker.log.info("Worker initialized (pid: %s)", worker.pid)
 
 def worker_abort(worker):
+    worker.log.info("Worker aborted (pid: %s)", worker.pid)
     worker.log.info("Worker aborted (pid: %s)", worker.pid)
     worker.log.info("Worker aborted (pid: %s)", worker.pid)
