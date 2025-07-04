@@ -1,12 +1,13 @@
 # Gunicorn configuration for Render.com deployment
 import os
 
-# Server socket - Use port 5000 for frontend compatibility, Render.com will override via PORT env var
-bind = f"0.0.0.0:{os.environ.get('PORT', '5000')}"  # Use 5000 to match frontend expectations
+# Server socket - Use port 10000 for Render.com compatibility and frontend expectations
+bind = f"0.0.0.0:{os.environ.get('PORT', '10000')}"  # Use 10000 to match frontend and Render.com
 backlog = 2048
 
-# Worker processes
-workers = 1
+# Worker processes - optimized for production
+workers = int(os.environ.get('WEB_CONCURRENCY', 1))  # Allow scaling via environment variable
+worker_class = "sync"  # Added missing worker_class
 worker_connections = 1000
 timeout = 300  # Increased timeout for slow operations
 keepalive = 120  # Increased keepalive
@@ -53,23 +54,32 @@ limit_request_field_size = 8190
 # Preload and memory management
 max_worker_connections = 1000
 
-# Logging configuration for debugging
+# Logging configuration for debugging - optimized startup sequence
 def when_ready(server):
+    server.log.info("=== PocketPro SBA Server Starting ===")
     server.log.info("Server is ready. Spawning workers")
     server.log.info("Binding to: %s", server.address)
+    server.log.info("Environment: %s", os.environ.get('ENVIRONMENT', 'development'))
+    server.log.info("Worker concurrency: %s", os.environ.get('WEB_CONCURRENCY', 1))
+    server.log.info("=== Startup Complete ===")
 
 def worker_int(worker):
-    worker.log.info("worker received INT or QUIT signal")
+    worker.log.info("Worker received INT or QUIT signal - shutting down gracefully")
 
 def pre_fork(server, worker):
-    server.log.info("Worker spawned (pid: %s)", worker.pid)
+    server.log.info("Pre-fork: Preparing worker (pid: %s)", worker.pid)
 
 def post_fork(server, worker):
-    server.log.info("Worker spawned (pid: %s)", worker.pid)
+    server.log.info("Post-fork: Worker spawned (pid: %s)", worker.pid)
 
 def post_worker_init(worker):
-    worker.log.info("Worker initialized (pid: %s)", worker.pid)
+    worker.log.info("Worker fully initialized and ready (pid: %s)", worker.pid)
 
 def worker_abort(worker):
-    worker.log.info("Worker aborted (pid: %s)", worker.pid)
-    worker.log.info("Worker aborted (pid: %s)", worker.pid)
+    worker.log.error("Worker aborted unexpectedly (pid: %s)", worker.pid)
+
+def on_exit(server):
+    server.log.info("=== PocketPro SBA Server Shutting Down ===")
+
+def on_reload(server):
+    server.log.info("=== PocketPro SBA Server Reloading ===")
