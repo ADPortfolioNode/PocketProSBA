@@ -1,183 +1,183 @@
+import os
+import logging
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-# flask_socketio import moved to conditional section below
-from werkzeug.utils import secure_filename
-import os
-import sys
-import json
-import uuid
-from datetime import datetime
+import chromadb
+from chromadb.config import Settings
+import google.generativeai as genai
+from sentence_transformers import SentenceTransformer
+import traceback
 
-# Add src directory to Python path
-sys.path.append(os.path.join(os.path.dirname(__file__), 'src'))
-
-# Import our services with graceful fallbacks for missing dependencies
-try:
-    from src.utils.config import config
-except ImportError:
-    # Fallback config for minimal deployment
-    class Config:
-        SECRET_KEY = os.getenv('SECRET_KEY', 'fallback-secret-key')
-        GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', '')
-        FLASK_ENV = os.getenv('FLASK_ENV', 'production')
-    config = Config()
-
-try:
-    from src.services.rag_manager import get_rag_manager
-    rag_manager = get_rag_manager()
-except ImportError:
-    # Fallback for missing RAG services
-    class MockRAGManager:
-        def get_collection_stats(self):
-            return {"document_count": 0, "success": False}
-    rag_manager = MockRAGManager()
-
-try:
-    from src.services.llm_factory import LLMFactory
-    llm = LLMFactory.get_llm()
-except ImportError:
-    # Fallback for missing LLM services
-    class MockLLM:
-        model_name = "gemini-pro"
-    llm = MockLLM()
-
-try:
-    from src.services.document_processor import DocumentProcessor
-    document_processor = DocumentProcessor()
-except ImportError:
-    # Fallback for missing document processor
-    class MockDocumentProcessor:
-        def process_file(self, *args, **kwargs):
-            return {"success": False, "error": "Document processing unavailable"}
-    document_processor = MockDocumentProcessor()
-
-try:
-    from src.assistants.concierge import create_concierge
-    concierge = create_concierge()
-except ImportError:
-    # Fallback for missing concierge
-    class MockConcierge:
-        def get_system_greeting(self):
-            return {"success": True, "message": "System running in minimal mode"}
-    concierge = MockConcierge()
-
-try:
-    from src.services.startup_service import initialize_app_on_startup
-    startup_results = initialize_app_on_startup()
-except ImportError:
-    # Fallback startup results
-    startup_results = {
-        "startup_completed": True,
-        "chromadb_status": "unavailable",
-        "available_models": []
-    }
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
-app.secret_key = config.SECRET_KEY
 CORS(app)
 
-# Only initialize SocketIO if flask-socketio is available
-try:
-    from flask_socketio import SocketIO, emit
-    socketio = SocketIO(app, cors_allowed_origins="*")
-except ImportError:
-    socketio = None
-print(f"🔄 Startup initialization results: {startup_results}")
+# Initialize ChromaDB client
+chroma_client = None
+collection = None
+embedding_model = None
 
-# In-memory storage for demonstration
-tasks = {}
-files = []
-
-@app.route('/')
-def index():
-    """Root route to show application status with models and documents summary."""
+def initialize_chromadb():
+    """Initialize ChromaDB with proper error handling"""
+    global chroma_client, collection, embedding_model
+    
     try:
-        # Get quick stats
-        from src.services.model_discovery import get_model_discovery_service
-        from src.services.llm_factory import LLMFactory
+        # Initialize ChromaDB client
+        chroma_client = chromadb.Client(Settings(
+            chroma_db_impl="duckdb+parquet",
+            persist_directory="./chroma_db"
+        ))
         
-        model_service = get_model_discovery_service()
-        available_models = model_service.discover_available_models()
-        llm = LLMFactory.get_llm()
+        # Create or get collection
+        collection = chroma_client.get_or_create_collection(
+            name="pocketpro_sba_documents",
+            metadata={"hnsw:space": "cosine"}
+        )
         
-        # Get document count
-        chroma_stats = rag_manager.get_collection_stats()
-        document_count = chroma_stats.get("document_count", 0)
+        # Initialize embedding model
+        embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
         
-        # Get current model info
-        current_model_info = model_service.get_model_info(llm.model_name)
+        logger.info("ChromaDB initialized successfully")
+        return True
         
+    except Exception as e:
+        logger.error(f"ChromaDB initialization failed: {str(e)}")
+        return False
+
+def initialize_genai():
+    """Initialize Google Generative AI"""
+    try:
+        api_key = os.environ.get('GOOGLE_API_KEY')
+        if api_key:
+            genai.configure(api_key=api_key)
+            logger.info("Google Generative AI initialized")
+            return True
+        else:
+            logger.warning("GOOGLE_API_KEY not found in environment")
+            return False
+    except Exception as e:
+        logger.error(f"Google Generative AI initialization failed: {str(e)}")
+        return False
+
+# Initialize services
+@app.before_first_request
+def startup():
+    """Initialize all services on startup"""
+    logger.info("🔄 Initializing PocketPro SBA application...")
+    
+    chromadb_status = initialize_chromadb()
+    genai_status = initialize_genai()
+    
+    startup_results = {
+        'startup_completed': True,
+        'chromadb_status': 'available' if chromadb_status else 'unavailable',
+        'genai_status': 'available' if genai_status else 'unavailable',
+        'available_models': []
+    }
+    
+    logger.info(f"🔄 Startup initialization results: {startup_results}")
+    return startup_results
+
+# Health check endpoint
+@app.route('/health', methods=['GET'])
+def health_check():
+    """Health check endpoint for monitoring"""
+    return jsonify({
+        'status': 'healthy',
+        'service': 'PocketPro SBA',
+        'chromadb': 'available' if chroma_client else 'unavailable'
+    })
+
+# API endpoints
+@app.route('/api/info', methods=['GET'])
+def get_system_info():
+    """Get system information"""
+    try:
         return jsonify({
-            "message": "🚀 PocketPro:SBA is running!",
-            "status": "success",
-            "version": "1.0.0",
-            "service": "PocketPro Small Business Assistant",
-            "startup_status": startup_results.get('startup_completed', False),
-            "chromadb_status": startup_results.get('chromadb_status', 'unknown'),
-            "summary": {
-                "models": {
-                    "current": current_model_info.get('display_name', llm.model_name) if current_model_info else llm.model_name,
-                    "available_count": len(available_models)
-                },
-                "documents": {
-                    "total_count": document_count,
-                    "chromadb_available": chroma_stats.get("success", False)
-                },
-                "services": {
-                    "llm_configured": bool(config.GEMINI_API_KEY),
-                    "chromadb_connected": chroma_stats.get("success", False)
-                }
-            },
-            "endpoints": {
-                "health": "/health",
-                "status": "/api/status",
-                "info": "/api/info",
-                "models": "/api/models",
-                "documents": "/api/documents",
-                "greeting": "/api/greeting", 
-                "decompose": "/api/decompose",
-                "execute": "/api/execute",
-                "files": "/api/files"
-            }
+            'service': 'PocketPro SBA',
+            'version': '1.0.0',
+            'chromadb_status': 'available' if chroma_client else 'unavailable',
+            'embedding_model': 'all-MiniLM-L6-v2' if embedding_model else 'unavailable'
         })
     except Exception as e:
-        # Fallback to basic info if detailed info fails
-        return jsonify({
-            "message": "🚀 PocketPro:SBA is running!",
-            "status": "success",
-            "version": "1.0.0",
-            "service": "PocketPro Small Business Assistant",
-            "startup_status": startup_results.get('startup_completed', False),
-            "chromadb_status": startup_results.get('chromadb_status', 'unknown'),
-            "available_models_count": len(startup_results.get('available_models', [])),
-            "error": f"Could not load detailed info: {str(e)}",
-            "endpoints": {
-                "health": "/health",
-                "status": "/api/status",
-                "info": "/api/info",
-                "greeting": "/api/greeting", 
-                "decompose": "/api/decompose",
-                "execute": "/api/execute",
-                "files": "/api/files"
-            }
-        })
+        logger.error(f"Error getting system info: {str(e)}")
+        return jsonify({'error': str(e)}), 500
 
-@app.route('/health')
-def health():
-    """Health check endpoint with quick system summary."""
+@app.route('/api/models', methods=['GET'])
+def get_available_models():
+    """Get available AI models"""
     try:
-        # Get basic stats
-        chroma_stats = rag_manager.get_collection_stats()
-        
-        # Try to get model count
-        try:
-            from src.services.model_discovery import get_model_discovery_service
-            model_service = get_model_discovery_service()
-            model_count = len(model_service.discover_available_models())
-        except:
-            model_count = len(startup_results.get('available_models', []))
-        
+        models = ['gemini-pro', 'gemini-pro-vision'] if genai else []
+        return jsonify({'models': models})
+    except Exception as e:
+        logger.error(f"Error getting models: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/documents', methods=['GET'])
+def get_documents():
+    """Get all documents from ChromaDB"""
+    try:
+        if not collection:
+            return jsonify({'error': 'ChromaDB not available'}), 500
+            
+        results = collection.get()
         return jsonify({
+            'documents': results.get('documents', []),
+            'count': len(results.get('documents', []))
+        })
+    except Exception as e:
+        logger.error(f"Error getting documents: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/collections/stats', methods=['GET'])
+def get_collection_stats():
+    """Get collection statistics"""
+    try:
+        if not collection:
+            return jsonify({'error': 'ChromaDB not available'}), 500
+            
+        count = collection.count()
+        return jsonify({
+            'total_documents': count,
+            'collection_name': 'pocketpro_sba_documents'
+        })
+    except Exception as e:
+        logger.error(f"Error getting collection stats: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/search/filters', methods=['GET'])
+def get_search_filters():
+    """Get available search filters"""
+    try:
+        return jsonify({
+            'filters': ['document_type', 'created_date', 'tags'],
+            'document_types': ['pdf', 'docx', 'txt', 'md']
+        })
+    except Exception as e:
+        logger.error(f"Error getting search filters: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/assistants', methods=['GET'])
+def get_assistants():
+    """Get available AI assistants"""
+    try:
+        assistants = [
+            {'id': 'sba_advisor', 'name': 'SBA Business Advisor', 'type': 'business'},
+            {'id': 'document_analyzer', 'name': 'Document Analyzer', 'type': 'analysis'}
+        ]
+        return jsonify({'assistants': assistants})
+    except Exception as e:
+        logger.error(f"Error getting assistants: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+if __name__ == '__main__':
+    port = int(os.environ.get('PORT', 5000))
+    logger.info(f"Starting PocketPro SBA Edition on 0.0.0.0:{port}")
+    logger.info("Environment: development")
+    app.run(host='0.0.0.0', port=port, debug=True)
             "status": "healthy", 
             "service": "PocketPro:SBA",
             "timestamp": str(datetime.now()),

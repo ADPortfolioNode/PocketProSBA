@@ -1,8 +1,8 @@
 # Gunicorn configuration for Render.com deployment
 import os
 
-# Server socket - Use port 10000 for Render.com compatibility and frontend expectations
-bind = f"0.0.0.0:{os.environ.get('PORT', '10000')}"  # Use 10000 to match frontend and Render.com
+# Server socket - Use port 5000 for Render.com compatibility
+bind = f"0.0.0.0:{os.environ.get('PORT', '5000')}"  # Render.com expects port 5000
 backlog = 2048
 
 # Worker processes - optimized for production
