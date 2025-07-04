@@ -61,6 +61,14 @@ def when_ready(server):
     server.log.info("Binding to: %s", server.address)
     server.log.info("Environment: %s", os.environ.get('ENVIRONMENT', 'development'))
     server.log.info("Worker concurrency: %s", os.environ.get('WEB_CONCURRENCY', 1))
+    server.log.info("Expected API endpoints:")
+    server.log.info("  - /api/info (system info)")
+    server.log.info("  - /api/models (available models)")
+    server.log.info("  - /api/documents (document management)")
+    server.log.info("  - /api/collections/stats (collection statistics)")
+    server.log.info("  - /api/search/filters (search filters)")
+    server.log.info("  - /api/assistants (AI assistants)")
+    server.log.info("  - /health (health check)")
     server.log.info("=== Startup Complete ===")
 
 def worker_int(worker):
