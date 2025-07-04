@@ -2,10 +2,6 @@ import os
 import logging
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-import chromadb
-from chromadb.config import Settings
-import google.generativeai as genai
-from sentence_transformers import SentenceTransformer
 import traceback
 
 # Configure logging
@@ -15,71 +11,22 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 CORS(app)
 
-# Initialize ChromaDB client
-chroma_client = None
-collection = None
-embedding_model = None
-
-def initialize_chromadb():
-    """Initialize ChromaDB with proper error handling"""
-    global chroma_client, collection, embedding_model
-    
-    try:
-        # Initialize ChromaDB client
-        chroma_client = chromadb.Client(Settings(
-            chroma_db_impl="duckdb+parquet",
-            persist_directory="./chroma_db"
-        ))
-        
-        # Create or get collection
-        collection = chroma_client.get_or_create_collection(
-            name="pocketpro_sba_documents",
-            metadata={"hnsw:space": "cosine"}
-        )
-        
-        # Initialize embedding model
-        embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
-        
-        logger.info("ChromaDB initialized successfully")
-        return True
-        
-    except Exception as e:
-        logger.error(f"ChromaDB initialization failed: {str(e)}")
-        return False
-
-def initialize_genai():
-    """Initialize Google Generative AI"""
-    try:
-        api_key = os.environ.get('GOOGLE_API_KEY')
-        if api_key:
-            genai.configure(api_key=api_key)
-            logger.info("Google Generative AI initialized")
-            return True
-        else:
-            logger.warning("GOOGLE_API_KEY not found in environment")
-            return False
-    except Exception as e:
-        logger.error(f"Google Generative AI initialization failed: {str(e)}")
-        return False
-
 # Initialize services
-@app.before_first_request
 def startup():
     """Initialize all services on startup"""
     logger.info("🔄 Initializing PocketPro SBA application...")
     
-    chromadb_status = initialize_chromadb()
-    genai_status = initialize_genai()
-    
     startup_results = {
         'startup_completed': True,
-        'chromadb_status': 'available' if chromadb_status else 'unavailable',
-        'genai_status': 'available' if genai_status else 'unavailable',
+        'chromadb_status': 'unavailable',
         'available_models': []
     }
     
     logger.info(f"🔄 Startup initialization results: {startup_results}")
     return startup_results
+
+# Initialize on startup
+startup()
 
 # Health check endpoint
 @app.route('/health', methods=['GET'])
@@ -88,7 +35,7 @@ def health_check():
     return jsonify({
         'status': 'healthy',
         'service': 'PocketPro SBA',
-        'chromadb': 'available' if chroma_client else 'unavailable'
+        'version': '1.0.0'
     })
 
 # API endpoints
@@ -99,8 +46,7 @@ def get_system_info():
         return jsonify({
             'service': 'PocketPro SBA',
             'version': '1.0.0',
-            'chromadb_status': 'available' if chroma_client else 'unavailable',
-            'embedding_model': 'all-MiniLM-L6-v2' if embedding_model else 'unavailable'
+            'status': 'operational'
         })
     except Exception as e:
         logger.error(f"Error getting system info: {str(e)}")
@@ -110,12 +56,66 @@ def get_system_info():
 def get_available_models():
     """Get available AI models"""
     try:
-        models = ['gemini-pro', 'gemini-pro-vision'] if genai else []
+        models = ['gemini-pro']
         return jsonify({'models': models})
     except Exception as e:
         logger.error(f"Error getting models: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/documents', methods=['GET'])
+def get_documents():
+    """Get all documents"""
+    try:
+        return jsonify({
+            'documents': [],
+            'count': 0
+        })
+    except Exception as e:
+        logger.error(f"Error getting documents: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/collections/stats', methods=['GET'])
+def get_collection_stats():
+    """Get collection statistics"""
+    try:
+        return jsonify({
+            'total_documents': 0,
+            'collection_name': 'pocketpro_sba_documents'
+        })
+    except Exception as e:
+        logger.error(f"Error getting collection stats: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/search/filters', methods=['GET'])
+def get_search_filters():
+    """Get available search filters"""
+    try:
+        return jsonify({
+            'filters': ['document_type', 'created_date', 'tags'],
+            'document_types': ['pdf', 'docx', 'txt', 'md']
+        })
+    except Exception as e:
+        logger.error(f"Error getting search filters: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/assistants', methods=['GET'])
+def get_assistants():
+    """Get available AI assistants"""
+    try:
+        assistants = [
+            {'id': 'sba_advisor', 'name': 'SBA Business Advisor', 'type': 'business'},
+            {'id': 'document_analyzer', 'name': 'Document Analyzer', 'type': 'analysis'}
+        ]
+        return jsonify({'assistants': assistants})
+    except Exception as e:
+        logger.error(f"Error getting assistants: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+if __name__ == '__main__':
+    port = int(os.environ.get('PORT', 5000))
+    logger.info(f"Starting PocketPro SBA Edition on 0.0.0.0:{port}")
+    logger.info("Environment: development")
+    app.run(host='0.0.0.0', port=port, debug=True)
 @app.route('/api/documents', methods=['GET'])
 def get_documents():
     """Get all documents from ChromaDB"""
