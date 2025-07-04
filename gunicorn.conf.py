@@ -1,12 +1,9 @@
 # Gunicorn configuration for Render.com deployment
 import os
 
-# Server socket
-bind = f"0.0.0.0:{os.environ.get('PORT', '10000')}"  # Use 10000 as default per Render docs
+# Server socket - Let Render control the port via PORT env var
+bind = f"0.0.0.0:{os.environ.get('PORT', '5000')}"  # Use 5000 as fallback, not 10000
 backlog = 2048
-
-# Additional socket options for better reliability
-worker_tmp_dir = "/dev/shm"  # Use shared memory if available
 
 # Worker processes
 workers = 1
@@ -17,7 +14,9 @@ keepalive = 120  # Increased keepalive
 max_requests = 1000
 max_requests_jitter = 100
 graceful_timeout = 120  # Graceful shutdown timeout
-worker_tmp_dir = "/dev/shm"  # Use memory for worker temp files if available
+
+# Use shared memory for worker temp files if available
+worker_tmp_dir = "/dev/shm"
 
 # Restart workers after this many requests, with up to jitter requests variation
 preload_app = True
@@ -73,4 +72,5 @@ def post_worker_init(worker):
     worker.log.info("Worker initialized (pid: %s)", worker.pid)
 
 def worker_abort(worker):
+    worker.log.info("Worker aborted (pid: %s)", worker.pid)
     worker.log.info("Worker aborted (pid: %s)", worker.pid)
