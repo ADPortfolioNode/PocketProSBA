@@ -1,8 +1,8 @@
 # Gunicorn configuration for Render.com deployment
 import os
 
-# Server socket - Let Render control the port via PORT env var
-bind = f"0.0.0.0:{os.environ.get('PORT', '5000')}"  # Use 5000 as fallback, not 10000
+# Server socket - Use Render.com's default port 10000
+bind = f"0.0.0.0:{os.environ.get('PORT', '10000')}"  # Use 10000 as stable default
 backlog = 2048
 
 # Worker processes
@@ -57,6 +57,7 @@ max_worker_connections = 1000
 # Logging configuration for debugging
 def when_ready(server):
     server.log.info("Server is ready. Spawning workers")
+    server.log.info("Binding to: %s", server.address)
 
 def worker_int(worker):
     worker.log.info("worker received INT or QUIT signal")
@@ -71,6 +72,5 @@ def post_worker_init(worker):
     worker.log.info("Worker initialized (pid: %s)", worker.pid)
 
 def worker_abort(worker):
-    worker.log.info("Worker aborted (pid: %s)", worker.pid)
     worker.log.info("Worker aborted (pid: %s)", worker.pid)
     worker.log.info("Worker aborted (pid: %s)", worker.pid)
