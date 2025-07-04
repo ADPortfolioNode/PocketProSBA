@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from flask_socketio import SocketIO, emit
+# flask_socketio import moved to conditional section below
 from werkzeug.utils import secure_filename
 import os
 import sys
@@ -1208,19 +1208,21 @@ def get_endpoints():
         'count': len(endpoints)
     })
 
-@socketio.on('connect')
-def on_connect():
-    emit('assistant_status', {"status": "connected"})
+# SocketIO event handlers (only if flask-socketio is available)
+if socketio is not None:
+    @socketio.on('connect')
+    def on_connect():
+        emit('assistant_status', {"status": "connected"})
 
-@socketio.on('disconnect')
-def on_disconnect():
-    print('Client disconnected')
+    @socketio.on('disconnect')
+    def on_disconnect():
+        print('Client disconnected')
 
-@socketio.on('chat_message')
-def on_chat_message(data):
-    text = data.get('text', '')
-    # Dummy response
-    emit('chat_response', {"text": f"Echo: {text}", "sources": []})
+    @socketio.on('chat_message')
+    def on_chat_message(data):
+        text = data.get('text', '')
+        # Dummy response
+        emit('chat_response', {"text": f"Echo: {text}", "sources": []})
 
 # =============================================================================
 # ADDITIONAL HELPER ENDPOINTS
