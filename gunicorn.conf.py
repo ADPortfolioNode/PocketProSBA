@@ -7,7 +7,6 @@ backlog = 2048
 
 # Worker processes
 workers = 1
-worker_class = "sync"
 worker_connections = 1000
 timeout = 300  # Increased timeout for slow operations
 keepalive = 120  # Increased keepalive
