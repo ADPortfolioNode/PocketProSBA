@@ -11,7 +11,7 @@ chromadb==0.4.24
 google-generativeai==0.3.2
 sentence-transformers==2.2.2
 transformers==4.35.0
-torch==2.1.0
+torch>=2.5.0  # Use available version range
 faiss-cpu==1.7.4  # Alternative vector store for better performance
 
 # Utilities
@@ -31,9 +31,9 @@ urllib3>=1.26.0,<3.0.0
 setuptools>=68.0.0
 werkzeug==3.0.1
 wheel>=0.42.0
-# Removed duplicate wheel entry
 
 # Text processing for RAG
 nltk==3.8.1
+langchain==0.0.350  # RAG framework integration
 spacy==3.7.2
 langchain==0.0.350  # RAG framework integration
