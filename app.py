@@ -2,7 +2,6 @@ import os
 import logging
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-import traceback
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -111,13 +110,14 @@ def get_assistants():
         logger.error(f"Error getting assistants: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
+# Create socketio for compatibility with run.py
+socketio = None
+
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     logger.info(f"Starting PocketPro SBA Edition on 0.0.0.0:{port}")
     logger.info("Environment: development")
     app.run(host='0.0.0.0', port=port, debug=True)
-@app.route('/api/documents', methods=['GET'])
-def get_documents():
     """Get all documents from ChromaDB"""
     try:
         if not collection:
