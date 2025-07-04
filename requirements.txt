@@ -1,39 +1,26 @@
-# Core Flask dependencies - Render.com optimized for Python 3.11+ (NO GEVENT)
+# Core Flask dependencies - Render.com optimized (NO COMPILATION ISSUES)
 flask==3.0.0
 flask-cors==4.0.0
-flask-socketio==5.3.6
 gunicorn==21.2.0
-# gevent==23.9.1  # REMOVED: Causes compilation errors on Python 3.13
-# gevent-websocket==0.10.1  # REMOVED: Depends on gevent
 
-# AI and Vector Database - RAG Application Core
-chromadb==0.4.24
-google-generativeai==0.3.2
-sentence-transformers==2.2.2
-transformers==4.35.0
-torch>=2.5.0  # Use available version range
-faiss-cpu==1.7.4  # Alternative vector store for better performance
-
-# Utilities
+# Essential utilities
 python-dotenv==1.0.0
 requests==2.31.0
-numpy==1.26.2
 
-# Document processing - RAG Pipeline
+# Basic AI integration (lightweight)
+google-generativeai==0.3.2
+
+# Document processing (pure Python)
 pypdf2==3.0.1
 python-docx==1.1.0
 markdown==3.5.1
-tiktoken==0.5.2  # Token counting for embeddings
 
-# Additional dependencies for Render
-pydantic==2.5.0
+# Core dependencies
 urllib3>=1.26.0,<3.0.0
 setuptools>=68.0.0
 werkzeug==3.0.1
 wheel>=0.42.0
-
-# Text processing for RAG
-nltk==3.8.1
-langchain==0.0.350  # RAG framework integration
-spacy==3.7.2
-langchain==0.0.350  # RAG framework integration
+click>=8.0.0
+itsdangerous>=2.0.0
+jinja2>=3.0.0
+markupsafe>=2.0.0
