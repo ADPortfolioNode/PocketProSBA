@@ -10,17 +10,17 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 CORS(app)
 
+# Global variables for compatibility
+startup_results = {
+    'startup_completed': True,
+    'chromadb_status': 'unavailable',
+    'available_models': []
+}
+
 # Initialize services
 def startup():
     """Initialize all services on startup"""
     logger.info("🔄 Initializing PocketPro SBA application...")
-    
-    startup_results = {
-        'startup_completed': True,
-        'chromadb_status': 'unavailable',
-        'available_models': []
-    }
-    
     logger.info(f"🔄 Startup initialization results: {startup_results}")
     return startup_results
 
@@ -41,58 +41,58 @@ def health_check():
 @app.route('/api/info', methods=['GET'])
 def get_system_info():
     """Get system information"""
-    try:
-        return jsonify({
-            'service': 'PocketPro SBA',
-            'version': '1.0.0',
-            'status': 'operational'
-        })
-    except Exception as e:
-        logger.error(f"Error getting system info: {str(e)}")
-        return jsonify({'error': str(e)}), 500
+    return jsonify({
+        'service': 'PocketPro SBA',
+        'version': '1.0.0',
+        'status': 'operational'
+    })
 
 @app.route('/api/models', methods=['GET'])
 def get_available_models():
     """Get available AI models"""
-    try:
-        models = ['gemini-pro']
-        return jsonify({'models': models})
-    except Exception as e:
-        logger.error(f"Error getting models: {str(e)}")
-        return jsonify({'error': str(e)}), 500
+    return jsonify({'models': ['gemini-pro']})
 
 @app.route('/api/documents', methods=['GET'])
 def get_documents():
     """Get all documents"""
-    try:
-        return jsonify({
-            'documents': [],
-            'count': 0
-        })
-    except Exception as e:
-        logger.error(f"Error getting documents: {str(e)}")
-        return jsonify({'error': str(e)}), 500
+    return jsonify({
+        'documents': [],
+        'count': 0
+    })
 
 @app.route('/api/collections/stats', methods=['GET'])
 def get_collection_stats():
     """Get collection statistics"""
-    try:
-        return jsonify({
-            'total_documents': 0,
-            'collection_name': 'pocketpro_sba_documents'
-        })
-    except Exception as e:
-        logger.error(f"Error getting collection stats: {str(e)}")
-        return jsonify({'error': str(e)}), 500
+    return jsonify({
+        'total_documents': 0,
+        'collection_name': 'pocketpro_sba_documents'
+    })
 
 @app.route('/api/search/filters', methods=['GET'])
 def get_search_filters():
     """Get available search filters"""
-    try:
-        return jsonify({
-            'filters': ['document_type', 'created_date', 'tags'],
-            'document_types': ['pdf', 'docx', 'txt', 'md']
-        })
+    return jsonify({
+        'filters': ['document_type', 'created_date', 'tags'],
+        'document_types': ['pdf', 'docx', 'txt', 'md']
+    })
+
+@app.route('/api/assistants', methods=['GET'])
+def get_assistants():
+    """Get available AI assistants"""
+    assistants = [
+        {'id': 'sba_advisor', 'name': 'SBA Business Advisor', 'type': 'business'},
+        {'id': 'document_analyzer', 'name': 'Document Analyzer', 'type': 'analysis'}
+    ]
+    return jsonify({'assistants': assistants})
+
+# Create socketio for compatibility with run.py
+socketio = None
+
+if __name__ == '__main__':
+    port = int(os.environ.get('PORT', 5000))
+    logger.info(f"Starting PocketPro SBA Edition on 0.0.0.0:{port}")
+    logger.info("Environment: development")
+    app.run(host='0.0.0.0', port=port, debug=True)
     except Exception as e:
         logger.error(f"Error getting search filters: {str(e)}")
         return jsonify({'error': str(e)}), 500
