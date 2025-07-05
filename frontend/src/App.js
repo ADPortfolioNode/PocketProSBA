@@ -1,299 +1,299 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { Container, Row, Col, Form, Button, Card, Badge, Alert, Spinner } from 'react-bootstrap';
+import io from 'socket.io-client';
+import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
-import RAGWorkflowInterface from './components/RAGWorkflowInterface';
-import SBANavigation from './components/SBANavigation';
-import { sbaPrograms } from './sbaResources';
+
+// API endpoint
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 function App() {
-  // Core application state
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('chat');
-  const [sidebarVisible, setSidebarVisible] = useState(true);
-  const [backendError, setBackendError] = useState(false);
-  
-  // LLM and models
-  const [availableModels, setAvailableModels] = useState([]);
-  const [selectedModel, setSelectedModel] = useState('');
-  const [currentAssistant, setCurrentAssistant] = useState('concierge');
-  const [assistants, setAssistants] = useState([]);
-  
-  // Documents and collections
-  const [documents, setDocuments] = useState([]);
-  const [collectionStats, setCollectionStats] = useState({});
-  const [uploadProgress, setUploadProgress] = useState(null);
-  const [selectedDocument, setSelectedDocument] = useState(null);
-  const [documentChunks, setDocumentChunks] = useState([]);
-  
-  // Search & RAG
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState([]);
-  const [searchFilters, setSearchFilters] = useState({});
-  const [availableFilters, setAvailableFilters] = useState({});
-  const [ragQuery, setRagQuery] = useState('');
-  const [ragResponse, setRagResponse] = useState(null);
-  
-  // Task management
-  const [tasks, setTasks] = useState([]);
-  const [currentTask, setCurrentTask] = useState(null);
-  
-  // SBA resources
-  const [sbaPrograms, setSbaPrograms] = useState([
-    { id: 'loans', name: 'SBA Loans', description: 'Small business loan programs', icon: '💰' },
-    { id: 'contracting', name: 'Government Contracting', description: 'Help small businesses win federal contracts', icon: '📝' },
-    { id: 'disaster', name: 'Disaster Assistance', description: 'Loans for businesses affected by disasters', icon: '🚨' },
-    { id: 'counseling', name: 'Counseling & Training', description: 'Free business counseling and training', icon: '👥' },
-    { id: 'international', name: 'International Trade', description: 'Export assistance programs', icon: '🌎' },
-    { id: 'innovation', name: 'SBIR/STTR', description: 'Research and development grants', icon: '💡' }
-  ]);
-  
-  // References
+  const [loading, setLoading] = useState(false);
+  const [status, setStatus] = useState('idle');
+  const [connected, setConnected] = useState(false);
+  const [error, setError] = useState(null);
   const chatBoxRef = useRef(null);
+  const socketRef = useRef(null);
+  const [systemInfo, setSystemInfo] = useState(null);
 
+  // Initialize Socket.IO connection
+  useEffect(() => {
+    // Socket.IO connection options
+    const socketOptions = {
+      transports: ['websocket', 'polling'],
+      reconnection: true,
+      reconnectionAttempts: 15,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 8000,
+      timeout: 30000,
+      autoConnect: true
+    };
+
+    // Create Socket.IO connection
+    socketRef.current = io(API_URL, socketOptions);
+
+    // Socket.IO event handlers
+    socketRef.current.on('connect', () => {
+      console.log('WebSocket connected');
+      setConnected(true);
+      setError(null);
+    });
+
+    socketRef.current.on('disconnect', (reason) => {
+      console.log(`WebSocket disconnected: ${reason}`);
+      setConnected(false);
+      if (reason === 'io server disconnect') {
+        // Server disconnected the client
+        socketRef.current.connect();
+      }
+    });
+
+    socketRef.current.on('connect_error', (err) => {
+      console.error('Connection error:', err);
+      setConnected(false);
+      setError(`Connection error: ${err.message}`);
+    });
+
+    socketRef.current.on('assistant_status', (data) => {
+      console.log('Status update:', data);
+      setStatus(data.status);
+    });
+
+    socketRef.current.on('chat_response', (data) => {
+      console.log('Received response:', data);
+      setMessages(prevMessages => [
+        ...prevMessages,
+        {
+          role: 'assistant',
+          content: data.text,
+          sources: data.sources,
+          timestamp: data.timestamp
+        }
+      ]);
+      setLoading(false);
+      setStatus('idle');
+    });
+
+    // Fetch system info
+    fetchSystemInfo();
+
+    // Clean up on unmount
+    return () => {
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+      }
+    };
+  }, []);
+
+  // Scroll to bottom of chat box when messages change
   useEffect(() => {
     if (chatBoxRef.current) {
       chatBoxRef.current.scrollTop = chatBoxRef.current.scrollHeight;
     }
   }, [messages]);
 
-  useEffect(() => {
-    // Load initial data when app starts
-    initializeApp();
-  }, []);
-
-  const initializeApp = async () => {
-    try {
-      // First check if backend is available
-      const backendUrl = process.env.REACT_APP_BACKEND_URL || '';
-      try {
-        const healthCheck = await fetch(`${backendUrl}/health`);
-        if (!healthCheck.ok) {
-          throw new Error(`Backend health check failed: ${healthCheck.status}`);
-        }
-      } catch (error) {
-        console.error('Backend server unavailable:', error);
-        setBackendError(true);
-        setIsLoading(false);
-        return; // Stop initialization if backend is not available
-      }
-      
-      await Promise.all([
-        fetchGreeting(),
-        fetchAvailableModels(),
-        fetchDocuments(),
-        fetchCollectionStats(),
-        fetchSearchFilters(),
-        fetchAssistants(),
-        fetchSystemInfo()
-      ]);
-      setIsLoading(false);
-    } catch (error) {
-      console.error('Error initializing app:', error);
-      setBackendError(true);
-      setIsLoading(false);
-    }
-  };
-
-  const fetchGreeting = async () => {
-    try {
-      // If using proxy, we can use relative URLs
-      // If REACT_APP_BACKEND_URL is set, use it as a prefix
-      const backendUrl = process.env.REACT_APP_BACKEND_URL || '';
-      const response = await fetch(`${backendUrl}/api/greeting`);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
-      }const data = await response.json();
-      
-      if (data.success) {
-        addMessage(data.text, false, 'greeting');
-      } else {
-        addMessage('👋 Welcome to PocketPro:SBA Edition! How can I assist you today with SBA programs and resources?', false, 'greeting');
-      }
-    } catch (error) {
-      addMessage('👋 Welcome to PocketPro:SBA Edition! System starting up... How can I assist you with SBA information today?', false, 'greeting');
-    }
-  };
-
-  const fetchAvailableModels = async () => {
-    try {
-      const backendUrl = process.env.REACT_APP_BACKEND_URL || '';
-      const response = await fetch(`${backendUrl}/api/models`);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      
-      if (data.available_models) {
-        setAvailableModels(data.available_models);
-        if (data.available_models.length > 0 && !selectedModel) {
-          setSelectedModel(data.available_models[0].name);
-        }
-      }
-    } catch (error) {
-      console.error('Error fetching models:', error);
-    }
-  };
-
-  const fetchDocuments = async () => {
-    try {
-      const backendUrl = process.env.REACT_APP_BACKEND_URL || '';
-      const response = await fetch(`${backendUrl}/api/documents`);
-      const data = await response.json();
-      
-      if (data.success && data.documents) {
-        setDocuments(data.documents);
-      }
-    } catch (error) {
-      console.error('Error fetching documents:', error);
-    }
-  };
-  
-  const fetchCollectionStats = async () => {
-    try {
-      const backendUrl = process.env.REACT_APP_BACKEND_URL || '';
-      const response = await fetch(`${backendUrl}/api/collections/stats`);
-      const data = await response.json();
-      
-      if (data.success && data.collection_stats) {
-        setCollectionStats(data.collection_stats);
-      }
-    } catch (error) {
-      console.error('Error fetching collection stats:', error);
-    }
-  };
-  
-  const fetchSearchFilters = async () => {
-    try {
-      const backendUrl = process.env.REACT_APP_BACKEND_URL || '';
-      const response = await fetch(`${backendUrl}/api/search/filters`);
-      const data = await response.json();
-      
-      if (data.success && data.filters) {
-        setAvailableFilters(data.filters);
-      }
-    } catch (error) {
-      console.error('Error fetching search filters:', error);
-    }
-  };
-  
-  const fetchAssistants = async () => {
-    try {
-      const backendUrl = process.env.REACT_APP_BACKEND_URL || '';
-      const response = await fetch(`${backendUrl}/api/assistants`);
-      const data = await response.json();
-      
-      if (data.success && data.assistants) {
-        setAssistants(data.assistants);
-      }
-    } catch (error) {
-      console.error('Error fetching assistants:', error);
-    }
-  };
-  
+  // Fetch system info
   const fetchSystemInfo = async () => {
     try {
-      const backendUrl = process.env.REACT_APP_BACKEND_URL || '';
-      const response = await fetch(`${backendUrl}/api/info`);
+      const response = await fetch(`${API_URL}/api/info`);
       const data = await response.json();
-      
-      // Process system info as needed
-      console.log('System info:', data);
-    } catch (error) {
-      console.error('Error fetching system info:', error);
+      setSystemInfo(data);
+    } catch (err) {
+      console.error('Error fetching system info:', err);
+      setError('Failed to fetch system information');
     }
   };
 
-  const addMessage = (content, isUser = false, type = 'message') => {
-    setMessages(prev => [...prev, { content, isUser, type, timestamp: new Date().toISOString() }]);
-  };
+  // Handle form submission
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!input.trim()) return;
 
-  // Document Operations
-  const handleFileUpload = async (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
+    // Add user message to chat
+    setMessages(prevMessages => [
+      ...prevMessages,
+      { role: 'user', content: input, timestamp: new Date().toISOString() }
+    ]);
 
-    const formData = new FormData();
-    formData.append('file', file);
-
-    setUploadProgress({ filename: file.name, status: 'uploading', progress: 0 });
+    // Clear input and show loading state
+    setInput('');
+    setLoading(true);
+    setStatus('processing');
 
     try {
-      const backendUrl = process.env.REACT_APP_BACKEND_URL || '';
-      const response = await fetch(`${backendUrl}/api/documents`, {
+      // Send message to API
+      const response = await fetch(`${API_URL}/api/chat`, {
         method: 'POST',
-        body: formData,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: input,
+          session_id: localStorage.getItem('session_id') || crypto.randomUUID()
+        }),
       });
-      const data = await response.json();
-      
-      if (data.success) {
-        setUploadProgress({ filename: file.name, status: 'success', progress: 100 });
-        await fetchDocuments(); // Refresh documents list
-        await fetchCollectionStats(); // Update collection stats
-        setTimeout(() => setUploadProgress(null), 3000);
-        addMessage(`✅ Document "${file.name}" successfully uploaded and processed into ${data.chunks_created || 'multiple'} chunks.`, false, 'system');
+
+      // Handle API response
+      if (response.ok) {
+        const data = await response.json();
+        
+        // If WebSocket didn't handle the response, add it to the chat
+        if (status !== 'idle') {
+          setMessages(prevMessages => [
+            ...prevMessages,
+            {
+              role: 'assistant',
+              content: data.response,
+              sources: data.sources,
+              timestamp: data.timestamp
+            }
+          ]);
+          setStatus('idle');
+        }
       } else {
-        setUploadProgress({ filename: file.name, status: 'error', error: data.error, progress: 0 });
-        setTimeout(() => setUploadProgress(null), 5000);
-        addMessage(`❌ Error uploading "${file.name}": ${data.error}`, false, 'error');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to send message');
       }
-    } catch (error) {
-      setUploadProgress({ filename: file.name, status: 'error', error: 'Upload failed', progress: 0 });
-      setTimeout(() => setUploadProgress(null), 5000);
-      addMessage(`❌ Error uploading "${file.name}": ${error.message}`, false, 'error');
+    } catch (err) {
+      console.error('Error sending message:', err);
+      setMessages(prevMessages => [
+        ...prevMessages,
+        {
+          role: 'assistant',
+          content: `Error: ${err.message}. Please try again later.`,
+          error: true,
+          timestamp: new Date().toISOString()
+        }
+      ]);
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
   };
-  
-  const handleBatchUpload = async (files) => {
-    if (!files || files.length === 0) return;
-    
-    const formData = new FormData();
-    let fileNames = [];
-    
-    Array.from(files).forEach(file => {
-      formData.append('files', file);
-      fileNames.push(file.name);
-    });
-    
-    setUploadProgress({ 
-      filename: `${files.length} files`, 
-      status: 'uploading',
-      progress: 0,
-      fileCount: files.length
-    });
-    
-    try {
-      const backendUrl = process.env.REACT_APP_BACKEND_URL || '';
-      const response = await fetch(`${backendUrl}/api/documents/batch`, {
-        method: 'POST',
-        body: formData,
-      });
-      
-      const data = await response.json();
-      
-      if (data.success) {
-        setUploadProgress({ 
-          filename: `${files.length} files`, 
-          status: 'success', 
-          progress: 100,
-          completed: data.successful_uploads,
-          failed: data.failed_uploads,
-          total: data.total_files
-        });
-        
-        await fetchDocuments();
-        await fetchCollectionStats();
-        
-        setTimeout(() => setUploadProgress(null), 3000);
-        addMessage(`✅ Batch upload complete: ${data.successful_uploads} of ${data.total_files} files processed successfully.`, false, 'system');
-      } else {
-        setUploadProgress({ 
-          filename: `${files.length} files`, 
-          status: 'error', 
-          error: data.error,
+
+  return (
+    <Container fluid className="app-container">
+      <Row className="header">
+        <Col>
+          <h1 className="text-center my-4">PocketPro: SBA Edition</h1>
+          {systemInfo && (
+            <div className="text-center mb-3">
+              <Badge bg="info" className="mx-1">
+                Version: {systemInfo.version}
+              </Badge>
+              <Badge bg={systemInfo.rag_status === 'available' ? 'success' : 'warning'} className="mx-1">
+                RAG: {systemInfo.rag_status}
+              </Badge>
+              <Badge bg="secondary" className="mx-1">
+                Documents: {systemInfo.document_count}
+              </Badge>
+            </div>
+          )}
+        </Col>
+      </Row>
+
+      {error && (
+        <Row className="mb-3">
+          <Col>
+            <Alert variant="danger" onClose={() => setError(null)} dismissible>
+              {error}
+            </Alert>
+          </Col>
+        </Row>
+      )}
+
+      <Row>
+        <Col>
+          <Card className="chat-card">
+            <Card.Header>
+              <div className="d-flex justify-content-between align-items-center">
+                <div className="d-flex align-items-center">
+                  <div className={`status-indicator ${connected ? 'connected' : 'disconnected'}`}></div>
+                  <span className="ms-2">
+                    {connected ? 'Connected' : 'Disconnected'}
+                  </span>
+                </div>
+                <div>
+                  <Badge bg={status === 'idle' ? 'success' : 'warning'}>
+                    {status === 'processing' ? (
+                      <>
+                        <Spinner animation="border" size="sm" className="me-1" />
+                        Processing
+                      </>
+                    ) : (
+                      status.charAt(0).toUpperCase() + status.slice(1)
+                    )}
+                  </Badge>
+                </div>
+              </div>
+            </Card.Header>
+            <Card.Body className="chat-container" ref={chatBoxRef}>
+              {messages.length === 0 ? (
+                <div className="text-center text-muted my-5">
+                  <h5>Welcome to PocketPro:SBA Edition</h5>
+                  <p>Ask me anything about small business resources and SBA programs!</p>
+                </div>
+              ) : (
+                messages.map((message, index) => (
+                  <div key={index} className={`message message-${message.role}`}>
+                    <div className="message-content">{message.content}</div>
+                    {message.sources && message.sources.length > 0 && (
+                      <div className="message-sources">
+                        <small>
+                          <strong>Sources:</strong>
+                          <ul>
+                            {message.sources.map((source, idx) => (
+                              <li key={idx}>{source.name || `Source ${idx + 1}`}</li>
+                            ))}
+                          </ul>
+                        </small>
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
+              {loading && (
+                <div className="text-center my-2">
+                  <Spinner animation="border" role="status" size="sm">
+                    <span className="visually-hidden">Loading...</span>
+                  </Spinner>
+                </div>
+              )}
+            </Card.Body>
+            <Card.Footer>
+              <Form onSubmit={handleSubmit}>
+                <div className="d-flex">
+                  <Form.Control
+                    type="text"
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    placeholder="Type your message here..."
+                    disabled={loading}
+                  />
+                  <Button variant="primary" type="submit" disabled={loading || !input.trim()} className="ms-2">
+                    {loading ? <Spinner animation="border" size="sm" /> : 'Send'}
+                  </Button>
+                </div>
+              </Form>
+            </Card.Footer>
+          </Card>
+        </Col>
+      </Row>
+
+      <Row className="footer">
+        <Col className="text-center mt-4">
+          <p className="text-muted">
+            &copy; {new Date().getFullYear()} PocketPro:SBA Edition by StainlessDeoism.biz
+          </p>
+        </Col>
+      </Row>
+    </Container>
+  );
+}
+
+export default App;
           progress: 0 
         });
         

@@ -3,12 +3,12 @@ services:
   - type: web
     name: pocketpro-sba-backend
     runtime: python
-    buildCommand: pip install --upgrade pip setuptools wheel && pip install -r requirements.txt
-    startCommand: gunicorn --config gunicorn.conf.py wsgi:application
+    buildCommand: pip install --upgrade pip setuptools wheel && pip install -r requirements-render-minimal.txt
+    startCommand: gunicorn --bind 0.0.0.0:$PORT --workers 2 --threads 4 wsgi:application
     plan: starter
     envVars:
       - key: PYTHON_VERSION
-        value: 3.13
+        value: 3.9
       - key: FLASK_ENV
         value: production
       - key: FLASK_APP
@@ -44,18 +44,3 @@ services:
           type: web
           name: pocketpro-sba-backend
           property: host
-
-  # Combined Service
-  - type: web
-    name: pocketpro-sba
-    env: python
-    plan: free
-    buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn app:app --config gunicorn.conf.py
-    envVars:
-      - key: PYTHON_VERSION
-        value: 3.9.18
-      - key: FLASK_ENV
-        value: production
-      - key: WEB_CONCURRENCY
-        value: 1

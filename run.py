@@ -71,6 +71,11 @@ except ImportError as e:
     print("✅ Fallback application created")
 
 if __name__ == '__main__':
+    import logging
+    # Configure logging
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger(__name__)
+    
     # Try to import config, fallback to environment variables
     try:
         from src.utils.config import config
@@ -91,19 +96,14 @@ if __name__ == '__main__':
         PORT = int(os.environ.get('PORT', 5000))
         FLASK_ENV = os.environ.get('FLASK_ENV', 'production')
     
-    print(f"Starting PocketPro:SBA Edition on {HOST}:{PORT}")
-    print(f"Environment: {FLASK_ENV}")
+    logger.info(f"🚀 Starting PocketPro SBA via run.py on port {PORT}")
     
-    # Run the application
-    if socketio:
-        socketio.run(
-            app, 
-            host=HOST, 
-            port=PORT, 
-            debug=(FLASK_ENV == 'development')
-        )
+    # For production, use gunicorn. For development, use Flask dev server
+    if FLASK_ENV == 'production':
+        import gunicorn.app.wsgiapp as wsgi
+        wsgi.run()
     else:
-        # Run with basic Flask
+        app.run(host='0.0.0.0', port=PORT, debug=(FLASK_ENV == 'development'), threaded=True)
         app.run(
             host=HOST,
             port=PORT,

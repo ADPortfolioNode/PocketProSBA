@@ -235,6 +235,16 @@ def startup():
 # Initialize on startup
 startup_result = startup()
 
+@app.route('/', methods=['GET'])
+def home():
+    """Home endpoint"""
+    return jsonify({
+        'service': 'PocketPro SBA',
+        'version': '1.0.0',
+        'status': 'operational',
+        'message': 'Welcome to PocketPro SBA RAG API'
+    })
+
 @app.route('/health', methods=['GET'])
 def health_check():
     """Health check endpoint for monitoring"""
@@ -438,36 +448,28 @@ def startup_check():
         'document_count': vector_store.count()
     })
 
+# Create socketio for compatibility with run.py
+socketio = None
+
 if __name__ == '__main__':
     # Render.com compatible port binding
     port = int(os.environ.get('PORT', 5000))
-    host = '0.0.0.0'  # Always bind to all interfaces for Render
-    debug = False  # Never use debug mode in production
+    debug = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
     
-    logger.info(f"🚀 Starting PocketPro SBA RAG Edition")
-    logger.info(f"   Host: {host}")
-    logger.info(f"   Port: {port}")
-    logger.info(f"   Environment: production")
-    logger.info(f"   RAG System: {'✅ Available' if rag_system_available else '❌ Unavailable'}")
-    logger.info(f"   Documents loaded: {vector_store.count()}")
+    vector_store_type = "Simple Memory"
     
-    # Force flush logs to ensure they appear immediately
-    import sys
-    sys.stdout.flush()
-    sys.stderr.flush()
+    logger.info(f"🚀 Starting PocketPro SBA RAG Edition on 0.0.0.0:{port}")
+    logger.info(f"Environment: {'development' if debug else 'production'}")
+    logger.info(f"Vector Store: {vector_store_type}")
+    logger.info(f"RAG System: {'✅ Available' if rag_system_available else '❌ Unavailable'}")
+    logger.info(f"Documents loaded: {vector_store.count() if vector_store else 0}")
     
     # Start the application
-    app.run(host=host, port=port, debug=debug, threaded=True)
-        if not data:
-            return jsonify({'error': 'No JSON data provided'}), 400
-            
-        query = data.get('query', '')
-        n_results = min(int(data.get('n_results', 5)), 20)
-        
-        if not query:
-            return jsonify({'error': 'Query is required'}), 400
-        
-        # Perform search
+    app.run(host='0.0.0.0', port=port, debug=debug, threaded=True)
+
+# Perform search
+def perform_search(query, n_results=3):
+    try:
         results = vector_store.search(query, n_results=n_results)
         
         # Format results

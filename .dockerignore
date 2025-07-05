@@ -16,6 +16,10 @@ __pycache__/
 *.pyc
 *.pyo
 *.pyd
+.Python
+.env
+.venv
+env/
 
 # Node
 node_modules/
@@ -30,3 +34,14 @@ dist/
 # Data and Logs
 chromadb_data/
 logs/
+
+# Misc
+.DS_Store
+*.log
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+dist/
+build/
+*.egg-info/
