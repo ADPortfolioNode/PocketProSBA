@@ -1,41 +1,33 @@
-# Gunicorn configuration for Render.com deployment
+"""
+Gunicorn configuration for Render deployment
+"""
 import os
 
-# Server socket - Use port 5000 for Render.com compatibility
-bind = f"0.0.0.0:{os.environ.get('PORT', '5000')}"  # Render.com expects port 5000
+# Server socket
+bind = f"0.0.0.0:{os.environ.get('PORT', 5000)}"
 backlog = 2048
 
-# Worker processes - optimized for production
-workers = int(os.environ.get('WEB_CONCURRENCY', 1))  # Allow scaling via environment variable
-worker_class = "sync"  # Added missing worker_class
+# Worker processes
+workers = int(os.environ.get('WEB_CONCURRENCY', 1))
+worker_class = "sync"
 worker_connections = 1000
-timeout = 300  # Increased timeout for slow operations
-keepalive = 120  # Increased keepalive
+timeout = 30
+keepalive = 2
+
+# Restart workers after this many requests, to help prevent memory leaks
 max_requests = 1000
 max_requests_jitter = 100
-graceful_timeout = 120  # Graceful shutdown timeout
-
-# Use shared memory for worker temp files if available
-worker_tmp_dir = "/dev/shm"
-
-# Restart workers after this many requests, with up to jitter requests variation
-preload_app = True
 
 # Logging
 accesslog = "-"
 errorlog = "-"
 loglevel = "info"
-access_log_format = '%(h)s %(l)s %(u)s %(t)s "%(r)s" %(s)s %(b)s "%(f)s" "%(a)s" %(D)s'
 
 # Process naming
 proc_name = "pocketpro-sba"
 
 # Server mechanics
-daemon = False
-pidfile = None
-user = None
-group = None
-tmp_upload_dir = None
+preload_app = True
 
 # SSL (not needed for Render.com)
 keyfile = None
@@ -83,6 +75,14 @@ def post_fork(server, worker):
 def post_worker_init(worker):
     worker.log.info("Worker fully initialized and ready (pid: %s)", worker.pid)
 
+def worker_abort(worker):
+    worker.log.error("Worker aborted unexpectedly (pid: %s)", worker.pid)
+
+def on_exit(server):
+    server.log.info("=== PocketPro SBA Server Shutting Down ===")
+
+def on_reload(server):
+    server.log.info("=== PocketPro SBA Server Reloading ===")
 def worker_abort(worker):
     worker.log.error("Worker aborted unexpectedly (pid: %s)", worker.pid)
 
