@@ -44,11 +44,11 @@ class ChromaService:
                 )
                 print(f"INFO: Using HttpClient for remote ChromaDB at {chroma_host}:{chroma_port}")
             else:
-                # For local development, use PersistentClient
-                persist_directory = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "chromadb_data")
+                # For local development, use chromadb.Client (new API) instead of PersistentClient
+                persist_directory = config.CHROMA_DB_PATH
                 os.makedirs(persist_directory, exist_ok=True)
-                self.client = chromadb.PersistentClient(path=persist_directory)
-                print(f"INFO: Using PersistentClient with directory: {persist_directory}")
+                self.client = chromadb.Client(persist_directory=persist_directory)
+                print(f"INFO: Using Client with persist_directory: {persist_directory}")
             
             # Test the connection
             self.client.list_collections()

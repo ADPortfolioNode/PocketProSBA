@@ -4,46 +4,164 @@ import pytest
 import shutil
 from pathlib import Path
 
-# Add the whitelabel-rag directory to sys.path for imports
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'whitelabel-rag')))
-
-from app import create_app
-from flask.testing import FlaskClient
+# Add the root directory to sys.path for imports
+root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+if root_dir not in sys.path:
+    sys.path.insert(0, root_dir)
 
 @pytest.fixture(scope="session", autouse=True)
 def test_environment():
-    """Setup test environment"""
-    # Create test data directory
-    test_data_dir = Path('./test_chromadb_data')
+    """Setup test environment with ChromaDB configuration"""
+    # Create unique test data directory to avoid conflicts
+    test_data_dir = Path('./test_pocketpro_chromadb')
+    
+    # Clean up any existing test directory
+    if test_data_dir.exists():
+        shutil.rmtree(test_data_dir)
+    
     test_data_dir.mkdir(exist_ok=True)
     
-    # Set test environment variables
+    # Set test environment variables to avoid ChromaDB conflicts
     os.environ.update({
         'TESTING': 'true',
-        'CHROMA_DB_PATH': str(test_data_dir),
-        'USE_CHROMA_HTTP_CLIENT': 'false',
+        'CHROMA_DB_PATH': str(test_data_dir.absolute()),
+        'FLASK_DEBUG': 'false',
+        'LOG_LEVEL': 'WARNING',
+        'CHROMA_DB_IMPL': 'duckdb+parquet'
     })
+    
+    # Clean up any .chroma directories that might cause conflicts
+    current_dir = Path.cwd()
+    chroma_dirs = [
+        current_dir / '.chroma',
+        current_dir / 'chroma_db',
+        current_dir / '.chromadb',
+        current_dir / 'pocketpro_vector_db'
+    ]
+    
+    for chroma_dir in chroma_dirs:
+        if chroma_dir.exists():
+            try:
+                shutil.rmtree(chroma_dir)
+                print(f"Cleaned up {chroma_dir}")
+            except Exception as e:
+                print(f"Could not clean {chroma_dir}: {e}")
     
     yield
     
-    # Cleanup
+    # Cleanup after tests
     if test_data_dir.exists():
         shutil.rmtree(test_data_dir)
 
-@pytest.fixture(autouse=True)
-def set_test_env_vars(monkeypatch):
-    # Force FastAPI HTTP client mode for ChromaDB during tests to avoid embedded mode errors
-    monkeypatch.setenv('CHROMA_SERVER_HOST', 'localhost')
-    monkeypatch.setenv('USE_CHROMA_HTTP_CLIENT', 'true')
-    monkeypatch.setenv('CHROMA_API_IMPL', 'chromadb.api.fastapi.FastAPI')
-    monkeypatch.setenv('CHROMA_SERVER_HTTP_PORT', '8000')
+@pytest.fixture
+def test_app():
+    """Create test Flask app with fresh ChromaDB setup"""
+    # Import after environment is set up
+    from app import app
+    
+    app.config['TESTING'] = True
+    app.config['WTF_CSRF_ENABLED'] = False
+    
+    with app.test_client() as client:
+        with app.app_context():
+            yield client
 
 @pytest.fixture
-def app():
-    app = create_app()
-    # FastAPI app does not have 'config', so remove app.config.update
-    # Instead, set testing flag via environment variable or app.state if needed
-    yield app
+def fresh_chromadb():
+    """Initialize a fresh ChromaDB instance for testing using ChromaDB 0.3.29 API"""
+    import chromadb
+    from chromadb.config import Settings
+    
+    # Create test-specific directory
+    test_db_path = Path('./test_fresh_chromadb')
+    if test_db_path.exists():
+        shutil.rmtree(test_db_path)
+    test_db_path.mkdir()
+    
+    try:
+        # Initialize fresh ChromaDB client using 0.3.29 compatible method
+        try:
+            settings = Settings(
+                chroma_db_impl="duckdb+parquet",
+                persist_directory=str(test_db_path.absolute()),
+                anonymized_telemetry=False
+            )
+            client = chromadb.Client(settings)
+        except Exception:
+            # Fallback to default client
+            client = chromadb.Client()
+        
+        # Create simple embedding function for testing
+        class TestEmbeddingFunction:
+            def __call__(self, texts):
+                import hashlib
+                embeddings = []
+                for text in texts:
+                    # Create simple hash-based embedding
+                    text_hash = hashlib.sha256(str(text).encode()).hexdigest()
+                    embedding = [float(int(text_hash[i:i+2], 16)) / 255.0 for i in range(0, min(len(text_hash), 768), 2)]
+                    while len(embedding) < 384:
+                        embedding.append(0.0)
+                    embeddings.append(embedding[:384])
+                return embeddings
+        
+        embedding_function = TestEmbeddingFunction()
+        
+        # Create test collection
+        collection = client.create_collection(
+            name="test_collection",
+            embedding_function=embedding_function,
+            metadata={"hnsw:space": "cosine"}
+        )
+        
+        yield client, collection
+        
+    except Exception as e:
+        print(f"Failed to create fresh ChromaDB: {e}")
+        yield None, None
+    finally:
+        if test_db_path.exists():
+            shutil.rmtree(test_db_path)
+
+@pytest.fixture
+def mock_chromadb_available():
+    """Mock ChromaDB availability for testing"""
+    try:
+        from app import collection, chroma_client
+        return collection is not None and chroma_client is not None
+    except ImportError:
+        return False
+
+@pytest.fixture
+def sample_documents():
+    """Sample documents for testing"""
+    return [
+        {
+            'id': 'doc1',
+            'text': 'Small Business Administration provides loans and grants to help entrepreneurs start and grow their businesses.',
+            'metadata': {'source': 'sba_guide', 'type': 'business_info'}
+        },
+        {
+            'id': 'doc2', 
+            'text': 'SBA 504 loans are designed for purchasing real estate or equipment for small businesses.',
+            'metadata': {'source': 'sba_loans', 'type': 'loan_info'}
+        },
+        {
+            'id': 'doc3',
+            'text': 'Business plan writing is essential for securing funding and setting clear goals for your startup.',
+            'metadata': {'source': 'business_planning', 'type': 'planning_guide'}
+        }
+    ]
+
+@pytest.fixture
+def sample_queries():
+    """Sample queries for testing RAG functionality"""
+    return [
+        'How can I get SBA loans?',
+        'What is business plan writing?',
+        'Tell me about small business grants',
+        'How do I start a business?'
+    ]
 
 import io
 import pytest
