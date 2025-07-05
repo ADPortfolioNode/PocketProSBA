@@ -451,23 +451,7 @@ def startup_check():
 # Create socketio for compatibility with run.py
 socketio = None
 
-if __name__ == '__main__':
-    # Render.com compatible port binding
-    port = int(os.environ.get('PORT', 5000))
-    debug = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
-    
-    vector_store_type = "Simple Memory"
-    
-    logger.info(f"🚀 Starting PocketPro SBA RAG Edition on 0.0.0.0:{port}")
-    logger.info(f"Environment: {'development' if debug else 'production'}")
-    logger.info(f"Vector Store: {vector_store_type}")
-    logger.info(f"RAG System: {'✅ Available' if rag_system_available else '❌ Unavailable'}")
-    logger.info(f"Documents loaded: {vector_store.count() if vector_store else 0}")
-    
-    # Start the application
-    app.run(host='0.0.0.0', port=port, debug=debug, threaded=True)
-
-# Perform search
+# Utility function for searching
 def perform_search(query, n_results=3):
     try:
         results = vector_store.search(query, n_results=n_results)
@@ -484,21 +468,19 @@ def perform_search(query, n_results=3):
                     'relevance_score': 1 - results['distances'][0][i]
                 })
         
-        return jsonify({
+        return {
             'query': query,
             'results': formatted_results,
             'count': len(formatted_results),
             'search_time': time.time()
-        })
+        }
         
     except Exception as e:
         logger.error(f"Search error: {str(e)}")
-        return jsonify({'error': f'Search failed: {str(e)}'}), 500
-
-# Create socketio for compatibility with run.py
-socketio = None
+        return {'error': f'Search failed: {str(e)}'}
 
 if __name__ == '__main__':
+    # Render.com compatible port binding
     port = int(os.environ.get('PORT', 5000))
     debug = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
     
@@ -510,4 +492,5 @@ if __name__ == '__main__':
     logger.info(f"RAG System: {'✅ Available' if rag_system_available else '❌ Unavailable'}")
     logger.info(f"Documents loaded: {vector_store.count() if vector_store else 0}")
     
-    app.run(host='0.0.0.0', port=port, debug=debug)
+    # Start the application
+    app.run(host='0.0.0.0', port=port, debug=debug, threaded=True)
