@@ -1,15 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-// Use direct imports to avoid any issues with missing components
-import Container from 'react-bootstrap/Container';
-import Row from 'react-bootstrap/Row';
-import Col from 'react-bootstrap/Col';
-import Form from 'react-bootstrap/Form';
-import Button from 'react-bootstrap/Button';
-import Card from 'react-bootstrap/Card';
-import Badge from 'react-bootstrap/Badge';
-import Alert from 'react-bootstrap/Alert';
-import Spinner from 'react-bootstrap/Spinner';
-import 'bootstrap/dist/css/bootstrap.min.css';
+// We'll use standard HTML and CSS instead of react-bootstrap
 import './App.css';
 
 // API endpoint
@@ -52,7 +42,6 @@ function App() {
       
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
-        const reader = new FileReader();
         
         // Update progress
         setUploadProgress({
@@ -181,7 +170,7 @@ function App() {
             {loading && (
               <div className="message assistant">
                 <div className="message-content">
-                  <Spinner animation="border" variant="light" size="sm" />
+                  <div className="loading-spinner"></div>
                   <span className="ml-2">Thinking...</span>
                 </div>
               </div>
@@ -190,7 +179,7 @@ function App() {
           
           <div className="input-area">
             <form onSubmit={handleSubmit}>
-              <div className="mb-0">
+              <div className="input-group">
                 <input
                   type="text"
                   className="form-control"
@@ -199,10 +188,13 @@ function App() {
                   onChange={(e) => setInput(e.target.value)}
                   disabled={loading}
                 />
+                <button 
+                  className="btn btn-primary" 
+                  type="submit" 
+                  disabled={loading || !input.trim()}>
+                  Send
+                </button>
               </div>
-              <button className="btn btn-primary" type="submit" disabled={loading || !input.trim()}>
-                Send
-              </button>
             </form>
           </div>
         </main>

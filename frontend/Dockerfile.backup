@@ -1,11 +1,10 @@
-﻿FROM node:16-alpine as build
+FROM node:16-alpine as build
 
 WORKDIR /app
 
 # Copy package files and install dependencies
 COPY package*.json ./
 RUN npm install
-RUN npm install react-bootstrap@2.8.0 --save
 
 # Copy source files
 COPY . .
