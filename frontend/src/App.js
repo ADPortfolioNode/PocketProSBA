@@ -21,6 +21,7 @@ import './App.css';
 // Import components
 import SBANavigation from './components/SBANavigation';
 import RAGWorkflowInterface from './components/RAGWorkflowInterface';
+import SBAContentExplorer from './components/SBAContentExplorer';
 
 // API endpoint
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
@@ -277,6 +278,13 @@ function App() {
                 SBA Resources
               </Nav.Link>
               <Nav.Link 
+                href="#content" 
+                active={activeTab === 'content'}
+                onClick={() => setActiveTab('content')}
+              >
+                Content Explorer
+              </Nav.Link>
+              <Nav.Link 
                 href="#documents" 
                 active={activeTab === 'documents'}
                 onClick={() => setActiveTab('documents')}
@@ -398,6 +406,10 @@ function App() {
                       setActiveTab('chat');
                     }}
                   />
+                </Tab.Pane>
+                
+                <Tab.Pane eventKey="content">
+                  <SBAContentExplorer />
                 </Tab.Pane>
                 
                 <Tab.Pane eventKey="documents">
