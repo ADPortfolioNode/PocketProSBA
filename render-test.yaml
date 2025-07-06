@@ -1,0 +1,14 @@
+services:
+  # Ultra minimal test deployment 
+  - type: web
+    name: pocketpro-test
+    runtime: python
+    buildCommand: pip install flask gunicorn
+    startCommand: gunicorn --bind 0.0.0.0:$PORT render_test_app:app
+    plan: starter
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.9
+      - key: PORT
+        value: 5000
+    healthCheckPath: /health

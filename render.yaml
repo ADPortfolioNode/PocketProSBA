@@ -13,6 +13,8 @@ services:
         value: production
       - key: FLASK_APP
         value: app.py
+      - key: PORT
+        value: 5000
       - key: GEMINI_API_KEY
         sync: false
       - key: SECRET_KEY

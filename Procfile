@@ -1,1 +1,1 @@
-web: python startup_simple.py
+web: gunicorn --config gunicorn.render.py wsgi:application

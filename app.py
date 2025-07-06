@@ -480,21 +480,18 @@ try:
 except Exception as e:
     logger.warning(f"⚠️ Failed to register API routes: {str(e)}")
 
+# Log the configured port
+port = int(os.environ.get("PORT", 5000))
+logger.info(f"🚪 Configured to listen on port {port}")
+
+# For Render.com, we need to expose the app for Gunicorn to find
+application = app
+
 # Create socketio for compatibility with run.py
 socketio = None
 
-if __name__ == '__main__':
-    # Render.com compatible port binding
-    port = int(os.environ.get('PORT', 5000))
-    debug = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
-    
-    vector_store_type = "Simple Memory"
-    
-    logger.info(f"🚀 Starting PocketPro SBA RAG Edition on 0.0.0.0:{port}")
-    logger.info(f"Environment: {'development' if debug else 'production'}")
-    logger.info(f"Vector Store: {vector_store_type}")
-    logger.info(f"RAG System: {'✅ Available' if rag_system_available else '❌ Unavailable'}")
-    logger.info(f"Documents loaded: {vector_store.count() if vector_store else 0}")
-    
-    # Start the application
-    app.run(host='0.0.0.0', port=port, debug=debug, threaded=True)
+if __name__ == "__main__":
+    # Read port from environment with fallback to 5000
+    port = int(os.environ.get("PORT", 5000))
+    logger.info(f"🚀 Starting Flask app on port {port}")
+    app.run(host="0.0.0.0", port=port, debug=debug, threaded=True)
