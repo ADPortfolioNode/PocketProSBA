@@ -1,108 +1,113 @@
 import React, { useState } from 'react';
 import { sbaPrograms, businessLifecycleStages, localResourceTypes } from '../sbaResources';
+import { Nav, Card, Row, Col, Container, Badge } from 'react-bootstrap';
 
 const SBANavigation = ({ onProgramSelect, onResourceSelect }) => {
   const [activeTab, setActiveTab] = useState('programs');
   
   return (
-    <div className="sba-navigation">
-      <div className="navigation-tabs">
-        <button 
-          className={`nav-tab ${activeTab === 'programs' ? 'active' : ''}`}
-          onClick={() => setActiveTab('programs')}
-        >
-          SBA Programs
-        </button>
-        <button 
-          className={`nav-tab ${activeTab === 'lifecycle' ? 'active' : ''}`}
-          onClick={() => setActiveTab('lifecycle')}
-        >
-          Business Lifecycle
-        </button>
-        <button 
-          className={`nav-tab ${activeTab === 'local' ? 'active' : ''}`}
-          onClick={() => setActiveTab('local')}
-        >
-          Local Resources
-        </button>
-      </div>
+    <Card className="sba-navigation">
+      <Card.Header>
+        <Nav variant="tabs" className="navigation-tabs">
+          <Nav.Item>
+            <Nav.Link 
+              active={activeTab === 'programs'}
+              onClick={() => setActiveTab('programs')}
+            >
+              SBA Programs
+            </Nav.Link>
+          </Nav.Item>
+          <Nav.Item>
+            <Nav.Link 
+              active={activeTab === 'lifecycle'}
+              onClick={() => setActiveTab('lifecycle')}
+            >
+              Business Lifecycle
+            </Nav.Link>
+          </Nav.Item>
+          <Nav.Item>
+            <Nav.Link 
+              active={activeTab === 'local'}
+              onClick={() => setActiveTab('local')}
+            >
+              Local Resources
+            </Nav.Link>
+          </Nav.Item>
+        </Nav>
+      </Card.Header>
       
-      <div className="navigation-content">
+      <Card.Body className="navigation-content">
         {activeTab === 'programs' && (
-          <div className="programs-grid">
-            {sbaPrograms.map(program => (
-              <div 
-                key={program.id}
-                className="program-card" 
-                onClick={() => onProgramSelect(program.id)}
-              >
-                <div className="program-icon">{program.icon}</div>
-                <div className="program-content">
-                  <h3>{program.name}</h3>
-                  <p>{program.description}</p>
-                </div>
-              </div>
-            ))}
-          </div>
+          <Container fluid>
+            <Row xs={1} md={2} lg={3} className="g-3">
+              {sbaPrograms.map(program => (
+                <Col key={program.id}>
+                  <Card 
+                    className="program-card h-100" 
+                    onClick={() => onProgramSelect(program.id)}
+                  >
+                    <Card.Body className="d-flex">
+                      <div className="program-icon me-3">{program.icon}</div>
+                      <div className="program-content">
+                        <Card.Title as="h5">{program.name}</Card.Title>
+                        <Card.Text className="small text-muted">{program.description}</Card.Text>
+                      </div>
+                    </Card.Body>
+                  </Card>
+                </Col>
+              ))}
+            </Row>
+          </Container>
         )}
         
         {activeTab === 'lifecycle' && (
-          <div className="lifecycle-stages">
-            {businessLifecycleStages.map(stage => (
-              <div key={stage.id} className="lifecycle-stage">
-                <h3>{stage.name}</h3>
-                <p>{stage.description}</p>
-                <div className="stage-resources">
-                  {stage.resources.map((resource, index) => (
-                    <a 
-                      key={index}
-                      href={resource.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="resource-link"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        onResourceSelect({
-                          title: resource.title,
-                          url: resource.url,
-                          stage: stage.name
-                        });
-                      }}
-                    >
-                      {resource.title}
-                    </a>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
+          <Container fluid>
+            <Row xs={1} md={2} lg={3} className="g-3">
+              {businessLifecycleStages.map(stage => (
+                <Col key={stage.id}>
+                  <Card 
+                    className="lifecycle-card h-100" 
+                    onClick={() => onResourceSelect(`${stage.id} stage`)}
+                  >
+                    <Card.Body className="d-flex">
+                      <div className="lifecycle-icon me-3">{stage.icon}</div>
+                      <div className="lifecycle-content">
+                        <Card.Title as="h5">{stage.name}</Card.Title>
+                        <Card.Text className="small text-muted">{stage.description}</Card.Text>
+                        <Badge bg="info" pill className="mt-2">{stage.phase}</Badge>
+                      </div>
+                    </Card.Body>
+                  </Card>
+                </Col>
+              ))}
+            </Row>
+          </Container>
         )}
         
         {activeTab === 'local' && (
-          <div className="local-resources">
-            <p className="local-intro">
-              The SBA works with a number of local partners to counsel, mentor, and train small businesses.
-            </p>
-            <div className="resource-types">
+          <Container fluid>
+            <Row xs={1} md={2} lg={3} className="g-3">
               {localResourceTypes.map(resource => (
-                <div key={resource.id} className="resource-type">
-                  <h3>{resource.name}</h3>
-                  <p>{resource.description}</p>
-                  <a 
-                    href={resource.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="find-local-button"
+                <Col key={resource.id}>
+                  <Card 
+                    className="resource-card h-100" 
+                    onClick={() => onResourceSelect(`${resource.id} resources`)}
                   >
-                    Find Nearby
-                  </a>
-                </div>
+                    <Card.Body className="d-flex">
+                      <div className="resource-icon me-3">{resource.icon}</div>
+                      <div className="resource-content">
+                        <Card.Title as="h5">{resource.name}</Card.Title>
+                        <Card.Text className="small text-muted">{resource.description}</Card.Text>
+                      </div>
+                    </Card.Body>
+                  </Card>
+                </Col>
               ))}
-            </div>
-          </div>
+            </Row>
+          </Container>
         )}
-      </div>
-    </div>
+      </Card.Body>
+    </Card>
   );
 };
 

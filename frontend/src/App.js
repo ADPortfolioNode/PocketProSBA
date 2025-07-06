@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-// Use direct imports to avoid any issues with missing components
+// Bootstrap components
 import Container from 'react-bootstrap/Container';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
@@ -9,8 +9,18 @@ import Card from 'react-bootstrap/Card';
 import Badge from 'react-bootstrap/Badge';
 import Alert from 'react-bootstrap/Alert';
 import Spinner from 'react-bootstrap/Spinner';
+import Nav from 'react-bootstrap/Nav';
+import Navbar from 'react-bootstrap/Navbar';
+import Tab from 'react-bootstrap/Tab';
+import Offcanvas from 'react-bootstrap/Offcanvas';
+import ListGroup from 'react-bootstrap/ListGroup';
+import InputGroup from 'react-bootstrap/InputGroup';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
+
+// Import components
+import SBANavigation from './components/SBANavigation';
+import RAGWorkflowInterface from './components/RAGWorkflowInterface';
 
 // API endpoint
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
@@ -24,6 +34,11 @@ function App() {
   const [error, setError] = useState(null);
   const [systemInfo, setSystemInfo] = useState(null);
   const [uploadProgress, setUploadProgress] = useState(null);
+  const [activeTab, setActiveTab] = useState('chat');
+  const [searchResults, setSearchResults] = useState([]);
+  const [documents, setDocuments] = useState([]);
+  const [showSidebar, setShowSidebar] = useState(false);
+  const [screenSize, setScreenSize] = useState('');
   const chatBoxRef = useRef(null);
   
   // Add a message to the chat
@@ -39,120 +54,184 @@ function App() {
     setMessages(prev => [...prev, newMessage]);
   };
   
-  // Handle batch document upload
-  const handleBatchUpload = async (files) => {
-    try {
-      setUploadProgress({ 
-        filename: `${files.length} files`, 
-        progress: 0 
-      });
-      
-      // Process each file
-      let successCount = 0;
-      
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        const reader = new FileReader();
-        
-        // Update progress
-        setUploadProgress({
-          filename: `${file.name} (${i+1}/${files.length})`,
-          progress: Math.round((i / files.length) * 100)
-        });
-      }
-    } catch (error) {
-      setUploadProgress({ 
-        filename: `${files.length} files`, 
-        progress: 0
-      });
-      
-      setTimeout(() => setUploadProgress(null), 5000);
-      addMessage(`❌ Batch upload failed: ${error.message}`, false, 'error');
-    }
-  };
-
-  // Fetch system info
+  // Handle responsive layout
   useEffect(() => {
-    fetchSystemInfo();
+    const handleResize = () => {
+      const width = window.innerWidth;
+      if (width < 576) {
+        setScreenSize('xs');
+      } else if (width >= 576 && width < 768) {
+        setScreenSize('sm');
+      } else if (width >= 768 && width < 992) {
+        setScreenSize('md');
+      } else if (width >= 992 && width < 1200) {
+        setScreenSize('lg');
+      } else {
+        setScreenSize('xl');
+      }
+    };
+    
+    handleResize(); // Initial check
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Scroll to bottom of chat box when messages change
+  // Scroll to bottom of chat when new messages are added
   useEffect(() => {
     if (chatBoxRef.current) {
       chatBoxRef.current.scrollTop = chatBoxRef.current.scrollHeight;
     }
   }, [messages]);
 
-  // Fetch system info
-  const fetchSystemInfo = async () => {
-    try {
-      const response = await fetch(`${API_URL}/api/info`);
-      const data = await response.json();
-      setSystemInfo(data);
-    } catch (err) {
-      console.error('Error fetching system info:', err);
-      setError('Failed to fetch system information');
-    }
-  };
+  // Check server connection
+  useEffect(() => {
+    const checkConnection = async () => {
+      try {
+        const response = await fetch(`${API_URL}/api/health`);
+        if (response.ok) {
+          const data = await response.json();
+          setConnected(true);
+          setSystemInfo(data);
+        } else {
+          setConnected(false);
+          setError('Server connection issue. Check the backend service.');
+        }
+      } catch (err) {
+        setConnected(false);
+        setError('Cannot connect to server. Is the backend running?');
+      }
+    };
 
-  // Handle form submission
+    checkConnection();
+    const interval = setInterval(checkConnection, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Handle chat submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!input.trim()) return;
-
-    // Add user message to chat
-    setMessages(prevMessages => [
-      ...prevMessages,
-      { role: 'user', content: input, timestamp: new Date().toISOString() }
-    ]);
-
-    // Clear input and show loading state
+    if (!input.trim() || loading) return;
+    
+    addMessage(input, true);
     setInput('');
     setLoading(true);
-    setStatus('processing');
-
+    setStatus('sending');
+    
     try {
-      // Send message to API
       const response = await fetch(`${API_URL}/api/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          message: input,
-          session_id: localStorage.getItem('session_id') || crypto.randomUUID()
-        }),
+        body: JSON.stringify({ message: input }),
       });
-
-      // Handle API response
-      if (response.ok) {
-        const data = await response.json();
-        
-        setMessages(prevMessages => [
-          ...prevMessages,
-          {
-            role: 'assistant',
-            content: data.response,
-            sources: data.sources,
-            timestamp: data.timestamp
-          }
-        ]);
-        setStatus('idle');
-      } else {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to send message');
+      
+      if (!response.ok) {
+        throw new Error(`Server responded with ${response.status}`);
       }
+      
+      const data = await response.json();
+      addMessage(data.response);
+      setStatus('received');
     } catch (err) {
-      console.error('Error sending message:', err);
-      setMessages(prevMessages => [
-        ...prevMessages,
-        {
-          role: 'assistant',
-          content: `Error: ${err.message}. Please try again later.`,
-          error: true,
-          timestamp: new Date().toISOString()
+      setError(`Error: ${err.message}`);
+      addMessage(`Sorry, there was an error processing your request: ${err.message}`, false, 'error');
+      setStatus('error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle file upload
+  const handleFileUpload = async (file) => {
+    if (!file) return;
+    
+    setUploadProgress(0);
+    setStatus('uploading');
+    
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    try {
+      const response = await fetch(`${API_URL}/api/upload`, {
+        method: 'POST',
+        body: formData,
+        onUploadProgress: (progressEvent) => {
+          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          setUploadProgress(percentCompleted);
         }
-      ]);
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Server responded with ${response.status}`);
+      }
+      
+      const data = await response.json();
+      setDocuments(prev => [...prev, data.document]);
+      addMessage(`File '${file.name}' uploaded and processed successfully.`, false, 'system');
+      setStatus('uploaded');
+    } catch (err) {
+      setError(`Error uploading file: ${err.message}`);
+      addMessage(`Failed to upload file: ${err.message}`, false, 'error');
+      setStatus('error');
+    } finally {
+      setUploadProgress(null);
+    }
+  };
+
+  // Handle search within documents
+  const handleSearch = async (query) => {
+    if (!query.trim()) return;
+    
+    setLoading(true);
+    setStatus('searching');
+    
+    try {
+      const response = await fetch(`${API_URL}/api/search?query=${encodeURIComponent(query)}`);
+      
+      if (!response.ok) {
+        throw new Error(`Server responded with ${response.status}`);
+      }
+      
+      const data = await response.json();
+      setSearchResults(data.results);
+      setStatus('search_complete');
+    } catch (err) {
+      setError(`Error searching: ${err.message}`);
+      setStatus('error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle RAG query with source retrieval
+  const handleRAGQuery = async (query) => {
+    if (!query.trim() || loading) return;
+    
+    addMessage(query, true);
+    setLoading(true);
+    setStatus('processing_rag');
+    
+    try {
+      const response = await fetch(`${API_URL}/api/rag`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ query }),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Server responded with ${response.status}`);
+      }
+      
+      const data = await response.json();
+      addMessage(data.answer, false, 'rag');
+      setSearchResults(data.sources || []);
+      setStatus('rag_complete');
+    } catch (err) {
+      setError(`Error with RAG query: ${err.message}`);
+      addMessage(`Sorry, there was an error processing your RAG request: ${err.message}`, false, 'error');
       setStatus('error');
     } finally {
       setLoading(false);
@@ -160,53 +239,300 @@ function App() {
   };
 
   return (
-    <div className="app-container">
-      <div className="chat-container">
-        <header className="app-header">
-          <h1>PocketPro SBA Assistant</h1>
-          <span className={`status-indicator ${connected ? 'connected' : 'disconnected'}`}>
-            {connected ? 'Connected' : 'Connecting...'}
-          </span>
-        </header>
-        
-        <main className="chat-main">
-          <div className="chat-messages" ref={chatBoxRef}>
-            {messages.map((message, index) => (
-              <div key={index} className={`message ${message.role}`}>
-                <div className="message-content">{message.content}</div>
-                <div className="message-timestamp">{new Date(message.timestamp).toLocaleTimeString()}</div>
-              </div>
-            ))}
-            
-            {loading && (
-              <div className="message assistant">
-                <div className="message-content">
-                  <Spinner animation="border" variant="light" size="sm" />
-                  <span className="ml-2">Thinking...</span>
-                </div>
-              </div>
-            )}
-          </div>
+    <div className="app-wrapper">
+      <Navbar bg="primary" variant="dark" expand="lg" className="mb-3">
+        <Container fluid>
+          <Navbar.Brand href="#home">
+            <img 
+              src="/logo192.png" 
+              width="30" 
+              height="30" 
+              className="d-inline-block align-top me-2" 
+              alt="PocketPro SBA Logo" 
+            />
+            PocketPro SBA Assistant
+          </Navbar.Brand>
+          <Navbar.Toggle aria-controls="basic-navbar-nav" />
+          <Navbar.Collapse id="basic-navbar-nav">
+            <Nav className="me-auto">
+              <Nav.Link 
+                href="#chat" 
+                active={activeTab === 'chat'}
+                onClick={() => setActiveTab('chat')}
+              >
+                Chat
+              </Nav.Link>
+              <Nav.Link 
+                href="#rag" 
+                active={activeTab === 'rag'}
+                onClick={() => setActiveTab('rag')}
+              >
+                RAG Workflow
+              </Nav.Link>
+              <Nav.Link 
+                href="#resources" 
+                active={activeTab === 'resources'}
+                onClick={() => setActiveTab('resources')}
+              >
+                SBA Resources
+              </Nav.Link>
+              <Nav.Link 
+                href="#documents" 
+                active={activeTab === 'documents'}
+                onClick={() => setActiveTab('documents')}
+              >
+                Documents
+              </Nav.Link>
+            </Nav>
+            <div className="d-flex align-items-center">
+              {connected ? (
+                <Badge bg="success" className="me-2">Connected</Badge>
+              ) : (
+                <Badge bg="danger" className="me-2">Disconnected</Badge>
+              )}
+              <Button 
+                variant="outline-light" 
+                size="sm"
+                onClick={() => setShowSidebar(!showSidebar)}
+              >
+                {screenSize === 'xs' || screenSize === 'sm' ? 'Menu' : 'System Info'}
+              </Button>
+            </div>
+          </Navbar.Collapse>
+        </Container>
+      </Navbar>
+
+      <Container fluid className="main-content">
+        <Row>
+          <Col xs={12} md={showSidebar ? 8 : 12} lg={showSidebar ? 9 : 12}>
+            <Tab.Container activeKey={activeTab}>
+              <Tab.Content>
+                <Tab.Pane eventKey="chat">
+                  <Card className="chat-card">
+                    <Card.Header>
+                      <h5 className="mb-0">Chat with PocketPro SBA Assistant</h5>
+                    </Card.Header>
+                    <Card.Body>
+                      <div className="chat-messages" ref={chatBoxRef}>
+                        {messages.length === 0 ? (
+                          <div className="text-center my-5">
+                            <h4>Welcome to PocketPro SBA Assistant</h4>
+                            <p>Ask any question about SBA programs and resources.</p>
+                          </div>
+                        ) : (
+                          messages.map(message => (
+                            <div 
+                              key={message.id} 
+                              className={`message ${message.role === 'user' ? 'user-message' : 'assistant-message'}`}
+                            >
+                              <div className="message-content">
+                                <p>{message.content}</p>
+                              </div>
+                              <div className="message-metadata">
+                                <small>
+                                  {message.role === 'user' ? 'You' : 'Assistant'} • 
+                                  {new Date(message.timestamp).toLocaleTimeString()}
+                                </small>
+                              </div>
+                            </div>
+                          ))
+                        )}
+                        {loading && (
+                          <div className="message assistant-message">
+                            <div className="message-content">
+                              <Spinner animation="border" size="sm" className="me-2" />
+                              <span>Thinking...</span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </Card.Body>
+                    <Card.Footer>
+                      <Form onSubmit={handleSubmit}>
+                        <InputGroup>
+                          <Form.Control
+                            type="text"
+                            placeholder="Type your message here..."
+                            value={input}
+                            onChange={(e) => setInput(e.target.value)}
+                            disabled={loading || !connected}
+                          />
+                          <Button 
+                            variant="primary" 
+                            type="submit" 
+                            disabled={loading || !connected || !input.trim()}
+                          >
+                            {loading ? (
+                              <Spinner animation="border" size="sm" />
+                            ) : (
+                              'Send'
+                            )}
+                          </Button>
+                        </InputGroup>
+                      </Form>
+                    </Card.Footer>
+                  </Card>
+                </Tab.Pane>
+                
+                <Tab.Pane eventKey="rag">
+                  <RAGWorkflowInterface 
+                    onSearch={handleSearch}
+                    onUpload={handleFileUpload}
+                    onQuery={handleRAGQuery}
+                    documents={documents}
+                    searchResults={searchResults}
+                    ragResponse={messages.filter(m => m.type === 'rag').pop()}
+                  />
+                </Tab.Pane>
+                
+                <Tab.Pane eventKey="resources">
+                  <SBANavigation 
+                    onProgramSelect={(programId) => {
+                      setInput(`Tell me about ${programId} SBA program`);
+                      handleSubmit({ preventDefault: () => {} });
+                      setActiveTab('chat');
+                    }}
+                    onResourceSelect={(resourceId) => {
+                      setInput(`What resources are available for ${resourceId}?`);
+                      handleSubmit({ preventDefault: () => {} });
+                      setActiveTab('chat');
+                    }}
+                  />
+                </Tab.Pane>
+                
+                <Tab.Pane eventKey="documents">
+                  <Card>
+                    <Card.Header>
+                      <h5 className="mb-0">Uploaded Documents</h5>
+                    </Card.Header>
+                    <Card.Body>
+                      {documents.length === 0 ? (
+                        <Alert variant="info">
+                          No documents uploaded yet. Go to the RAG Workflow tab to upload documents.
+                        </Alert>
+                      ) : (
+                        <ListGroup>
+                          {documents.map((doc, index) => (
+                            <ListGroup.Item key={index}>
+                              <div className="d-flex justify-content-between align-items-center">
+                                <div>
+                                  <h6 className="mb-0">{doc.filename}</h6>
+                                  <small className="text-muted">
+                                    {doc.pages} pages • {doc.chunks} chunks
+                                  </small>
+                                </div>
+                                <Button 
+                                  variant="outline-primary" 
+                                  size="sm"
+                                  onClick={() => {
+                                    setInput(`Summarize the document ${doc.filename}`);
+                                    handleSubmit({ preventDefault: () => {} });
+                                    setActiveTab('chat');
+                                  }}
+                                >
+                                  Query
+                                </Button>
+                              </div>
+                            </ListGroup.Item>
+                          ))}
+                        </ListGroup>
+                      )}
+                    </Card.Body>
+                    <Card.Footer>
+                      <Button 
+                        variant="primary" 
+                        onClick={() => setActiveTab('rag')}
+                      >
+                        Upload New Document
+                      </Button>
+                    </Card.Footer>
+                  </Card>
+                </Tab.Pane>
+              </Tab.Content>
+            </Tab.Container>
+          </Col>
           
-          <div className="input-area">
-            <form onSubmit={handleSubmit}>
-              <div className="mb-0">
-                <input
-                  type="text"
-                  className="form-control"
-                  placeholder="Ask about SBA resources..."
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  disabled={loading}
-                />
-              </div>
-              <button className="btn btn-primary" type="submit" disabled={loading || !input.trim()}>
-                Send
-              </button>
-            </form>
-          </div>
-        </main>
-      </div>
+          {showSidebar && (
+            <Col xs={12} md={4} lg={3} className="sidebar-col">
+              <Card className="system-info">
+                <Card.Header>
+                  <h5 className="mb-0">System Information</h5>
+                </Card.Header>
+                <Card.Body>
+                  {systemInfo ? (
+                    <>
+                      <p><strong>Status:</strong> {connected ? 'Online' : 'Offline'}</p>
+                      <p><strong>Version:</strong> {systemInfo.version || 'Unknown'}</p>
+                      <p><strong>Model:</strong> {systemInfo.model || 'Not specified'}</p>
+                      <p><strong>Documents:</strong> {documents.length}</p>
+                      <p><strong>Screen Size:</strong> {screenSize}</p>
+                    </>
+                  ) : (
+                    <Spinner animation="border" />
+                  )}
+                </Card.Body>
+              </Card>
+              
+              {searchResults.length > 0 && (
+                <Card className="mt-3">
+                  <Card.Header>
+                    <h5 className="mb-0">Search Results</h5>
+                  </Card.Header>
+                  <Card.Body>
+                    <ListGroup>
+                      {searchResults.slice(0, 5).map((result, index) => (
+                        <ListGroup.Item key={index}>
+                          <h6>{result.title || `Result ${index + 1}`}</h6>
+                          <p className="mb-1">{result.content.substring(0, 100)}...</p>
+                          <Badge bg="info">Score: {(result.score * 100).toFixed(1)}%</Badge>
+                        </ListGroup.Item>
+                      ))}
+                    </ListGroup>
+                  </Card.Body>
+                </Card>
+              )}
+            </Col>
+          )}
+        </Row>
+      </Container>
+      
+      {/* Mobile sidebar as offcanvas for small screens */}
+      <Offcanvas 
+        show={showSidebar && (screenSize === 'xs' || screenSize === 'sm')} 
+        onHide={() => setShowSidebar(false)}
+        placement="end"
+      >
+        <Offcanvas.Header closeButton>
+          <Offcanvas.Title>System Information</Offcanvas.Title>
+        </Offcanvas.Header>
+        <Offcanvas.Body>
+          {systemInfo ? (
+            <>
+              <p><strong>Status:</strong> {connected ? 'Online' : 'Offline'}</p>
+              <p><strong>Version:</strong> {systemInfo.version || 'Unknown'}</p>
+              <p><strong>Model:</strong> {systemInfo.model || 'Not specified'}</p>
+              <p><strong>Documents:</strong> {documents.length}</p>
+            </>
+          ) : (
+            <Spinner animation="border" />
+          )}
+          
+          {searchResults.length > 0 && (
+            <div className="mt-4">
+              <h5>Search Results</h5>
+              <ListGroup>
+                {searchResults.slice(0, 3).map((result, index) => (
+                  <ListGroup.Item key={index}>
+                    <h6>{result.title || `Result ${index + 1}`}</h6>
+                    <p className="mb-1">{result.content.substring(0, 50)}...</p>
+                    <Badge bg="info">Score: {(result.score * 100).toFixed(1)}%</Badge>
+                  </ListGroup.Item>
+                ))}
+              </ListGroup>
+            </div>
+          )}
+        </Offcanvas.Body>
+      </Offcanvas>
     </div>
   );
 }
