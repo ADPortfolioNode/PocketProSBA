@@ -1,11 +1,41 @@
-from backend.services.SBA_Content import SBAContentAPI
+from flask import request, jsonify
+import math
+import logging
+import os
+
+# Configure logging
+logger = logging.getLogger(__name__)
 
 # Initialize SBA Content API client
+try:
+    from backend.services.SBA_Content import SBAContentAPI
+    logger.info("Using backend.services.SBA_Content")
+except ImportError:
+    try:
+        # Fallback to local copy if backend module is not available
+        from sba_content import SBAContentAPI
+        logger.info("Using local sba_content module as fallback")
+    except ImportError:
+        logger.error("Failed to import SBA_Content from any location")
+        # Define a stub API class as a last resort
+        class SBAContentAPI:
+            def __init__(self, *args, **kwargs):
+                pass
+                
+            def _get(self, *args, **kwargs):
+                return {"error": "SBA Content API not available", "success": False}
+                
+            def __getattr__(self, name):
+                return lambda *args, **kwargs: self._get()
+
 sba_content_api = SBAContentAPI()
 
-@app.route('/api/sba-content/<content_type>', methods=['GET'])
-def get_sba_content(content_type):
-    """Get SBA content by type with optional search query"""
+def register_sba_content_routes(app):
+    """Register SBA content routes with the Flask app"""
+
+    @app.route('/api/sba-content/<content_type>', methods=['GET'])
+    def get_sba_content(content_type):
+        """Get SBA content by type with optional search query"""
     try:
         query = request.args.get('query', '')
         page = int(request.args.get('page', 1))
@@ -59,9 +89,9 @@ def get_sba_content(content_type):
         logger.error(f"SBA content error: {str(e)}")
         return jsonify({'error': f'Failed to fetch SBA content: {str(e)}'}), 500
 
-@app.route('/api/sba-content/<content_type>/<int:item_id>', methods=['GET'])
-def get_sba_content_item(content_type, item_id):
-    """Get a specific SBA content item by type and ID"""
+    @app.route('/api/sba-content/<content_type>/<int:item_id>', methods=['GET'])
+    def get_sba_content_item(content_type, item_id):
+        """Get a specific SBA content item by type and ID"""
     try:
         # Call the appropriate method based on content type
         result = None
@@ -114,3 +144,30 @@ def get_sba_content_item(content_type, item_id):
     except Exception as e:
         logger.error(f"SBA content item error: {str(e)}")
         return jsonify({'error': f'Failed to fetch SBA content item: {str(e)}'}), 500
+
+    # Add a health check endpoint for SBA content API
+    @app.route('/api/sba-content/health', methods=['GET'])
+    def sba_content_health():
+        """Check if SBA content API is available"""
+        try:
+            # Try to make a simple query to test the API
+            test_result = sba_content_api.search_articles(limit=1)
+            if test_result.get('error'):
+                return jsonify({
+                    'status': 'degraded',
+                    'message': f"SBA Content API returned an error: {test_result.get('error')}",
+                    'available': False
+                }), 200
+            
+            return jsonify({
+                'status': 'ok',
+                'message': 'SBA Content API is available',
+                'available': True
+            }), 200
+        except Exception as e:
+            logger.error(f"SBA content health check error: {str(e)}")
+            return jsonify({
+                'status': 'error',
+                'message': f'SBA Content API health check failed: {str(e)}',
+                'available': False
+            }), 200  # Still return 200 for health checks

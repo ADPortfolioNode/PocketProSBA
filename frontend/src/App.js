@@ -23,6 +23,10 @@ import SBANavigation from './components/SBANavigation';
 import RAGWorkflowInterface from './components/RAGWorkflowInterface';
 import SBAContentExplorer from './components/SBAContentExplorer';
 import ServerStatusMonitor from './components/ServerStatusMonitor';
+import ErrorBoundary from './components/ErrorBoundary';
+import APIErrorHandler from './components/APIErrorHandler';
+import ConnectionStatusIndicator from './components/ConnectionStatusIndicator';
+import LoadingIndicator from './components/LoadingIndicator';
 
 // API endpoint
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
@@ -315,327 +319,353 @@ function App() {
     }
   };
 
-  return (
-    <div className="app-wrapper">
-      <Navbar bg="primary" variant="dark" expand="lg" className="mb-3">
-        <Container fluid>
-          <Navbar.Brand href="#home">
-            <img 
-              src="/logo192.png" 
-              width="30" 
-              height="30" 
-              className="d-inline-block align-top me-2" 
-              alt="PocketPro SBA Logo" 
-            />
-            PocketPro SBA Assistant
-          </Navbar.Brand>
-          <Navbar.Toggle aria-controls="basic-navbar-nav" />
-          <Navbar.Collapse id="basic-navbar-nav">
-            <Nav className="me-auto">
-              <Nav.Link 
-                href="#chat" 
-                active={activeTab === 'chat'}
-                onClick={() => setActiveTab('chat')}
-              >
-                Chat
-              </Nav.Link>
-              <Nav.Link 
-                href="#rag" 
-                active={activeTab === 'rag'}
-                onClick={() => setActiveTab('rag')}
-              >
-                RAG Workflow
-              </Nav.Link>
-              <Nav.Link 
-                href="#resources" 
-                active={activeTab === 'resources'}
-                onClick={() => setActiveTab('resources')}
-              >
-                SBA Resources
-              </Nav.Link>
-              <Nav.Link 
-                href="#content" 
-                active={activeTab === 'content'}
-                onClick={() => setActiveTab('content')}
-              >
-                Content Explorer
-              </Nav.Link>
-              <Nav.Link 
-                href="#documents" 
-                active={activeTab === 'documents'}
-                onClick={() => setActiveTab('documents')}
-              >
-                Documents
-              </Nav.Link>
-            </Nav>
-            <div className="d-flex align-items-center">
-              {connected ? (
-                <Badge bg="success" className="me-2">Connected</Badge>
-              ) : (
-                <Badge bg="danger" className="me-2">Disconnected</Badge>
-              )}
-              <Button 
-                variant="outline-light" 
-                size="sm"
-                onClick={() => setShowSidebar(!showSidebar)}
-              >
-                {screenSize === 'xs' || screenSize === 'sm' ? 'Menu' : 'System Info'}
-              </Button>
-            </div>
-          </Navbar.Collapse>
-        </Container>
-      </Navbar>
+  // Handle connection status change
+  const handleConnectionChange = (newStatus, systemData) => {
+    setConnected(newStatus);
+    if (systemData) {
+      setSystemInfo(systemData);
+    }
+    
+    if (!newStatus) {
+      setError('Server connection lost. Trying to reconnect...');
+    } else if (newStatus && error && error.includes('connection')) {
+      setError(null); // Clear connection errors when connection is restored
+    }
+  };
 
-      <Container fluid className="main-content">
-        <Row>
-          <Col xs={12} md={showSidebar ? 8 : 12} lg={showSidebar ? 9 : 12}>
-            <Tab.Container activeKey={activeTab}>
-              <Tab.Content>
-                <Tab.Pane eventKey="chat">
-                  <Card className="chat-card">
-                    <Card.Header>
-                      <h5 className="mb-0">Chat with PocketPro SBA Assistant</h5>
-                    </Card.Header>
-                    <Card.Body>
-                      {!connected && (
-                        <ServerStatusMonitor 
-                          onStatusChange={(status, info) => {
-                            setConnected(status === 'online');
-                            if (info) setSystemInfo(info);
-                          }} 
-                        />
-                      )}
-                      
-                      <div className="chat-messages" ref={chatBoxRef}>
-                        {messages.length === 0 ? (
-                          <div className="text-center my-5">
-                            <h4>Welcome to PocketPro SBA Assistant</h4>
-                            <p>Ask any question about SBA programs and resources.</p>
-                          </div>
-                        ) : (
-                          messages.map(message => (
-                            <div 
-                              key={message.id} 
-                              className={`message ${message.role === 'user' ? 'user-message' : 'assistant-message'}`}
-                            >
-                              <div className="message-content">
-                                <p>{message.content}</p>
-                              </div>
-                              <div className="message-metadata">
-                                <small>
-                                  {message.role === 'user' ? 'You' : 'Assistant'} • 
-                                  {new Date(message.timestamp).toLocaleTimeString()}
-                                </small>
-                              </div>
-                            </div>
-                          ))
-                        )}
-                        {loading && (
-                          <div className="message assistant-message">
-                            <div className="message-content">
-                              <Spinner animation="border" size="sm" className="me-2" />
-                              <span>Thinking...</span>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </Card.Body>
-                    <Card.Footer>
-                      <Form onSubmit={handleSubmit}>
-                        <InputGroup>
-                          <Form.Control
-                            type="text"
-                            placeholder={connected ? "Type your message here..." : "Server connection required..."}
-                            value={input}
-                            onChange={(e) => setInput(e.target.value)}
-                            disabled={loading || !connected}
-                          />
-                          <Button 
-                            variant="primary" 
-                            type="submit" 
-                            disabled={loading || !connected || !input.trim()}
-                          >
-                            {loading ? (
-                              <Spinner animation="border" size="sm" />
-                            ) : (
-                              'Send'
-                            )}
-                          </Button>
-                        </InputGroup>
+  // Retry any failed operations
+  const retryLastOperation = async () => {
+    if (status === 'error' && activeTab === 'chat') {
+      // Retry last chat message
+      const lastUserMessage = [...messages].reverse().find(m => m.role === 'user');
+      if (lastUserMessage) {
+        setInput(lastUserMessage.content);
+        handleSubmit();
+      }
+    } else if (status === 'error' && activeTab === 'rag') {
+      // Implement retry for RAG operations
+      // This will depend on what specific operation failed
+    }
+  };
+
+  return (
+    <ErrorBoundary showDetails={true}>
+      <div className="app-wrapper">
+        <Navbar bg="primary" variant="dark" expand="lg" className="mb-3">
+          <Container fluid>
+            <Navbar.Brand href="#home">
+              <img 
+                src="/logo192.png" 
+                width="30" 
+                height="30" 
+                className="d-inline-block align-top me-2" 
+                alt="PocketPro SBA Logo" 
+              />
+              PocketPro SBA Assistant
+            </Navbar.Brand>
+            <Navbar.Toggle aria-controls="basic-navbar-nav" />
+            <Navbar.Collapse id="basic-navbar-nav">
+              <Nav className="me-auto">
+                <Nav.Link 
+                  href="#chat" 
+                  active={activeTab === 'chat'}
+                  onClick={() => setActiveTab('chat')}
+                >
+                  Chat
+                </Nav.Link>
+                <Nav.Link 
+                  href="#rag" 
+                  active={activeTab === 'rag'}
+                  onClick={() => setActiveTab('rag')}
+                >
+                  RAG Workflow
+                </Nav.Link>
+                <Nav.Link 
+                  href="#resources" 
+                  active={activeTab === 'resources'}
+                  onClick={() => setActiveTab('resources')}
+                >
+                  SBA Resources
+                </Nav.Link>
+                <Nav.Link 
+                  href="#content" 
+                  active={activeTab === 'content'}
+                  onClick={() => setActiveTab('content')}
+                >
+                  Content Explorer
+                </Nav.Link>
+                <Nav.Link 
+                  href="#documents" 
+                  active={activeTab === 'documents'}
+                  onClick={() => setActiveTab('documents')}
+                >
+                  Documents
+                </Nav.Link>
+              </Nav>
+              <div className="d-flex align-items-center">
+                <ConnectionStatusIndicator 
+                  connected={connected}
+                  systemInfo={systemInfo}
+                  apiUrl={API_URL}
+                  checkInterval={30000}
+                  onConnectionChange={handleConnectionChange}
+                />
+              </div>
+            </Navbar.Collapse>
+          </Container>
+        </Navbar>
+
+        <Container fluid className="main-content">
+          <Row>
+            <Col xs={12} md={showSidebar ? 8 : 12} lg={showSidebar ? 9 : 12}>
+              <Tab.Container activeKey={activeTab}>
+                <Tab.Content>
+                  <Tab.Pane eventKey="chat">
+                    <Card className="chat-card">
+                      <Card.Header>
+                        <h5 className="mb-0">Chat with PocketPro SBA Assistant</h5>
+                      </Card.Header>
+                      <Card.Body>
                         {!connected && (
-                          <Alert variant="warning" className="mt-2 mb-0">
-                            Chat is currently unavailable. Please check the server connection.
-                          </Alert>
+                          <ServerStatusMonitor 
+                            onStatusChange={(status, info) => {
+                              setConnected(status === 'online');
+                              if (info) setSystemInfo(info);
+                            }} 
+                          />
                         )}
-                      </Form>
-                    </Card.Footer>
-                  </Card>
-                </Tab.Pane>
-                
-                <Tab.Pane eventKey="rag">
-                  <RAGWorkflowInterface 
-                    onSearch={handleSearch}
-                    onUpload={handleFileUpload}
-                    onQuery={handleRAGQuery}
-                    documents={documents}
-                    searchResults={searchResults}
-                    ragResponse={messages.filter(m => m.type === 'rag').pop()}
-                  />
-                </Tab.Pane>
-                
-                <Tab.Pane eventKey="resources">
-                  <SBANavigation 
-                    onProgramSelect={(programId) => {
-                      setInput(`Tell me about ${programId} SBA program`);
-                      handleSubmit({ preventDefault: () => {} });
-                      setActiveTab('chat');
-                    }}
-                    onResourceSelect={(resourceId) => {
-                      setInput(`What resources are available for ${resourceId}?`);
-                      handleSubmit({ preventDefault: () => {} });
-                      setActiveTab('chat');
-                    }}
-                  />
-                </Tab.Pane>
-                
-                <Tab.Pane eventKey="content">
-                  <SBAContentExplorer />
-                </Tab.Pane>
-                
-                <Tab.Pane eventKey="documents">
-                  <Card>
-                    <Card.Header>
-                      <h5 className="mb-0">Uploaded Documents</h5>
-                    </Card.Header>
-                    <Card.Body>
-                      {documents.length === 0 ? (
-                        <Alert variant="info">
-                          No documents uploaded yet. Go to the RAG Workflow tab to upload documents.
-                        </Alert>
-                      ) : (
-                        <ListGroup>
-                          {documents.map((doc, index) => (
-                            <ListGroup.Item key={index}>
-                              <div className="d-flex justify-content-between align-items-center">
-                                <div>
-                                  <h6 className="mb-0">{doc.filename}</h6>
-                                  <small className="text-muted">
-                                    {doc.pages} pages • {doc.chunks} chunks
+                        
+                        <div className="chat-messages" ref={chatBoxRef}>
+                          {messages.length === 0 ? (
+                            <div className="text-center my-5">
+                              <h4>Welcome to PocketPro SBA Assistant</h4>
+                              <p>Ask any question about SBA programs and resources.</p>
+                            </div>
+                          ) : (
+                            messages.map(message => (
+                              <div 
+                                key={message.id} 
+                                className={`message ${message.role === 'user' ? 'user-message' : 'assistant-message'}`}
+                              >
+                                <div className="message-content">
+                                  <p>{message.content}</p>
+                                </div>
+                                <div className="message-metadata">
+                                  <small>
+                                    {message.role === 'user' ? 'You' : 'Assistant'} • 
+                                    {new Date(message.timestamp).toLocaleTimeString()}
                                   </small>
                                 </div>
-                                <Button 
-                                  variant="outline-primary" 
-                                  size="sm"
-                                  onClick={() => {
-                                    setInput(`Summarize the document ${doc.filename}`);
-                                    handleSubmit({ preventDefault: () => {} });
-                                    setActiveTab('chat');
-                                  }}
-                                >
-                                  Query
-                                </Button>
                               </div>
-                            </ListGroup.Item>
-                          ))}
-                        </ListGroup>
-                      )}
-                    </Card.Body>
-                    <Card.Footer>
-                      <Button 
-                        variant="primary" 
-                        onClick={() => setActiveTab('rag')}
-                      >
-                        Upload New Document
-                      </Button>
-                    </Card.Footer>
-                  </Card>
-                </Tab.Pane>
-              </Tab.Content>
-            </Tab.Container>
-          </Col>
-          
-          {showSidebar && (
-            <Col xs={12} md={4} lg={3} className="sidebar-col">
-              <Card className="system-info">
-                <Card.Header>
-                  <h5 className="mb-0">System Information</h5>
-                </Card.Header>
-                <Card.Body>
-                  {systemInfo ? (
-                    <>
-                      <p><strong>Status:</strong> {connected ? 'Online' : 'Offline'}</p>
-                      <p><strong>Version:</strong> {systemInfo.version || 'Unknown'}</p>
-                      <p><strong>Model:</strong> {systemInfo.model || 'Not specified'}</p>
-                      <p><strong>Documents:</strong> {documents.length}</p>
-                      <p><strong>Screen Size:</strong> {screenSize}</p>
-                    </>
-                  ) : (
-                    <Spinner animation="border" />
-                  )}
-                </Card.Body>
-              </Card>
-              
-              {searchResults.length > 0 && (
-                <Card className="mt-3">
+                            ))
+                          }
+                          {loading && (
+                            <div className="message assistant-message">
+                              <div className="message-content">
+                                <Spinner animation="border" size="sm" className="me-2" />
+                                <span>Thinking...</span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </Card.Body>
+                      <Card.Footer>
+                        <Form onSubmit={handleSubmit}>
+                          <InputGroup>
+                            <Form.Control
+                              type="text"
+                              placeholder={connected ? "Type your message here..." : "Server connection required..."}
+                              value={input}
+                              onChange={(e) => setInput(e.target.value)}
+                              disabled={loading || !connected}
+                            />
+                            <Button 
+                              variant="primary" 
+                              type="submit" 
+                              disabled={loading || !connected || !input.trim()}
+                            >
+                              {loading ? (
+                                <Spinner animation="border" size="sm" />
+                              ) : (
+                                'Send'
+                              )}
+                            </Button>
+                          </InputGroup>
+                          {!connected && (
+                            <Alert variant="warning" className="mt-2 mb-0">
+                              Chat is currently unavailable. Please check the server connection.
+                            </Alert>
+                          )}
+                        </Form>
+                      </Card.Footer>
+                    </Card>
+                  </Tab.Pane>
+                  
+                  <Tab.Pane eventKey="rag">
+                    <RAGWorkflowInterface 
+                      onSearch={handleSearch}
+                      onUpload={handleFileUpload}
+                      onQuery={handleRAGQuery}
+                      documents={documents}
+                      searchResults={searchResults}
+                      ragResponse={messages.filter(m => m.type === 'rag').pop()}
+                    />
+                  </Tab.Pane>
+                  
+                  <Tab.Pane eventKey="resources">
+                    <SBANavigation 
+                      onProgramSelect={(programId) => {
+                        setInput(`Tell me about ${programId} SBA program`);
+                        handleSubmit({ preventDefault: () => {} });
+                        setActiveTab('chat');
+                      }}
+                      onResourceSelect={(resourceId) => {
+                        setInput(`What resources are available for ${resourceId}?`);
+                        handleSubmit({ preventDefault: () => {} });
+                        setActiveTab('chat');
+                      }}
+                    />
+                  </Tab.Pane>
+                  
+                  <Tab.Pane eventKey="content">
+                    <SBAContentExplorer />
+                  </Tab.Pane>
+                  
+                  <Tab.Pane eventKey="documents">
+                    <Card>
+                      <Card.Header>
+                        <h5 className="mb-0">Uploaded Documents</h5>
+                      </Card.Header>
+                      <Card.Body>
+                        {documents.length === 0 ? (
+                          <Alert variant="info">
+                            No documents uploaded yet. Go to the RAG Workflow tab to upload documents.
+                          </Alert>
+                        ) : (
+                          <ListGroup>
+                            {documents.map((doc, index) => (
+                              <ListGroup.Item key={index}>
+                                <div className="d-flex justify-content-between align-items-center">
+                                  <div>
+                                    <h6 className="mb-0">{doc.filename}</h6>
+                                    <small className="text-muted">
+                                      {doc.pages} pages • {doc.chunks} chunks
+                                    </small>
+                                  </div>
+                                  <Button 
+                                    variant="outline-primary" 
+                                    size="sm"
+                                    onClick={() => {
+                                      setInput(`Summarize the document ${doc.filename}`);
+                                      handleSubmit({ preventDefault: () => {} });
+                                      setActiveTab('chat');
+                                    }}
+                                  >
+                                    Query
+                                  </Button>
+                                </div>
+                              </ListGroup.Item>
+                            ))}
+                          </ListGroup>
+                        )}
+                      </Card.Body>
+                      <Card.Footer>
+                        <Button 
+                          variant="primary" 
+                          onClick={() => setActiveTab('rag')}
+                        >
+                          Upload New Document
+                        </Button>
+                      </Card.Footer>
+                    </Card>
+                  </Tab.Pane>
+                </Tab.Content>
+              </Tab.Container>
+            </Col
+            
+            {showSidebar && (
+              <Col xs={12} md={4} lg={3} className="sidebar-col">
+                <Card className="system-info">
                   <Card.Header>
-                    <h5 className="mb-0">Search Results</h5>
+                    <h5 className="mb-0">System Information</h5>
                   </Card.Header>
                   <Card.Body>
-                    <ListGroup>
-                      {searchResults.slice(0, 5).map((result, index) => (
-                        <ListGroup.Item key={index}>
-                          <h6>{result.title || `Result ${index + 1}`}</h6>
-                          <p className="mb-1">{result.content.substring(0, 100)}...</p>
-                          <Badge bg="info">Score: {(result.score * 100).toFixed(1)}%</Badge>
-                        </ListGroup.Item>
-                      ))}
-                    </ListGroup>
+                    {systemInfo ? (
+                      <>
+                        <p><strong>Status:</strong> {connected ? 'Online' : 'Offline'}</p>
+                        <p><strong>Version:</strong> {systemInfo.version || 'Unknown'}</p>
+                        <p><strong>Model:</strong> {systemInfo.model || 'Not specified'}</p>
+                        <p><strong>Documents:</strong> {documents.length}</p>
+                        <p><strong>Screen Size:</strong> {screenSize}</p>
+                      </>
+                    ) : (
+                      <Spinner animation="border" />
+                    )}
                   </Card.Body>
                 </Card>
-              )}
-            </Col>
-          )}
-        </Row>
-      </Container>
-      
-      {/* Mobile sidebar as offcanvas for small screens */}
-      <Offcanvas 
-        show={showSidebar && (screenSize === 'xs' || screenSize === 'sm')} 
-        onHide={() => setShowSidebar(false)}
-        placement="end"
-      >
-        <Offcanvas.Header closeButton>
-          <Offcanvas.Title>System Information</Offcanvas.Title>
-        </Offcanvas.Header>
-        <Offcanvas.Body>
-          {systemInfo ? (
-            <>
-              <p><strong>Status:</strong> {connected ? 'Online' : 'Offline'}</p>
-              <p><strong>Version:</strong> {systemInfo.version || 'Unknown'}</p>
-              <p><strong>Model:</strong> {systemInfo.model || 'Not specified'}</p>
-              <p><strong>Documents:</strong> {documents.length}</p>
-            </>
-          ) : (
-            <Spinner animation="border" />
-          )}
-          
-          {searchResults.length > 0 && (
-            <div className="mt-4">
-              <h5>Search Results</h5>
-              <ListGroup>
-                {searchResults.slice(0, 3).map((result, index) => (
-                  <ListGroup.Item key={index}>
-                    <h6>{result.title || `Result ${index + 1}`}</h6>
-                    <p className="mb-1">{result.content.substring(0, 50)}...</p>
-                    <Badge bg="info">Score: {(result.score * 100).toFixed(1)}%</Badge>
-                  </ListGroup.Item>
-                ))}
-              </ListGroup>
-            </div>
-          )}
-        </Offcanvas.Body>
-      </Offcanvas>
-    </div>
+                
+                {searchResults.length > 0 && (
+                  <Card className="mt-3">
+                    <Card.Header>
+                      <h5 className="mb-0">Search Results</h5>
+                    </Card.Header>
+                    <Card.Body>
+                      <ListGroup>
+                        {searchResults.slice(0, 5).map((result, index) => (
+                          <ListGroup.Item key={index}>
+                            <h6>{result.title || `Result ${index + 1}`}</h6>
+                            <p className="mb-1">{result.content.substring(0, 100)}...</p>
+                            <Badge bg="info">Score: {(result.score * 100).toFixed(1)}%</Badge>
+                          </ListGroup.Item>
+                        ))}
+                      </ListGroup>
+                    </Card.Body>
+                  </Card>
+                )}
+              </Col>
+            )}
+          </Row>
+        </Container>
+        
+        {/* Mobile sidebar as offcanvas for small screens */}
+        <Offcanvas 
+          show={showSidebar && (screenSize === 'xs' || screenSize === 'sm')} 
+          onHide={() => setShowSidebar(false)}
+          placement="end"
+        >
+          <Offcanvas.Header closeButton>
+            <Offcanvas.Title>System Information</Offcanvas.Title>
+          </Offcanvas.Header>
+          <Offcanvas.Body>
+            {systemInfo ? (
+              <>
+                <p><strong>Status:</strong> {connected ? 'Online' : 'Offline'}</p>
+                <p><strong>Version:</strong> {systemInfo.version || 'Unknown'}</p>
+                <p><strong>Model:</strong> {systemInfo.model || 'Not specified'}</p>
+                <p><strong>Documents:</strong> {documents.length}</p>
+              </>
+            ) : (
+              <Spinner animation="border" />
+            )}
+            
+            {searchResults.length > 0 && (
+              <div className="mt-4">
+                <h5>Search Results</h5>
+                <ListGroup>
+                  {searchResults.slice(0, 3).map((result, index) => (
+                    <ListGroup.Item key={index}>
+                      <h6>{result.title || `Result ${index + 1}`}</h6>
+                      <p className="mb-1">{result.content.substring(0, 50)}...</p>
+                      <Badge bg="info">Score: {(result.score * 100).toFixed(1)}%</Badge>
+                    </ListGroup.Item>
+                  ))}
+                </ListGroup>
+              </div>
+            )}
+          </Offcanvas.Body>
+        </Offcanvas>
+      </div>
+    </ErrorBoundary>
   );
 }
 

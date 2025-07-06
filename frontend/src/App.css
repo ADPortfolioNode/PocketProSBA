@@ -1531,3 +1531,174 @@ body {
 .retry-button:hover {
   background-color: var(--primary-dark);
 }
+
+/* Error Boundary styles */
+.error-boundary-card {
+  margin: 1rem;
+  border: none;
+  box-shadow: var(--shadow);
+}
+
+.error-boundary-card .card-header {
+  font-weight: 600;
+}
+
+/* Connection Status Indicator styles */
+.connection-status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8rem;
+  border-radius: 20px;
+  box-shadow: var(--shadow);
+  transition: var(--transition);
+}
+
+.connection-status-badge:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.connection-indicator {
+  display: inline-block;
+  margin-right: 5px;
+  animation: pulse 2s infinite;
+}
+
+.connection-indicator.connected {
+  color: #a4ff9e;
+}
+
+.connection-indicator.disconnected {
+  color: #ffadad;
+}
+
+.connection-tooltip {
+  max-width: 220px;
+  font-size: 0.8rem;
+  text-align: left;
+}
+
+/* Loading Indicator styles */
+.loader-sm {
+  width: 1rem;
+  height: 1rem;
+}
+
+.loader-md {
+  width: 2rem;
+  height: 2rem;
+}
+
+.loader-lg {
+  width: 3rem;
+  height: 3rem;
+}
+
+.fullpage-loader {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.85);
+  z-index: 9999;
+}
+
+/* Dots loader animation */
+.dots-loader-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.dots-loader {
+  display: flex;
+  justify-content: center;
+}
+
+.dots-loader .dot {
+  width: 12px;
+  height: 12px;
+  margin: 0 5px;
+  border-radius: 50%;
+  animation: dotPulse 1.5s ease-in-out infinite;
+}
+
+.dots-loader-sm .dot {
+  width: 6px;
+  height: 6px;
+  margin: 0 3px;
+}
+
+.dots-loader-lg .dot {
+  width: 18px;
+  height: 18px;
+  margin: 0 7px;
+}
+
+.dots-loader .dot-1 {
+  animation-delay: 0s;
+}
+
+.dots-loader .dot-2 {
+  animation-delay: 0.3s;
+}
+
+.dots-loader .dot-3 {
+  animation-delay: 0.6s;
+}
+
+/* Skeleton loader */
+.skeleton-loader {
+  width: 100%;
+}
+
+.skeleton-line {
+  height: 12px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+.skeleton-sm {
+  height: 8px;
+}
+
+.skeleton-lg {
+  height: 20px;
+}
+
+/* Animations */
+@keyframes pulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes dotPulse {
+  0%, 100% {
+    transform: scale(0.8);
+    opacity: 0.5;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}

@@ -488,8 +488,13 @@ if __name__ == '__main__':
     logger.info(f"RAG System: {'✅ Available' if rag_system_available else '❌ Unavailable'}")
     logger.info(f"Documents loaded: {vector_store.count() if vector_store else 0}")
     
+    # Register SBA Content routes
+    try:
+        from sba_content_routes import register_sba_content_routes
+        register_sba_content_routes(app)
+        logger.info("✅ SBA Content API routes registered successfully")
+    except Exception as e:
+        logger.warning(f"⚠️ Failed to register SBA Content API routes: {str(e)}")
+    
     # Start the application
     app.run(host='0.0.0.0', port=port, debug=debug, threaded=True)
-
-# Import SBA Content routes
-from sba_content_routes import *
