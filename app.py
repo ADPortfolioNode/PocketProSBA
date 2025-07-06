@@ -472,6 +472,14 @@ def perform_search(query, n_results=3):
         logger.error(f"Search error: {str(e)}")
         return []
 
+# Register all routes in one place
+try:
+    from routes import register_all_routes
+    register_all_routes(app)
+    logger.info("✅ All API routes registered successfully")
+except Exception as e:
+    logger.warning(f"⚠️ Failed to register API routes: {str(e)}")
+
 # Create socketio for compatibility with run.py
 socketio = None
 
@@ -487,14 +495,6 @@ if __name__ == '__main__':
     logger.info(f"Vector Store: {vector_store_type}")
     logger.info(f"RAG System: {'✅ Available' if rag_system_available else '❌ Unavailable'}")
     logger.info(f"Documents loaded: {vector_store.count() if vector_store else 0}")
-    
-    # Register SBA Content routes
-    try:
-        from sba_content_routes import register_sba_content_routes
-        register_sba_content_routes(app)
-        logger.info("✅ SBA Content API routes registered successfully")
-    except Exception as e:
-        logger.warning(f"⚠️ Failed to register SBA Content API routes: {str(e)}")
     
     # Start the application
     app.run(host='0.0.0.0', port=port, debug=debug, threaded=True)
