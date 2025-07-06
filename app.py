@@ -477,7 +477,22 @@ def perform_search(query, n_results=3):
         
     except Exception as e:
         logger.error(f"Search error: {str(e)}")
+<<<<<<< HEAD
         return {'error': f'Search failed: {str(e)}'}
+=======
+        return []
+
+# Register all routes in one place
+try:
+    from routes import register_all_routes
+    register_all_routes(app)
+    logger.info("✅ All API routes registered successfully")
+except Exception as e:
+    logger.warning(f"⚠️ Failed to register API routes: {str(e)}")
+
+# Create socketio for compatibility with run.py
+socketio = None
+>>>>>>> 92e99b6 (production ready- fires out)
 
 if __name__ == '__main__':
     # Render.com compatible port binding
