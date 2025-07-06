@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Container, Row, Col, Form, Button, Card, Badge, Alert, Spinner } from 'react-bootstrap';
-import io from 'socket.io-client';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
 
@@ -14,77 +13,12 @@ function App() {
   const [status, setStatus] = useState('idle');
   const [connected, setConnected] = useState(false);
   const [error, setError] = useState(null);
-  const chatBoxRef = useRef(null);
-  const socketRef = useRef(null);
   const [systemInfo, setSystemInfo] = useState(null);
+  const chatBoxRef = useRef(null);
 
-  // Initialize Socket.IO connection
+  // Fetch system info
   useEffect(() => {
-    // Socket.IO connection options
-    const socketOptions = {
-      transports: ['websocket', 'polling'],
-      reconnection: true,
-      reconnectionAttempts: 15,
-      reconnectionDelay: 1000,
-      reconnectionDelayMax: 8000,
-      timeout: 30000,
-      autoConnect: true
-    };
-
-    // Create Socket.IO connection
-    socketRef.current = io(API_URL, socketOptions);
-
-    // Socket.IO event handlers
-    socketRef.current.on('connect', () => {
-      console.log('WebSocket connected');
-      setConnected(true);
-      setError(null);
-    });
-
-    socketRef.current.on('disconnect', (reason) => {
-      console.log(`WebSocket disconnected: ${reason}`);
-      setConnected(false);
-      if (reason === 'io server disconnect') {
-        // Server disconnected the client
-        socketRef.current.connect();
-      }
-    });
-
-    socketRef.current.on('connect_error', (err) => {
-      console.error('Connection error:', err);
-      setConnected(false);
-      setError(`Connection error: ${err.message}`);
-    });
-
-    socketRef.current.on('assistant_status', (data) => {
-      console.log('Status update:', data);
-      setStatus(data.status);
-    });
-
-    socketRef.current.on('chat_response', (data) => {
-      console.log('Received response:', data);
-      setMessages(prevMessages => [
-        ...prevMessages,
-        {
-          role: 'assistant',
-          content: data.text,
-          sources: data.sources,
-          timestamp: data.timestamp
-        }
-      ]);
-      setLoading(false);
-      setStatus('idle');
-    });
-
-    // Fetch system info
     fetchSystemInfo();
-
-    // Clean up on unmount
-    return () => {
-      if (socketRef.current) {
-        socketRef.current.disconnect();
-      }
-    };
   }, []);
 
   // Scroll to bottom of chat box when messages change
@@ -139,19 +73,16 @@ function App() {
       if (response.ok) {
         const data = await response.json();
         
-        // If WebSocket didn't handle the response, add it to the chat
-        if (status !== 'idle') {
-          setMessages(prevMessages => [
-            ...prevMessages,
-            {
-              role: 'assistant',
-              content: data.response,
-              sources: data.sources,
-              timestamp: data.timestamp
-            }
-          ]);
-          setStatus('idle');
-        }
+        setMessages(prevMessages => [
+          ...prevMessages,
+          {
+            role: 'assistant',
+            content: data.response,
+            sources: data.sources,
+            timestamp: data.timestamp
+          }
+        ]);
+        setStatus('idle');
       } else {
         const errorData = await response.json();
         throw new Error(errorData.error || 'Failed to send message');
@@ -294,14 +225,8 @@ function App() {
 }
 
 export default App;
-        addMessage(`❌ Batch upload failed: ${data.error}`, false, 'error');
-      }
-    } catch (error) {
-      setUploadProgress({ 
-        filename: `${files.length} files`, 
-        status: 'error', 
-        error: 'Batch upload failed',
-        progress: 0 
+
+export default App;
       });
       
       setTimeout(() => setUploadProgress(null), 5000);
