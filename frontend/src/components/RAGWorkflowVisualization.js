@@ -1,4 +1,5 @@
 import React from 'react';
+import { ProgressBar, Row, Col, Card } from 'react-bootstrap';
 
 const RAGWorkflowVisualization = ({ activeStep }) => {
   // Define the steps in the RAG workflow with icons
@@ -35,43 +36,39 @@ const RAGWorkflowVisualization = ({ activeStep }) => {
     }
   ];
 
+  // Determine progress percentage based on active step
+  const getProgressPercentage = () => {
+    const stepIndex = workflowSteps.findIndex(step => step.id === activeStep);
+    if (stepIndex === -1) return 0;
+    return ((stepIndex + 1) / workflowSteps.length) * 100;
+  };
+
   return (
-    <div className="rag-workflow">
-      <h3>RAG Workflow Visualization</h3>
-      <p className="workflow-description">
-        Retrieval-Augmented Generation (RAG) combines document retrieval with AI text generation for accurate, contextual responses
-      </p>
-      <div className="workflow-visualization">
-        {workflowSteps.map((step, index) => (
-          <React.Fragment key={step.id}>
-            <div 
-              className={`workflow-step ${activeStep === step.id ? 'active' : ''} ${
-                // If no active step is set, don't highlight any specific step
-                !activeStep ? '' : 
-                // Steps before the active step are considered "completed"
-                workflowSteps.findIndex(s => s.id === activeStep) > index ? 'completed' : ''
-              }`}
-            >
-              <div className="step-icon">{step.icon}</div>
-              <div className="step-number">{index + 1}</div>
-              <div className="step-content">
-                <h4>{step.name}</h4>
-                <p>{step.description}</p>
+    <Card className="rag-workflow-visualization">
+      <Card.Body>
+        <ProgressBar 
+          now={getProgressPercentage()} 
+          className="mb-4" 
+          variant="primary" 
+          animated
+        />
+        
+        <Row xs={1} md={5} className="workflow-steps g-2">
+          {workflowSteps.map(step => (
+            <Col key={step.id}>
+              <div 
+                className={`workflow-step text-center p-2 rounded ${step.id === activeStep ? 'active bg-light' : ''}`}
+                style={{ opacity: step.id === activeStep ? 1 : 0.6 }}
+              >
+                <div className="workflow-step-icon mb-2">{step.icon}</div>
+                <h6 className="mb-1">{step.name}</h6>
+                <p className="small text-muted mb-0">{step.description}</p>
               </div>
-              {activeStep === step.id && (
-                <div className="step-indicator">Current</div>
-              )}
-            </div>
-            {index < workflowSteps.length - 1 && (
-              <div className={`workflow-connector ${
-                !activeStep ? '' :
-                workflowSteps.findIndex(s => s.id === activeStep) > index ? 'completed' : ''
-              }`}></div>
-            )}
-          </React.Fragment>
-        ))}
-      </div>
-    </div>
+            </Col>
+          ))}
+        </Row>
+      </Card.Body>
+    </Card>
   );
 };
 

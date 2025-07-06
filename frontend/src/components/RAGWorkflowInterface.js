@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import RAGWorkflowVisualization from './RAGWorkflowVisualization';
+import { Card, Row, Col, Button, Form, ListGroup, Badge, Accordion, Alert, ProgressBar } from 'react-bootstrap';
 
 const RAGWorkflowInterface = ({ 
   onSearch, 
@@ -13,6 +14,7 @@ const RAGWorkflowInterface = ({
   const [queryText, setQueryText] = useState('');
   const [selectedFile, setSelectedFile] = useState(null);
   const [activeDocument, setActiveDocument] = useState(null);
+  const [uploadProgress, setUploadProgress] = useState(null);
   
   const handleStepChange = (step) => {
     setCurrentStep(step);
@@ -27,6 +29,17 @@ const RAGWorkflowInterface = ({
   
   const handleUpload = () => {
     if (selectedFile) {
+      setUploadProgress(0);
+      const fakeProgress = setInterval(() => {
+        setUploadProgress(prev => {
+          if (prev >= 90) {
+            clearInterval(fakeProgress);
+            return prev;
+          }
+          return prev + 10;
+        });
+      }, 300);
+      
       onUpload(selectedFile);
       setCurrentStep('index'); // Move to the next step
     }
@@ -40,273 +53,302 @@ const RAGWorkflowInterface = ({
     }
   };
   
-  const handleRagQuery = (e) => {
+  const handleRAGQuery = (e) => {
     e.preventDefault();
     if (queryText.trim()) {
       onQuery(queryText);
       setCurrentStep('generate'); // Move to the generation step
     }
   };
-
-  return (
-    <div className="rag-workflow-interface">
-      <RAGWorkflowVisualization activeStep={currentStep} />
-      
-      <div className="workflow-steps-container">
-        <div className={`workflow-step-content ${currentStep === 'upload' ? 'active' : ''}`}>
-          <h3>Step 1: Document Upload</h3>
-          <p>Upload documents to build your knowledge base.</p>
-          
-          <div className="file-upload-area">
-            <input 
-              type="file" 
-              id="rag-file-upload" 
-              className="file-input" 
-              onChange={handleFileSelect}
-            />
-            <label htmlFor="rag-file-upload" className="file-upload-label">
-              {selectedFile ? selectedFile.name : 'Choose a file'}
-            </label>
-            <button 
-              className="upload-button" 
-              disabled={!selectedFile}
-              onClick={handleUpload}
-            >
-              Upload Document
-            </button>
-          </div>
-          
-          <div className="document-list">
-            <h4>Your Documents ({documents.length})</h4>
-            {documents.length > 0 ? (
-              <ul className="document-items">
-                {documents.slice(0, 5).map(doc => (
-                  <li 
-                    key={doc.id} 
-                    className={`document-item ${activeDocument === doc.id ? 'active' : ''}`}
-                    onClick={() => setActiveDocument(doc.id)}
-                  >
-                    <span className="document-name">{doc.filename || 'Unnamed document'}</span>
-                    {doc.chunk_count && (
-                      <span className="document-chunks">{doc.chunk_count} chunks</span>
-                    )}
-                  </li>
-                ))}
-                {documents.length > 5 && (
-                  <li className="document-item more">
-                    And {documents.length - 5} more...
-                  </li>
-                )}
-              </ul>
-            ) : (
-              <p className="no-documents">No documents uploaded yet.</p>
-            )}
-          </div>
-          
-          <div className="step-actions">
-            <button 
-              className="next-step-button"
-              onClick={() => handleStepChange('index')}
-              disabled={documents.length === 0}
-            >
-              Next: Indexing
-            </button>
-          </div>
-        </div>
-        
-        <div className={`workflow-step-content ${currentStep === 'index' ? 'active' : ''}`}>
-          <h3>Step 2: Indexing</h3>
-          <p>Your documents are processed and indexed for semantic search.</p>
-          
-          <div className="indexing-info">
-            <div className="info-item">
-              <span className="info-label">Documents:</span>
-              <span className="info-value">{documents.length}</span>
-            </div>
-            <div className="info-item">
-              <span className="info-label">Total Chunks:</span>
-              <span className="info-value">
-                {documents.reduce((sum, doc) => sum + (doc.chunk_count || 0), 0)}
-              </span>
-            </div>
-            <div className="info-item">
-              <span className="info-label">Embedding Model:</span>
-              <span className="info-value">OpenAI Embeddings</span>
-            </div>
-          </div>
-          
-          <div className="step-actions">
-            <button 
-              className="prev-step-button"
-              onClick={() => handleStepChange('upload')}
-            >
-              Back: Upload
-            </button>
-            <button 
-              className="next-step-button"
-              onClick={() => handleStepChange('query')}
-            >
-              Next: Query
-            </button>
-          </div>
-        </div>
-        
-        <div className={`workflow-step-content ${currentStep === 'query' ? 'active' : ''}`}>
-          <h3>Step 3: Query</h3>
-          <p>Ask questions about your documents.</p>
-          
-          <form className="query-form" onSubmit={handleSearch}>
-            <input
-              type="text"
-              className="query-input"
-              value={queryText}
-              onChange={(e) => setQueryText(e.target.value)}
-              placeholder="What would you like to know about your documents?"
-            />
-            <div className="query-actions">
-              <button type="submit" className="search-button">
-                Search
-              </button>
-              <button 
-                type="button" 
-                className="rag-button"
-                onClick={handleRagQuery}
-              >
-                Generate Answer
-              </button>
-            </div>
-          </form>
-          
-          <div className="step-actions">
-            <button 
-              className="prev-step-button"
-              onClick={() => handleStepChange('index')}
-            >
-              Back: Indexing
-            </button>
-          </div>
-        </div>
-        
-        <div className={`workflow-step-content ${currentStep === 'retrieve' ? 'active' : ''}`}>
-          <h3>Step 4: Retrieval</h3>
-          <p>Relevant context is retrieved from your documents.</p>
-          
-          <div className="retrieval-results">
-            <h4>Search Results for: "{queryText}"</h4>
-            
-            {searchResults.length > 0 ? (
-              <div className="results-list">
-                {searchResults.map((result, index) => (
-                  <div className="result-item" key={index}>
-                    <div className="result-header">
-                      <span className="result-source">
-                        {result.metadata?.filename || 'Unknown source'}
-                      </span>
-                      {result.score && (
-                        <span className="result-score">
-                          Score: {Number(result.score).toFixed(2)}
-                        </span>
-                      )}
-                    </div>
-                    <div className="result-content">
-                      {result.content || result.text || 'No content'}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="no-results">No results found. Try a different query.</p>
-            )}
-          </div>
-          
-          <div className="step-actions">
-            <button 
-              className="prev-step-button"
-              onClick={() => handleStepChange('query')}
-            >
-              Back: Query
-            </button>
-            <button 
-              className="next-step-button"
-              onClick={() => {
-                handleRagQuery({ preventDefault: () => {} });
-              }}
-              disabled={searchResults.length === 0}
-            >
-              Next: Generate Answer
-            </button>
-          </div>
-        </div>
-        
-        <div className={`workflow-step-content ${currentStep === 'generate' ? 'active' : ''}`}>
-          <h3>Step 5: Generation</h3>
-          <p>The AI generates an answer based on the retrieved context.</p>
-          
-          {ragResponse ? (
-            <div className="rag-response">
-              <div className="answer-section">
-                <h4>Answer</h4>
-                <div className="answer-content">
-                  {ragResponse.status === 'loading' ? (
-                    <div className="loading-spinner">
-                      <div className="spinner"></div>
-                      <p>Generating answer...</p>
-                    </div>
-                  ) : ragResponse.status === 'error' ? (
-                    <div className="error-message">
-                      Error: {ragResponse.error}
-                    </div>
-                  ) : (
-                    <div dangerouslySetInnerHTML={{ __html: ragResponse.answer.replace(/\n/g, '<br/>') }}></div>
-                  )}
-                </div>
-              </div>
+  
+  const renderStepContent = () => {
+    switch(currentStep) {
+      case 'upload':
+        return (
+          <Card className="mb-3">
+            <Card.Header>
+              <h5 className="mb-0">Upload Documents</h5>
+            </Card.Header>
+            <Card.Body>
+              <p className="mb-3">
+                Upload PDF, DOCX, or TXT files to enable the assistant to search and answer questions based on your documents.
+              </p>
               
-              {ragResponse.sources && ragResponse.sources.length > 0 && (
-                <div className="sources-section">
-                  <h4>Sources</h4>
-                  <ul className="sources-list">
-                    {ragResponse.sources.map((source, index) => (
-                      <li key={index} className="source-item">
-                        <span className="source-name">
-                          {source.filename || 'Unknown source'}
-                        </span>
-                        {source.relevance_score && (
-                          <span className="source-score">
-                            Relevance: {Number(source.relevance_score).toFixed(2)}
-                          </span>
-                        )}
-                      </li>
+              <Form.Group controlId="fileUpload" className="mb-3">
+                <Form.Label>Select a document to upload</Form.Label>
+                <Form.Control 
+                  type="file" 
+                  onChange={handleFileSelect}
+                  accept=".pdf,.docx,.txt"
+                />
+                <Form.Text className="text-muted">
+                  Supported file types: PDF, DOCX, and TXT
+                </Form.Text>
+              </Form.Group>
+              
+              {documents.length > 0 && (
+                <div className="mt-3 mb-3">
+                  <h6>Previously Uploaded Documents</h6>
+                  <ListGroup>
+                    {documents.map((doc, index) => (
+                      <ListGroup.Item key={index} className="d-flex justify-content-between align-items-center">
+                        <div>
+                          <strong>{doc.filename}</strong>
+                          <Badge bg="info" className="ms-2">{doc.pages} pages</Badge>
+                        </div>
+                        <Button 
+                          variant="outline-primary" 
+                          size="sm"
+                          onClick={() => setActiveDocument(doc)}
+                        >
+                          View
+                        </Button>
+                      </ListGroup.Item>
                     ))}
-                  </ul>
+                  </ListGroup>
                 </div>
               )}
-            </div>
-          ) : (
-            <div className="no-response">
-              <p>Ask a question to generate an answer.</p>
-            </div>
-          )}
-          
-          <div className="step-actions">
-            <button 
-              className="prev-step-button"
-              onClick={() => handleStepChange('retrieve')}
-            >
-              Back: Retrieval
-            </button>
-            <button 
-              className="restart-button"
-              onClick={() => {
-                setCurrentStep('query');
-                setQueryText('');
-              }}
-            >
-              Ask Another Question
-            </button>
-          </div>
-        </div>
-      </div>
+              
+              {uploadProgress !== null && (
+                <ProgressBar animated now={uploadProgress} className="mt-3" />
+              )}
+              
+              <div className="d-flex justify-content-between mt-4">
+                <Button 
+                  variant="outline-secondary" 
+                  disabled
+                >
+                  Previous
+                </Button>
+                <Button 
+                  variant="primary" 
+                  onClick={handleUpload}
+                  disabled={!selectedFile}
+                >
+                  Upload & Continue
+                </Button>
+              </div>
+            </Card.Body>
+          </Card>
+        );
+        
+      case 'index':
+        return (
+          <Card className="mb-3">
+            <Card.Header>
+              <h5 className="mb-0">Document Indexing</h5>
+            </Card.Header>
+            <Card.Body>
+              <Alert variant="success">
+                <Alert.Heading>Document Processing Complete!</Alert.Heading>
+                <p>
+                  Your document has been successfully uploaded and processed. The document has been chunked and indexed for semantic search.
+                </p>
+              </Alert>
+              
+              <Accordion className="mb-4">
+                <Accordion.Item eventKey="0">
+                  <Accordion.Header>What happens during indexing?</Accordion.Header>
+                  <Accordion.Body>
+                    <p>During the indexing process, the document is:</p>
+                    <ol>
+                      <li>Split into smaller chunks for efficient processing</li>
+                      <li>Converted into vector embeddings using advanced AI models</li>
+                      <li>Stored in a vector database for fast semantic retrieval</li>
+                      <li>Optimized for natural language queries</li>
+                    </ol>
+                  </Accordion.Body>
+                </Accordion.Item>
+              </Accordion>
+              
+              <div className="d-flex justify-content-between mt-4">
+                <Button 
+                  variant="outline-secondary" 
+                  onClick={() => handleStepChange('upload')}
+                >
+                  Back to Upload
+                </Button>
+                <Button 
+                  variant="primary" 
+                  onClick={() => handleStepChange('query')}
+                >
+                  Continue to Query
+                </Button>
+              </div>
+            </Card.Body>
+          </Card>
+        );
+        
+      case 'query':
+        return (
+          <Card className="mb-3">
+            <Card.Header>
+              <h5 className="mb-0">Ask Questions About Your Documents</h5>
+            </Card.Header>
+            <Card.Body>
+              <p className="mb-3">
+                Ask any question about the content of your uploaded documents. The system will retrieve the most relevant information and generate an answer.
+              </p>
+              
+              <Form onSubmit={handleRAGQuery} className="mb-4">
+                <Form.Group controlId="queryInput" className="mb-3">
+                  <Form.Label>Your Question</Form.Label>
+                  <Form.Control
+                    as="textarea"
+                    rows={3}
+                    placeholder="e.g., What types of SBA loans are available for small businesses?"
+                    value={queryText}
+                    onChange={(e) => setQueryText(e.target.value)}
+                  />
+                </Form.Group>
+                
+                <div className="d-grid gap-2">
+                  <Button 
+                    variant="primary" 
+                    type="submit"
+                    disabled={!queryText.trim()}
+                  >
+                    Search & Generate Answer
+                  </Button>
+                </div>
+              </Form>
+              
+              <div className="d-flex justify-content-between mt-4">
+                <Button 
+                  variant="outline-secondary" 
+                  onClick={() => handleStepChange('index')}
+                >
+                  Previous
+                </Button>
+                <Button 
+                  variant="outline-primary" 
+                  onClick={() => handleStepChange('retrieve')}
+                  disabled={!queryText.trim()}
+                >
+                  Skip to Retrieval
+                </Button>
+              </div>
+            </Card.Body>
+          </Card>
+        );
+        
+      case 'retrieve':
+        return (
+          <Card className="mb-3">
+            <Card.Header>
+              <h5 className="mb-0">Retrieved Context</h5>
+            </Card.Header>
+            <Card.Body>
+              <p className="mb-3">
+                These are the most relevant passages retrieved from your documents based on your query.
+              </p>
+              
+              {searchResults.length > 0 ? (
+                <ListGroup className="mb-4">
+                  {searchResults.map((result, index) => (
+                    <ListGroup.Item key={index}>
+                      <h6>Source: {result.source || "Document " + (index + 1)}</h6>
+                      <p>{result.content}</p>
+                      <div className="d-flex justify-content-between align-items-center">
+                        <Badge bg="info">Relevance: {(result.score * 100).toFixed(1)}%</Badge>
+                        <small className="text-muted">Chunk {result.chunk_id || index}</small>
+                      </div>
+                    </ListGroup.Item>
+                  ))}
+                </ListGroup>
+              ) : (
+                <Alert variant="warning">
+                  No relevant contexts found. Try refining your query or uploading more documents.
+                </Alert>
+              )}
+              
+              <div className="d-flex justify-content-between mt-4">
+                <Button 
+                  variant="outline-secondary" 
+                  onClick={() => handleStepChange('query')}
+                >
+                  Back to Query
+                </Button>
+                <Button 
+                  variant="primary" 
+                  onClick={() => handleStepChange('generate')}
+                  disabled={searchResults.length === 0}
+                >
+                  Generate Answer
+                </Button>
+              </div>
+            </Card.Body>
+          </Card>
+        );
+        
+      case 'generate':
+        return (
+          <Card className="mb-3">
+            <Card.Header>
+              <h5 className="mb-0">Generated Response</h5>
+            </Card.Header>
+            <Card.Body>
+              <p className="mb-3">
+                Based on the retrieved context, here is the AI-generated answer to your query.
+              </p>
+              
+              {ragResponse ? (
+                <Card className="mb-4 bg-light">
+                  <Card.Body>
+                    <Card.Title className="text-primary">Query</Card.Title>
+                    <Card.Text className="mb-3">{queryText}</Card.Text>
+                    
+                    <Card.Title className="text-primary">Response</Card.Title>
+                    <Card.Text style={{ whiteSpace: 'pre-line' }}>{ragResponse.content}</Card.Text>
+                  </Card.Body>
+                </Card>
+              ) : (
+                <Alert variant="info">
+                  No response generated yet. Submit a query to see results.
+                </Alert>
+              )}
+              
+              <div className="d-flex justify-content-between mt-4">
+                <Button 
+                  variant="outline-secondary" 
+                  onClick={() => handleStepChange('retrieve')}
+                >
+                  Back to Retrieved Context
+                </Button>
+                <Button 
+                  variant="primary" 
+                  onClick={() => {
+                    setQueryText('');
+                    handleStepChange('query');
+                  }}
+                >
+                  Ask Another Question
+                </Button>
+              </div>
+            </Card.Body>
+          </Card>
+        );
+        
+      default:
+        return null;
+    }
+  };
+  
+  return (
+    <div className="rag-workflow-container">
+      <h3 className="mb-4 text-center">RAG Workflow Interface</h3>
+      
+      <Row className="mb-4">
+        <Col>
+          <RAGWorkflowVisualization activeStep={currentStep} />
+        </Col>
+      </Row>
+      
+      <Row>
+        <Col>
+          {renderStepContent()}
+        </Col>
+      </Row>
     </div>
   );
 };
