@@ -416,23 +416,49 @@ function App() {
         </Navbar>
 
         <Container fluid className="main-content">
+          {/* Global error or alert messages */}
+          {error && (
+            <Row className="mb-3">
+              <Col>
+                <APIErrorHandler 
+                  error={{ message: error }}
+                  variant="danger"
+                  onRetry={retryLastOperation}
+                  dismissible={true}
+                  resourceType="application"
+                />
+              </Col>
+            </Row>
+          )}
+          
+          {/* Main content area */}
           <Row>
             <Col xs={12} md={showSidebar ? 8 : 12} lg={showSidebar ? 9 : 12}>
               <Tab.Container activeKey={activeTab}>
                 <Tab.Content>
                   <Tab.Pane eventKey="chat">
                     <Card className="chat-card">
-                      <Card.Header>
+                      <Card.Header className="d-flex justify-content-between align-items-center">
                         <h5 className="mb-0">Chat with PocketPro SBA Assistant</h5>
+                        {loading && (
+                          <LoadingIndicator 
+                            type="dots" 
+                            size="sm" 
+                            text="" 
+                            variant="primary" 
+                          />
+                        )}
                       </Card.Header>
                       <Card.Body>
                         {!connected && (
-                          <ServerStatusMonitor 
-                            onStatusChange={(status, info) => {
-                              setConnected(status === 'online');
-                              if (info) setSystemInfo(info);
-                            }} 
-                          />
+                          <ErrorBoundary>
+                            <ServerStatusMonitor 
+                              onStatusChange={(status, info) => {
+                                setConnected(status === 'online');
+                                if (info) setSystemInfo(info);
+                              }} 
+                            />
+                          </ErrorBoundary>
                         )}
                         
                         <div className="chat-messages" ref={chatBoxRef}>
@@ -448,7 +474,16 @@ function App() {
                                 className={`message ${message.role === 'user' ? 'user-message' : 'assistant-message'}`}
                               >
                                 <div className="message-content">
-                                  <p>{message.content}</p>
+                                  {message.type === 'loading' ? (
+                                    <LoadingIndicator 
+                                      type="dots" 
+                                      size="sm"
+                                      text="Thinking..." 
+                                      variant={message.role === 'user' ? 'light' : 'primary'} 
+                                    />
+                                  ) : (
+                                    <>{message.content}</>
+                                  )}
                                 </div>
                                 <div className="message-metadata">
                                   <small>
@@ -478,23 +513,63 @@ function App() {
                               value={input}
                               onChange={(e) => setInput(e.target.value)}
                               disabled={loading || !connected}
+                              aria-label="Message input"
+                              aria-describedby="send-button"
                             />
                             <Button 
+                              id="send-button"
                               variant="primary" 
                               type="submit" 
                               disabled={loading || !connected || !input.trim()}
                             >
                               {loading ? (
-                                <Spinner animation="border" size="sm" />
+                                <Spinner animation="border" size="sm" role="status">
+                                  <span className="visually-hidden">Loading...</span>
+                                </Spinner>
                               ) : (
                                 'Send'
                               )}
                             </Button>
                           </InputGroup>
+                          
+                          {/* Connection warning */}
                           {!connected && (
-                            <Alert variant="warning" className="mt-2 mb-0">
-                              Chat is currently unavailable. Please check the server connection.
+                            <Alert variant="warning" className="mt-2 mb-0 d-flex align-items-center">
+                              <div className="me-2">
+                                <i className="bi bi-exclamation-triangle-fill"></i>
+                              </div>
+                              <div>
+                                Server connection issue. Trying to reconnect... 
+                                <Button 
+                                  variant="link" 
+                                  className="p-0 ms-2" 
+                                  onClick={() => window.location.reload()}
+                                  size="sm"
+                                >
+                                  Refresh
+                                </Button>
+                              </div>
                             </Alert>
+                          )}
+                          
+                          {/* Status indicator */}
+                          {connected && status === 'sending' && (
+                            <div className="text-muted mt-2 small d-flex align-items-center">
+                              <Spinner animation="border" size="sm" className="me-2" />
+                              Sending message...
+                            </div>
+                          )}
+                          
+                          {/* Error message for failed submission */}
+                          {status === 'error' && (
+                            <APIErrorHandler 
+                              error={{ message: error || 'Failed to send message' }}
+                              variant="danger"
+                              onRetry={retryLastOperation}
+                              dismissible={true}
+                              resourceType="message"
+                              className="mt-2 mb-0"
+                            />
                           )}
                         </Form>
                       </Card.Footer>
