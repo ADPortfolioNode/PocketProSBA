@@ -43,7 +43,8 @@ const SBAContentExplorer = () => {
       setTotalPages(data.totalPages || 1);
       setPage(pageNum);
     } catch (err) {
-      setError(`Error searching SBA content: ${err.message}`);
+      console.error('Error searching SBA content:', err);
+      setError(`Unable to fetch SBA content: ${err.message}. This feature may not be fully implemented yet.`);
       setResults([]);
     } finally {
       setLoading(false);

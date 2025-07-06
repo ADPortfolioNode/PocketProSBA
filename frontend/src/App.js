@@ -22,6 +22,7 @@ import './App.css';
 import SBANavigation from './components/SBANavigation';
 import RAGWorkflowInterface from './components/RAGWorkflowInterface';
 import SBAContentExplorer from './components/SBAContentExplorer';
+import ServerStatusMonitor from './components/ServerStatusMonitor';
 
 // API endpoint
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
@@ -110,7 +111,7 @@ function App() {
 
   // Handle chat submission
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    if (e && e.preventDefault) e.preventDefault();
     if (!input.trim() || loading) return;
     
     addMessage(input, true);
@@ -124,7 +125,10 @@ function App() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ message: input }),
+        body: JSON.stringify({ 
+          message: input,
+          session_id: localStorage.getItem('session_id') || crypto.randomUUID()
+        }),
       });
       
       if (!response.ok) {
@@ -132,11 +136,37 @@ function App() {
       }
       
       const data = await response.json();
-      addMessage(data.response);
-      setStatus('received');
+      
+      // Handle different response formats
+      const responseText = data.response || data.answer || data.message || 'No response from server';
+      const sources = data.sources || data.context || [];
+      
+      setMessages(prevMessages => [
+        ...prevMessages,
+        {
+          role: 'assistant',
+          content: responseText,
+          sources: sources,
+          timestamp: data.timestamp || new Date().toISOString()
+        }
+      ]);
+      
+      if (sources && sources.length > 0) {
+        setSearchResults(sources);
+      }
+      
+      setStatus('idle');
     } catch (err) {
-      setError(`Error: ${err.message}`);
-      addMessage(`Sorry, there was an error processing your request: ${err.message}`, false, 'error');
+      console.error('Error sending message:', err);
+      setMessages(prevMessages => [
+        ...prevMessages,
+        {
+          role: 'assistant',
+          content: `I'm having trouble connecting to the server right now. Please try again later or try a different question.`,
+          error: true,
+          timestamp: new Date().toISOString()
+        }
+      ]);
       setStatus('error');
     } finally {
       setLoading(false);
@@ -154,26 +184,52 @@ function App() {
     formData.append('file', file);
     
     try {
-      const response = await fetch(`${API_URL}/api/upload`, {
-        method: 'POST',
-        body: formData,
-        onUploadProgress: (progressEvent) => {
-          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-          setUploadProgress(percentCompleted);
-        }
-      });
+      // First check if the upload endpoint exists
+      const healthCheck = await fetch(`${API_URL}/api/health`, { method: 'GET' });
+      if (!healthCheck.ok) {
+        throw new Error('Backend service is not available');
+      }
+      
+      // Try the main upload endpoint
+      let response;
+      try {
+        response = await fetch(`${API_URL}/api/files`, {
+          method: 'POST',
+          body: formData,
+          onUploadProgress: (progressEvent) => {
+            const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+            setUploadProgress(percentCompleted);
+          }
+        });
+      } catch (uploadError) {
+        // If the main endpoint fails, try the alternative endpoint
+        console.warn('Primary upload endpoint failed, trying alternative:', uploadError);
+        response = await fetch(`${API_URL}/api/documents/upload_and_ingest_document`, {
+          method: 'POST',
+          body: formData
+        });
+      }
       
       if (!response.ok) {
         throw new Error(`Server responded with ${response.status}`);
       }
       
       const data = await response.json();
-      setDocuments(prev => [...prev, data.document]);
+      const documentInfo = data.document || { 
+        id: Date.now(),
+        filename: file.name,
+        pages: 'Unknown',
+        chunks: 'Unknown',
+        uploadTime: new Date().toISOString()
+      };
+      
+      setDocuments(prev => [...prev, documentInfo]);
       addMessage(`File '${file.name}' uploaded and processed successfully.`, false, 'system');
       setStatus('uploaded');
     } catch (err) {
+      console.error('File upload error:', err);
       setError(`Error uploading file: ${err.message}`);
-      addMessage(`Failed to upload file: ${err.message}`, false, 'error');
+      addMessage(`Failed to upload file: ${err.message}. This feature may not be fully implemented in the current backend.`, false, 'error');
       setStatus('error');
     } finally {
       setUploadProgress(null);
@@ -214,25 +270,45 @@ function App() {
     setStatus('processing_rag');
     
     try {
-      const response = await fetch(`${API_URL}/api/rag`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ query }),
-      });
+      // First try with the /api/rag endpoint
+      let response;
+      try {
+        response = await fetch(`${API_URL}/api/rag`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ query }),
+        });
+      } catch (ragError) {
+        // If /api/rag fails, try the /api/chat endpoint
+        console.warn('RAG endpoint failed, trying chat endpoint:', ragError);
+        response = await fetch(`${API_URL}/api/chat`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ message: query }),
+        });
+      }
       
       if (!response.ok) {
         throw new Error(`Server responded with ${response.status}`);
       }
       
       const data = await response.json();
-      addMessage(data.answer, false, 'rag');
-      setSearchResults(data.sources || []);
+      
+      // Handle different response formats
+      const answer = data.answer || data.response || data.message || 'No response from server';
+      const sources = data.sources || data.context || [];
+      
+      addMessage(answer, false, 'rag');
+      setSearchResults(sources);
       setStatus('rag_complete');
     } catch (err) {
+      console.error('RAG query error:', err);
       setError(`Error with RAG query: ${err.message}`);
-      addMessage(`Sorry, there was an error processing your RAG request: ${err.message}`, false, 'error');
+      addMessage(`Sorry, there was an error processing your request: ${err.message}. Please try a different question or try again later.`, false, 'error');
       setStatus('error');
     } finally {
       setLoading(false);
@@ -321,6 +397,15 @@ function App() {
                       <h5 className="mb-0">Chat with PocketPro SBA Assistant</h5>
                     </Card.Header>
                     <Card.Body>
+                      {!connected && (
+                        <ServerStatusMonitor 
+                          onStatusChange={(status, info) => {
+                            setConnected(status === 'online');
+                            if (info) setSystemInfo(info);
+                          }} 
+                        />
+                      )}
+                      
                       <div className="chat-messages" ref={chatBoxRef}>
                         {messages.length === 0 ? (
                           <div className="text-center my-5">
@@ -360,7 +445,7 @@ function App() {
                         <InputGroup>
                           <Form.Control
                             type="text"
-                            placeholder="Type your message here..."
+                            placeholder={connected ? "Type your message here..." : "Server connection required..."}
                             value={input}
                             onChange={(e) => setInput(e.target.value)}
                             disabled={loading || !connected}
@@ -377,6 +462,11 @@ function App() {
                             )}
                           </Button>
                         </InputGroup>
+                        {!connected && (
+                          <Alert variant="warning" className="mt-2 mb-0">
+                            Chat is currently unavailable. Please check the server connection.
+                          </Alert>
+                        )}
                       </Form>
                     </Card.Footer>
                   </Card>

@@ -40,8 +40,10 @@ const RAGWorkflowInterface = ({
         });
       }, 300);
       
-      onUpload(selectedFile);
-      setCurrentStep('index'); // Move to the next step
+      onUpload(selectedFile).catch(err => {
+        console.error('Upload error in RAGWorkflowInterface:', err);
+        setCurrentStep('upload'); // Go back to upload step on error
+      });
     }
   };
   
