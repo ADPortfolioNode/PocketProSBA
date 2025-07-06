@@ -378,6 +378,56 @@ def semantic_search():
         logger.error(f"Search error: {str(e)}")
         return jsonify({'error': f'Search failed: {str(e)}'}), 500
 
+@app.route('/api/chat', methods=['POST'])
+def rag_chat():
+    """RAG-powered chat endpoint"""
+    if not rag_system_available:
+        return jsonify({'error': 'RAG system not available'}), 503
+    
+    try:
+        data = request.get_json()
+        user_query = data.get('message', '')
+        
+        if not user_query:
+            return jsonify({'error': 'Message is required'}), 400
+        
+        # Retrieve relevant documents
+        search_results = vector_store.search(user_query, n_results=3)
+        
+        # Build context and sources
+        context_parts = []
+        sources = []
+        
+        if search_results['documents'][0]:
+            for i, doc in enumerate(search_results['documents'][0]):
+                context_parts.append(f"Source {i+1}: {doc}")
+                sources.append({
+                    'id': search_results['ids'][0][i],
+                    'content': doc[:200] + "..." if len(doc) > 200 else doc,
+                    'metadata': search_results['metadatas'][0][i],
+                    'relevance': 1 - search_results['distances'][0][i]
+                })
+        
+        # Generate response
+        context = "\n\n".join(context_parts)
+        
+        if context:
+            response = f"Based on my knowledge base, here's what I found regarding '{user_query}':\n\n{context}"
+        else:
+            response = f"I don't have specific information about '{user_query}' in my current knowledge base. Please add relevant documents to help me provide better answers."
+        
+        return jsonify({
+            'query': user_query,
+            'response': response,
+            'sources': sources,
+            'context_used': bool(context),
+            'response_time': time.time()
+        })
+        
+    except Exception as e:
+        logger.error(f"RAG chat error: {str(e)}")
+        return jsonify({'error': f'Chat failed: {str(e)}'}), 500
+
 # Additional endpoints for compatibility
 @app.route('/api/collections/stats', methods=['GET'])
 def get_collection_stats():
@@ -397,25 +447,6 @@ def startup_check():
         'service': 'PocketPro SBA',
         'document_count': vector_store.count()
     })
-
-# Create socketio for compatibility with run.py
-socketio = None
-
-if __name__ == '__main__':
-    # Render.com compatible port binding
-    port = int(os.environ.get('PORT', 5000))
-    debug = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
-    
-    vector_store_type = "Simple Memory"
-    
-    logger.info(f"🚀 Starting PocketPro SBA RAG Edition on 0.0.0.0:{port}")
-    logger.info(f"Environment: {'development' if debug else 'production'}")
-    logger.info(f"Vector Store: {vector_store_type}")
-    logger.info(f"RAG System: {'✅ Available' if rag_system_available else '❌ Unavailable'}")
-    logger.info(f"Documents loaded: {vector_store.count() if vector_store else 0}")
-    
-    # Start the application
-    app.run(host='0.0.0.0', port=port, debug=debug, threaded=True)
 
 # Utility function to perform search
 def perform_search(query, n_results=3):
@@ -444,6 +475,7 @@ def perform_search(query, n_results=3):
 socketio = None
 
 if __name__ == '__main__':
+    # Render.com compatible port binding
     port = int(os.environ.get('PORT', 5000))
     debug = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
     
@@ -455,4 +487,5 @@ if __name__ == '__main__':
     logger.info(f"RAG System: {'✅ Available' if rag_system_available else '❌ Unavailable'}")
     logger.info(f"Documents loaded: {vector_store.count() if vector_store else 0}")
     
-    app.run(host='0.0.0.0', port=port, debug=debug)
+    # Start the application
+    app.run(host='0.0.0.0', port=port, debug=debug, threaded=True)
