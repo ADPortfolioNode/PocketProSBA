@@ -294,10 +294,6 @@ function App() {
 }
 
 export default App;
-          progress: 0 
-        });
-        
-        setTimeout(() => setUploadProgress(null), 5000);
         addMessage(`❌ Batch upload failed: ${data.error}`, false, 'error');
       }
     } catch (error) {

@@ -378,56 +378,6 @@ def semantic_search():
         logger.error(f"Search error: {str(e)}")
         return jsonify({'error': f'Search failed: {str(e)}'}), 500
 
-@app.route('/api/chat', methods=['POST'])
-def rag_chat():
-    """RAG-powered chat endpoint"""
-    if not rag_system_available:
-        return jsonify({'error': 'RAG system not available'}), 503
-    
-    try:
-        data = request.get_json()
-        user_query = data.get('message', '')
-        
-        if not user_query:
-            return jsonify({'error': 'Message is required'}), 400
-        
-        # Retrieve relevant documents
-        search_results = vector_store.search(user_query, n_results=3)
-        
-        # Build context and sources
-        context_parts = []
-        sources = []
-        
-        if search_results['documents'][0]:
-            for i, doc in enumerate(search_results['documents'][0]):
-                context_parts.append(f"Source {i+1}: {doc}")
-                sources.append({
-                    'id': search_results['ids'][0][i],
-                    'content': doc[:200] + "..." if len(doc) > 200 else doc,
-                    'metadata': search_results['metadatas'][0][i],
-                    'relevance': 1 - search_results['distances'][0][i]
-                })
-        
-        # Generate response
-        context = "\n\n".join(context_parts)
-        
-        if context:
-            response = f"Based on my knowledge base, here's what I found regarding '{user_query}':\n\n{context}"
-        else:
-            response = f"I don't have specific information about '{user_query}' in my current knowledge base. Please add relevant documents to help me provide better answers."
-        
-        return jsonify({
-            'query': user_query,
-            'response': response,
-            'sources': sources,
-            'context_used': bool(context),
-            'response_time': time.time()
-        })
-        
-    except Exception as e:
-        logger.error(f"RAG chat error: {str(e)}")
-        return jsonify({'error': f'Chat failed: {str(e)}'}), 500
-
 # Additional endpoints for compatibility
 @app.route('/api/collections/stats', methods=['GET'])
 def get_collection_stats():
@@ -467,7 +417,7 @@ if __name__ == '__main__':
     # Start the application
     app.run(host='0.0.0.0', port=port, debug=debug, threaded=True)
 
-# Perform search
+# Utility function to perform search
 def perform_search(query, n_results=3):
     try:
         results = vector_store.search(query, n_results=n_results)
@@ -484,16 +434,11 @@ def perform_search(query, n_results=3):
                     'relevance_score': 1 - results['distances'][0][i]
                 })
         
-        return jsonify({
-            'query': query,
-            'results': formatted_results,
-            'count': len(formatted_results),
-            'search_time': time.time()
-        })
+        return formatted_results
         
     except Exception as e:
         logger.error(f"Search error: {str(e)}")
-        return jsonify({'error': f'Search failed: {str(e)}'}), 500
+        return []
 
 # Create socketio for compatibility with run.py
 socketio = None
