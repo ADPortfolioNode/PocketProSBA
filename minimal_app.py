@@ -18,6 +18,9 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'fallback-secret-key')
 CORS(app)
 
+# Export for Gunicorn to find
+application = app
+
 @app.route('/')
 def index():
     """Root route - minimal response"""
@@ -27,7 +30,8 @@ def index():
         "version": "1.0.0",
         "service": "PocketPro Small Business Assistant",
         "environment": os.environ.get('FLASK_ENV', 'unknown'),
-        "python_version": sys.version.split()[0]
+        "python_version": sys.version.split()[0],
+        "port": os.environ.get('PORT', '5000')
     })
 
 @app.route('/health')

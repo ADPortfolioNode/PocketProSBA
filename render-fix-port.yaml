@@ -1,0 +1,14 @@
+services:
+  # Absolute minimal deployment to fix port binding issue
+  - type: web
+    name: pocketpro-sba-minimal
+    runtime: python
+    buildCommand: pip install flask gunicorn
+    startCommand: gunicorn --bind 0.0.0.0:$PORT minimal_app:app
+    plan: starter
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.9
+      - key: PORT
+        value: 5000
+    healthCheckPath: /health
