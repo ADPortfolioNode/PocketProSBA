@@ -5,6 +5,17 @@ Write-Host "Fixing frontend container issues..." -ForegroundColor Cyan
 # Navigate to the project root
 Set-Location "e:\2024 RESET\PocketProSBA"
 
+# Stop the frontend container
+docker-compose stop frontend
+
+# Remove the frontend container
+docker-compose rm -f frontend
+
+# Rebuild the frontend container
+docker-compose up -d --build frontend
+
+Write-Host "Frontend container has been fixed and restarted!" -ForegroundColor Green
+
 # Create a custom docker-compose file for rebuilding just the frontend
 $customCompose = @"
 version: '3.8'

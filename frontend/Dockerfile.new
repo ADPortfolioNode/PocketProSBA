@@ -1,24 +1,24 @@
-FROM node:16-alpine as build
+FROM node:18-alpine
 
 WORKDIR /app
 
-# Copy package.json and install dependencies first (for better caching)
-COPY package.json package-lock.json* ./
-RUN npm install
-# Force install react-bootstrap explicitly
-RUN npm install --save react-bootstrap
+# Copy package.json and package-lock.json
+COPY package.json package-lock.json ./
 
-# Copy source files
+# Install dependencies
+RUN npm install
+
+# Copy the rest of the application
 COPY . .
 
 # Build the application
-ENV CI=false
-ENV ESLINT_NO_DEV_ERRORS=true
-ENV NODE_OPTIONS=--max-old-space-size=4096
 RUN npm run build
 
-# Production environment
-FROM nginx:alpine
+# Expose the port
+EXPOSE 3000
+
+# Start the application
+CMD ["npm", "start"]
 COPY --from=build /app/build /usr/share/nginx/html
 # Add nginx configuration for SPA routing
 RUN echo 'server { \

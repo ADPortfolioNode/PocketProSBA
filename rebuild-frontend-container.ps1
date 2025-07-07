@@ -26,3 +26,16 @@ if ($docker) {
 } else {
     Write-Host "Docker Desktop is not running. Please start Docker Desktop first." -ForegroundColor Yellow
 }
+
+Write-Host "Rebuilding frontend container..." -ForegroundColor Cyan
+
+# Stop the frontend container
+docker-compose stop frontend
+
+# Remove the frontend container
+docker-compose rm -f frontend
+
+# Rebuild the frontend container
+docker-compose up -d --build frontend
+
+Write-Host "Frontend container has been rebuilt and restarted!" -ForegroundColor Green

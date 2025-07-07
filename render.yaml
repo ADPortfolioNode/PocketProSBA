@@ -14,7 +14,7 @@ services:
       - key: FLASK_APP
         value: app.py
       - key: PORT
-        value: 5000
+        value: "10000"
       - key: SECRET_KEY
         generateValue: true
       - key: PYTHONPATH

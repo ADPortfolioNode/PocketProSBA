@@ -481,9 +481,9 @@ except Exception as e:
     logger.warning(f"⚠️ Failed to register API routes: {str(e)}")
 
 # Log the configured port - CRITICAL for Render.com
-port = int(os.environ.get("PORT", 5000))  # Default to 5000 for Render.com
-logger.info(f"🚪 Configured to listen on port {port}")
-logger.info(f"🔍 PORT environment variable: {os.environ.get('PORT')}")
+port = int(os.environ.get("PORT", 5000))
+logger.info(f"🔍 Binding to port {port}")
+app.run(host="0.0.0.0", port=port, debug=os.environ.get("FLASK_ENV", "production") == "development", threaded=True)
 logger.info(f"🔍 All environment variables related to ports:")
 for key, value in os.environ.items():
     if 'PORT' in key.upper() or 'BIND' in key.upper():
