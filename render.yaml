@@ -1,27 +1,27 @@
 services:
+  # Frontend Static Site
+  - type: web
+    name: pocketpro-sba-frontend
+    env: node
+    buildCommand: npm install && npm run build
+    startCommand: serve -s build
+    envVars:
+      - key: REACT_APP_API_URL
+        value: "https://<your-backend-service-name>.onrender.com"
+    routes:
+      - type: rewrite
+        source: /api/(.*)
+        destination: https://<your-backend-service-name>.onrender.com/api/$1
+      - type: static
+        source: /
+        destination: /
+
   # Backend API Service (Primary Application)
   - type: web
     name: pocketpro-sba-backend
-    runtime: python
-    buildCommand: pip install --upgrade pip setuptools wheel && pip install -r requirements.txt && chmod +x run_on_render.sh
-    startCommand: ./run_on_render.sh
-    plan: starter
-    envVars:
-      - key: PYTHON_VERSION
-        value: 3.9
-      - key: FLASK_ENV
-        value: production
-      - key: FLASK_APP
-        value: app.py
-      - key: PORT
-        value: "10000"
-      - key: SECRET_KEY
-        generateValue: true
-      - key: PYTHONPATH
-        value: /opt/render/project/src:/opt/render/project
-      - key: CORS_ORIGINS
-        value: "*"
-      - key: PYTHONUNBUFFERED
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT
         value: "1"
     healthCheckPath: /health
     healthCheckTimeout: 30

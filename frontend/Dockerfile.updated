@@ -19,6 +19,9 @@ ENV NODE_OPTIONS=--max-old-space-size=4096
 # Build the application
 RUN npm run build
 
+# Ensure proper file permissions
+RUN chmod -R 777 /app
+
 # Production environment
 FROM nginx:alpine
 COPY --from=build /app/build /usr/share/nginx/html
