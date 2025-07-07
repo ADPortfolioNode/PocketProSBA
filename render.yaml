@@ -27,18 +27,3 @@ services:
     healthCheckTimeout: 30
     autoDeploy: false
     numInstances: 1
-
-  # Frontend Static Site
-  - type: static
-    name: pocketpro-sba-frontend
-    buildCommand: cd frontend && npm install --legacy-peer-deps && npm run build
-    staticPublishPath: frontend/build
-    pullRequestPreviewsEnabled: false
-    envVars:
-      - key: NODE_VERSION
-        value: 18.17.0
-      - key: REACT_APP_BACKEND_URL
-        fromService:
-          type: web
-          name: pocketpro-sba-backend
-          property: host

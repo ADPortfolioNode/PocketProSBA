@@ -9,6 +9,8 @@ from collections import Counter
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import math
+from chromadb.config import Settings
+from chromadb.client import Client
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -16,6 +18,12 @@ logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 CORS(app)
+
+# Initialize ChromaDB client
+chroma_client = Client(Settings(
+    chroma_db_impl="duckdb+parquet",
+    persist_directory="./chroma_storage"
+))
 
 # Simple in-memory vector store
 class SimpleVectorStore:
@@ -428,6 +436,40 @@ def rag_chat():
     except Exception as e:
         logger.error(f"RAG chat error: {str(e)}")
         return jsonify({'error': f'Chat failed: {str(e)}'}), 500
+
+@app.route('/api/rag', methods=['POST'])
+def rag_query():
+    """Perform RAG operations using ChromaDB"""
+    try:
+        data = request.get_json()
+        query = data.get('query', '')
+        n_results = data.get('n_results', 5)
+
+        if not query:
+            return jsonify({'error': 'Query is required'}), 400
+
+        # Perform search in ChromaDB
+        results = chroma_client.query(query_text=query, n_results=n_results)
+
+        # Format results
+        formatted_results = [
+            {
+                'id': result['id'],
+                'content': result['document'],
+                'metadata': result['metadata'],
+                'distance': result['distance']
+            }
+            for result in results
+        ]
+
+        return jsonify({
+            'query': query,
+            'results': formatted_results,
+            'count': len(formatted_results)
+        })
+    except Exception as e:
+        logger.error(f"RAG query error: {str(e)}")
+        return jsonify({'error': f'Failed to process query: {str(e)}'}), 500
 
 # Additional endpoints for compatibility
 @app.route('/api/collections/stats', methods=['GET'])

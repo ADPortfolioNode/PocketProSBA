@@ -268,54 +268,37 @@ function App() {
   // Handle RAG query with source retrieval
   const handleRAGQuery = async (query) => {
     if (!query.trim() || loading) return;
-    
+
     addMessage(query, true);
     setLoading(true);
     setStatus('processing_rag');
-    
+
     try {
-      // First try with the /api/rag endpoint
-      let response;
-      try {
-        response = await fetch(`${API_URL}/api/rag`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ query }),
+        const response = await fetch(`${API_URL}/api/rag`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ query, n_results: 5 }),
         });
-      } catch (ragError) {
-        // If /api/rag fails, try the /api/chat endpoint
-        console.warn('RAG endpoint failed, trying chat endpoint:', ragError);
-        response = await fetch(`${API_URL}/api/chat`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ message: query }),
-        });
-      }
-      
-      if (!response.ok) {
-        throw new Error(`Server responded with ${response.status}`);
-      }
-      
-      const data = await response.json();
-      
-      // Handle different response formats
-      const answer = data.answer || data.response || data.message || 'No response from server';
-      const sources = data.sources || data.context || [];
-      
-      addMessage(answer, false, 'rag');
-      setSearchResults(sources);
-      setStatus('rag_complete');
+
+        if (!response.ok) {
+            throw new Error(`Server responded with ${response.status}`);
+        }
+
+        const data = await response.json();
+        const answer = data.results.map(result => result.content).join('\n\n');
+
+        addMessage(answer, false, 'rag');
+        setSearchResults(data.results);
+        setStatus('rag_complete');
     } catch (err) {
-      console.error('RAG query error:', err);
-      setError(`Error with RAG query: ${err.message}`);
-      addMessage(`Sorry, there was an error processing your request: ${err.message}. Please try a different question or try again later.`, false, 'error');
-      setStatus('error');
+        console.error('RAG query error:', err);
+        setError(`Error with RAG query: ${err.message}`);
+        addMessage(`Sorry, there was an error processing your request: ${err.message}.`, false, 'error');
+        setStatus('error');
     } finally {
-      setLoading(false);
+        setLoading(false);
     }
   };
 
@@ -728,6 +711,23 @@ function App() {
                 <h5>Search Results</h5>
                 <ListGroup>
                   {searchResults.slice(0, 3).map((result, index) => (
+                    <ListGroup.Item key={index}>
+                      <h6>{result.title || `Result ${index + 1}`}</h6>
+                      <p className="mb-1">{result.content.substring(0, 50)}...</p>
+                      <Badge bg="info">Score: {(result.score * 100).toFixed(1)}%</Badge>
+                    </ListGroup.Item>
+                  ))}
+                </ListGroup>
+              </div>
+            )}
+          </Offcanvas.Body>
+        </Offcanvas>
+      </div>
+    </ErrorBoundary>
+  );
+}
+
+export default App;
                     <ListGroup.Item key={index}>
                       <h6>{result.title || `Result ${index + 1}`}</h6>
                       <p className="mb-1">{result.content.substring(0, 50)}...</p>
