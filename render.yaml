@@ -4,7 +4,7 @@ services:
     name: pocketpro-sba-backend
     runtime: python
     buildCommand: pip install --upgrade pip setuptools wheel && pip install -r requirements-render-minimal.txt
-    startCommand: gunicorn --bind 0.0.0.0:$PORT --workers 2 --threads 4 wsgi:application
+    startCommand: gunicorn --bind 0.0.0.0:$PORT --timeout 60 --workers 2 --access-logfile - --error-logfile - minimal_app:app
     plan: starter
     envVars:
       - key: PYTHON_VERSION
@@ -12,25 +12,21 @@ services:
       - key: FLASK_ENV
         value: production
       - key: FLASK_APP
-        value: app.py
+        value: minimal_app.py
       - key: PORT
         value: 5000
-      - key: GEMINI_API_KEY
-        sync: false
       - key: SECRET_KEY
         generateValue: true
       - key: PYTHONPATH
         value: /opt/render/project/src:/opt/render/project
-      - key: CHROMA_HOST
-        value: localhost
-      - key: CHROMA_PORT
-        value: 8000
-      - key: UPLOAD_FOLDER
-        value: /opt/render/project/uploads
       - key: CORS_ORIGINS
         value: "*"
+      - key: PYTHONUNBUFFERED
+        value: "1"
     healthCheckPath: /health
-    autoDeploy: true
+    healthCheckTimeout: 15
+    autoDeploy: false
+    numInstances: 1
 
   # Frontend Static Site
   - type: static

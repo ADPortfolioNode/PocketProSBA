@@ -21,12 +21,17 @@ COPY . .
 RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
 USER appuser
 
-# Expose port
-EXPOSE 5000
+# Expose port - Configurable via PORT env var
+# Expose port - Configurable via PORT env var
+ENV PORT=5000
+ENV FLASK_ENV=production
+ENV FLASK_APP=minimal_app.py
+ENV PYTHONUNBUFFERED=1
+EXPOSE ${PORT}
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:5000/health || exit 1
-
-# Start command
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "2", "--threads", "4", "app:app"]
+    CMD curl -f http://localhost:${PORT}/health || exit 1
+    
+# Start command - Use minimal_app for Render.com deployment
+CMD gunicorn --bind 0.0.0.0:${PORT} --timeout 60 --workers 2 minimal_app:app

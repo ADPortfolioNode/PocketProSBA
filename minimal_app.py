@@ -5,21 +5,35 @@ This version strips down to essentials to ensure deployment works
 """
 import os
 import sys
+import logging
 from pathlib import Path
 from flask import Flask, jsonify
 from flask_cors import CORS
 
+# Configure logging
+logging.basicConfig(level=logging.INFO, 
+                   format='[%(asctime)s] %(levelname)s: %(message)s',
+                   datefmt='%Y-%m-%d %H:%M:%S')
+logger = logging.getLogger(__name__)
+
 # Set up the Python path
 project_root = Path(__file__).parent.absolute()
 sys.path.insert(0, str(project_root))
+
+# Get PORT from environment (critical for Render.com)
+PORT = int(os.environ.get('PORT', 5000))
 
 # Create minimal Flask app
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'fallback-secret-key')
 CORS(app)
 
-# Export for Gunicorn to find
+# Export for Gunicorn to find - CRITICAL for Render.com
 application = app
+
+# Log port information at startup
+logger.info("🚀 Application configured to run on port %s (host: 0.0.0.0)", PORT)
+logger.info("🔍 Render.com environment: %s", "Yes" if os.environ.get('RENDER') else "No")
 
 @app.route('/')
 def index():
@@ -31,17 +45,17 @@ def index():
         "service": "PocketPro Small Business Assistant",
         "environment": os.environ.get('FLASK_ENV', 'unknown'),
         "python_version": sys.version.split()[0],
-        "port": os.environ.get('PORT', '5000')
+        "port": PORT,
+        "host": "0.0.0.0",  # Always binding to all interfaces
+        "render": "Yes" if os.environ.get('RENDER') else "No"
     })
 
 @app.route('/health')
 def health():
-    """Health check endpoint"""
+    """Health check endpoint required by Render"""
     return jsonify({
         "status": "healthy",
-        "service": "PocketPro:SBA",
-        "environment": os.environ.get('FLASK_ENV', 'unknown'),
-        "port": os.environ.get('PORT', 'unknown')
+        "success": True
     })
 
 @app.route('/test')
@@ -57,10 +71,37 @@ def test():
         "python_path": sys.path[:3]
     })
 
+@app.route('/port-debug')
+def port_debug():
+    """Debug endpoint to check port configuration"""
+    # Get all relevant environment variables
+    important_vars = ['PORT', 'FLASK_APP', 'FLASK_ENV', 'PYTHONPATH', 'RENDER', 'PYTHON_VERSION']
+    env_vars = {k: v for k, v in os.environ.items() if k in important_vars}
+    
+    # Get network information
+    import socket
+    hostname = socket.gethostname()
+    try:
+        ip = socket.gethostbyname(hostname)
+    except:
+        ip = "Unable to determine"
+    
+    return jsonify({
+        "configured_port": PORT,
+        "environment_variables": env_vars,
+        "process_id": os.getpid(),
+        "working_directory": os.getcwd(),
+        "hostname": hostname,
+        "ip_address": ip,
+        "python_version": sys.version,
+        "render_deployment": os.environ.get('RENDER') is not None
+    })
+
 # For Gunicorn
 application = app
 
+# When run directly, use the PORT environment variable
 if __name__ == "__main__":
-    port = int(os.environ.get('PORT', 10000))  # Default to 10000 for Render
-    print(f"🚀 Starting minimal app on host=0.0.0.0, port={port}")
-    app.run(host='0.0.0.0', port=port, debug=False)
+    port_num = int(os.environ.get('PORT', 5000))
+    logger.info(f"🚀 Starting development server on port {port_num}")
+    app.run(host='0.0.0.0', port=port_num, debug=True)

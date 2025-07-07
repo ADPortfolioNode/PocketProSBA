@@ -1,0 +1,23 @@
+services:
+  # Docker-based deployment for Render.com Production
+  - type: web
+    name: pocketpro-sba-production
+    env: docker
+    dockerfilePath: ./Dockerfile.production
+    dockerCommand: gunicorn --bind 0.0.0.0:$PORT --timeout 60 --workers 2 --access-logfile - --error-logfile - minimal_app:app
+    region: ohio
+    plan: starter
+    envVars:
+      - key: PORT
+        value: 5000
+      - key: FLASK_ENV
+        value: production
+      - key: FLASK_APP
+        value: minimal_app.py
+      - key: SECRET_KEY
+        generateValue: true
+      - key: PYTHONUNBUFFERED
+        value: 1
+    healthCheckPath: /health
+    healthCheckTimeout: 15
+    numInstances: 1

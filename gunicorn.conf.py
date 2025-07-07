@@ -11,8 +11,8 @@ backlog = 2048
 workers = int(os.environ.get('WEB_CONCURRENCY', 1))
 worker_class = "sync"
 worker_connections = 1000
-timeout = 30
-keepalive = 2
+timeout = 60  # Increased timeout for Render.com
+keepalive = 5
 
 # Restart workers after this many requests, to help prevent memory leaks
 max_requests = 1000

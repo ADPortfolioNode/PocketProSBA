@@ -9,9 +9,14 @@ import urllib.error
 import json
 import time
 
-def check_health_endpoint(url="http://localhost:10000/health", timeout=30):
+def check_health_endpoint(url=None, timeout=30):
     """Check if the health endpoint is responding"""
     try:
+        # If no URL is provided, try to use the PORT environment variable
+        if url is None:
+            port = os.environ.get('PORT', '5000')
+            url = f"http://localhost:{port}/health"
+            
         print(f"🔍 Checking health endpoint: {url}")
         
         request = urllib.request.Request(url)
