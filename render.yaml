@@ -3,8 +3,8 @@ services:
   - type: web
     name: pocketpro-sba-backend
     runtime: python
-    buildCommand: pip install --upgrade pip setuptools wheel && pip install -r requirements.txt
-    startCommand: gunicorn app:app --bind=0.0.0.0:$PORT --timeout=60 --workers=2 --access-logfile=- --error-logfile=-
+    buildCommand: pip install --upgrade pip setuptools wheel && pip install -r requirements.txt && chmod +x run_on_render.sh
+    startCommand: ./run_on_render.sh
     plan: starter
     envVars:
       - key: PYTHON_VERSION

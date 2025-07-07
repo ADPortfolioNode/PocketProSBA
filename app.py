@@ -483,6 +483,11 @@ except Exception as e:
 # Log the configured port - CRITICAL for Render.com
 port = int(os.environ.get("PORT", 5000))  # Default to 5000 for Render.com
 logger.info(f"🚪 Configured to listen on port {port}")
+logger.info(f"🔍 PORT environment variable: {os.environ.get('PORT')}")
+logger.info(f"🔍 All environment variables related to ports:")
+for key, value in os.environ.items():
+    if 'PORT' in key.upper() or 'BIND' in key.upper():
+        logger.info(f"   {key}={value}")
 
 # For Render.com, we need to expose the app for Gunicorn to find
 application = app
