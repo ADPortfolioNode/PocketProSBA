@@ -14,11 +14,11 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first for better caching
-COPY requirements-render-minimal.txt .
+COPY requirements-render-production.txt .
 
 # Install Python dependencies with optimizations
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
-    pip install --no-cache-dir -r requirements-render-minimal.txt
+    pip install --no-cache-dir -r requirements-render-production.txt
 
 # Copy application code
 COPY . .

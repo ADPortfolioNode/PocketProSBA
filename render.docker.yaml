@@ -3,8 +3,8 @@ services:
   - type: web
     name: pocketpro-sba-production
     env: docker
-    dockerfilePath: ./Dockerfile.production
-    dockerCommand: gunicorn --bind 0.0.0.0:$PORT --timeout 60 --workers 2 --access-logfile - --error-logfile - minimal_app:app
+    dockerfilePath: ./Dockerfile
+    dockerCommand: gunicorn app:app --bind=0.0.0.0:$PORT --timeout=60 --workers=2 --access-logfile=- --error-logfile=-
     region: ohio
     plan: starter
     envVars:
@@ -13,11 +13,11 @@ services:
       - key: FLASK_ENV
         value: production
       - key: FLASK_APP
-        value: minimal_app.py
+        value: app.py
       - key: SECRET_KEY
         generateValue: true
       - key: PYTHONUNBUFFERED
         value: 1
     healthCheckPath: /health
-    healthCheckTimeout: 15
+    healthCheckTimeout: 30
     numInstances: 1

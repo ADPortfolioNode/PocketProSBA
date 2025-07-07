@@ -33,5 +33,5 @@ EXPOSE ${PORT}
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:${PORT}/health || exit 1
     
-# Start command - Use minimal_app for Render.com deployment
-CMD gunicorn --bind 0.0.0.0:${PORT} --timeout 60 --workers 2 minimal_app:app
+# Start command - Use main app for Render.com deployment
+CMD gunicorn --bind 0.0.0.0:${PORT} --timeout 60 --workers 2 --access-logfile - --error-logfile - app:app

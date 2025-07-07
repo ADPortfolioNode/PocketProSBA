@@ -3,8 +3,8 @@ services:
   - type: web
     name: pocketpro-sba-backend
     runtime: python
-    buildCommand: pip install --upgrade pip setuptools wheel && pip install -r requirements-render-minimal.txt
-    startCommand: gunicorn --bind 0.0.0.0:$PORT --timeout 60 --workers 2 --access-logfile - --error-logfile - minimal_app:app
+    buildCommand: pip install --upgrade pip setuptools wheel && pip install -r requirements.txt
+    startCommand: gunicorn app:app --bind=0.0.0.0:$PORT --timeout=60 --workers=2 --access-logfile=- --error-logfile=-
     plan: starter
     envVars:
       - key: PYTHON_VERSION
@@ -12,7 +12,7 @@ services:
       - key: FLASK_ENV
         value: production
       - key: FLASK_APP
-        value: minimal_app.py
+        value: app.py
       - key: PORT
         value: 5000
       - key: SECRET_KEY
@@ -24,7 +24,7 @@ services:
       - key: PYTHONUNBUFFERED
         value: "1"
     healthCheckPath: /health
-    healthCheckTimeout: 15
+    healthCheckTimeout: 30
     autoDeploy: false
     numInstances: 1
 

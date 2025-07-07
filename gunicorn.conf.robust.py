@@ -2,8 +2,8 @@
 # Addresses 502 Bad Gateway issues with timeouts and worker management
 import os
 
-# Server socket - Render.com default port is 10000, not 5000
-bind = f"0.0.0.0:{os.environ.get('PORT', '10000')}"
+# Server socket - FIXED: Render.com expects port 5000, not 10000
+bind = f"0.0.0.0:{os.environ.get('PORT', '5000')}"
 backlog = 2048
 
 # Worker processes - Conservative settings for stability
