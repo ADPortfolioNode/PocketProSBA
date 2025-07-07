@@ -9,13 +9,31 @@ It checks:
 1. The application is running on the correct port
 2. The health endpoint is responding
 3. All required environment variables are set
+4. No references to port 10000 remain in deployment files
 """
 import os
 import sys
 import json
 import requests
 import time
+import re
 from urllib.parse import urlparse
+from pathlib import Path
+
+# Files to check for port references
+PORT_CHECK_FILES = [
+    "app.py",
+    "wsgi.py",
+    "gunicorn.conf.py",
+    "gunicorn.conf.robust.py",
+    "Dockerfile",
+    "Dockerfile.backend",
+    "Dockerfile.backend.prod",
+    "Dockerfile.render",
+    "Procfile",
+    "render.yaml",
+    "render.docker.yaml",
+]
 
 def verify_deployment(base_url):
     """Verify that the deployment is working correctly"""
@@ -85,6 +103,46 @@ def verify_deployment(base_url):
     # All checks passed
     return True
 
+def check_port_references(file_path, bad_port="10000", good_port="5000"):
+    """Check for hard-coded port references"""
+    if not Path(file_path).exists():
+        return True, f"File {file_path} does not exist - skipping"
+    
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+        
+        # Check for bad port references
+        bad_port_pattern = r'(?<!-)(?<!\d)' + bad_port + r'(?!\d)'
+        matches = re.findall(bad_port_pattern, content)
+        if matches:
+            bad_port_locations = []
+            for line_num, line in enumerate(content.splitlines(), 1):
+                if bad_port in line:
+                    context = line.strip()
+                    bad_port_locations.append(f"Line {line_num}: {context}")
+            
+            return False, f"Found {len(matches)} references to port {bad_port} in {file_path}:\n" + "\n".join(bad_port_locations[:5])
+        
+        return True, f"No bad port references found in {file_path}"
+        
+    except Exception as e:
+        return False, f"Error checking {file_path}: {e}"
+
+def verify_port_configuration():
+    """Verify that all files are using the correct port"""
+    print("\n🔍 Checking for port 10000 references...")
+    all_passed = True
+    
+    for file_path in PORT_CHECK_FILES:
+        passed, message = check_port_references(file_path)
+        status = "✅" if passed else "❌"
+        print(f"  {status} {message}")
+        if not passed:
+            all_passed = False
+    
+    return all_passed
+
 def main():
     """Main function"""
     if len(sys.argv) < 2:
@@ -113,8 +171,9 @@ def main():
     print("=" * 50)
     
     success = verify_deployment(base_url)
+    port_success = verify_port_configuration()
     
-    if success:
+    if success and port_success:
         print("\n🎉 All checks passed! Your application is running correctly on Render.com")
         return 0
     else:

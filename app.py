@@ -481,7 +481,7 @@ except Exception as e:
     logger.warning(f"⚠️ Failed to register API routes: {str(e)}")
 
 # Log the configured port - CRITICAL for Render.com
-port = int(os.environ.get("PORT", 5000))  # Default to 5000, not 10000
+port = int(os.environ.get("PORT", 5000))  # Default to 5000 for Render.com
 logger.info(f"🚪 Configured to listen on port {port}")
 
 # For Render.com, we need to expose the app for Gunicorn to find
