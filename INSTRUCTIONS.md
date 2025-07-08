@@ -13,9 +13,32 @@ PocketPro:SBA Edition is a scalable Retrieval-Augmented Generation (RAG) applica
 | Backend   | Python Flask (port 5000) | REST API server with CORS and modular design |
 | Vector DB | ChromaDB (port 8000) | Stores document and step embeddings for semantic search |
 | LLM Service | Gemini API (Google) | Powers the conversational AI and task processing |
-| Frontend  |create-react-app (port 3000) b React.js + Bootstrap grid layout | Mobile-first, responsive and adaptive UI with real-time updates |
+| Frontend  | React.js + Bootstrap (port 3000) | Mobile-first, responsive and adaptive UI with real-time updates |
+| Reverse Proxy | Nginx (port 8080) | Routes traffic between frontend and backend services |
 | WebSockets | Flask-SocketIO | Real-time communication between client and server |
 | **Brand** | **PocketPro:SBA Edition by StainlessDeoism.biz** | **White-label RAG for SBA/small business** |
+
+### Docker & Deployment Configuration
+
+The application uses Docker Compose for local development and is configured for deployment on Render.com:
+
+#### Port Mappings
+
+| Service  | Internal Port | External Port | Description |
+|----------|---------------|--------------|-------------|
+| Backend  | 5000          | 5000         | Flask API server with Gunicorn |
+| Frontend | 3000          | 3000         | React development server |
+| Nginx    | 80            | 8080         | Reverse proxy for routing |
+
+#### Routing Configuration
+
+Nginx handles routing between services:
+- `/` → Frontend (React app)
+- `/api/` → Backend (Flask API)
+- `/health` → Backend health check
+- `/socket.io/` → WebSocket connections
+
+For detailed deployment instructions, see [DOCKER_CONFIGURATION.md](./DOCKER_CONFIGURATION.md) and [PRODUCTION_DEPLOYMENT_GUIDE.md](./PRODUCTION_DEPLOYMENT_GUIDE.md).
 
 ## ASSISTANT ARCHITECTURE AND WORKFLOWS
 

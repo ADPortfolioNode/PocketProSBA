@@ -18,6 +18,13 @@ keepalive = 5
 max_requests = 1000
 max_requests_jitter = 100
 
+# Threading
+threads = 2
+
+# Memory management
+worker_tmp_dir = "/dev/shm"
+worker_abort_on_error = True
+
 # Logging
 accesslog = "-"
 errorlog = "-"
