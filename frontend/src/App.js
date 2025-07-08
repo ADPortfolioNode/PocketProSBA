@@ -53,7 +53,7 @@ function App() {
     
     // Call backend with RAG if server is connected
     if (serverConnected) {
-      fetch("http://localhost:5000/api/chat", {
+      fetch("/api/chat", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

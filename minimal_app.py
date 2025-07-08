@@ -7,7 +7,7 @@ import os
 import sys
 import logging
 from pathlib import Path
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from flask_cors import CORS
 
 # Configure logging
@@ -57,6 +57,38 @@ def health():
         "status": "healthy",
         "success": True
     })
+
+@app.route('/api/health')
+def api_health():
+    """API health check endpoint for frontend connection status"""
+    return jsonify({
+        "status": "connected",
+        "success": True,
+        "version": "1.0.0",
+        "environment": os.environ.get('FLASK_ENV', 'development')
+    })
+
+@app.route('/api/chat', methods=['POST'])
+def chat():
+    """Simple chat endpoint to respond to frontend requests"""
+    try:
+        data = request.get_json()
+        query = data.get('query', '')
+        
+        # Simple response for minimal app
+        response = f"You asked: {query}\n\nThis is a simple response from the minimal backend. For full RAG functionality, use the complete app."
+        
+        return jsonify({
+            "success": True,
+            "response": response
+        })
+    except Exception as e:
+        logger.error(f"Error in chat endpoint: {str(e)}")
+        return jsonify({
+            "success": False,
+            "error": str(e),
+            "response": "Sorry, there was an error processing your request."
+        }), 500
 
 @app.route('/test')
 def test():

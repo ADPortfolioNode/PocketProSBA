@@ -8,15 +8,17 @@ git add Dockerfile.backend
 git add Dockerfile.frontend.dev
 git add frontend/src/App.js
 git add frontend/src/App.css
+git add frontend/src/index.js
+git add frontend/REACT18_UPGRADE.md
 git add INSTRUCTIONS.md
 git add DOCKER_CONFIGURATION.md
 git add nginx.conf
 
 # Create a commit with a descriptive message
-git commit -m "Stable Docker configuration with memory optimizations and improved frontend"
+git commit -m "Stable Docker configuration with memory optimizations and React 18 upgrade"
 
 # Add tag for this stable version
-git tag -a v1.0.0-stable-docker -m "Stable Docker configuration with memory optimizations"
+git tag -a v1.0.0-stable -m "Stable Docker configuration with memory optimizations and React 18 upgrade"
 
-Write-Host "Changes committed successfully. Tag v1.0.0-stable-docker created."
+Write-Host "Changes committed successfully. Tag v1.0.0-stable created."
 Write-Host "Use 'git push origin master --tags' to push changes to remote repository."
