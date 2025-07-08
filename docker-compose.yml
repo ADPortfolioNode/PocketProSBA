@@ -18,7 +18,7 @@ services:
       - PYTHONUNBUFFERED=1
       # PYTHONMALLOC=debug can increase memory usage, removing it
       - PYTHONDONTWRITEBYTECODE=1
-    command: gunicorn --bind 0.0.0.0:5000 --timeout 60 --workers 1 --log-level info --config=gunicorn.minimal.py minimal_app:app
+    command: gunicorn --bind 0.0.0.0:5000 --timeout 60 --workers 1 --log-level info app:app
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
       interval: 30s
@@ -44,7 +44,7 @@ services:
       - ./frontend:/app
       - /app/node_modules
     environment:
-      - REACT_APP_BACKEND_URL=http://localhost:5000
+      - REACT_APP_BACKEND_URL=/api
       # Disable ESLint errors from failing the build
       - CI=false
       - ESLINT_NO_DEV_ERRORS=true

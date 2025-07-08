@@ -27,7 +27,7 @@ function App() {
   
   const checkServerConnection = async () => {
     try {
-      const response = await fetch("http://localhost:5000/health");
+      const response = await fetch("/health");
       if (response.ok) {
         setServerConnected(true);
       } else {
@@ -97,7 +97,7 @@ function App() {
     formData.append("file", file);
     
     try {
-      const response = await fetch("http://localhost:5000/api/documents/upload", {
+      const response = await fetch("/api/documents/upload", {
         method: "POST",
         body: formData,
       });
@@ -120,7 +120,7 @@ function App() {
     if (!query.trim()) return;
     
     try {
-      const response = await fetch(`http://localhost:5000/api/documents/search?query=${encodeURIComponent(query)}`);
+      const response = await fetch(`/api/documents/search?query=${encodeURIComponent(query)}`);
       
       if (!response.ok) {
         throw new Error(`Search failed with status ${response.status}`);
@@ -148,7 +148,7 @@ function App() {
     setLoading(true);
     
     try {
-      const response = await fetch("http://localhost:5000/api/rag/query", {
+      const response = await fetch("/api/rag/query", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -202,7 +202,10 @@ function App() {
       <Navbar bg="primary" variant="dark" expand="lg" className="mb-3">
         <Container>
           <Navbar.Brand href="#home">PocketPro SBA Assistant</Navbar.Brand>
-          <ConnectionStatusIndicator connected={serverConnected} />
+          <ConnectionStatusIndicator 
+            connected={serverConnected} 
+            onConnectionChange={(status) => setServerConnected(status)}
+          />
           <Navbar.Toggle aria-controls="basic-navbar-nav" />
           <Navbar.Collapse id="basic-navbar-nav">
             <Nav className="ms-auto">

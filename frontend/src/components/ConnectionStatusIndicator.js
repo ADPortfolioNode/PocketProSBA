@@ -27,7 +27,9 @@ const ConnectionStatusIndicator = ({
     
     setIsChecking(true);
     try {
-      const response = await fetch(`${apiUrl}/api/health`);
+      // Use relative URL instead of including apiUrl to avoid CORS issues
+      const endpoint = apiUrl ? `${apiUrl}/api/health` : '/api/health';
+      const response = await fetch(endpoint);
       const newStatus = response.ok;
       const data = response.ok ? await response.json() : null;
       

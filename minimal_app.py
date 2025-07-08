@@ -1,4 +1,10 @@
-#!/usr/bin/env python3
+#!/usimport os
+import sys
+import logging
+import time
+from pathlib import Path
+from flask import Flask, jsonify, request
+from flask_cors import CORSenv python3
 """
 Minimal Flask app for Render.com deployment testing
 This version strips down to essentials to ensure deployment works
@@ -7,8 +13,9 @@ import os
 import sys
 import logging
 from pathlib import Path
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, request
 from flask_cors import CORS
+import time
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, 
@@ -26,7 +33,20 @@ PORT = int(os.environ.get('PORT', 5000))
 # Create minimal Flask app
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'fallback-secret-key')
-CORS(app)
+
+# Configure CORS with more specific settings
+CORS(app, resources={
+    r"/api/*": {
+        "origins": [
+            "http://localhost:3000",  # React dev server
+            "http://localhost:8080",  # Nginx proxy
+            "http://frontend:3000",   # Docker service name
+            "*"                       # Allow all origins as fallback
+        ],
+        "methods": ["GET", "POST", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization"]
+    }
+})
 
 # Export for Gunicorn to find - CRITICAL for Render.com
 application = app
@@ -88,6 +108,88 @@ def chat():
             "success": False,
             "error": str(e),
             "response": "Sorry, there was an error processing your request."
+        }), 500
+
+@app.route('/api/documents/upload', methods=['POST'])
+def upload_document():
+    """Mock document upload endpoint"""
+    try:
+        # In the minimal app, we'll just mock a successful upload
+        return jsonify({
+            "success": True,
+            "message": "Document uploaded successfully (simulated)",
+            "document": {
+                "id": str(int(time.time())),
+                "name": "Example Document.pdf",
+                "size": "256 KB",
+                "uploadDate": time.strftime("%Y-%m-%d %H:%M:%S"),
+                "status": "processed"
+            }
+        })
+    except Exception as e:
+        logger.error(f"Error in document upload: {str(e)}")
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+@app.route('/api/documents/search', methods=['GET'])
+def search_documents():
+    """Mock document search endpoint"""
+    query = request.args.get('query', '')
+    try:
+        # Return mock search results
+        return jsonify({
+            "success": True,
+            "query": query,
+            "matches": [
+                {
+                    "id": "doc1",
+                    "title": "SBA Loan Programs Guide",
+                    "snippet": "Information about various SBA loan programs including 7(a), 504, and microloans.",
+                    "score": 0.92
+                },
+                {
+                    "id": "doc2",
+                    "title": "Business Plan Template",
+                    "snippet": "Step-by-step guide to creating an effective business plan for SBA loan applications.",
+                    "score": 0.85
+                }
+            ]
+        })
+    except Exception as e:
+        logger.error(f"Error in document search: {str(e)}")
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+@app.route('/api/rag/query', methods=['POST'])
+def rag_query():
+    """Mock RAG query endpoint"""
+    try:
+        data = request.get_json()
+        query = data.get('query', '')
+        
+        # Return mock RAG response
+        return jsonify({
+            "success": True,
+            "query": query,
+            "response": f"Based on the available information, here's what I can tell you about '{query}': The SBA offers various loan programs to help small businesses, including the 7(a) loan program which provides up to $5 million for various business purposes like working capital, equipment purchase, and real estate.",
+            "sources": [
+                {
+                    "title": "SBA Loan Programs Guide",
+                    "page": 12,
+                    "relevance": 0.94
+                }
+            ]
+        })
+    except Exception as e:
+        logger.error(f"Error in RAG query: {str(e)}")
+        return jsonify({
+            "success": False,
+            "error": str(e),
+            "response": "Sorry, there was an error processing your RAG query."
         }), 500
 
 @app.route('/test')
