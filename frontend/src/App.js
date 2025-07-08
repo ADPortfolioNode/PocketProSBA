@@ -15,7 +15,6 @@ import Tab from 'react-bootstrap/Tab';
 import Offcanvas from 'react-bootstrap/Offcanvas';
 import ListGroup from 'react-bootstrap/ListGroup';
 import InputGroup from 'react-bootstrap/InputGroup';
-import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
 
 // Import components

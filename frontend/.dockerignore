@@ -1,0 +1,9 @@
+node_modules
+build
+.DS_Store
+.env
+.git
+.gitignore
+package-lock.json
+npm-debug.log
+public

@@ -543,3 +543,8 @@ if __name__ == "__main__":
     debug = os.environ.get("FLASK_ENV", "production") == "development"
     logger.info(f"🚀 Starting Flask app on port {port}")
     app.run(host="0.0.0.0", port=port, debug=debug, threaded=True)
+
+try:
+    from chromadb.config import Settings
+except ImportError as e:
+    raise ImportError("Missing 'chromadb' dependency. Ensure it is installed in your environment.") from e

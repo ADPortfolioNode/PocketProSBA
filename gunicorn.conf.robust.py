@@ -1,16 +1,17 @@
 # Robust Gunicorn configuration for Render.com deployment
 # Addresses 502 Bad Gateway issues with timeouts and worker management
 import os
+import multiprocessing
 
 # Server socket - Render.com expects port 5000 from PORT environment variable
 bind = f"0.0.0.0:{os.environ.get('PORT', '5000')}"
 backlog = 2048
 
 # Worker processes - Conservative settings for stability
-workers = 1  # Single worker to avoid resource contention
+workers = multiprocessing.cpu_count() * 2 + 1  # Adjusted for better CPU utilization
 worker_class = "sync"  # Sync workers are more stable
 worker_connections = 1000
-timeout = 300  # 5 minutes - increased for slow operations
+timeout = 120  # 2 minutes - increased for slow operations
 keepalive = 120  # 2 minutes - increased for better connection reuse
 graceful_timeout = 120  # 2 minutes for graceful shutdown
 max_requests = 1000
