@@ -445,9 +445,9 @@ function App() {
                         
                         <div className="chat-messages" ref={chatBoxRef}>
                           {messages.length === 0 ? (
-                            <div className="text-center my-5">
-                              <h4>Welcome to PocketPro SBA Assistant</h4>
-                              <p>Ask any question about SBA programs and resources.</p>
+                            <div className="welcome-message">
+                              <h4>🎯 Welcome to PocketPro SBA Assistant</h4>
+                              <p>I'm here to help you navigate SBA programs, funding opportunities, and resources. Ask me anything!</p>
                             </div>
                           ) : (
                             messages.map(message => (
@@ -469,7 +469,7 @@ function App() {
                                 </div>
                                 <div className="message-metadata">
                                   <small>
-                                    {message.role === 'user' ? 'You' : 'Assistant'} • 
+                                    {message.role === 'user' ? '👤 You' : '🤖 Assistant'} • 
                                     {new Date(message.timestamp).toLocaleTimeString()}
                                   </small>
                                 </div>
@@ -491,12 +491,13 @@ function App() {
                           <InputGroup>
                             <Form.Control
                               type="text"
-                              placeholder={connected ? "Type your message here..." : "Server connection required..."}
+                              placeholder={connected ? "💬 Type your message here..." : "🔌 Server connection required..."}
                               value={input}
                               onChange={(e) => setInput(e.target.value)}
                               disabled={loading || !connected}
                               aria-label="Message input"
                               aria-describedby="send-button"
+                              className="chat-input"
                             />
                             <Button 
                               id="send-button"
