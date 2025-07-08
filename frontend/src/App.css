@@ -1562,8 +1562,6 @@
   }
 }
 
-/* ...existing code... */
-
 /* Backend error screen */
 .app-container.error {
   display: flex;
@@ -1813,4 +1811,21 @@
   100% {
     background-position: 200% 0;
   }
+}
+
+.App {
+  min-height: 100vh;
+  background-color: #f8f9fa;
+}
+
+.text-decoration-line-through {
+  text-decoration: line-through;
+}
+
+.card {
+  border-radius: 8px;
+}
+
+.shadow-sm {
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
 }

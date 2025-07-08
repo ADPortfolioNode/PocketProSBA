@@ -13,8 +13,10 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
-    "serve": "serve -s build"
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
   },
+  "homepage": ".",
   "browserslist": {
     "production": [
       ">0.2%",
