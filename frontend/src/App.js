@@ -5,7 +5,10 @@ import { Container, Row, Col, Card, Button, Form, Navbar, Nav } from "react-boot
 import SBANavigation from "./components/SBANavigation";
 import RAGWorkflowInterface from "./components/RAGWorkflowInterface";
 import SBAContentExplorer from "./components/SBAContentExplorer";
+import SBAContent from "./components/SBAContent";
 import ConnectionStatusIndicator from "./components/ConnectionStatusIndicator";
+import ConnectionErrorHandler from "./components/ConnectionErrorHandler";
+import ConciergeGreeting from "./components/ConciergeGreeting";
 import LoadingIndicator from "./components/LoadingIndicator";
 import ErrorBoundary from "./components/ErrorBoundary";
 
@@ -15,6 +18,11 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("chat");
   const [serverConnected, setServerConnected] = useState(false);
+  const [connectionError, setConnectionError] = useState(null);
+  const [usingFallbackConnection, setUsingFallbackConnection] = useState(false);
+  const [systemInfo, setSystemInfo] = useState(null);
+  const [userName, setUserName] = useState("");
+  const [greeted, setGreeted] = useState(false);
   const [selectedProgram, setSelectedProgram] = useState(null);
   const [searchResults, setSearchResults] = useState([]);
   const [documents, setDocuments] = useState([]);
@@ -26,21 +34,84 @@ function App() {
     fetchDocuments(); // Fetch documents on load
   }, []);
   
+  const handleConnectionChange = (status, data, error) => {
+    setServerConnected(status);
+    if (data) {
+      setSystemInfo(data);
+    }
+    
+    if (!status) {
+      setConnectionError(error || new Error("Connection failed"));
+    } else {
+      setConnectionError(null);
+    }
+    
+    // If connection successful, fetch documents
+    if (status) {
+      fetchDocuments();
+    }
+  };
+  
+  // Try a fallback connection method (using HEAD request)
+  const tryFallbackConnection = async () => {
+    try {
+      const endpoints = ['/api/health', '/healthcheck', '/health'];
+      
+      for (const endpoint of endpoints) {
+        try {
+          const response = await fetch(endpoint, { method: 'HEAD' });
+          
+          if (response.ok) {
+            console.log(`Fallback connection successful using ${endpoint}`);
+            setUsingFallbackConnection(true);
+            setServerConnected(true);
+            setConnectionError(null);
+            return true;
+          }
+        } catch (error) {
+          console.warn(`Fallback attempt to ${endpoint} failed:`, error);
+        }
+      }
+      
+      return false;
+    } catch (error) {
+      console.error("All fallback connection attempts failed:", error);
+      return false;
+    }
+  };
+  
   const checkServerConnection = async () => {
     try {
-      const response = await fetch('/api/health');
+      // Use the direct URL to the backend on port 8080
+      const response = await fetch('http://localhost:8080/api/health');
       
       if (response.ok) {
-        const data = await response.json();
-        console.log("Backend connected:", data);
-        setServerConnected(true);
+        try {
+          const data = await response.json();
+          console.log("Backend connected:", data);
+          setSystemInfo(data);
+          setServerConnected(true);
+          setConnectionError(null);
+        } catch (jsonError) {
+          console.warn("Backend returned non-JSON response:", jsonError);
+          // Still consider connected but with unknown system info
+          setServerConnected(true);
+          setSystemInfo({ server_type: "Unknown (non-JSON response)" });
+          setConnectionError(null);
+        }
       } else {
         console.error("Backend connection failed with status:", response.status);
         setServerConnected(false);
+        setConnectionError(new Error(`HTTP Error: ${response.status}`));
+        // Try fallback
+        tryFallbackConnection();
       }
     } catch (error) {
       console.error("Backend connection error:", error);
       setServerConnected(false);
+      setConnectionError(error);
+      // Try fallback
+      tryFallbackConnection();
     }
   };
   
@@ -83,12 +154,16 @@ function App() {
     
     // Call backend with RAG if server is connected
     if (serverConnected) {
-      fetch("/api/chat", {
+      fetch("http://localhost:8080/api/chat", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ message: currentMessage }),
+        body: JSON.stringify({ 
+          message: currentMessage,
+          userName: userName || "Guest",
+          query: currentMessage // Adding this for compatibility with minimal_app.py
+        }),
       })
         .then(response => response.json())
         .then(data => {
@@ -234,6 +309,42 @@ function App() {
     setActiveTab(tab);
   };
   
+  const handleProgramSelect = (programId) => {
+    setSelectedProgram(programId);
+    console.log("Selected program:", programId);
+  };
+  
+  const handleNameSubmit = (name) => {
+    setUserName(name);
+    setGreeted(true);
+    
+    // Add initial greeting message from assistant
+    const greeting = `Hello ${name}! I'm your SBA Assistant. How can I help you today?`;
+    setMessages([
+      { 
+        id: Date.now(), 
+        role: "assistant", 
+        content: greeting 
+      }
+    ]);
+    
+    // Send greeting to backend to store user session info
+    if (serverConnected) {
+      fetch("/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ 
+          message: "SYSTEM: User session started", 
+          userName: name 
+        }),
+      }).catch(error => {
+        console.error("Error sending user info to API:", error);
+      });
+    }
+  };
+  
   return (
     <div className="App">
       <SBANavigation 
@@ -242,6 +353,15 @@ function App() {
         serverConnected={serverConnected}
       />
       
+      {/* Connection Error Handler */}
+      {connectionError && !serverConnected && (
+        <ConnectionErrorHandler 
+          error={connectionError}
+          onRetry={checkServerConnection}
+          fallbackActive={usingFallbackConnection}
+        />
+      )}
+      
       <Container fluid className="py-4">
         {activeTab === "chat" && (
           <Row className="justify-content-center">
@@ -249,22 +369,35 @@ function App() {
               <Card className="shadow-sm">
                 <Card.Header className="d-flex justify-content-between align-items-center">
                   <h4>Chat with SBA Assistant</h4>
-                  <ConnectionStatusIndicator connected={serverConnected} />
+                  <ConnectionStatusIndicator 
+                    connected={serverConnected} 
+                    systemInfo={systemInfo}
+                    checkInterval={30000}
+                    onConnectionChange={handleConnectionChange}
+                  />
                 </Card.Header>
                 <Card.Body>
                   <div className="chat-messages">
                     {messages.length === 0 ? (
-                      <div className="welcome-message">
-                        <h5>Welcome to PocketPro SBA Assistant</h5>
-                        <p>Ask me anything about SBA programs and resources!</p>
-                      </div>
+                      !greeted ? (
+                        <ConciergeGreeting onNameSubmit={handleNameSubmit} />
+                      ) : (
+                        <div className="welcome-message">
+                          <h5>Welcome to PocketPro SBA Assistant</h5>
+                          <p className="user-greeting-message">Hello, {userName}!</p>
+                          <p>Ask me anything about SBA programs and resources!</p>
+                        </div>
+                      )
                     ) : (
                       messages.map(msg => (
                         <div 
                           key={msg.id} 
                           className={`message ${msg.role === "user" ? "user-message" : "assistant-message"}`}
                         >
-                          {msg.content}
+                          {msg.role === "assistant" && msg.content.includes(`Hello ${userName}!`) ? 
+                            <span className="assistant-greeting">{msg.content}</span> :
+                            msg.content
+                          }
                         </div>
                       ))
                     )}
@@ -300,10 +433,9 @@ function App() {
           <ErrorBoundary>
             <Row>
               <Col>
-                <SBAContentExplorer
-                  selectedProgram={selectedProgram}
-                  setSelectedProgram={setSelectedProgram}
-                  serverConnected={serverConnected}
+                <SBAContent
+                  onProgramSelect={handleProgramSelect}
+                  onResourceSelect={(resource) => console.log("Selected resource:", resource)}
                 />
               </Col>
             </Row>

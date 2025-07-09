@@ -1,113 +1,62 @@
-import React, { useState } from 'react';
-import { sbaPrograms, businessLifecycleStages, localResourceTypes } from '../sbaResources';
-import { Nav, Card, Row, Col, Container, Badge } from 'react-bootstrap';
+import React from 'react';
+import { Navbar, Nav, Container } from 'react-bootstrap';
+import ConnectionStatusIndicator from './ConnectionStatusIndicator';
 
-const SBANavigation = ({ onProgramSelect, onResourceSelect }) => {
-  const [activeTab, setActiveTab] = useState('programs');
-  
+const SBANavigation = ({ activeTab, onTabChange, serverConnected }) => {
   return (
-    <Card className="sba-navigation">
-      <Card.Header>
-        <Nav variant="tabs" className="navigation-tabs">
-          <Nav.Item>
+    <Navbar bg="light" expand="lg" className="mb-4 main-navbar">
+      <Container>
+        <Navbar.Brand href="#home">PocketPro SBA Assistant</Navbar.Brand>
+        <Navbar.Toggle aria-controls="basic-navbar-nav" />
+        <Navbar.Collapse id="basic-navbar-nav">
+          <Nav className="me-auto">
             <Nav.Link 
-              active={activeTab === 'programs'}
-              onClick={() => setActiveTab('programs')}
+              href="#chat" 
+              active={activeTab === "chat"}
+              onClick={(e) => {
+                e.preventDefault();
+                onTabChange("chat");
+              }}
             >
-              SBA Programs
+              Chat
             </Nav.Link>
-          </Nav.Item>
-          <Nav.Item>
             <Nav.Link 
-              active={activeTab === 'lifecycle'}
-              onClick={() => setActiveTab('lifecycle')}
+              href="#browse" 
+              active={activeTab === "browse"}
+              onClick={(e) => {
+                e.preventDefault();
+                onTabChange("browse");
+              }}
             >
-              Business Lifecycle
+              Browse Resources
             </Nav.Link>
-          </Nav.Item>
-          <Nav.Item>
             <Nav.Link 
-              active={activeTab === 'local'}
-              onClick={() => setActiveTab('local')}
+              href="#rag" 
+              active={activeTab === "rag"}
+              onClick={(e) => {
+                e.preventDefault();
+                onTabChange("rag");
+              }}
             >
-              Local Resources
+              RAG
             </Nav.Link>
-          </Nav.Item>
-        </Nav>
-      </Card.Header>
-      
-      <Card.Body className="navigation-content">
-        {activeTab === 'programs' && (
-          <Container fluid>
-            <Row xs={1} md={2} lg={3} className="g-3">
-              {sbaPrograms.map(program => (
-                <Col key={program.id}>
-                  <Card 
-                    className="program-card h-100" 
-                    onClick={() => onProgramSelect(program.id)}
-                  >
-                    <Card.Body className="d-flex">
-                      <div className="program-icon me-3">{program.icon}</div>
-                      <div className="program-content">
-                        <Card.Title as="h5">{program.name}</Card.Title>
-                        <Card.Text className="small text-muted">{program.description}</Card.Text>
-                      </div>
-                    </Card.Body>
-                  </Card>
-                </Col>
-              ))}
-            </Row>
-          </Container>
-        )}
-        
-        {activeTab === 'lifecycle' && (
-          <Container fluid>
-            <Row xs={1} md={2} lg={3} className="g-3">
-              {businessLifecycleStages.map(stage => (
-                <Col key={stage.id}>
-                  <Card 
-                    className="lifecycle-card h-100" 
-                    onClick={() => onResourceSelect(`${stage.id} stage`)}
-                  >
-                    <Card.Body className="d-flex">
-                      <div className="lifecycle-icon me-3">{stage.icon}</div>
-                      <div className="lifecycle-content">
-                        <Card.Title as="h5">{stage.name}</Card.Title>
-                        <Card.Text className="small text-muted">{stage.description}</Card.Text>
-                        <Badge bg="info" pill className="mt-2">{stage.phase}</Badge>
-                      </div>
-                    </Card.Body>
-                  </Card>
-                </Col>
-              ))}
-            </Row>
-          </Container>
-        )}
-        
-        {activeTab === 'local' && (
-          <Container fluid>
-            <Row xs={1} md={2} lg={3} className="g-3">
-              {localResourceTypes.map(resource => (
-                <Col key={resource.id}>
-                  <Card 
-                    className="resource-card h-100" 
-                    onClick={() => onResourceSelect(`${resource.id} resources`)}
-                  >
-                    <Card.Body className="d-flex">
-                      <div className="resource-icon me-3">{resource.icon}</div>
-                      <div className="resource-content">
-                        <Card.Title as="h5">{resource.name}</Card.Title>
-                        <Card.Text className="small text-muted">{resource.description}</Card.Text>
-                      </div>
-                    </Card.Body>
-                  </Card>
-                </Col>
-              ))}
-            </Row>
-          </Container>
-        )}
-      </Card.Body>
-    </Card>
+            <Nav.Link 
+              href="#documents" 
+              active={activeTab === "documents"}
+              onClick={(e) => {
+                e.preventDefault();
+                onTabChange("documents");
+              }}
+            >
+              Document Center
+            </Nav.Link>
+          </Nav>
+          <div className="d-flex align-items-center">
+            <ConnectionStatusIndicator connected={serverConnected} />
+          </div>
+        </Navbar.Collapse>
+      </Container>
+    </Navbar>
   );
 };
 

@@ -7,11 +7,11 @@ services:
     startCommand: serve -s build
     envVars:
       - key: REACT_APP_API_URL
-        value: "https://<your-backend-service-name>.onrender.com"
+        value: "https://pocketpro-sba-backend.onrender.com"
     routes:
       - type: rewrite
         source: /api/(.*)
-        destination: https://<your-backend-service-name>.onrender.com/api/$1
+        destination: https://pocketpro-sba-backend.onrender.com/api/$1
       - type: static
         source: /
         destination: /

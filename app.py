@@ -8,6 +8,7 @@ import os
 import logging
 import time
 import json
+import uuid
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from pathlib import Path
@@ -80,36 +81,75 @@ def health_check():
         }
     })
 
+@app.route('/health', methods=['GET'])
+def simple_health_check():
+    """Simple health check endpoint"""
+    return jsonify({
+        'status': 'healthy',
+        'success': True
+    })
+
 @app.route('/api/chat', methods=['POST'])
 def chat():
     """Main chat endpoint with SBA knowledge"""
     try:
         data = request.get_json()
-        message = data.get('message', '')
+        
+        # Accept message parameter from frontend or query parameter from minimal_app
+        message = data.get('message', data.get('query', ''))
+        user_name = data.get('userName', 'Guest')
         
         if not message:
             return jsonify({'error': 'Message is required'}), 400
         
-        # Simple keyword-based responses for SBA queries
-        response = generate_sba_response(message)
+        # Track session and personalize response
+        session_id = request.cookies.get('session_id', str(uuid.uuid4()))
         
-        return jsonify({
+        # System message handling
+        if message.startswith("SYSTEM:"):
+            response = f"Session started for {user_name}. Welcome to the SBA Assistant!"
+            resp = jsonify({
+                'response': response,
+                'timestamp': time.time(),
+                'sessionId': session_id
+            })
+            resp.set_cookie('session_id', session_id, max_age=3600, httponly=True)
+            return resp
+        
+        # Simple keyword-based responses for SBA queries with personalization
+        response = generate_sba_response(message, user_name)
+        
+        resp = jsonify({
             'response': response,
             'timestamp': time.time(),
             'sources': get_relevant_sources(message)
         })
+        resp.set_cookie('session_id', session_id, max_age=3600, httponly=True)
+        return resp
         
     except Exception as e:
         logger.error(f"Chat error: {str(e)}")
         return jsonify({'error': f'Chat failed: {str(e)}'}), 500
 
-def generate_sba_response(message):
-    """Generate response based on SBA knowledge"""
+def generate_sba_response(message, user_name='Guest'):
+    """Generate personalized response based on SBA knowledge"""
     message_lower = message.lower()
+    personal_greeting = f"{user_name}, " if user_name and user_name != 'Guest' else ""
+    
+    # Greeting and introduction queries
+    if any(keyword in message_lower for keyword in ['hello', 'hi ', 'hey', 'greetings', 'howdy']):
+        return f"Hello {user_name}! I'm your SBA Assistant. How can I help you today with SBA programs and resources?"
+    
+    # Personal questions
+    if any(keyword in message_lower for keyword in ['who are you', 'what can you do', 'your name']):
+        return f"I'm your SBA Assistant, {user_name}! I can help you with information about SBA loans, grants, programs, and resources for small businesses. What would you like to know about?"
     
     # 7(a) Loans
     if any(keyword in message_lower for keyword in ['7a', '7(a)', 'loan', 'financing']):
-        return """The SBA 7(a) loan program is the most common SBA loan program. Here are the key details:
+        return f"{personal_greeting}The SBA 7(a) loan program is the most common SBA loan program. Here are the key details:\n\n**Loan Amount**: Up to $5,000,000\n**Uses**: Working capital, equipment purchase, real estate, business acquisition\n**Terms**: Up to 25 years for real estate, 10 years for equipment, 7 years for working capital\n**Down Payment**: Typically 10-15%\n\n**Benefits**:\n- Lower down payments than conventional loans\n- Longer repayment terms\n- Competitive interest rates\n- No prepayment penalties"
+    # 7(a) Loans
+    if any(keyword in message_lower for keyword in ['7a', '7(a)', 'loan', 'financing']):
+        return f"""{personal_greeting}The SBA 7(a) loan program is the most common SBA loan program. Here are the key details:
 
 **Loan Amount**: Up to $5,000,000
 **Uses**: Working capital, equipment purchase, real estate, business acquisition

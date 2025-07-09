@@ -1,10 +1,4 @@
-#!/usimport os
-import sys
-import logging
-import time
-from pathlib import Path
-from flask import Flask, jsonify, request
-from flask_cors import CORSenv python3
+#!/usr/bin/env python3
 """
 Minimal Flask app for Render.com deployment testing
 This version strips down to essentials to ensure deployment works
@@ -12,10 +6,10 @@ This version strips down to essentials to ensure deployment works
 import os
 import sys
 import logging
-from pathlib import Path
-from flask import Flask, jsonify, request, request
-from flask_cors import CORS
 import time
+from pathlib import Path
+from flask import Flask, jsonify, request
+from flask_cors import CORS
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, 
@@ -97,10 +91,18 @@ def chat():
     """Simple chat endpoint to respond to frontend requests"""
     try:
         data = request.get_json()
-        query = data.get('query', '')
+        query = data.get('query', data.get('message', ''))
+        user_name = data.get('userName', 'Guest')
         
-        # Simple response for minimal app
-        response = f"You asked: {query}\n\nThis is a simple response from the minimal backend. For full RAG functionality, use the complete app."
+        # Handle system message
+        if query.startswith("SYSTEM:"):
+            return jsonify({
+                "success": True,
+                "response": f"Session started for {user_name}. Welcome to the SBA Assistant!"
+            })
+        
+        # Simple personalized response for minimal app
+        response = f"Hello {user_name}! You asked: {query}\n\nThis is a simple response from the minimal backend. For full RAG functionality, use the complete app."
         
         return jsonify({
             "success": True,

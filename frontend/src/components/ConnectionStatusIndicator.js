@@ -21,31 +21,101 @@ const ConnectionStatusIndicator = ({
   const [isChecking, setIsChecking] = useState(false);
   const [lastChecked, setLastChecked] = useState(new Date());
   
-  // Function to check connection
+  // Define multiple health endpoints for fallback
+  const healthEndpoints = [
+    'http://localhost:8080/api/health',
+    'http://localhost:8080/health'
+  ];
+
+  // Function to validate content type and parse response safely
+  const safeParseResponse = async (response) => {
+    try {
+      // Check content-type to make sure it's not HTML
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('text/html')) {
+        console.warn('Received HTML response instead of expected JSON');
+        throw new Error('Received HTML instead of JSON');
+      }
+      
+      const text = await response.text();
+      try {
+        // Try to parse as JSON
+        return { isJson: true, data: JSON.parse(text) };
+      } catch (e) {
+        // If parsing fails, return the text
+        console.warn('Failed to parse response as JSON:', e);
+        return { isJson: false, data: text };
+      }
+    } catch (e) {
+      return { isJson: false, error: e };
+    }
+  };
+
+  // Function to check connection with fallback options
   const checkConnection = async () => {
     if (isChecking) return;
     
     setIsChecking(true);
-    try {
-      // Use relative URL instead of including apiUrl to avoid CORS issues
-      const endpoint = apiUrl ? `${apiUrl}/api/health` : '/api/health';
-      const response = await fetch(endpoint);
-      const newStatus = response.ok;
-      const data = response.ok ? await response.json() : null;
-      
-      if (onConnectionChange && connected !== newStatus) {
-        onConnectionChange(newStatus, data);
+    let errorDetails = null;
+    
+    // Try all endpoints in order until one works
+    for (const path of healthEndpoints) {
+      try {
+        const endpoint = path;  // Use the full URL directly
+        
+        // First try with a HEAD request to minimize data transfer
+        try {
+          const headResponse = await fetch(endpoint, { method: 'HEAD' });
+          if (headResponse.ok) {
+            if (onConnectionChange && connected !== true) {
+              onConnectionChange(true, { server_type: 'Unknown (HEAD check)' });
+            }
+            setLastChecked(new Date());
+            setIsChecking(false);
+            return;
+          }
+        } catch (headError) {
+          // If HEAD fails, continue to full GET request
+          console.debug('HEAD request failed, trying GET:', headError);
+        }
+        
+        // Try a full GET request
+        const response = await fetch(endpoint);
+        if (!response.ok) continue; // Try next endpoint if this one fails
+        
+        const { isJson, data, error } = await safeParseResponse(response);
+        
+        if (isJson && data) {
+          if (onConnectionChange && connected !== true) {
+            onConnectionChange(true, data);
+          }
+          setLastChecked(new Date());
+          setIsChecking(false);
+          return;
+        } else if (response.ok) {
+          // Response is OK but not JSON, still consider connected
+          if (onConnectionChange && connected !== true) {
+            onConnectionChange(true, { server_type: 'Unknown (non-JSON response)' });
+          }
+          setLastChecked(new Date());
+          setIsChecking(false);
+          return;
+        }
+      } catch (error) {
+        errorDetails = error;
+        console.warn(`Connection check failed for ${path}:`, error);
+        // Continue to next endpoint
       }
-      
-      setLastChecked(new Date());
-    } catch (error) {
-      console.error('Connection check failed:', error);
-      if (onConnectionChange && connected !== false) {
-        onConnectionChange(false, null);
-      }
-    } finally {
-      setIsChecking(false);
     }
+    
+    // If we get here, all endpoints failed
+    console.error('All connection endpoints failed:', errorDetails);
+    if (onConnectionChange && connected !== false) {
+      onConnectionChange(false, null, errorDetails);
+    }
+    
+    setLastChecked(new Date());
+    setIsChecking(false);
   };
   
   // Set up interval to check connection periodically
