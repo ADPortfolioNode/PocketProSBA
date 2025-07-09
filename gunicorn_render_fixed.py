@@ -11,7 +11,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("gunicorn.render")
 
 # Force the correct port binding
-port = os.environ.get('PORT', 5000)
+port = int(os.environ.get('PORT', 5000))
 logger.info(f"🔍 PORT environment variable: {port}")
 
 # Server socket binding - CRITICAL for Render.com

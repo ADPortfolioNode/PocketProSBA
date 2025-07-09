@@ -90,13 +90,18 @@ const RAGWorkflowInterface = ({
               
               {documents.length > 0 && (
                 <div className="mt-3 mb-3">
-                  <h6>Previously Uploaded Documents</h6>
+                  <h6>Available Documents</h6>
                   <ListGroup>
                     {documents.map((doc, index) => (
                       <ListGroup.Item key={index} className="d-flex justify-content-between align-items-center">
                         <div>
                           <strong>{doc.filename}</strong>
-                          <Badge bg="info" className="ms-2">{doc.pages} pages</Badge>
+                          {doc.pages && <Badge bg="info" className="ms-2">{doc.pages} pages</Badge>}
+                          <small className="d-block text-muted">
+                            {doc.type && `Type: ${doc.type.toUpperCase()}`} 
+                            {doc.size && ` • Size: ${(doc.size / 1024).toFixed(1)} KB`}
+                            {doc.modified && ` • Modified: ${doc.modified}`}
+                          </small>
                         </div>
                         <Button 
                           variant="outline-primary" 

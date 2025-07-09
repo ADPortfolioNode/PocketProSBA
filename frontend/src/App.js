@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./App.css";
-import { Container, Row, Col, Card, Button, Form, Navbar, Nav, Tab, Tabs } from "react-bootstrap";
+import { Container, Row, Col, Card, Button, Form, Navbar, Nav } from "react-bootstrap";
 import SBANavigation from "./components/SBANavigation";
 import RAGWorkflowInterface from "./components/RAGWorkflowInterface";
 import SBAContentExplorer from "./components/SBAContentExplorer";
@@ -23,19 +23,49 @@ function App() {
   // Check backend connection on load
   useEffect(() => {
     checkServerConnection();
+    fetchDocuments(); // Fetch documents on load
   }, []);
   
   const checkServerConnection = async () => {
     try {
-      const response = await fetch("/health");
+      const response = await fetch('/api/health');
+      
       if (response.ok) {
+        const data = await response.json();
+        console.log("Backend connected:", data);
         setServerConnected(true);
       } else {
+        console.error("Backend connection failed with status:", response.status);
         setServerConnected(false);
       }
     } catch (error) {
-      console.error("Server connection error:", error);
+      console.error("Backend connection error:", error);
       setServerConnected(false);
+    }
+  };
+  
+  // Fetch documents from the backend
+  const fetchDocuments = async () => {
+    if (!serverConnected) {
+      console.log("Server not connected, skipping document fetch");
+      return;
+    }
+    
+    try {
+      const response = await fetch('/api/documents/list');
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch documents: ${response.status} ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      
+      if (data.success && data.documents) {
+        setDocuments(data.documents);
+        console.log(`Fetched ${data.documents.length} documents`);
+      }
+    } catch (error) {
+      console.error("Error fetching documents:", error);
     }
   };
 
@@ -58,7 +88,7 @@ function App() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ query: currentMessage }),
+        body: JSON.stringify({ message: currentMessage }),
       })
         .then(response => response.json())
         .then(data => {
@@ -107,7 +137,10 @@ function App() {
       }
       
       const result = await response.json();
-      setDocuments(prev => [...prev, result.document]);
+      
+      // Refresh the document list after successful upload
+      await fetchDocuments();
+      
       return result;
     } catch (error) {
       console.error("Error uploading document:", error);
@@ -196,52 +229,27 @@ function App() {
       return mockResponse;
     }
   };
-
+  
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+  };
+  
   return (
     <div className="App">
-      <Navbar bg="primary" variant="dark" expand="lg" className="mb-3">
-        <Container>
-          <Navbar.Brand href="#home">PocketPro SBA Assistant</Navbar.Brand>
-          <ConnectionStatusIndicator 
-            connected={serverConnected} 
-            onConnectionChange={(status) => setServerConnected(status)}
-          />
-          <Navbar.Toggle aria-controls="basic-navbar-nav" />
-          <Navbar.Collapse id="basic-navbar-nav">
-            <Nav className="ms-auto">
-              <Nav.Link 
-                href="#chat" 
-                active={activeTab === "chat"}
-                onClick={() => setActiveTab("chat")}
-              >
-                Chat
-              </Nav.Link>
-              <Nav.Link 
-                href="#browse" 
-                active={activeTab === "browse"}
-                onClick={() => setActiveTab("browse")}
-              >
-                Browse Resources
-              </Nav.Link>
-              <Nav.Link 
-                href="#documents" 
-                active={activeTab === "documents"}
-                onClick={() => setActiveTab("documents")}
-              >
-                Document Center
-              </Nav.Link>
-            </Nav>
-          </Navbar.Collapse>
-        </Container>
-      </Navbar>
+      <SBANavigation 
+        activeTab={activeTab} 
+        onTabChange={handleTabChange}
+        serverConnected={serverConnected}
+      />
       
-      <Container className="main-container">
+      <Container fluid className="py-4">
         {activeTab === "chat" && (
-          <Row>
-            <Col>
-              <Card className="chat-card">
-                <Card.Header>
+          <Row className="justify-content-center">
+            <Col xs={12} md={10} lg={8} xl={7}>
+              <Card className="shadow-sm">
+                <Card.Header className="d-flex justify-content-between align-items-center">
                   <h4>Chat with SBA Assistant</h4>
+                  <ConnectionStatusIndicator connected={serverConnected} />
                 </Card.Header>
                 <Card.Body>
                   <div className="chat-messages">
@@ -260,6 +268,7 @@ function App() {
                         </div>
                       ))
                     )}
+                    
                     {loading && (
                       <div className="message assistant-message">
                         <LoadingIndicator text="Thinking..." />
@@ -291,15 +300,29 @@ function App() {
           <ErrorBoundary>
             <Row>
               <Col>
-                <SBANavigation 
-                  onProgramSelect={setSelectedProgram} 
-                  onResourceSelect={() => {}} 
+                <SBAContentExplorer
+                  selectedProgram={selectedProgram}
+                  setSelectedProgram={setSelectedProgram}
+                  serverConnected={serverConnected}
                 />
               </Col>
             </Row>
-            <Row className="mt-3">
+          </ErrorBoundary>
+        )}
+        
+        {activeTab === "rag" && (
+          <ErrorBoundary>
+            <Row>
               <Col>
-                <SBAContentExplorer />
+                <RAGWorkflowInterface
+                  documents={documents}
+                  onDocumentUpload={handleDocumentUpload}
+                  onSearch={handleSearch}
+                  searchResults={searchResults}
+                  onRagQuery={handleRagQuery}
+                  ragResponse={ragResponse}
+                  serverConnected={serverConnected}
+                />
               </Col>
             </Row>
           </ErrorBoundary>
@@ -309,14 +332,46 @@ function App() {
           <ErrorBoundary>
             <Row>
               <Col>
-                <RAGWorkflowInterface 
-                  onSearch={handleSearch}
-                  onUpload={handleDocumentUpload}
-                  onQuery={handleRagQuery}
-                  documents={documents}
-                  searchResults={searchResults}
-                  ragResponse={ragResponse}
-                />
+                <Card className="shadow-sm">
+                  <Card.Header>
+                    <h4>Document Center</h4>
+                  </Card.Header>
+                  <Card.Body>
+                    {documents.length > 0 ? (
+                      <div className="document-list">
+                        {documents.map((doc, index) => (
+                          <div key={index} className="document-item mb-3 p-3 border rounded">
+                            <h5>{doc.filename}</h5>
+                            <div className="document-meta">
+                              <span className="me-3">Type: {doc.type || 'Unknown'}</span>
+                              <span className="me-3">Size: {Math.round(doc.size / 1024)} KB</span>
+                              <span>Modified: {doc.modified}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="no-documents-message">
+                        <p>No documents found. Upload documents in the RAG tab to get started.</p>
+                      </div>
+                    )}
+                  </Card.Body>
+                  <Card.Footer>
+                    <Button 
+                      variant="primary" 
+                      onClick={() => handleTabChange("rag")}
+                    >
+                      Upload Documents
+                    </Button>
+                    <Button 
+                      variant="outline-secondary" 
+                      className="ms-2"
+                      onClick={fetchDocuments}
+                    >
+                      Refresh
+                    </Button>
+                  </Card.Footer>
+                </Card>
               </Col>
             </Row>
           </ErrorBoundary>

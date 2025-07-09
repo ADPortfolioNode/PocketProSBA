@@ -30,6 +30,10 @@ sys.path.insert(0, str(project_root))
 # Get PORT from environment (critical for Render.com)
 PORT = int(os.environ.get('PORT', 5000))
 
+# Configure uploads folder
+UPLOAD_FOLDER = os.environ.get('UPLOAD_FOLDER', os.path.join(os.path.dirname(__file__), 'frontend', 'uploads'))
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)  # Ensure uploads directory exists
+
 # Create minimal Flask app
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'fallback-secret-key')
@@ -112,20 +116,60 @@ def chat():
 
 @app.route('/api/documents/upload', methods=['POST'])
 def upload_document():
-    """Mock document upload endpoint"""
+    """Document upload endpoint"""
     try:
-        # In the minimal app, we'll just mock a successful upload
+        # Check if the post request has the file part
+        if 'file' not in request.files:
+            return jsonify({
+                'success': False,
+                'error': 'No file part in the request'
+            }), 400
+        
+        file = request.files['file']
+        
+        # If user does not select file, browser also
+        # submit an empty part without filename
+        if file.filename == '':
+            return jsonify({
+                'success': False,
+                'error': 'No selected file'
+            }), 400
+        
+        # Save the file to the uploads folder
+        filename = file.filename
+        file_path = os.path.join(UPLOAD_FOLDER, filename)
+        file.save(file_path)
+        
+        # Get file stats
+        stats = os.stat(file_path)
+        size_bytes = stats.st_size
+        modified_timestamp = stats.st_mtime
+        
+        # Get file extension
+        file_ext = Path(filename).suffix[1:].lower() if '.' in filename else ""
+        
+        # Determine number of pages (mock for now)
+        pages = 1
+        if file_ext.lower() in ['pdf', 'docx']:
+            # Simulate document with multiple pages
+            pages = max(1, size_bytes // 5000)
+        
+        # Create document metadata
+        document = {
+            'filename': filename,
+            'path': file_path,
+            'size': size_bytes,
+            'modified': time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(modified_timestamp)),
+            'type': file_ext,
+            'pages': pages
+        }
+        
         return jsonify({
-            "success": True,
-            "message": "Document uploaded successfully (simulated)",
-            "document": {
-                "id": str(int(time.time())),
-                "name": "Example Document.pdf",
-                "size": "256 KB",
-                "uploadDate": time.strftime("%Y-%m-%d %H:%M:%S"),
-                "status": "processed"
-            }
+            'success': True,
+            'message': f'File {filename} uploaded successfully',
+            'document': document
         })
+        
     except Exception as e:
         logger.error(f"Error in document upload: {str(e)}")
         return jsonify({
@@ -190,6 +234,58 @@ def rag_query():
             "success": False,
             "error": str(e),
             "response": "Sorry, there was an error processing your RAG query."
+        }), 500
+
+@app.route('/api/documents/list', methods=['GET'])
+def list_documents():
+    """List documents in the uploads folder"""
+    try:
+        documents = []
+        
+        # Check if uploads folder exists
+        if not os.path.exists(UPLOAD_FOLDER):
+            return jsonify({
+                'success': True,
+                'documents': documents
+            })
+        
+        # List files in the uploads folder
+        for filename in os.listdir(UPLOAD_FOLDER):
+            file_path = os.path.join(UPLOAD_FOLDER, filename)
+            if os.path.isfile(file_path):
+                # Get file stats
+                stats = os.stat(file_path)
+                size_bytes = stats.st_size
+                modified_timestamp = stats.st_mtime
+                
+                # Get file extension
+                file_ext = Path(filename).suffix[1:].lower() if '.' in filename else ""
+                
+                # Determine number of pages (mock for now)
+                pages = 1
+                if file_ext.lower() in ['pdf', 'docx']:
+                    # Simulate document with multiple pages
+                    pages = max(1, size_bytes // 5000)
+                
+                documents.append({
+                    'filename': filename,
+                    'path': file_path,
+                    'size': size_bytes,
+                    'modified': time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(modified_timestamp)),
+                    'type': file_ext,
+                    'pages': pages
+                })
+        
+        return jsonify({
+            'success': True,
+            'documents': documents
+        })
+        
+    except Exception as e:
+        logger.error(f"Document listing error: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
         }), 500
 
 @app.route('/test')

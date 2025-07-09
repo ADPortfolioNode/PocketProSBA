@@ -10,6 +10,7 @@ import time
 import json
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+from pathlib import Path
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -17,6 +18,10 @@ logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 CORS(app)
+
+# Configure uploads folder
+UPLOAD_FOLDER = os.environ.get('UPLOAD_FOLDER', os.path.join(os.path.dirname(__file__), 'frontend', 'uploads'))
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)  # Ensure uploads directory exists
 
 # SBA Resources mock data for demonstration
 SBA_RESOURCES = {
@@ -259,6 +264,69 @@ def get_resources():
     """Get SBA resources"""
     return jsonify(SBA_RESOURCES['resources'])
 
+@app.route('/api/documents/upload', methods=['POST'])
+def upload_document():
+    """Document upload endpoint"""
+    try:
+        # Check if the post request has the file part
+        if 'file' not in request.files:
+            return jsonify({
+                'success': False,
+                'error': 'No file part in the request'
+            }), 400
+        
+        file = request.files['file']
+        
+        # If user does not select file, browser also
+        # submit an empty part without filename
+        if file.filename == '':
+            return jsonify({
+                'success': False,
+                'error': 'No selected file'
+            }), 400
+        
+        # Save the file to the uploads folder
+        filename = file.filename
+        file_path = os.path.join(UPLOAD_FOLDER, filename)
+        file.save(file_path)
+        
+        # Get file stats
+        stats = os.stat(file_path)
+        size_bytes = stats.st_size
+        modified_timestamp = stats.st_mtime
+        
+        # Get file extension
+        file_ext = Path(filename).suffix[1:].lower() if '.' in filename else ""
+        
+        # Determine number of pages (mock for now)
+        pages = 1
+        if file_ext.lower() in ['pdf', 'docx']:
+            # Simulate document with multiple pages
+            pages = max(1, size_bytes // 5000)
+        
+        # Create document metadata
+        document = {
+            'filename': filename,
+            'path': file_path,
+            'size': size_bytes,
+            'modified': time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(modified_timestamp)),
+            'type': file_ext,
+            'pages': pages
+        }
+        
+        return jsonify({
+            'success': True,
+            'message': f'File {filename} uploaded successfully',
+            'document': document
+        })
+        
+    except Exception as e:
+        logger.error(f"Document upload error: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
 @app.route('/api/search', methods=['POST'])
 def search():
     """Search SBA resources"""
@@ -300,6 +368,74 @@ def search():
         logger.error(f"Search error: {str(e)}")
         return jsonify({'error': f'Search failed: {str(e)}'}), 500
 
+@app.route('/api/uploads', methods=['GET'])
+def list_uploads():
+    """List uploaded documents"""
+    try:
+        # Get list of files in the uploads directory
+        files = [f for f in os.listdir(UPLOAD_FOLDER) if os.path.isfile(os.path.join(UPLOAD_FOLDER, f))]
+        
+        return jsonify({
+            'uploads': files,
+            'count': len(files)
+        })
+        
+    except Exception as e:
+        logger.error(f"Uploads listing error: {str(e)}")
+        return jsonify({'error': f'Failed to list uploads: {str(e)}'}), 500
+
+@app.route('/api/documents/list', methods=['GET'])
+def list_documents():
+    """List documents in the uploads folder"""
+    try:
+        documents = []
+        
+        # Check if uploads folder exists
+        if not os.path.exists(UPLOAD_FOLDER):
+            return jsonify({
+                'success': True,
+                'documents': documents
+            })
+        
+        # List files in the uploads folder
+        for filename in os.listdir(UPLOAD_FOLDER):
+            file_path = os.path.join(UPLOAD_FOLDER, filename)
+            if os.path.isfile(file_path):
+                # Get file stats
+                stats = os.stat(file_path)
+                size_bytes = stats.st_size
+                modified_timestamp = stats.st_mtime
+                
+                # Get file extension
+                file_ext = Path(filename).suffix[1:].lower() if '.' in filename else ""
+                
+                # Determine number of pages (mock for now)
+                pages = 1
+                if file_ext.lower() in ['pdf', 'docx']:
+                    # Simulate document with multiple pages
+                    pages = max(1, size_bytes // 5000)
+                
+                documents.append({
+                    'filename': filename,
+                    'path': file_path,
+                    'size': size_bytes,
+                    'modified': time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(modified_timestamp)),
+                    'type': file_ext,
+                    'pages': pages
+                })
+        
+        return jsonify({
+            'success': True,
+            'documents': documents
+        })
+        
+    except Exception as e:
+        logger.error(f"Document listing error: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
 @app.route('/', methods=['GET'])
 def index():
     """Root endpoint"""
@@ -312,7 +448,9 @@ def index():
             'chat': '/api/chat',
             'programs': '/api/programs',
             'resources': '/api/resources',
-            'search': '/api/search'
+            'search': '/api/search',
+            'uploads': '/api/uploads',
+            'documents': '/api/documents/list'
         }
     })
 
