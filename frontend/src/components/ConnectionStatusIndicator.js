@@ -23,8 +23,8 @@ const ConnectionStatusIndicator = ({
   
   // Define multiple health endpoints for fallback
   const healthEndpoints = [
-    'http://localhost:8080/api/health',
-    'http://localhost:8080/health'
+    '/api/health',
+    '/health'
   ];
 
   // Function to validate content type and parse response safely
@@ -61,7 +61,7 @@ const ConnectionStatusIndicator = ({
     // Try all endpoints in order until one works
     for (const path of healthEndpoints) {
       try {
-        const endpoint = path;  // Use the full URL directly
+        const endpoint = path;  // Use the relative path directly
         
         // First try with a HEAD request to minimize data transfer
         try {
@@ -122,7 +122,7 @@ const ConnectionStatusIndicator = ({
   useEffect(() => {
     const intervalId = setInterval(checkConnection, checkInterval);
     return () => clearInterval(intervalId);
-  }, [checkInterval, connected, apiUrl]);
+  }, [checkInterval, connected]);
   
   // Format backend info for display
   const getBackendInfo = () => {
