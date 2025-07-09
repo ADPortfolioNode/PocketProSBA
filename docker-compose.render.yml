@@ -1,6 +1,17 @@
 version: '3.8'
 
 services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend.render
+    ports:
+      - "10000:80"
+    depends_on:
+      - backend
+    environment:
+      - BACKEND_URL=backend:$PORT
+
   backend:
     build:
       context: .
@@ -21,13 +32,3 @@ services:
     restart: unless-stopped
     command: /bin/sh -c "gunicorn --bind 0.0.0.0:$PORT --timeout 60 app_full:app"
 
-  web:
-    build:
-      context: .
-      dockerfile: Dockerfile.frontend.render
-    ports:
-      - "10000:80"
-    depends_on:
-      - backend
-    environment:
-      - BACKEND_URL=backend:$PORT

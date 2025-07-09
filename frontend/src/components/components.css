@@ -660,3 +660,78 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Concierge Greeting Responsive Chat Styles */
+.concierge-greeting {
+  max-width: 420px;
+  margin: 2rem auto;
+  background: #fff;
+  border-radius: 1.25rem;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.07);
+  padding: 2rem 1.5rem 1.5rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+}
+.greeting-header {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+.greeting-header h5 {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #1a237e;
+  margin-bottom: 0.5rem;
+}
+.greeting-header p {
+  color: #555;
+  font-size: 1rem;
+  margin-bottom: 0;
+}
+.greeting-body {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.name-form {
+  width: 100%;
+  margin-top: 1rem;
+}
+.name-form .form-label {
+  font-weight: 500;
+  color: #1a237e;
+}
+.name-form .form-control {
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  padding: 0.75rem 1rem;
+}
+.sba-tip {
+  background: #f1f8e9;
+  border-left: 4px solid #43a047;
+  color: #33691e;
+  border-radius: 0.5rem;
+  padding: 0.5rem 1rem;
+  margin: 1rem 0 0.5rem 0;
+  width: 100%;
+  font-size: 0.95rem;
+}
+@media (max-width: 600px) {
+  .concierge-greeting {
+    padding: 1rem 0.5rem 1rem 0.5rem;
+    max-width: 98vw;
+  }
+  .greeting-header h5 {
+    font-size: 1.1rem;
+  }
+  .name-form .form-control {
+    font-size: 0.95rem;
+    padding: 0.5rem 0.75rem;
+  }
+  .sba-tip {
+    font-size: 0.9rem;
+    padding: 0.4rem 0.7rem;
+  }
+}

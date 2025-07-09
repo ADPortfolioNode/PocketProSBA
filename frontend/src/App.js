@@ -368,7 +368,7 @@ function App() {
             <Col xs={12} md={10} lg={8} xl={7}>
               <Card className="shadow-sm">
                 <Card.Header className="d-flex justify-content-between align-items-center">
-                  <h4>Chat with SBA Assistant</h4>
+                  <h4>Concierge Chat</h4>
                   <ConnectionStatusIndicator 
                     connected={serverConnected} 
                     systemInfo={systemInfo}
@@ -378,52 +378,9 @@ function App() {
                 </Card.Header>
                 <Card.Body>
                   <div className="chat-messages">
-                    {messages.length === 0 ? (
-                      !greeted ? (
-                        <ConciergeGreeting onNameSubmit={handleNameSubmit} />
-                      ) : (
-                        <div className="welcome-message">
-                          <h5>Welcome to PocketPro SBA Assistant</h5>
-                          <p className="user-greeting-message">Hello, {userName}!</p>
-                          <p>Ask me anything about SBA programs and resources!</p>
-                        </div>
-                      )
-                    ) : (
-                      messages.map(msg => (
-                        <div 
-                          key={msg.id} 
-                          className={`message ${msg.role === "user" ? "user-message" : "assistant-message"}`}
-                        >
-                          {msg.role === "assistant" && msg.content.includes(`Hello ${userName}!`) ? 
-                            <span className="assistant-greeting">{msg.content}</span> :
-                            msg.content
-                          }
-                        </div>
-                      ))
-                    )}
-                    
-                    {loading && (
-                      <div className="message assistant-message">
-                        <LoadingIndicator text="Thinking..." />
-                      </div>
-                    )}
+                    <ConciergeGreeting onNameSubmit={handleNameSubmit} />
                   </div>
                 </Card.Body>
-                <Card.Footer>
-                  <Form onSubmit={handleSubmit}>
-                    <Form.Group className="d-flex">
-                      <Form.Control
-                        type="text"
-                        value={message}
-                        onChange={(e) => setMessage(e.target.value)}
-                        placeholder="Type your message here..."
-                      />
-                      <Button type="submit" variant="primary" className="ms-2">
-                        Send
-                      </Button>
-                    </Form.Group>
-                  </Form>
-                </Card.Footer>
               </Card>
             </Col>
           </Row>
