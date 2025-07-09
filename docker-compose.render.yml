@@ -8,12 +8,12 @@ services:
     image: pocketpro-sba-backend
     container_name: pocketpro-sba-backend
     environment:
-      - PORT=${PORT:-5000}
+      - PORT
       - FLASK_ENV=production
       - FLASK_APP=app_full.py
     # Ports mapping removed - not needed for Render private services
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:${PORT:-5000}/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:$PORT/health"]
       interval: 30s
       timeout: 15s
       retries: 3
@@ -30,4 +30,4 @@ services:
     depends_on:
       - backend
     environment:
-      - BACKEND_URL=backend:${PORT:-5000}
+      - BACKEND_URL=backend:$PORT
