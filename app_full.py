@@ -499,6 +499,53 @@ def rag_query():
         logger.error(f"RAG query error: {str(e)}")
         return jsonify({'error': f'Failed to process query: {str(e)}'}), 500
 
+@app.route('/api/programs/<program_id>/rag', methods=['GET'])
+def rag_program(program_id):
+    """RAG response for a selected program"""
+    try:
+        # Find the program document by id
+        all_docs = vector_store.get_all_documents()
+        program_doc = next((doc for doc in all_docs if doc.get('metadata', {}).get('id') == program_id or doc.get('id') == program_id), None)
+        if not program_doc:
+            return jsonify({'error': f'Program {program_id} not found'}), 404
+        # Use the document text as the query/context
+        user_query = program_doc['text']
+        search_results = vector_store.search(user_query, n_results=3)
+        context = '\n\n'.join([f"Source {i+1}: {doc}" for i, doc in enumerate(search_results['documents'][0])]) if search_results['documents'][0] else ""
+        response = f"RAG summary for program '{program_id}':\n\n{context}" if context else f"No relevant information found for program '{program_id}'."
+        return jsonify({
+            'program_id': program_id,
+            'response': response,
+            'sources': search_results['documents'][0],
+            'context_used': bool(context)
+        })
+    except Exception as e:
+        logger.error(f"RAG program error: {str(e)}")
+        return jsonify({'error': f'RAG program failed: {str(e)}'}), 500
+
+@app.route('/api/resources/<resource_id>/rag', methods=['GET'])
+def rag_resource(resource_id):
+    """RAG response for a selected resource"""
+    try:
+        # Find the resource document by id
+        all_docs = vector_store.get_all_documents()
+        resource_doc = next((doc for doc in all_docs if doc.get('metadata', {}).get('id') == resource_id or doc.get('id') == resource_id), None)
+        if not resource_doc:
+            return jsonify({'error': f'Resource {resource_id} not found'}), 404
+        user_query = resource_doc['text']
+        search_results = vector_store.search(user_query, n_results=3)
+        context = '\n\n'.join([f"Source {i+1}: {doc}" for i, doc in enumerate(search_results['documents'][0])]) if search_results['documents'][0] else ""
+        response = f"RAG summary for resource '{resource_id}':\n\n{context}" if context else f"No relevant information found for resource '{resource_id}'."
+        return jsonify({
+            'resource_id': resource_id,
+            'response': response,
+            'sources': search_results['documents'][0],
+            'context_used': bool(context)
+        })
+    except Exception as e:
+        logger.error(f"RAG resource error: {str(e)}")
+        return jsonify({'error': f'RAG resource failed: {str(e)}'}), 500
+
 # Additional endpoints for compatibility
 @app.route('/api/collections/stats', methods=['GET'])
 def get_collection_stats():
