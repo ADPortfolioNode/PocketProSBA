@@ -1,1 +1,1 @@
-web: gunicorn app:app --config=gunicorn_windows_render.py
+web: gunicorn app_full:app --bind 0.0.0.0:$PORT --config=gunicorn.render.conf.py

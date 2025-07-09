@@ -9,6 +9,8 @@ from collections import Counter
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import math
+import sys
+from functools import wraps
 
 # Handle ChromaDB import gracefully
 try:
@@ -26,7 +28,50 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
-CORS(app)
+
+# --- Production Hardening Additions ---
+
+# Required environment variables
+REQUIRED_ENV_VARS = ["GEMINI_API_KEY", "SECRET_KEY"]
+def check_required_env_vars():
+    missing = [var for var in REQUIRED_ENV_VARS if not os.environ.get(var)]
+    if missing:
+        logger.error(f"Missing required environment variables: {missing}")
+        sys.exit(1)
+check_required_env_vars()
+
+# Configurable CORS (allow all in dev, restrict in prod)
+if os.environ.get("FLASK_ENV", "production") == "production":
+    CORS(app, origins=[os.environ.get("CORS_ORIGIN", "*")])
+else:
+    CORS(app)
+
+# Request logging
+@app.before_request
+def log_request_info():
+    logger.info(f"Request: {request.method} {request.path} | IP: {request.remote_addr}")
+
+# Global error handler for 500
+@app.errorhandler(500)
+def handle_500(e):
+    logger.error(f"Internal server error: {str(e)}", exc_info=True)
+    return jsonify({"error": "Internal server error"}), 500
+
+# Global error handler for 404
+@app.errorhandler(404)
+def handle_404(e):
+    return jsonify({"error": "Not found"}), 404
+
+# /api/status endpoint
+@app.route('/api/status', methods=['GET'])
+def api_status():
+    return jsonify({
+        'service': 'PocketPro SBA',
+        'status': 'ok',
+        'version': '1.0.0',
+        'rag_status': 'available' if rag_system_available else 'unavailable',
+        'document_count': vector_store.count()
+    })
 
 # Initialize ChromaDB client
 if CHROMADB_AVAILABLE:
@@ -43,6 +88,115 @@ if CHROMADB_AVAILABLE:
 else:
     chroma_client = None
     logger.warning("ChromaDB not available, using fallback vector store")
+
+# --- Advanced Assistant/Session/Task Architecture Additions ---
+import threading
+try:
+    import redis
+    REDIS_AVAILABLE = True
+except ImportError:
+    REDIS_AVAILABLE = False
+
+try:
+    from flask_socketio import SocketIO, emit
+    SOCKETIO_AVAILABLE = True
+except ImportError:
+    SOCKETIO_AVAILABLE = False
+
+# Initialize Flask-SocketIO
+if SOCKETIO_AVAILABLE:
+    socketio = SocketIO(app, cors_allowed_origins="*")
+else:
+    socketio = None
+
+# Redis-backed ConversationStore with fallback to in-memory
+class ConversationStore:
+    def __init__(self, redis_url=None):
+        self.use_redis = False
+        self.redis_url = redis_url or os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
+        if REDIS_AVAILABLE:
+            try:
+                self.r = redis.Redis.from_url(self.redis_url)
+                self.r.ping()
+                self.use_redis = True
+            except Exception as e:
+                logger.warning(f"Redis unavailable: {e}. Using in-memory store.")
+                self.r = None
+        else:
+            self.r = None
+        self.memory_store = {}  # {session_id: [messages]}
+        self.lock = threading.Lock()
+
+    def get(self, session_id):
+        if self.use_redis:
+            data = self.r.get(f"conv:{session_id}")
+            if data:
+                return json.loads(data)
+            return []
+        else:
+            with self.lock:
+                return self.memory_store.get(session_id, []).copy()
+
+    def append(self, session_id, message):
+        if self.use_redis:
+            history = self.get(session_id)
+            history.append(message)
+            self.r.set(f"conv:{session_id}", json.dumps(history))
+        else:
+            with self.lock:
+                self.memory_store.setdefault(session_id, []).append(message)
+
+    def clear(self, session_id):
+        if self.use_redis:
+            self.r.delete(f"conv:{session_id}")
+        else:
+            with self.lock:
+                self.memory_store.pop(session_id, None)
+
+conversation_store = ConversationStore()
+
+# --- TaskAssistant and StepAssistant stubs ---
+class TaskAssistant:
+    def __init__(self, store):
+        self.store = store
+        # TODO: Implement task decomposition, execution, validation
+
+    def decompose(self, user_message):
+        # TODO: Use LLM to decompose user_message into steps
+        return []
+
+    def execute(self, task_id):
+        # TODO: Execute steps for a given task_id
+        return []
+
+    def validate(self, task_id):
+        # TODO: Validate results for a given task_id
+        return True
+
+# StepAssistant stubs (to be implemented)
+class SearchAgent:
+    pass
+class FileAgent:
+    pass
+class FunctionAgent:
+    pass
+
+# Intent classification stub
+class Concierge:
+    def __init__(self, store):
+        self.store = store
+
+    def classify_intent(self, message):
+        # TODO: Use LLM to classify intent
+        return "unknown"
+
+    def handle_message(self, session_id, message):
+        # TODO: Route message to correct workflow
+        return {"response": "Not implemented yet."}
+
+concierge = Concierge(conversation_store)
+task_assistant = TaskAssistant(conversation_store)
+# --- End Advanced Additions ---
 
 # Simple in-memory vector store
 class SimpleVectorStore:
@@ -178,11 +332,45 @@ class SimpleEmbeddingFunction:
 vector_store = SimpleVectorStore()
 rag_system_available = True
 
+UPLOADS_DIR = os.environ.get('UPLOAD_FOLDER', './uploads')
+
+@app.route('/api/uploads', methods=['GET'])
+def list_uploaded_files():
+    """List files in the uploads directory"""
+    try:
+        files = os.listdir(UPLOADS_DIR)
+        file_info = []
+        for fname in files:
+            fpath = os.path.join(UPLOADS_DIR, fname)
+            if os.path.isfile(fpath):
+                stat = os.stat(fpath)
+                file_info.append({
+                    'filename': fname,
+                    'size': stat.st_size,
+                    'modified': stat.st_mtime
+                })
+        return jsonify({'files': file_info, 'count': len(file_info)})
+    except Exception as e:
+        logger.error(f"Error listing uploads: {e}")
+        return jsonify({'error': str(e), 'files': [], 'count': 0}), 500
+
 def initialize_rag_system():
-    """Initialize the RAG system"""
+    """Initialize the RAG system and index new uploads"""
     global vector_store, rag_system_available
     
     try:
+        # Index new files in uploads directory
+        files = os.listdir(UPLOADS_DIR)
+        for fname in files:
+            fpath = os.path.join(UPLOADS_DIR, fname)
+            if os.path.isfile(fpath):
+                with open(fpath, 'r', encoding='utf-8', errors='ignore') as f:
+                    text = f.read()
+                doc_id = f"upload_{fname}"
+                # Avoid duplicate indexing
+                if not any(doc.get('id') == doc_id for doc in vector_store.get_all_documents()):
+                    vector_store.add_document(doc_id, text, {'source': 'upload', 'filename': fname})
+        
         # Test the vector store
         test_id = vector_store.add_document(
             "test_init",

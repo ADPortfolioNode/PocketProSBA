@@ -448,7 +448,7 @@ function App() {
               <Col>
                 <RAGWorkflowInterface
                   documents={documents}
-                  onDocumentUpload={handleDocumentUpload}
+                  onUpload={handleDocumentUpload}
                   onSearch={handleSearch}
                   searchResults={searchResults}
                   onRagQuery={handleRagQuery}
