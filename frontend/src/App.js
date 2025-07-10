@@ -13,8 +13,10 @@ import LoadingIndicator from "./components/LoadingIndicator";
 import ErrorBoundary from "./components/ErrorBoundary";
 import StatusBar from "./components/StatusBar";
 import UploadsManager from "./components/uploads/UploadsManager";
+import { loadEndpoints, getEndpoints, apiFetch } from "./apiClient";
 
-const BACKEND_URL = process.env.BACKEND_URL || "http://backend:5000";
+// Use only the React build-time env variable for backend URL
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
 function App() {
   const [message, setMessage] = useState("");
@@ -33,26 +35,36 @@ function App() {
   const [ragResponse, setRagResponse] = useState(null);
   const [resources, setResources] = useState([]);
   const [expandedResource, setExpandedResource] = useState(null);
+  const [endpoints, setEndpoints] = useState(null);
   
-  // Check backend connection on load
+  // Load endpoint registry on mount
   useEffect(() => {
-    checkServerConnection();
-    fetchDocuments(); // Fetch documents on load
+    loadEndpoints()
+      .then((eps) => setEndpoints(eps))
+      .catch((err) => console.error("Failed to fetch endpoint registry:", err));
   }, []);
   
-  // Fetch resources from API on load
+  // Check backend connection and fetch documents only after endpoints are loaded
   useEffect(() => {
-    fetch(`${BACKEND_URL}/api/resources`)
-      .then(res => res.json())
-      .then(data => {
+    if (endpoints) {
+      checkServerConnection();
+      fetchDocuments();
+    }
+  }, [endpoints]);
+  
+  // Fetch resources from API when endpoints are loaded
+  useEffect(() => {
+    if (!endpoints) return;
+    apiFetch("resources")
+      .then((data) => {
         if (data && Array.isArray(data.resources)) {
           setResources(data.resources);
         }
       })
-      .catch(err => {
+      .catch((err) => {
         console.error("Failed to fetch resources:", err);
       });
-  }, []);
+  }, [endpoints]);
   
   const handleConnectionChange = (status, data, error) => {
     setServerConnected(status);
@@ -101,48 +113,26 @@ function App() {
   };
   
   const checkServerConnection = async () => {
+    if (!endpoints) return;
     try {
-      // Use the backend service name and port
-      const response = await fetch(`${BACKEND_URL}/api/health`);
-      if (response.ok) {
-        try {
-          const data = await response.json();
-          console.log("Backend connected:", data);
-          setSystemInfo(data);
-          setServerConnected(true);
-          setConnectionError(null);
-        } catch (jsonError) {
-          console.warn("Backend returned non-JSON response:", jsonError);
-          setServerConnected(true);
-          setSystemInfo({ server_type: "Unknown (non-JSON response)" });
-          setConnectionError(null);
-        }
-      } else {
-        console.error("Backend connection failed with status:", response.status);
-        setServerConnected(false);
-        setConnectionError(new Error(`HTTP Error: ${response.status}`));
-        tryFallbackConnection();
-      }
+      const data = await apiFetch("health");
+      setSystemInfo(data);
+      setServerConnected(true);
+      setConnectionError(null);
     } catch (error) {
-      console.error("Backend connection error:", error);
       setServerConnected(false);
       setConnectionError(error);
-      tryFallbackConnection();
     }
   };
   
   // Fetch documents from the backend
   const fetchDocuments = async () => {
-    if (!serverConnected) {
-      console.log("Server not connected, skipping document fetch");
+    if (!serverConnected || !endpoints) {
+      console.log("Server not connected or endpoints not loaded, skipping document fetch");
       return;
     }
     try {
-      const response = await fetch(`${BACKEND_URL}/api/documents/list`);
-      if (!response.ok) {
-        throw new Error(`Failed to fetch documents: ${response.status} ${response.statusText}`);
-      }
-      const data = await response.json();
+      const data = await apiFetch("documents.list");
       if (data.success && data.documents) {
         setDocuments(data.documents);
         console.log(`Fetched ${data.documents.length} documents`);
@@ -152,37 +142,36 @@ function App() {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!message.trim()) return;
+    if (!message.trim() || !endpoints) return;
     const currentMessage = message;
-    setMessages(prevMessages => [...prevMessages, { id: Date.now(), role: "user", content: currentMessage }]);
+    setMessages((prevMessages) => [
+      ...prevMessages,
+      { id: Date.now(), role: "user", content: currentMessage },
+    ]);
     setLoading(true);
     setMessage("");
     if (serverConnected) {
-      fetch(`${BACKEND_URL}/api/chat`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ 
-          message: currentMessage,
-          userName: userName || "Guest",
-          query: currentMessage
-        }),
-      })
-        .then(response => response.json())
-        .then(data => {
-          setMessages(prevMessages => [
-            ...prevMessages,
-            { id: Date.now() + 1, role: "assistant", content: data.response }
-          ]);
-          setLoading(false);
-        })
-        .catch(error => {
-          console.error("Error calling API:", error);
-          simulateResponse(currentMessage);
+      try {
+        const data = await apiFetch("chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            message: currentMessage,
+            userName: userName || "Guest",
+            query: currentMessage,
+          }),
         });
+        setMessages((prevMessages) => [
+          ...prevMessages,
+          { id: Date.now() + 1, role: "assistant", content: data.response },
+        ]);
+        setLoading(false);
+      } catch (error) {
+        console.error("Error calling API:", error);
+        simulateResponse(currentMessage);
+      }
     } else {
       simulateResponse(currentMessage);
     }
@@ -200,18 +189,14 @@ function App() {
   
   // Handle document upload for RAG
   const handleDocumentUpload = async (file) => {
-    if (!file) return;
+    if (!file || !endpoints) return;
     const formData = new FormData();
     formData.append("file", file);
     try {
-      const response = await fetch(`${BACKEND_URL}/api/documents/upload`, {
+      const result = await apiFetch("documents.upload", {
         method: "POST",
         body: formData,
       });
-      if (!response.ok) {
-        throw new Error(`Upload failed with status ${response.status}`);
-      }
-      const result = await response.json();
       await fetchDocuments();
       return result;
     } catch (error) {
@@ -222,13 +207,15 @@ function App() {
   
   // Handle search for RAG
   const handleSearch = async (query) => {
-    if (!query.trim()) return;
+    if (!query.trim() || !endpoints) return;
     try {
-      const response = await fetch(`${BACKEND_URL}/api/documents/search?query=${encodeURIComponent(query)}`);
-      if (!response.ok) {
-        throw new Error(`Search failed with status ${response.status}`);
-      }
-      const results = await response.json();
+      const results = await apiFetch(
+        "documents.search",
+        {
+          method: "GET",
+          // If your backend expects query as a param, you may need to adjust apiClient.js
+        }
+      );
       setSearchResults(results.matches || []);
       return results;
     } catch (error) {
@@ -238,93 +225,59 @@ function App() {
   
   // Handle RAG query
   const handleRagQuery = async (query) => {
-    if (!query.trim()) return;
+    if (!query.trim() || !endpoints) return;
     setLoading(true);
     try {
-      const response = await fetch("/api/rag/query", {
+      const result = await apiFetch("rag_query", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ query }),
       });
-      
-      if (!response.ok) {
-        throw new Error(`RAG query failed with status ${response.status}`);
-      }
-      
-      const result = await response.json();
       setRagResponse(result);
-      
-      // Also add to chat
-      setMessages(prev => [
+      setMessages((prev) => [
         ...prev,
         { id: Date.now(), role: "user", content: query },
-        { id: Date.now() + 1, role: "assistant", content: result.response }
+        { id: Date.now() + 1, role: "assistant", content: result.response },
       ]);
-      
       setLoading(false);
       return result;
     } catch (error) {
       console.error("Error with RAG query:", error);
       setLoading(false);
-      
       // Mock response
       const mockResponse = {
-        response: "Based on the documents I've analyzed, the SBA offers various loan programs to help small businesses. The most common is the 7(a) loan program which provides up to $5 million for business purposes.",
-        sources: [
-          { title: "SBA Loan Programs Guide", page: 12 }
-        ]
+        response:
+          "Based on the documents I've analyzed, the SBA offers various loan programs to help small businesses. The most common is the 7(a) loan program which provides up to $5 million for business purposes.",
+        sources: [{ title: "SBA Loan Programs Guide", page: 12 }],
       };
-      
       setRagResponse(mockResponse);
-      
-      // Add to chat
-      setMessages(prev => [
+      setMessages((prev) => [
         ...prev,
         { id: Date.now(), role: "user", content: query },
-        { id: Date.now() + 1, role: "assistant", content: mockResponse.response }
+        { id: Date.now() + 1, role: "assistant", content: mockResponse.response },
       ]);
-      
       return mockResponse;
     }
   };
   
-  const handleTabChange = (tab) => {
-    setActiveTab(tab);
-  };
-  
-  const handleProgramSelect = (programId) => {
-    setSelectedProgram(programId);
-    console.log("Selected program:", programId);
-  };
-  
+  // Send greeting to backend to store user session info
   const handleNameSubmit = (name) => {
     setUserName(name);
     setGreeted(true);
-    
-    // Add initial greeting message from assistant
     const greeting = `Hello ${name}! I'm your SBA Assistant. How can I help you today?`;
     setMessages([
-      { 
-        id: Date.now(), 
-        role: "assistant", 
-        content: greeting 
-      }
+      {
+        id: Date.now(),
+        role: "assistant",
+        content: greeting,
+      },
     ]);
-    
-    // Send greeting to backend to store user session info
-    if (serverConnected) {
-      fetch("/api/chat", {
+    if (serverConnected && endpoints) {
+      apiFetch("chat", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ 
-          message: "SYSTEM: User session started", 
-          userName: name 
-        }),
-      }).catch(error => {
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: "SYSTEM: User session started", userName: name }),
+      }).catch((error) => {
         console.error("Error sending user info to API:", error);
       });
     }
