@@ -4,7 +4,7 @@ import { Card, ListGroup, Form, Button, InputGroup, Spinner, Alert, Badge, Row, 
 // API endpoint
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
-const SBAContentExplorer = () => {
+const SBAContentExplorer = ({ selectedResource }) => {
   const [contentType, setContentType] = useState('articles');
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(false);
@@ -284,73 +284,110 @@ const SBAContentExplorer = () => {
     );
   };
 
+  // Fetch resource details if selectedResource prop is provided
+  useEffect(() => {
+    if (selectedResource) {
+      // Try to fetch the resource details from the SBA_content endpoint
+      setLoading(true);
+      setError(null);
+      fetch(`${API_URL}/api/sba-content/resources/${selectedResource}`)
+        .then(res => {
+          if (!res.ok) throw new Error(`Server responded with ${res.status}`);
+          return res.json();
+        })
+        .then(data => {
+          setSelectedItem(data);
+          setLoading(false);
+        })
+        .catch(err => {
+          setError(`Unable to load resource: ${err.message}`);
+          setLoading(false);
+        });
+    } else {
+      setSelectedItem(null);
+    }
+    // eslint-disable-next-line
+  }, [selectedResource]);
+
   return (
     <div className="sba-content-explorer">
-      <Card>
-        <Card.Header>
-          <h4 className="mb-0">SBA Content Explorer</h4>
-        </Card.Header>
-        <Card.Body>
-          {selectedItem ? (
-            renderContentDetails()
-          ) : (
-            <>
-              <Form onSubmit={handleSearch}>
-                <Row className="mb-3">
-                  <Col md={4}>
-                    <Form.Group>
-                      <Form.Label>Content Type</Form.Label>
-                      <Form.Select
-                        value={contentType}
-                        onChange={(e) => setContentType(e.target.value)}
-                      >
-                        {contentTypes.map(type => (
-                          <option key={type.value} value={type.value}>
-                            {type.label}
-                          </option>
-                        ))}
-                      </Form.Select>
-                    </Form.Group>
-                  </Col>
-                  <Col md={8}>
-                    <Form.Group>
-                      <Form.Label>Search Query</Form.Label>
-                      <InputGroup>
-                        <Form.Control
-                          type="text"
-                          placeholder={`Search SBA ${contentType}...`}
-                          value={searchQuery}
-                          onChange={(e) => setSearchQuery(e.target.value)}
-                        />
-                        <Button 
-                          variant="primary" 
-                          type="submit"
-                          disabled={loading || (!searchQuery.trim() && contentType !== 'offices')}
+      {selectedItem ? (
+        <Card className="mb-4">
+          <Card.Header>
+            <h4>{selectedItem.title}</h4>
+          </Card.Header>
+          <Card.Body>
+            <div>{selectedItem.description || selectedItem.summary || "No description available."}</div>
+            {/* Add more details as needed */}
+          </Card.Body>
+        </Card>
+      ) : (
+        <Card>
+          <Card.Header>
+            <h4 className="mb-0">SBA Content Explorer</h4>
+          </Card.Header>
+          <Card.Body>
+            {selectedItem ? (
+              renderContentDetails()
+            ) : (
+              <>
+                <Form onSubmit={handleSearch}>
+                  <Row className="mb-3">
+                    <Col md={4}>
+                      <Form.Group>
+                        <Form.Label>Content Type</Form.Label>
+                        <Form.Select
+                          value={contentType}
+                          onChange={(e) => setContentType(e.target.value)}
                         >
-                          {loading ? <Spinner animation="border" size="sm" /> : 'Search'}
-                        </Button>
-                      </InputGroup>
-                    </Form.Group>
-                  </Col>
-                </Row>
-              </Form>
-              
-              {error && <Alert variant="danger">{error}</Alert>}
-              
-              {loading ? (
-                <div className="text-center my-4">
-                  <Spinner animation="border" />
-                  <p className="mt-2">Loading results...</p>
-                </div>
-              ) : (
-                renderContentList()
-              )}
-              
-              {renderPagination()}
-            </>
-          )}
-        </Card.Body>
-      </Card>
+                          {contentTypes.map(type => (
+                            <option key={type.value} value={type.value}>
+                              {type.label}
+                            </option>
+                          ))}
+                        </Form.Select>
+                      </Form.Group>
+                    </Col>
+                    <Col md={8}>
+                      <Form.Group>
+                        <Form.Label>Search Query</Form.Label>
+                        <InputGroup>
+                          <Form.Control
+                            type="text"
+                            placeholder={`Search SBA ${contentType}...`}
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                          />
+                          <Button 
+                            variant="primary" 
+                            type="submit"
+                            disabled={loading || (!searchQuery.trim() && contentType !== 'offices')}
+                          >
+                            {loading ? <Spinner animation="border" size="sm" /> : 'Search'}
+                          </Button>
+                        </InputGroup>
+                      </Form.Group>
+                    </Col>
+                  </Row>
+                </Form>
+                
+                {error && <Alert variant="danger">{error}</Alert>}
+                
+                {loading ? (
+                  <div className="text-center my-4">
+                    <Spinner animation="border" />
+                    <p className="mt-2">Loading results...</p>
+                  </div>
+                ) : (
+                  renderContentList()
+                )}
+                
+                {renderPagination()}
+              </>
+            )}
+          </Card.Body>
+        </Card>
+      )}
     </div>
   );
 };

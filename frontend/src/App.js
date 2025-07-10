@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./App.css";
-import { Container, Row, Col, Card, Button, Form, Navbar, Nav } from "react-bootstrap";
+import { Container, Row, Col, Card, Button } from "react-bootstrap";
 import SBANavigation from "./components/SBANavigation";
 import RAGWorkflowInterface from "./components/RAGWorkflowInterface";
 import SBAContentExplorer from "./components/SBAContentExplorer";
@@ -11,6 +11,10 @@ import ConnectionErrorHandler from "./components/ConnectionErrorHandler";
 import ConciergeGreeting from "./components/ConciergeGreeting";
 import LoadingIndicator from "./components/LoadingIndicator";
 import ErrorBoundary from "./components/ErrorBoundary";
+import StatusBar from "./components/StatusBar";
+import UploadsManager from "./components/uploads/UploadsManager";
+
+const BACKEND_URL = process.env.BACKEND_URL || "http://backend:5000";
 
 function App() {
   const [message, setMessage] = useState("");
@@ -27,11 +31,27 @@ function App() {
   const [searchResults, setSearchResults] = useState([]);
   const [documents, setDocuments] = useState([]);
   const [ragResponse, setRagResponse] = useState(null);
+  const [resources, setResources] = useState([]);
+  const [expandedResource, setExpandedResource] = useState(null);
   
   // Check backend connection on load
   useEffect(() => {
     checkServerConnection();
     fetchDocuments(); // Fetch documents on load
+  }, []);
+  
+  // Fetch resources from API on load
+  useEffect(() => {
+    fetch(`${BACKEND_URL}/api/resources`)
+      .then(res => res.json())
+      .then(data => {
+        if (data && Array.isArray(data.resources)) {
+          setResources(data.resources);
+        }
+      })
+      .catch(err => {
+        console.error("Failed to fetch resources:", err);
+      });
   }, []);
   
   const handleConnectionChange = (status, data, error) => {
@@ -82,9 +102,8 @@ function App() {
   
   const checkServerConnection = async () => {
     try {
-      // Use the direct URL to the backend on port 8080
-      const response = await fetch('http://localhost:8080/api/health');
-      
+      // Use the backend service name and port
+      const response = await fetch(`${BACKEND_URL}/api/health`);
       if (response.ok) {
         try {
           const data = await response.json();
@@ -94,7 +113,6 @@ function App() {
           setConnectionError(null);
         } catch (jsonError) {
           console.warn("Backend returned non-JSON response:", jsonError);
-          // Still consider connected but with unknown system info
           setServerConnected(true);
           setSystemInfo({ server_type: "Unknown (non-JSON response)" });
           setConnectionError(null);
@@ -103,14 +121,12 @@ function App() {
         console.error("Backend connection failed with status:", response.status);
         setServerConnected(false);
         setConnectionError(new Error(`HTTP Error: ${response.status}`));
-        // Try fallback
         tryFallbackConnection();
       }
     } catch (error) {
       console.error("Backend connection error:", error);
       setServerConnected(false);
       setConnectionError(error);
-      // Try fallback
       tryFallbackConnection();
     }
   };
@@ -121,16 +137,12 @@ function App() {
       console.log("Server not connected, skipping document fetch");
       return;
     }
-    
     try {
-      const response = await fetch('/api/documents/list');
-      
+      const response = await fetch(`${BACKEND_URL}/api/documents/list`);
       if (!response.ok) {
         throw new Error(`Failed to fetch documents: ${response.status} ${response.statusText}`);
       }
-      
       const data = await response.json();
-      
       if (data.success && data.documents) {
         setDocuments(data.documents);
         console.log(`Fetched ${data.documents.length} documents`);
@@ -143,18 +155,12 @@ function App() {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!message.trim()) return;
-
-    // Store current message to avoid state closure issues
     const currentMessage = message;
-    
-    // Add user message
     setMessages(prevMessages => [...prevMessages, { id: Date.now(), role: "user", content: currentMessage }]);
     setLoading(true);
-    setMessage(""); // Clear input immediately for better UX
-    
-    // Call backend with RAG if server is connected
+    setMessage("");
     if (serverConnected) {
-      fetch("http://localhost:8080/api/chat", {
+      fetch(`${BACKEND_URL}/api/chat`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -162,7 +168,7 @@ function App() {
         body: JSON.stringify({ 
           message: currentMessage,
           userName: userName || "Guest",
-          query: currentMessage // Adding this for compatibility with minimal_app.py
+          query: currentMessage
         }),
       })
         .then(response => response.json())
@@ -175,11 +181,9 @@ function App() {
         })
         .catch(error => {
           console.error("Error calling API:", error);
-          // Fallback to simulated response on error
           simulateResponse(currentMessage);
         });
     } else {
-      // Simulate response if server is not connected
       simulateResponse(currentMessage);
     }
   };
@@ -197,25 +201,18 @@ function App() {
   // Handle document upload for RAG
   const handleDocumentUpload = async (file) => {
     if (!file) return;
-    
     const formData = new FormData();
     formData.append("file", file);
-    
     try {
-      const response = await fetch("/api/documents/upload", {
+      const response = await fetch(`${BACKEND_URL}/api/documents/upload`, {
         method: "POST",
         body: formData,
       });
-      
       if (!response.ok) {
         throw new Error(`Upload failed with status ${response.status}`);
       }
-      
       const result = await response.json();
-      
-      // Refresh the document list after successful upload
       await fetchDocuments();
-      
       return result;
     } catch (error) {
       console.error("Error uploading document:", error);
@@ -226,35 +223,23 @@ function App() {
   // Handle search for RAG
   const handleSearch = async (query) => {
     if (!query.trim()) return;
-    
     try {
-      const response = await fetch(`/api/documents/search?query=${encodeURIComponent(query)}`);
-      
+      const response = await fetch(`${BACKEND_URL}/api/documents/search?query=${encodeURIComponent(query)}`);
       if (!response.ok) {
         throw new Error(`Search failed with status ${response.status}`);
       }
-      
       const results = await response.json();
       setSearchResults(results.matches || []);
       return results;
     } catch (error) {
       console.error("Error searching documents:", error);
-      // Return mock results for now
-      const mockResults = [
-        { id: 1, title: "SBA Loan Programs", snippet: "Information about various SBA loan programs...", score: 0.92 },
-        { id: 2, title: "Business Plan Guide", snippet: "How to create an effective business plan...", score: 0.85 }
-      ];
-      setSearchResults(mockResults);
-      return { matches: mockResults };
     }
   };
   
   // Handle RAG query
   const handleRagQuery = async (query) => {
     if (!query.trim()) return;
-    
     setLoading(true);
-    
     try {
       const response = await fetch("/api/rag/query", {
         method: "POST",
@@ -345,60 +330,74 @@ function App() {
     }
   };
   
+  // Handler to open resource details in the browse tab
+  const handleResourceMore = (resource) => {
+    setActiveTab("browse");
+    setSelectedProgram(resource.id || resource.title || "");
+  };
+
+  // Example RAG task status for progress bar demo
+  const ragTaskStatus = loading ? { progress: 60 } : { progress: 100 };
+  
   return (
-    <div className="App">
-      <SBANavigation 
-        activeTab={activeTab} 
-        onTabChange={handleTabChange}
-        serverConnected={serverConnected}
-      />
-      
-      {/* Connection Error Handler */}
-      {connectionError && !serverConnected && (
-        <ConnectionErrorHandler 
-          error={connectionError}
-          onRetry={checkServerConnection}
-          fallbackActive={usingFallbackConnection}
-        />
-      )}
-      
-      <Container fluid className="py-4">
-        {activeTab === "chat" && (
-          <Row className="justify-content-center">
-            <Col xs={12} md={10} lg={8} xl={7}>
-              <Card className="shadow-sm">
-                <Card.Header className="d-flex justify-content-between align-items-center">
-                  <h4>Concierge Chat</h4>
-                  <ConnectionStatusIndicator 
-                    connected={serverConnected} 
-                    systemInfo={systemInfo}
-                    checkInterval={30000}
-                    onConnectionChange={handleConnectionChange}
-                  />
-                </Card.Header>
-                <Card.Body>
-                  <div className="chat-messages">
-                    <ConciergeGreeting onNameSubmit={handleNameSubmit} />
+    <div className="App bg-light min-vh-100">
+      <SBANavigation activeTab={activeTab} onTabChange={setActiveTab} serverConnected={serverConnected} />
+      <Container className="mt-3">
+        <StatusBar serverConnected={serverConnected} userName={userName} ragTaskStatus={ragTaskStatus} />
+        {/* Resource Badges Section */}
+        <div className="mb-4 d-flex flex-wrap gap-2">
+          {resources.length > 0 ? resources.map((resource, idx) => (
+            <div key={resource.id || resource.title || idx} style={{ minWidth: 200, marginBottom: 8 }}>
+              <span
+                className="badge bg-info text-dark resource-badge"
+                style={{ cursor: "pointer", fontSize: "1rem", padding: "0.75em 1.25em", display: "inline-block" }}
+                onClick={() => setExpandedResource(expandedResource === (resource.id || resource.title) ? null : (resource.id || resource.title))}
+              >
+                {resource.title}
+              </span>
+              {expandedResource === (resource.id || resource.title) && (
+                <div className="resource-summary bg-white border rounded shadow-sm p-3 mt-2">
+                  <div style={{ fontSize: "0.98rem" }}>
+                    {resource.description || resource.summary || "No summary available."}
                   </div>
-                </Card.Body>
-              </Card>
-            </Col>
-          </Row>
-        )}
-        
-        {activeTab === "browse" && (
+                  <Button
+                    variant="link"
+                    size="sm"
+                    className="p-0 mt-2"
+                    onClick={() => handleResourceMore(resource)}
+                  >
+                    More &gt;&gt;&gt;
+                  </Button>
+                </div>
+              )}
+            </div>
+          )) : (
+            <span className="text-muted">No resources available.</span>
+          )}
+        </div>
+        {/* Main Content Tabs */}
+        {activeTab === "chat" && (
           <ErrorBoundary>
             <Row>
-              <Col>
-                <SBAContent
-                  onProgramSelect={handleProgramSelect}
-                  onResourceSelect={(resource) => console.log("Selected resource:", resource)}
-                />
+              <Col md={8} className="mx-auto">
+                <Card className="shadow-sm">
+                  <Card.Body>
+                    <ConciergeGreeting onNameSubmit={setUserName} />
+                  </Card.Body>
+                </Card>
               </Col>
             </Row>
           </ErrorBoundary>
         )}
-        
+        {activeTab === "browse" && (
+          <ErrorBoundary>
+            <Row>
+              <Col>
+                <SBAContentExplorer selectedResource={selectedProgram} />
+              </Col>
+            </Row>
+          </ErrorBoundary>
+        )}
         {activeTab === "rag" && (
           <ErrorBoundary>
             <Row>
@@ -416,50 +415,41 @@ function App() {
             </Row>
           </ErrorBoundary>
         )}
-        
         {activeTab === "documents" && (
           <ErrorBoundary>
             <Row>
-              <Col>
-                <Card className="shadow-sm">
-                  <Card.Header>
-                    <h4>Document Center</h4>
+              <Col md={10} className="mx-auto">
+                <Card className="shadow-sm document-center-hero">
+                  <Card.Header className="bg-primary text-white">
+                    <h3 className="mb-0">Document Center</h3>
+                    <p className="mb-0">All your uploaded documents in one place. Upload, view, and manage your files for RAG tasks.</p>
                   </Card.Header>
                   <Card.Body>
-                    {documents.length > 0 ? (
-                      <div className="document-list">
-                        {documents.map((doc, index) => (
-                          <div key={index} className="document-item mb-3 p-3 border rounded">
-                            <h5>{doc.filename}</h5>
-                            <div className="document-meta">
-                              <span className="me-3">Type: {doc.type || 'Unknown'}</span>
-                              <span className="me-3">Size: {Math.round(doc.size / 1024)} KB</span>
-                              <span>Modified: {doc.modified}</span>
+                    <Row>
+                      <Col md={6}>
+                        <UploadsManager files={documents} onUpload={fetchDocuments} onRefresh={fetchDocuments} />
+                      </Col>
+                      <Col md={6}>
+                        <div className="document-list-hero">
+                          <h5>Uploaded Documents</h5>
+                          {documents.length > 0 ? (
+                            <ul className="list-group">
+                              {documents.map((doc, index) => (
+                                <li key={index} className="list-group-item d-flex flex-column align-items-start">
+                                  <span className="fw-bold">{doc.filename}</span>
+                                  <span className="text-muted small">Type: {doc.type || 'Unknown'} | Size: {Math.round(doc.size / 1024)} KB | Modified: {doc.modified}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <div className="no-documents-message">
+                              <p>No documents found. Upload documents to get started.</p>
                             </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="no-documents-message">
-                        <p>No documents found. Upload documents in the RAG tab to get started.</p>
-                      </div>
-                    )}
+                          )}
+                        </div>
+                      </Col>
+                    </Row>
                   </Card.Body>
-                  <Card.Footer>
-                    <Button 
-                      variant="primary" 
-                      onClick={() => handleTabChange("rag")}
-                    >
-                      Upload Documents
-                    </Button>
-                    <Button 
-                      variant="outline-secondary" 
-                      className="ms-2"
-                      onClick={fetchDocuments}
-                    >
-                      Refresh
-                    </Button>
-                  </Card.Footer>
                 </Card>
               </Col>
             </Row>
