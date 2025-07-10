@@ -330,15 +330,9 @@ function App() {
     }
   };
   
-  // Handler to open resource details in the browse tab
-  const handleResourceMore = (resource) => {
-    setActiveTab("browse");
-    setSelectedProgram(resource.id || resource.title || "");
-  };
-
   // Example RAG task status for progress bar demo
   const ragTaskStatus = loading ? { progress: 60 } : { progress: 100 };
-  
+
   return (
     <div className="App bg-light min-vh-100">
       <SBANavigation activeTab={activeTab} onTabChange={setActiveTab} serverConnected={serverConnected} />
@@ -364,7 +358,7 @@ function App() {
                     variant="link"
                     size="sm"
                     className="p-0 mt-2"
-                    onClick={() => handleResourceMore(resource)}
+                    onClick={() => window.open(`/resources/${(resource.slug || resource.title || "").replace(/\s+/g, '-').toLowerCase()}`, "_blank")}
                   >
                     More &gt;&gt;&gt;
                   </Button>
@@ -382,7 +376,7 @@ function App() {
               <Col md={8} className="mx-auto">
                 <Card className="shadow-sm">
                   <Card.Body>
-                    <ConciergeGreeting onNameSubmit={setUserName} />
+                    <ConciergeGreeting onNameSubmit={handleNameSubmit} />
                   </Card.Body>
                 </Card>
               </Col>
