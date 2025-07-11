@@ -1,27 +1,52 @@
 // src/apiClient.js
 let endpoints = null;
 
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const apiUrl = (path) =>
+  path.startsWith("http") ? path : `${BACKEND_URL}${path.startsWith("/") ? "" : "/"}${path}`;
+
+// Endpoint registry
 export async function loadEndpoints() {
-  const backendUrl = process.env.REACT_APP_BACKEND_URL;
-  if (!backendUrl) throw new Error("REACT_APP_BACKEND_URL is not set");
-  const res = await fetch(`${backendUrl}/api`);
-  if (!res.ok) throw new Error(`Failed to load endpoint registry: ${res.status}`);
-  const data = await res.json();
-  endpoints = data.endpoints;
+  // Correct: matches backend @app.route('/api/api')
+  const response = await fetch(apiUrl("/api/api"));
+  if (!response.ok) throw new Error("Failed to load endpoint registry: " + response.status);
+  return response.json();
+}
+
+// Dynamic endpoint loader
+export async function getEndpoints() {
+  if (endpoints) return endpoints;
+  endpoints = await loadEndpoints();
   return endpoints;
 }
 
-export function getEndpoints() {
-  if (!endpoints) throw new Error("Endpoints not loaded yet");
-  return endpoints;
+// Generic API fetcher using endpoint registry
+export async function apiFetch(endpointKey, options = {}) {
+  // Ensure endpoints are loaded
+  if (!endpoints) {
+    endpoints = await loadEndpoints();
+  }
+  const endpointPath = endpoints[endpointKey];
+  if (!endpointPath) {
+    throw new Error(`Endpoint '${endpointKey}' not found in registry.`);
+  }
+  const url = apiUrl(endpointPath);
+  const response = await fetch(url, options);
+  if (!response.ok) {
+    throw new Error(`API call to '${endpointKey}' failed: ${response.status}`);
+  }
+  return response.json();
 }
 
-export async function apiFetch(pathKey, options = {}) {
-  if (!endpoints) throw new Error("Endpoints not loaded yet");
-  const backendUrl = process.env.REACT_APP_BACKEND_URL;
-  if (!backendUrl) throw new Error("REACT_APP_BACKEND_URL is not set");
-  const url = `${backendUrl}${endpoints[pathKey]}`;
-  const res = await fetch(url, options);
-  if (!res.ok) throw new Error(`API error: ${res.status}`);
-  return res.json();
+// Example for chat endpoint
+export async function chatApi(data) {
+  // Correct: matches backend @app.route('/api/chat')
+  const response = await fetch(apiUrl("/api/chat"), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  return response.json();
 }
+
+// ...repeat for other endpoints...

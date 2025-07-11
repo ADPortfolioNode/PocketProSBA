@@ -1,8 +1,9 @@
 import React from 'react';
 import { Navbar, Nav, Container } from 'react-bootstrap';
+import PropTypes from 'prop-types';
 import ConnectionStatusIndicator from './ConnectionStatusIndicator';
 
-const SBANavigation = ({ activeTab, onTabChange, serverConnected }) => {
+const SBANavigation = ({ activeTab, onTabChange, serverConnected, apiUrl }) => {
   return (
     <Navbar bg="light" expand="lg" className="mb-4 main-navbar">
       <Container>
@@ -52,12 +53,19 @@ const SBANavigation = ({ activeTab, onTabChange, serverConnected }) => {
             </Nav.Link>
           </Nav>
           <div className="d-flex align-items-center">
-            <ConnectionStatusIndicator connected={serverConnected} />
+            <ConnectionStatusIndicator connected={serverConnected} apiUrl={apiUrl} />
           </div>
         </Navbar.Collapse>
       </Container>
     </Navbar>
   );
+};
+
+SBANavigation.propTypes = {
+  activeTab: PropTypes.string.isRequired,
+  onTabChange: PropTypes.func.isRequired,
+  serverConnected: PropTypes.bool.isRequired,
+  apiUrl: PropTypes.func.isRequired
 };
 
 export default SBANavigation;

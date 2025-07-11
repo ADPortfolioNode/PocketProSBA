@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Card, ListGroup, Form, Button, InputGroup, Spinner, Alert, Badge, Row, Col, Pagination } from 'react-bootstrap';
+import { apiFetch } from '../apiClient';
 
-// API endpoint
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
-
-const SBAContentExplorer = ({ selectedResource }) => {
+const SBAContentExplorer = ({ selectedResource, endpoints }) => {
   const [contentType, setContentType] = useState('articles');
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(false);
@@ -24,7 +22,7 @@ const SBAContentExplorer = ({ selectedResource }) => {
     { value: 'offices', label: 'Offices' }
   ];
 
-  // Search SBA content
+  // Search SBA content using endpoint registry
   const searchContent = async (pageNum = 1) => {
     if (!searchQuery.trim() && contentType !== 'offices') return;
     
@@ -32,15 +30,16 @@ const SBAContentExplorer = ({ selectedResource }) => {
     setError(null);
     
     try {
-      const response = await fetch(`${API_URL}/api/sba-content/${contentType}?query=${encodeURIComponent(searchQuery)}&page=${pageNum}`);
+      const endpointKey = `sba_content_${contentType}`;
+      if (!endpoints || !endpoints[endpointKey]) throw new Error('Endpoint not found');
+      const response = await apiFetch(endpointKey, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        query: { query: searchQuery, page: pageNum }
+      });
       
-      if (!response.ok) {
-        throw new Error(`Server responded with ${response.status}`);
-      }
-      
-      const data = await response.json();
-      setResults(data.items || []);
-      setTotalPages(data.totalPages || 1);
+      setResults(response.items || []);
+      setTotalPages(response.totalPages || 1);
       setPage(pageNum);
     } catch (err) {
       console.error('Error searching SBA content:', err);
@@ -64,20 +63,21 @@ const SBAContentExplorer = ({ selectedResource }) => {
     }
   }, [contentType]);
 
-  // View content details
+  // View content details using endpoint registry
   const viewContentDetails = async (id) => {
     setLoading(true);
     setError(null);
     
     try {
-      const response = await fetch(`${API_URL}/api/sba-content/${contentType}/${id}`);
+      const endpointKey = `sba_content_${contentType}_details`;
+      if (!endpoints || !endpoints[endpointKey]) throw new Error('Endpoint not found');
+      const response = await apiFetch(endpointKey, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        params: { id }
+      });
       
-      if (!response.ok) {
-        throw new Error(`Server responded with ${response.status}`);
-      }
-      
-      const data = await response.json();
-      setSelectedItem(data);
+      setSelectedItem(response);
     } catch (err) {
       setError(`Error fetching content details: ${err.message}`);
     } finally {
@@ -287,14 +287,19 @@ const SBAContentExplorer = ({ selectedResource }) => {
   // Fetch resource details if selectedResource prop is provided
   useEffect(() => {
     if (selectedResource) {
-      // Try to fetch the resource details from the SBA_content endpoint
       setLoading(true);
       setError(null);
-      fetch(`${API_URL}/api/sba-content/resources/${selectedResource}`)
-        .then(res => {
-          if (!res.ok) throw new Error(`Server responded with ${res.status}`);
-          return res.json();
-        })
+      const endpointKey = 'sba_content_resource_details';
+      if (!endpoints || !endpoints[endpointKey]) {
+        setError('Resource details endpoint not found');
+        setLoading(false);
+        return;
+      }
+      apiFetch(endpointKey, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        params: { id: selectedResource }
+      })
         .then(data => {
           setSelectedItem(data);
           setLoading(false);
@@ -306,8 +311,7 @@ const SBAContentExplorer = ({ selectedResource }) => {
     } else {
       setSelectedItem(null);
     }
-    // eslint-disable-next-line
-  }, [selectedResource]);
+  }, [selectedResource, endpoints]);
 
   return (
     <div className="sba-content-explorer">

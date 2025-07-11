@@ -18,6 +18,21 @@ import { loadEndpoints, getEndpoints, apiFetch } from "./apiClient";
 // Use only the React build-time env variable for backend URL
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
+// Helper to prefix endpoint paths with BACKEND_URL if not already absolute
+const apiUrl = (path) => {
+  // If path is absolute (starts with http), return as is
+  if (path.startsWith('http')) return path;
+  // If path is exactly /api/api or starts with /api/api/, return as is
+  if (path === '/api/api' || path.startsWith('/api/api/')) return path;
+  // If path starts with /api and BACKEND_URL is /api, avoid double prefix
+  if (BACKEND_URL === '/api' && path.startsWith('/api')) return path;
+  // Otherwise, prefix with BACKEND_URL
+  return `${BACKEND_URL}${path.startsWith('/') ? '' : '/'}${path}`;
+};
+
+// Helper to check response status
+const isSuccessResponse = (response) => response && response.status === 200;
+
 function App() {
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState([]);
@@ -37,34 +52,26 @@ function App() {
   const [expandedResource, setExpandedResource] = useState(null);
   const [endpoints, setEndpoints] = useState(null);
   
-  // Load endpoint registry on mount
+  // Only fetch endpoint registry after mount
   useEffect(() => {
-    loadEndpoints()
-      .then((eps) => setEndpoints(eps))
+    // Use /api/health for health check after loading endpoints
+    fetch(apiUrl("/api/api"))
+      .then(res => res.json())
+      .then((eps) => {
+        setEndpoints(eps);
+        // After endpoints are loaded, check health using /api/health
+        checkServerConnection("/api/health");
+      })
       .catch((err) => console.error("Failed to fetch endpoint registry:", err));
   }, []);
-  
-  // Check backend connection and fetch documents only after endpoints are loaded
+
+  // Fetch documents and resources only after health check and endpoint registry are loaded
   useEffect(() => {
-    if (endpoints) {
-      checkServerConnection();
+    if (serverConnected && endpoints) {
       fetchDocuments();
+      fetchResources();
     }
-  }, [endpoints]);
-  
-  // Fetch resources from API when endpoints are loaded
-  useEffect(() => {
-    if (!endpoints) return;
-    apiFetch("resources")
-      .then((data) => {
-        if (data && Array.isArray(data.resources)) {
-          setResources(data.resources);
-        }
-      })
-      .catch((err) => {
-        console.error("Failed to fetch resources:", err);
-      });
-  }, [endpoints]);
+  }, [serverConnected, endpoints]);
   
   const handleConnectionChange = (status, data, error) => {
     setServerConnected(status);
@@ -87,12 +94,14 @@ function App() {
   // Try a fallback connection method (using HEAD request)
   const tryFallbackConnection = async () => {
     try {
-      const endpoints = ['/api/health', '/healthcheck', '/health'];
-      
+      const endpoints = [
+        apiUrl("/api/health"),
+        apiUrl("/healthcheck"),
+        apiUrl("/health")
+      ];
       for (const endpoint of endpoints) {
         try {
           const response = await fetch(endpoint, { method: 'HEAD' });
-          
           if (response.ok) {
             console.log(`Fallback connection successful using ${endpoint}`);
             setUsingFallbackConnection(true);
@@ -104,21 +113,30 @@ function App() {
           console.warn(`Fallback attempt to ${endpoint} failed:`, error);
         }
       }
-      
       return false;
     } catch (error) {
       console.error("All fallback connection attempts failed:", error);
       return false;
     }
   };
-  
-  const checkServerConnection = async () => {
-    if (!endpoints) return;
+
+  const checkServerConnection = async (healthUrl) => {
+    let healthChecked = false;
+    let data = null;
     try {
-      const data = await apiFetch("health");
-      setSystemInfo(data);
-      setServerConnected(true);
-      setConnectionError(null);
+      // Use /health endpoint
+      let response = await fetch(apiUrl(healthUrl));
+      if (isSuccessResponse(response)) {
+        data = await response.json();
+        healthChecked = true;
+      }
+      if (healthChecked) {
+        setSystemInfo(data);
+        setServerConnected(true);
+        setConnectionError(null);
+      } else {
+        throw new Error("Health check failed");
+      }
     } catch (error) {
       setServerConnected(false);
       setConnectionError(error);
@@ -127,24 +145,47 @@ function App() {
   
   // Fetch documents from the backend
   const fetchDocuments = async () => {
-    if (!serverConnected || !endpoints) {
+    if (!serverConnected || !endpoints || !endpoints.documents_list) {
       console.log("Server not connected or endpoints not loaded, skipping document fetch");
       return;
     }
     try {
-      const data = await apiFetch("documents.list");
-      if (data.success && data.documents) {
-        setDocuments(data.documents);
-        console.log(`Fetched ${data.documents.length} documents`);
+      // Use endpoint from registry
+      const response = await fetch(apiUrl(endpoints.documents_list));
+      if (isSuccessResponse(response)) {
+        const data = await response.json();
+        if (data.success && data.documents) {
+          setDocuments(data.documents);
+          console.log(`Fetched ${data.documents.length} documents`);
+        }
+      } else {
+        throw new Error("Document fetch failed");
       }
     } catch (error) {
       console.error("Error fetching documents:", error);
     }
   };
 
+  // Fetch resources from the backend
+  const fetchResources = async () => {
+    if (!serverConnected || !endpoints || !endpoints.resources) {
+      console.log("Server not connected or endpoints not loaded, skipping resources fetch");
+      return;
+    }
+    try {
+      const response = await fetch(apiUrl(endpoints.resources));
+      const data = await response.json();
+      if (data && Array.isArray(data.resources)) {
+        setResources(data.resources);
+      }
+    } catch (err) {
+      console.error("Failed to fetch resources:", err);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!message.trim() || !endpoints) return;
+    if (!message.trim() || !endpoints || !endpoints.chat) return;
     const currentMessage = message;
     setMessages((prevMessages) => [
       ...prevMessages,
@@ -154,7 +195,7 @@ function App() {
     setMessage("");
     if (serverConnected) {
       try {
-        const data = await apiFetch("chat", {
+        const data = await apiFetch(endpoints.chat, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -189,11 +230,11 @@ function App() {
   
   // Handle document upload for RAG
   const handleDocumentUpload = async (file) => {
-    if (!file || !endpoints) return;
+    if (!file || !endpoints || !endpoints.documents_upload) return;
     const formData = new FormData();
     formData.append("file", file);
     try {
-      const result = await apiFetch("documents.upload", {
+      const result = await apiFetch(endpoints.documents_upload, {
         method: "POST",
         body: formData,
       });
@@ -207,10 +248,10 @@ function App() {
   
   // Handle search for RAG
   const handleSearch = async (query) => {
-    if (!query.trim() || !endpoints) return;
+    if (!query.trim() || !endpoints || !endpoints.documents_search) return;
     try {
       const results = await apiFetch(
-        "documents.search",
+        endpoints.documents_search,
         {
           method: "GET",
           // If your backend expects query as a param, you may need to adjust apiClient.js
@@ -225,10 +266,10 @@ function App() {
   
   // Handle RAG query
   const handleRagQuery = async (query) => {
-    if (!query.trim() || !endpoints) return;
+    if (!query.trim() || !endpoints || !endpoints.rag_query) return;
     setLoading(true);
     try {
-      const result = await apiFetch("rag_query", {
+      const result = await apiFetch(endpoints.rag_query, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ query }),
@@ -261,6 +302,7 @@ function App() {
   };
   
   // Send greeting to backend to store user session info
+  // Send greeting to backend to store user session info
   const handleNameSubmit = (name) => {
     setUserName(name);
     setGreeted(true);
@@ -288,9 +330,16 @@ function App() {
 
   return (
     <div className="App bg-light min-vh-100">
-      <SBANavigation activeTab={activeTab} onTabChange={setActiveTab} serverConnected={serverConnected} />
+      <SBANavigation activeTab={activeTab} onTabChange={setActiveTab} serverConnected={serverConnected} apiUrl={apiUrl} />
       <Container className="mt-3">
         <StatusBar serverConnected={serverConnected} userName={userName} ragTaskStatus={ragTaskStatus} />
+        {/* Pass apiUrl to ConnectionStatusIndicator */}
+        <ConnectionStatusIndicator
+          connected={serverConnected}
+          systemInfo={systemInfo}
+          apiUrl={apiUrl}
+          onConnectionChange={handleConnectionChange}
+        />
         {/* Resource Badges Section */}
         <div className="mb-4 d-flex flex-wrap gap-2">
           {resources.length > 0 ? resources.map((resource, idx) => (
@@ -340,7 +389,7 @@ function App() {
           <ErrorBoundary>
             <Row>
               <Col>
-                <SBAContentExplorer selectedResource={selectedProgram} />
+                <SBAContentExplorer selectedResource={selectedProgram} endpoints={endpoints} />
               </Col>
             </Row>
           </ErrorBoundary>

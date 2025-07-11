@@ -33,7 +33,7 @@ REACT_BUILD_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
 def serve_react(path):
-    # If the request is for an API route, return 404
+    # If the request is for an API route, forward to API (do not abort)
     if path.startswith("api/"):
         abort(404)
     # Serve static files if they exist
@@ -47,10 +47,62 @@ def serve_react(path):
     else:
         return "Build directory not found. Please build the frontend.", 500
 
-# Example API endpoint (replace or expand as needed)
+# Health check endpoints
+@app.route('/api/health', methods=['GET', 'HEAD'])
+def api_health_check():
+    return jsonify({"status": "ok"}), 200
+
+@app.route('/health', methods=['GET', 'HEAD'])
+def health_check():
+    return jsonify({"status": "ok"}), 200
+
+# Endpoint registry (used by loadEndpoints in frontend)
 @app.route('/api/api', methods=['GET'])
 def api_registry():
-    return jsonify({"status": "ok", "message": "API registry endpoint working"}), 200
+    # Example: return a list of available endpoints
+    return jsonify({
+        "endpoints": [
+            "/api/health",
+            "/api/resources",
+            "/api/documents.list",
+            "/api/documents.upload",
+            "/api/documents.search",
+            "/api/chat",
+            "/api/rag_query"
+        ]
+    }), 200
+
+# Resources endpoint
+@app.route('/api/resources', methods=['GET'])
+def api_resources():
+    # Example: return a list of resources
+    return jsonify({"resources": []}), 200
+
+# Documents endpoints (examples)
+@app.route('/api/documents.list', methods=['GET'])
+def api_documents_list():
+    return jsonify({"success": True, "documents": []}), 200
+
+@app.route('/api/documents.upload', methods=['POST'])
+def api_documents_upload():
+    # ...handle upload...
+    return jsonify({"success": True}), 200
+
+@app.route('/api/documents.search', methods=['GET'])
+def api_documents_search():
+    return jsonify({"matches": []}), 200
+
+# Chat endpoint
+@app.route('/api/chat', methods=['POST'])
+def api_chat():
+    # ...handle chat...
+    return jsonify({"response": "Chat response"}), 200
+
+# RAG query endpoint
+@app.route('/api/rag_query', methods=['POST'])
+def api_rag_query():
+    # ...handle RAG query...
+    return jsonify({"response": "RAG response"}), 200
 
 if __name__ == "__main__":
     # Get port from environment variable (for Render.com compatibility)

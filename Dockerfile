@@ -11,9 +11,11 @@ RUN apt-get update && apt-get install -y \
 # Copy requirements first for better caching
 COPY requirements.txt .
 
+# Upgrade pip and setuptools before installing dependencies
+RUN pip install --upgrade pip setuptools
+
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
-RUN pip install -r requirements-render-production.txt
 
 # Copy application code
 COPY . .

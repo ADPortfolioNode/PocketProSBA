@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Badge, OverlayTrigger, Tooltip, Spinner } from 'react-bootstrap';
+import PropTypes from 'prop-types';
 
 /**
  * Component for displaying the current connection status to the backend
@@ -18,13 +19,24 @@ const ConnectionStatusIndicator = ({
   checkInterval = 30000,
   onConnectionChange
 }) => {
+  // Runtime type check for apiUrl
+  if (typeof apiUrl !== 'function') {
+    console.error('ConnectionStatusIndicator: apiUrl prop must be a function, but received:', typeof apiUrl);
+    return (
+      <div className="connection-status-error text-danger">
+        <strong>Error:</strong> <code>apiUrl</code> prop must be a function, but received <code>{typeof apiUrl}</code>.<br />
+        Please check how <code>apiUrl</code> is passed from <code>App.js</code>.
+      </div>
+    );
+  }
+
   const [isChecking, setIsChecking] = useState(false);
   const [lastChecked, setLastChecked] = useState(new Date());
   
   // Define multiple health endpoints for fallback
   const healthEndpoints = [
-    '/api/health',
-    '/health'
+    apiUrl('/api/health'),
+    apiUrl('/health')
   ];
 
   // Function to validate content type and parse response safely
@@ -61,7 +73,7 @@ const ConnectionStatusIndicator = ({
     // Try all endpoints in order until one works
     for (const path of healthEndpoints) {
       try {
-        const endpoint = path;  // Use the relative path directly
+        const endpoint = path;  // Use the absolute API URL
         
         // First try with a HEAD request to minimize data transfer
         try {
@@ -204,6 +216,14 @@ const ConnectionStatusIndicator = ({
       </Badge>
     </OverlayTrigger>
   );
+};
+
+ConnectionStatusIndicator.propTypes = {
+  connected: PropTypes.bool.isRequired,
+  systemInfo: PropTypes.object,
+  apiUrl: PropTypes.func.isRequired,
+  checkInterval: PropTypes.number,
+  onConnectionChange: PropTypes.func
 };
 
 export default ConnectionStatusIndicator;

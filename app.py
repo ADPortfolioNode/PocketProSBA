@@ -12,6 +12,7 @@ import uuid
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from pathlib import Path
+import datetime
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -64,22 +65,6 @@ SBA_RESOURCES = {
         }
     ]
 }
-
-@app.route('/api/health', methods=['GET'])
-def health_check():
-    """Health check endpoint"""
-    return jsonify({
-        'status': 'healthy',
-        'timestamp': time.time(),
-        'version': '1.0.0',
-        'environment': os.environ.get('RENDER_SERVICE_NAME', 'local'),
-        'python_version': '3.13',
-        'features': {
-            'chat': True,
-            'rag': False,  # Disabled for minimal deployment
-            'file_upload': False
-        }
-    })
 
 @app.route('/health', methods=['GET'])
 def simple_health_check():
@@ -492,6 +477,29 @@ def index():
             'uploads': '/api/uploads',
             'documents': '/api/documents/list'
         }
+    })
+
+@app.route('/api/health', methods=['GET'])
+def api_health():
+    return jsonify({
+        "status": "ok",
+        "timestamp": datetime.datetime.utcnow().isoformat() + "Z",
+        "service": "PocketProSBA"
+    }), 200
+
+@app.route('/api/api', methods=['GET'])
+def api_registry():
+    """Return registry of all API endpoints for frontend"""
+    return jsonify({
+        "health": "/api/health",
+        "chat": "/api/chat",
+        "programs_list": "/api/programs",
+        "resources": "/api/resources",
+        "documents_list": "/api/documents/list",
+        "documents_upload": "/api/documents/upload",
+        "documents_search": "/api/search",
+        "uploads": "/api/uploads",
+        "rag_query": "/api/rag"  # Add if implemented
     })
 
 if __name__ == '__main__':
