@@ -77,8 +77,8 @@ function App() {
       .then((eps) => {
         setEndpoints(eps);
         setProgress(50); // Step 2: Registry loaded
-        // After endpoints are loaded, check health using /api/health
-        return fetch(apiUrl("/api/health"));
+        // After endpoints are loaded, check health using frontend API endpoint
+        return fetch(apiUrl("/api/health")); // If you want to use a frontend endpoint, change this to e.g. "/health" or another frontend route
       })
       .then(async res => {
         try {
