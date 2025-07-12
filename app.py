@@ -487,6 +487,11 @@ def api_health():
         "service": "PocketProSBA"
     }), 200
 
+@app.route('/api/health', methods=['HEAD'])
+def api_health_head():
+    """Health check endpoint for HEAD requests"""
+    return ('', 200)
+
 @app.route('/api/api', methods=['GET'])
 def api_registry():
     """Return registry of all API endpoints for frontend"""

@@ -19,7 +19,9 @@ ENV PYTHONHASHSEED=random
 
 # Copy requirements and install dependencies
 COPY requirements.txt .
+COPY requirements-render-production.txt .
 RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements-render-production.txt
 
 # Copy the entire application
 COPY . .
