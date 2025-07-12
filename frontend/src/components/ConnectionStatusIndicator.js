@@ -36,7 +36,7 @@ const ConnectionStatusIndicator = ({
   // Define multiple health endpoints for fallback
   // Always use backend URL from env, never default to frontend
   const healthEndpoints = [
-    apiUrl('/api/health'),
+    apiUrl('/api/health'), // Always uses REACT_APP_BACKEND_URL (port 5000)
     apiUrl('/health')
   ];
 

@@ -64,22 +64,8 @@ function App() {
   // Enhanced loading sequence with progress
   useEffect(() => {
     setLoading(true);
-    setProgress(10); // Step 1: Start registry fetch
-    fetch(apiUrl("/api/registry"))
-      .then(async res => {
-        // Always expect JSON, but catch parse errors
-        try {
-          return await res.json();
-        } catch (jsonErr) {
-          throw new Error("Invalid JSON from /api/registry");
-        }
-      })
-      .then((eps) => {
-        setEndpoints(eps);
-        setProgress(50); // Step 2: Registry loaded
-        // After endpoints are loaded, check health using frontend API endpoint
-        return fetch(apiUrl("/api/health")); // If you want to use a frontend endpoint, change this to e.g. "/health" or another frontend route
-      })
+    setProgress(10); // Step 1: Start health check
+    fetch(apiUrl("/api/health"))
       .then(async res => {
         try {
           return await res.json();
@@ -90,14 +76,27 @@ function App() {
       .then((sysInfo) => {
         setSystemInfo(sysInfo);
         setServerConnected(true);
-        setProgress(100); // Step 3: Health checked, ready
+        setProgress(50); // Step 2: Health checked, now load endpoints
+        // Only after health check passes, load endpoints
+        return fetch(apiUrl("/api/registry"));
+      })
+      .then(async res => {
+        try {
+          return await res.json();
+        } catch (jsonErr) {
+          throw new Error("Invalid JSON from /api/registry");
+        }
+      })
+      .then((eps) => {
+        setEndpoints(eps);
+        setProgress(100); // Step 3: Registry loaded, ready
         setLoading(false);
       })
       .catch((err) => {
         setLoading(false);
         setProgress(0);
         setConnectionError(err);
-        console.error("Failed to load endpoints or health:", err);
+        console.error("Failed to load health or endpoints:", err);
       });
   }, []);
   // Progress state for loading sequence
