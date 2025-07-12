@@ -34,10 +34,20 @@ const ConnectionStatusIndicator = ({
   const [lastChecked, setLastChecked] = useState(new Date());
   
   // Define multiple health endpoints for fallback
+  // Always use backend URL from env, never default to frontend
   const healthEndpoints = [
     apiUrl('/api/health'),
     apiUrl('/health')
   ];
+
+  // Helper to retry connection if backend is not ready
+  const [retryCount, setRetryCount] = useState(0);
+
+  // Retry logic: if connection fails, allow user to retry
+  const handleRetry = () => {
+    setRetryCount(retryCount + 1);
+    checkConnection();
+  };
 
   // Function to validate content type and parse response safely
   const safeParseResponse = async (response) => {
@@ -130,11 +140,12 @@ const ConnectionStatusIndicator = ({
     setIsChecking(false);
   };
   
-  // Set up interval to check connection periodically
+  // Set up interval to check connection periodically and on retry
   useEffect(() => {
     const intervalId = setInterval(checkConnection, checkInterval);
+    checkConnection(); // Initial check on mount and retry
     return () => clearInterval(intervalId);
-  }, [checkInterval, connected]);
+  }, [checkInterval, connected, retryCount]);
   
   // Format backend info for display
   const getBackendInfo = () => {
@@ -191,6 +202,13 @@ const ConnectionStatusIndicator = ({
             {getBackendInfo()}
             <div className="text-center mt-2">
               <small>Click to check connection</small>
+              {!connected && (
+                <div className="mt-2">
+                  <button className="btn btn-sm btn-outline-danger" onClick={handleRetry} disabled={isChecking}>
+                    Retry
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </Tooltip>
