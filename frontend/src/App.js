@@ -16,7 +16,16 @@ import UploadsManager from "./components/uploads/UploadsManager";
 import { loadEndpoints, getEndpoints, apiFetch } from "./apiClient";
 
 // Use only the React build-time env variable for backend URL
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+// Use correct backend URL based on environment
+let BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+if (!BACKEND_URL || BACKEND_URL === "") {
+  // Default to localhost for development
+  BACKEND_URL = "http://localhost:5000";
+}
+if (process.env.NODE_ENV === "production") {
+  // Use Render.com backend in production
+  BACKEND_URL = "https://pocketprosba.onrender.com";
+}
 
 // Helper to prefix endpoint paths with BACKEND_URL if not already absolute
 const apiUrl = (path) => {
