@@ -4,6 +4,9 @@ Minimal PocketPro SBA Assistant - Render.com Compatible
 Optimized for deployment without ChromaDB dependencies
 """
 
+import eventlet
+eventlet.monkey_patch()
+
 import os
 import logging
 import time
@@ -13,6 +16,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from pathlib import Path
 import datetime
+from flask_socketio import SocketIO, emit
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -20,6 +24,7 @@ logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 CORS(app)
+socketio = SocketIO(app, cors_allowed_origins="*")
 
 # Configure uploads folder
 UPLOAD_FOLDER = os.environ.get('UPLOAD_FOLDER', os.path.join(os.path.dirname(__file__), 'frontend', 'uploads'))
@@ -481,32 +486,51 @@ def index():
 
 @app.route('/api/health', methods=['GET'])
 def api_health():
-    return jsonify({
-        "status": "ok",
-        "timestamp": datetime.datetime.utcnow().isoformat() + "Z",
-        "service": "PocketProSBA"
-    }), 200
+    try:
+        return jsonify({
+            "status": "ok",
+            "timestamp": datetime.datetime.utcnow().isoformat() + "Z",
+            "service": "PocketProSBA"
+        }), 200
+    except Exception as e:
+        logger.error(f"/api/health error: {str(e)}", exc_info=True)
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/api/health', methods=['HEAD'])
 def api_health_head():
-    """Health check endpoint for HEAD requests"""
-    return ('', 200)
+    try:
+        return ('', 200)
+    except Exception as e:
+        logger.error(f"/api/health HEAD error: {str(e)}", exc_info=True)
+        return ('', 500)
 
-@app.route('/api/api', methods=['GET'])
+@app.route('/api/registry', methods=['GET'])
 def api_registry():
-    """Return registry of all API endpoints for frontend"""
-    return jsonify({
-        "health": "/api/health",
-        "chat": "/api/chat",
-        "programs_list": "/api/programs",
-        "resources": "/api/resources",
-        "documents_list": "/api/documents/list",
-        "documents_upload": "/api/documents/upload",
-        "documents_search": "/api/search",
-        "uploads": "/api/uploads",
-        "rag_query": "/api/rag"  # Add if implemented
-    })
+    try:
+        return jsonify({
+            "health": "/api/health",
+            "chat": "/api/chat",
+            "programs": "/api/programs",
+            "resources": "/api/resources",
+            "documents": "/api/documents/list",
+            "upload": "/api/documents/upload",
+            "search": "/api/search",
+            "uploads": "/api/uploads"
+        })
+    except Exception as e:
+        logger.error(f"/api/registry error: {str(e)}", exc_info=True)
+        return jsonify({"error": str(e)}), 500
+
+# Example WebSocket event
+@socketio.on('connect')
+def handle_connect():
+    emit('message', {'data': 'Connected to backend WebSocket!'})
+
+@socketio.on('chat')
+def handle_chat(data):
+    # Echo chat message
+    emit('message', {'data': f"Echo: {data}"})
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port, debug=False)
+    socketio.run(app, host='0.0.0.0', port=port, debug=False)

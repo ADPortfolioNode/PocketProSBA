@@ -1,3 +1,27 @@
+/* Add smooth transitions and drop shadows for depth */
+.progress-bar {
+  transition: width 0.7s cubic-bezier(0.4, 0.0, 0.2, 1), background 0.3s;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.12), 0 1.5px 6px rgba(0,0,0,0.10);
+}
+
+.card.shadow-sm, .document-center-hero, .resource-summary {
+  box-shadow: 0 4px 24px rgba(0,0,0,0.13), 0 2px 8px rgba(0,0,0,0.10);
+  transition: box-shadow 0.4s cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+.card:hover, .document-center-hero:hover, .resource-summary:hover {
+  box-shadow: 0 8px 32px rgba(0,0,0,0.18), 0 4px 16px rgba(0,0,0,0.13);
+}
+
+.resource-badge {
+  transition: box-shadow 0.3s, background 0.3s;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.10);
+}
+
+.resource-badge:hover {
+  box-shadow: 0 3px 12px rgba(0,0,0,0.16);
+  background: #e0f7fa;
+}
 /* Global styles */
 :root {
   --primary-color: #0066c7;

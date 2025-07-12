@@ -52,18 +52,47 @@ function App() {
   const [expandedResource, setExpandedResource] = useState(null);
   const [endpoints, setEndpoints] = useState(null);
   
-  // Only fetch endpoint registry after mount
+  // Enhanced loading sequence with progress
   useEffect(() => {
-    // Use /api/health for health check after loading endpoints
-    fetch(apiUrl("/api/api"))
-      .then(res => res.json())
+    setLoading(true);
+    setProgress(10); // Step 1: Start registry fetch
+    fetch(apiUrl("/api/registry"))
+      .then(async res => {
+        // Always expect JSON, but catch parse errors
+        try {
+          return await res.json();
+        } catch (jsonErr) {
+          throw new Error("Invalid JSON from /api/registry");
+        }
+      })
       .then((eps) => {
         setEndpoints(eps);
+        setProgress(50); // Step 2: Registry loaded
         // After endpoints are loaded, check health using /api/health
-        checkServerConnection("/api/health");
+        return fetch(apiUrl("/api/health"));
       })
-      .catch((err) => console.error("Failed to fetch endpoint registry:", err));
+      .then(async res => {
+        try {
+          return await res.json();
+        } catch (jsonErr) {
+          throw new Error("Invalid JSON from /api/health");
+        }
+      })
+      .then((sysInfo) => {
+        setSystemInfo(sysInfo);
+        setServerConnected(true);
+        setProgress(100); // Step 3: Health checked, ready
+        setLoading(false);
+      })
+      .catch((err) => {
+        setLoading(false);
+        setProgress(0);
+        setConnectionError(err);
+        console.error("Failed to load endpoints or health:", err);
+      });
   }, []);
+  // Progress state for loading sequence
+  const [progress, setProgress] = useState(0);
 
   // Fetch documents and resources only after health check and endpoint registry are loaded
   useEffect(() => {
@@ -145,13 +174,13 @@ function App() {
   
   // Fetch documents from the backend
   const fetchDocuments = async () => {
-    if (!serverConnected || !endpoints || !endpoints.documents_list) {
+    if (!serverConnected || !endpoints || !endpoints.documents) {
       console.log("Server not connected or endpoints not loaded, skipping document fetch");
       return;
     }
     try {
       // Use endpoint from registry
-      const response = await fetch(apiUrl(endpoints.documents_list));
+      const response = await fetch(apiUrl(endpoints.documents));
       if (isSuccessResponse(response)) {
         const data = await response.json();
         if (data.success && data.documents) {
@@ -230,11 +259,11 @@ function App() {
   
   // Handle document upload for RAG
   const handleDocumentUpload = async (file) => {
-    if (!file || !endpoints || !endpoints.documents_upload) return;
+    if (!file || !endpoints || !endpoints.upload) return;
     const formData = new FormData();
     formData.append("file", file);
     try {
-      const result = await apiFetch(endpoints.documents_upload, {
+      const result = await apiFetch(endpoints.upload, {
         method: "POST",
         body: formData,
       });
@@ -248,10 +277,10 @@ function App() {
   
   // Handle search for RAG
   const handleSearch = async (query) => {
-    if (!query.trim() || !endpoints || !endpoints.documents_search) return;
+    if (!query.trim() || !endpoints || !endpoints.search) return;
     try {
       const results = await apiFetch(
-        endpoints.documents_search,
+        endpoints.search,
         {
           method: "GET",
           // If your backend expects query as a param, you may need to adjust apiClient.js
@@ -332,14 +361,31 @@ function App() {
     <div className="App bg-light min-vh-100">
       <SBANavigation activeTab={activeTab} onTabChange={setActiveTab} serverConnected={serverConnected} apiUrl={apiUrl} />
       <Container className="mt-3">
-        <StatusBar serverConnected={serverConnected} userName={userName} ragTaskStatus={ragTaskStatus} />
-        {/* Pass apiUrl to ConnectionStatusIndicator */}
+        {/* Progress bar for loading sequence */}
+        {loading && (
+          <div className="mb-3">
+            <div className="progress" style={{ height: "24px" }}>
+              <div
+                className="progress-bar progress-bar-striped progress-bar-animated bg-info"
+                role="progressbar"
+                style={{ width: `${progress}%`, fontWeight: "bold", fontSize: "1.1em" }}
+                aria-valuenow={progress}
+                aria-valuemin={0}
+                aria-valuemax={100}
+              >
+                {progress < 100 ? `Loading... (${progress}%)` : "Ready"}
+              </div>
+            </div>
+          </div>
+        )}
+        <StatusBar serverConnected={serverConnected} userName={userName} ragTaskStatus={ragTaskStatus} systemInfo={systemInfo} />
         <ConnectionStatusIndicator
           connected={serverConnected}
           systemInfo={systemInfo}
           apiUrl={apiUrl}
           onConnectionChange={handleConnectionChange}
         />
+        {/* ...existing resource badges and tab content... */}
         {/* Resource Badges Section */}
         <div className="mb-4 d-flex flex-wrap gap-2">
           {resources.length > 0 ? resources.map((resource, idx) => (
@@ -372,6 +418,7 @@ function App() {
           )}
         </div>
         {/* Main Content Tabs */}
+        {/* ...existing tab content unchanged... */}
         {activeTab === "chat" && (
           <ErrorBoundary>
             <Row>
