@@ -58,6 +58,7 @@ function App() {
   const [systemInfo, setSystemInfo] = useState(null);
   const [userName, setUserName] = useState("");
   const [greeted, setGreeted] = useState(false);
+  const [showGreeting, setShowGreeting] = useState(true);
   const [selectedProgram, setSelectedProgram] = useState(null);
   const [searchResults, setSearchResults] = useState([]);
   const [documents, setDocuments] = useState([]);
@@ -341,6 +342,8 @@ function App() {
   const handleNameSubmit = (name) => {
     setUserName(name);
     setGreeted(true);
+    setShowGreeting(false);
+    setActiveTab("chat");
     const greeting = `Hello ${name}! I'm your SBA Assistant. How can I help you today?`;
     setMessages([
       {
@@ -364,9 +367,9 @@ function App() {
   const ragTaskStatus = loading ? { progress: 60 } : { progress: 100 };
 
   return (
-    <div className="App bg-light min-vh-100">
+    <div className="App bg-light min-vh-100 d-flex flex-column" style={{ minHeight: "100vh", width: "100vw", overflow: "hidden" }}>
       <SBANavigation activeTab={activeTab} onTabChange={setActiveTab} serverConnected={serverConnected} apiUrl={apiUrl} />
-      <Container className="mt-3">
+      <Container fluid className="flex-grow-1 px-0" style={{ maxWidth: "100vw", minHeight: "100vh" }}>
         {/* Progress bar for loading sequence */}
         {loading && (
           <div className="mb-3">
@@ -391,119 +394,237 @@ function App() {
           apiUrl={apiUrl}
           onConnectionChange={handleConnectionChange}
         />
-        {/* ...existing resource badges and tab content... */}
-        {/* Resource Badges Section */}
-        <div className="mb-4 d-flex flex-wrap gap-2">
-          {resources.length > 0 ? resources.map((resource, idx) => (
-            <div key={resource.id || resource.title || idx} style={{ minWidth: 200, marginBottom: 8 }}>
-              <span
-                className="badge bg-info text-dark resource-badge"
-                style={{ cursor: "pointer", fontSize: "1rem", padding: "0.75em 1.25em", display: "inline-block" }}
-                onClick={() => setExpandedResource(expandedResource === (resource.id || resource.title) ? null : (resource.id || resource.title))}
-              >
-                {resource.title}
-              </span>
-              {expandedResource === (resource.id || resource.title) && (
-                <div className="resource-summary bg-white border rounded shadow-sm p-3 mt-2">
-                  <div style={{ fontSize: "0.98rem" }}>
-                    {resource.description || resource.summary || "No summary available."}
+        {/* Adaptive Mosaic Grid Layout */}
+        <div className="mosaic-grid d-flex flex-row flex-wrap w-100 h-100" style={{ minHeight: "calc(100vh - 56px)", gap: "0px" }}>
+          {/* Sidebar: Resources & Assistants */}
+          <div
+            className="sidebar-col bg-white border-end shadow-sm animate__animated animate__fadeIn d-flex flex-column"
+            style={{
+              minWidth: 0,
+              width: "100%",
+              maxWidth: "340px",
+              flex: "1 1 320px",
+              zIndex: 2,
+              height: "100%",
+              position: "relative"
+            }}
+          >
+            <div className="sticky-top" style={{ top: 80 }}>
+              <h5 className="mb-3">Resources</h5>
+              {resources.length > 0 ? (
+                <ul className="list-group mb-4">
+                  {resources.map((resource, idx) => (
+                    <li key={resource.id || resource.title || idx} className="list-group-item p-2">
+                      <div className="d-flex align-items-center justify-content-between">
+                        <span
+                          style={{ cursor: "pointer", fontWeight: "bold" }}
+                          onClick={() => setExpandedResource(expandedResource === (resource.id || resource.title) ? null : (resource.id || resource.title))}
+                        >
+                          {resource.title}
+                        </span>
+                        <span className="badge bg-info text-dark ms-2">Info</span>
+                      </div>
+                      {expandedResource === (resource.id || resource.title) && (
+                        <div className="mt-2 p-2 bg-light border rounded animate__animated animate__fadeIn">
+                          <div style={{ fontSize: "0.98rem" }}>
+                            {resource.description || resource.summary || "No summary available."}
+                          </div>
+                          <Button
+                            variant="link"
+                            size="sm"
+                            className="p-0 mt-2"
+                            onClick={() => window.open(`/resources/${(resource.slug || resource.title || "").replace(/\s+/g, '-').toLowerCase()}`, "_blank")}
+                          >
+                            More &gt;&gt;&gt;
+                          </Button>
+                        </div>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <span className="text-muted">No resources available.</span>
+              )}
+
+              {/* Active Assistants Section */}
+              <h5 className="mb-3">Active Assistants</h5>
+              <ul className="list-group">
+                <li className="list-group-item p-2">
+                  <div className="d-flex align-items-center justify-content-between">
+                    <span style={{ fontWeight: "bold" }}>Concierge Assistant</span>
+                    <span className="badge bg-success">Online</span>
                   </div>
+                  {/* Expand for task/progress */}
                   <Button
                     variant="link"
                     size="sm"
                     className="p-0 mt-2"
-                    onClick={() => window.open(`/resources/${(resource.slug || resource.title || "").replace(/\s+/g, '-').toLowerCase()}`, "_blank")}
+                    onClick={() => setExpandedResource(expandedResource === "concierge" ? null : "concierge")}
                   >
-                    More &gt;&gt;&gt;
+                    {expandedResource === "concierge" ? "Hide Details" : "Show Details"}
                   </Button>
-                </div>
-              )}
+                  {expandedResource === "concierge" && (
+                    <div className="mt-2 p-2 bg-light border rounded animate__animated animate__fadeIn">
+                      <div><strong>Task:</strong> User chat, RAG queries, document search</div>
+                      <div><strong>Status:</strong> {serverConnected ? "Connected" : "Disconnected"}</div>
+                      <div className="mt-2">
+                        <strong>Progress:</strong>
+                        <div className="progress" style={{ height: "18px", maxWidth: 180 }}>
+                          <div
+                            className={`progress-bar ${serverConnected ? "bg-success" : "bg-danger"}`}
+                            role="progressbar"
+                            style={{ width: `${ragTaskStatus.progress}%` }}
+                            aria-valuenow={ragTaskStatus.progress}
+                            aria-valuemin={0}
+                            aria-valuemax={100}
+                          >
+                            {ragTaskStatus.progress}%
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </li>
+                {/* Add more assistants here if needed */}
+              </ul>
             </div>
-          )) : (
-            <span className="text-muted">No resources available.</span>
-          )}
-        </div>
-        {/* Main Content Tabs */}
-        {/* ...existing tab content unchanged... */}
-        {activeTab === "chat" && (
-          <ErrorBoundary>
-            <Row>
-              <Col md={8} className="mx-auto">
-                <Card className="shadow-sm">
-                  <Card.Body>
-                    <ConciergeGreeting onNameSubmit={handleNameSubmit} />
-                  </Card.Body>
-                </Card>
-              </Col>
-            </Row>
-          </ErrorBoundary>
-        )}
-        {activeTab === "browse" && (
-          <ErrorBoundary>
-            <Row>
-              <Col>
-                <SBAContentExplorer selectedResource={selectedProgram} endpoints={endpoints} />
-              </Col>
-            </Row>
-          </ErrorBoundary>
-        )}
-        {activeTab === "rag" && (
-          <ErrorBoundary>
-            <Row>
-              <Col>
-                <RAGWorkflowInterface
-                  documents={documents}
-                  onUpload={handleDocumentUpload}
-                  onSearch={handleSearch}
-                  searchResults={searchResults}
-                  onRagQuery={handleRagQuery}
-                  ragResponse={ragResponse}
-                  serverConnected={serverConnected}
-                />
-              </Col>
-            </Row>
-          </ErrorBoundary>
-        )}
-        {activeTab === "documents" && (
-          <ErrorBoundary>
-            <Row>
-              <Col md={10} className="mx-auto">
-                <Card className="shadow-sm document-center-hero">
-                  <Card.Header className="bg-primary text-white">
-                    <h3 className="mb-0">Document Center</h3>
-                    <p className="mb-0">All your uploaded documents in one place. Upload, view, and manage your files for RAG tasks.</p>
-                  </Card.Header>
-                  <Card.Body>
-                    <Row>
-                      <Col md={6}>
-                        <UploadsManager files={documents} onUpload={fetchDocuments} onRefresh={fetchDocuments} />
-                      </Col>
-                      <Col md={6}>
-                        <div className="document-list-hero">
-                          <h5>Uploaded Documents</h5>
-                          {documents.length > 0 ? (
-                            <ul className="list-group">
-                              {documents.map((doc, index) => (
-                                <li key={index} className="list-group-item d-flex flex-column align-items-start">
-                                  <span className="fw-bold">{doc.filename}</span>
-                                  <span className="text-muted small">Type: {doc.type || 'Unknown'} | Size: {Math.round(doc.size / 1024)} KB | Modified: {doc.modified}</span>
-                                </li>
-                              ))}
-                            </ul>
+          </div>
+          {/* Main Content Area - Adaptive Mosaic Grid */}
+          <div
+            className="main-content-col animate__animated animate__fadeIn flex-grow-1 d-flex flex-column"
+            style={{
+              minWidth: 0,
+              width: "100%",
+              flex: "4 1 0px",
+              maxWidth: "100vw",
+              height: "100%",
+              overflowY: "auto",
+              position: "relative"
+            }}
+          >
+            {/* Main Content Tabs - Responsive Mosaic */}
+            {showGreeting && activeTab === "chat" && (
+              <div className="fade-in-out mosaic-chat">
+                <ErrorBoundary>
+                  <Row className="justify-content-center">
+                    <Col xs={12} sm={10} md={8} lg={7} xl={6} className="mx-auto">
+                      <Card className="shadow-sm">
+                        <Card.Body>
+                          <ConciergeGreeting onNameSubmit={handleNameSubmit} />
+                        </Card.Body>
+                      </Card>
+                    </Col>
+                  </Row>
+                </ErrorBoundary>
+              </div>
+            )}
+            {!showGreeting && activeTab === "chat" && (
+              <ErrorBoundary>
+                <Row className="justify-content-center mosaic-chat-content">
+                  <Col xs={12} sm={10} md={8} lg={7} xl={6} className="mx-auto">
+                    <Card className="shadow-sm">
+                      <Card.Body>
+                        {/* Chat UI: message history and input */}
+                        <div className="chat-history mb-3" style={{ maxHeight: "50vh", overflowY: "auto" }}>
+                          {messages.length === 0 ? (
+                            <div className="text-muted text-center py-4">Start chatting with your SBA Assistant!</div>
                           ) : (
-                            <div className="no-documents-message">
-                              <p>No documents found. Upload documents to get started.</p>
-                            </div>
+                            messages.map((msg) => (
+                              <div key={msg.id} className={`chat-message chat-message-${msg.role} mb-2`}>
+                                <div className={`fw-bold text-${msg.role === 'user' ? 'primary' : 'success'}`}>{msg.role === 'user' ? userName || 'You' : 'Assistant'}:</div>
+                                <div>{msg.content}</div>
+                              </div>
+                            ))
                           )}
                         </div>
-                      </Col>
-                    </Row>
-                  </Card.Body>
-                </Card>
-              </Col>
-            </Row>
-          </ErrorBoundary>
-        )}
+                        <form onSubmit={handleSubmit} className="d-flex flex-row align-items-center gap-2">
+                          <input
+                            type="text"
+                            className="form-control"
+                            placeholder="Type your message..."
+                            value={message}
+                            onChange={(e) => setMessage(e.target.value)}
+                            disabled={loading}
+                            style={{ flex: 1 }}
+                          />
+                          <Button type="submit" variant="primary" disabled={loading || !message.trim()}>
+                            Send
+                          </Button>
+                        </form>
+                      </Card.Body>
+                    </Card>
+                  </Col>
+                </Row>
+              </ErrorBoundary>
+            )}
+            {activeTab === "browse" && (
+              <ErrorBoundary>
+                <Row className="mosaic-browse">
+                  <Col xs={12}>
+                    <SBAContentExplorer selectedResource={selectedProgram} endpoints={endpoints} />
+                  </Col>
+                </Row>
+              </ErrorBoundary>
+            )}
+            {activeTab === "rag" && (
+              <ErrorBoundary>
+                <Row className="mosaic-rag">
+                  <Col xs={12}>
+                    <RAGWorkflowInterface
+                      documents={documents}
+                      onUpload={handleDocumentUpload}
+                      onSearch={handleSearch}
+                      searchResults={searchResults}
+                      onRagQuery={handleRagQuery}
+                      ragResponse={ragResponse}
+                      serverConnected={serverConnected}
+                    />
+                  </Col>
+                </Row>
+              </ErrorBoundary>
+            )}
+            {activeTab === "documents" && (
+              <ErrorBoundary>
+                <Row className="mosaic-documents">
+                  <Col xs={12} md={10} className="mx-auto">
+                    <Card className="shadow-sm document-center-hero">
+                      <Card.Header className="bg-primary text-white">
+                        <h3 className="mb-0">Document Center</h3>
+                        <p className="mb-0">All your uploaded documents in one place. Upload, view, and manage your files for RAG tasks.</p>
+                      </Card.Header>
+                      <Card.Body>
+                        <Row>
+                          <Col xs={12} md={6}>
+                            <UploadsManager files={documents} onUpload={fetchDocuments} onRefresh={fetchDocuments} />
+                          </Col>
+                          <Col xs={12} md={6}>
+                            <div className="document-list-hero">
+                              <h5>Uploaded Documents</h5>
+                              {documents.length > 0 ? (
+                                <ul className="list-group">
+                                  {documents.map((doc, index) => (
+                                    <li key={index} className="list-group-item d-flex flex-column align-items-start">
+                                      <span className="fw-bold">{doc.filename}</span>
+                                      <span className="text-muted small">Type: {doc.type || 'Unknown'} | Size: {Math.round(doc.size / 1024)} KB | Modified: {doc.modified}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              ) : (
+                                <div className="no-documents-message">
+                                  <p>No documents found. Upload documents to get started.</p>
+                                </div>
+                              )}
+                            </div>
+                          </Col>
+                        </Row>
+                      </Card.Body>
+                    </Card>
+                  </Col>
+                </Row>
+              </ErrorBoundary>
+            )}
+          </div>
+        </div>
       </Container>
     </div>
   );
