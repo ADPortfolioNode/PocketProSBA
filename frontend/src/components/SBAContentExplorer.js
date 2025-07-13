@@ -24,6 +24,40 @@ const SBAContentExplorer = ({ selectedResource, endpoints }) => {
     { value: 'offices', label: 'Offices' }
   ];
 
+  // Resource status (chromadb, flask)
+  const [resourceStatus, setResourceStatus] = useState({
+    chromadb: { status: 'unknown', message: '' },
+    flask: { status: 'unknown', message: '' }
+  });
+
+  // Fetch resource status from backend endpoints
+  const fetchResourceStatus = async () => {
+    try {
+      // Flask health
+      const flaskResp = await apiFetch('health', { method: 'GET' });
+      setResourceStatus(prev => ({
+        ...prev,
+        flask: { status: flaskResp.status === 'ok' ? 'online' : 'error', message: flaskResp.message || '' }
+      }));
+    } catch (err) {
+      setResourceStatus(prev => ({ ...prev, flask: { status: 'error', message: err.message } }));
+    }
+    try {
+      // ChromaDB health
+      const chromaResp = await apiFetch('chromadb_health', { method: 'GET' });
+      setResourceStatus(prev => ({
+        ...prev,
+        chromadb: { status: chromaResp.status === 'ok' ? 'online' : 'error', message: chromaResp.message || '' }
+      }));
+    } catch (err) {
+      setResourceStatus(prev => ({ ...prev, chromadb: { status: 'error', message: err.message } }));
+    }
+  };
+
+  useEffect(() => {
+    fetchResourceStatus();
+  }, []);
+
   // Search SBA content using endpoint registry (node structure)
   const searchContent = async (pageNum = 1) => {
     if (!searchQuery.trim() && contentType !== 'offices') return;
@@ -369,6 +403,29 @@ const SBAContentExplorer = ({ selectedResource, endpoints }) => {
 
   return (
     <div className="sba-content-explorer">
+      {/* Resource Status Section */}
+      <Card className="mb-3">
+        <Card.Header>
+          <h5>System Resources</h5>
+        </Card.Header>
+        <Card.Body>
+          <ListGroup>
+            <ListGroup.Item action onClick={() => alert(resourceStatus.flask.message)}>
+              <span className="fw-bold">Flask Server</span>
+              <Badge bg={resourceStatus.flask.status === 'online' ? 'success' : 'danger'} className="ms-2">
+                {resourceStatus.flask.status}
+              </Badge>
+            </ListGroup.Item>
+            <ListGroup.Item action onClick={() => alert(resourceStatus.chromadb.message)}>
+              <span className="fw-bold">ChromaDB</span>
+              <Badge bg={resourceStatus.chromadb.status === 'online' ? 'success' : 'danger'} className="ms-2">
+                {resourceStatus.chromadb.status}
+              </Badge>
+            </ListGroup.Item>
+          </ListGroup>
+        </Card.Body>
+      </Card>
+      {/* ...existing code... */}
       {selectedItem ? (
         <Card className="mb-4">
           <Card.Header>

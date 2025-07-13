@@ -512,7 +512,7 @@ def api_health():
     try:
         return jsonify({
             "status": "ok",
-            "timestamp": datetime.datetime.now(datetime.UTC).isoformat(),
+            "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
             "service": "PocketProSBA"
         }), 200
     except Exception as e:
