@@ -6,7 +6,9 @@ const SBAContentExplorer = ({ selectedResource, endpoints }) => {
   const [contentType, setContentType] = useState('articles');
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(false);
-  const [results, setResults] = useState([]);
+  const [results, setResults] = useState([]); // Top-level nodes
+  const [nodeMap, setNodeMap] = useState({}); // id -> children
+  const [expandedNodes, setExpandedNodes] = useState({}); // id -> bool
   const [error, setError] = useState(null);
   const [selectedItem, setSelectedItem] = useState(null);
   const [page, setPage] = useState(1);
@@ -22,29 +24,60 @@ const SBAContentExplorer = ({ selectedResource, endpoints }) => {
     { value: 'offices', label: 'Offices' }
   ];
 
-  // Search SBA content using endpoint registry
+  // Search SBA content using endpoint registry (node structure)
   const searchContent = async (pageNum = 1) => {
     if (!searchQuery.trim() && contentType !== 'offices') return;
-    
+
     setLoading(true);
     setError(null);
-    
+
     try {
       const endpointKey = `sba_content_${contentType}`;
-      if (!endpoints || !endpoints[endpointKey]) throw new Error('Endpoint not found');
+      if (!endpoints || !endpoints[endpointKey]) {
+        setError('SBA content endpoint not found. Please check your backend configuration or registry.');
+        setResults([]);
+        return;
+      }
       const response = await apiFetch(endpointKey, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
         query: { query: searchQuery, page: pageNum }
       });
-      
-      setResults(response.items || []);
-      setTotalPages(response.totalPages || 1);
-      setPage(pageNum);
+
+      // Expect response.items to be an array of nodes, each with possible children
+      if (response && response.items) {
+        setResults(response.items);
+        setTotalPages(response.totalPages || 1);
+        setPage(pageNum);
+        setNodeMap({}); // Reset node map on new search
+      } else {
+        setError('No SBA content found for your query.');
+        setResults([]);
+      }
     } catch (err) {
       console.error('Error searching SBA content:', err);
-      setError(`Unable to fetch SBA content: ${err.message}. This feature may not be fully implemented yet.`);
+      setError(`Error fetching SBA content: ${err.message}`);
       setResults([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch children for a node (by id)
+  const fetchNodeChildren = async (nodeId) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const endpointKey = `sba_content_${contentType}_children`;
+      if (!endpoints || !endpoints[endpointKey]) throw new Error('Children endpoint not found');
+      const response = await apiFetch(endpointKey, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        params: { id: nodeId }
+      });
+      setNodeMap(prev => ({ ...prev, [nodeId]: response.items || [] }));
+    } catch (err) {
+      setError(`Error fetching node children: ${err.message}`);
     } finally {
       setLoading(false);
     }
@@ -246,40 +279,61 @@ const SBAContentExplorer = ({ selectedResource, endpoints }) => {
     );
   };
 
-  // Render content list
-  const renderContentList = () => {
-    if (results.length === 0) {
+  // Render node tree recursively
+  const renderNodeTree = (nodes, level = 0) => {
+    if (!nodes || nodes.length === 0) {
       return (
-        <Alert variant="info">
-          {contentType === 'offices' && !searchQuery.trim() && !loading
-            ? "Loading offices..."
-            : "No results found. Try a different search term."}
+        <Alert variant="info" className={level === 0 ? '' : 'ms-4'}>
+          {level === 0
+            ? (contentType === 'offices' && !searchQuery.trim() && !loading
+                ? "Loading offices..."
+                : "No results found. Try a different search term.")
+            : "No child nodes."}
         </Alert>
       );
     }
-    
     return (
-      <ListGroup>
-        {results.map((item, index) => (
-          <ListGroup.Item 
-            key={index}
-            action
-            onClick={() => viewContentDetails(item.id)}
-            className="d-flex justify-content-between align-items-center"
-          >
-            <div>
-              <h5 className="mb-1">{item.title}</h5>
-              <p className="mb-1 text-muted">
-                {item.created && `Published: ${formatDate(item.created)}`}
-                {item.startDate && `Date: ${formatDate(item.startDate)}`}
-              </p>
-              {item.summary && <p className="mb-0">{item.summary.substring(0, 100)}...</p>}
-            </div>
-            <Badge bg="primary" pill>
-              View
-            </Badge>
-          </ListGroup.Item>
-        ))}
+      <ListGroup className={level > 0 ? 'ms-4' : ''}>
+        {nodes.map((item, idx) => {
+          const hasChildren = item.hasChildren || (nodeMap[item.id] && nodeMap[item.id].length > 0);
+          const expanded = expandedNodes[item.id];
+          return (
+            <ListGroup.Item key={item.id} className="d-flex align-items-center">
+              <div style={{ flex: 1 }}>
+                <span style={{ fontWeight: 'bold' }}>{item.title}</span>
+                {item.summary && <span className="ms-2 text-muted">{item.summary.substring(0, 60)}...</span>}
+              </div>
+              {hasChildren && (
+                <Button
+                  variant="outline-secondary"
+                  size="sm"
+                  className="me-2"
+                  onClick={async () => {
+                    setExpandedNodes(prev => ({ ...prev, [item.id]: !expanded }));
+                    if (!expanded && !nodeMap[item.id]) {
+                      await fetchNodeChildren(item.id);
+                    }
+                  }}
+                  aria-label={expanded ? 'Collapse' : 'Expand'}
+                >
+                  {expanded ? '-' : '+'}
+                </Button>
+              )}
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => viewContentDetails(item.id)}
+              >
+                View
+              </Button>
+              {expanded && nodeMap[item.id] && (
+                <div style={{ width: '100%' }}>
+                  {renderNodeTree(nodeMap[item.id], level + 1)}
+                </div>
+              )}
+            </ListGroup.Item>
+          );
+        })}
       </ListGroup>
     );
   };
@@ -383,9 +437,8 @@ const SBAContentExplorer = ({ selectedResource, endpoints }) => {
                     <p className="mt-2">Loading results...</p>
                   </div>
                 ) : (
-                  renderContentList()
+                  renderNodeTree(results)
                 )}
-                
                 {renderPagination()}
               </>
             )}

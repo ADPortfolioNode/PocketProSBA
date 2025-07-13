@@ -5,7 +5,7 @@ import { Card, Row, Col, Button, Form, ListGroup, Badge, Accordion, Alert, Progr
 const RAGWorkflowInterface = ({ 
   onSearch, 
   onUpload, 
-  onQuery, 
+  onRagQuery, 
   documents,
   searchResults,
   ragResponse
@@ -58,8 +58,8 @@ const RAGWorkflowInterface = ({
   const handleRAGQuery = (e) => {
     e.preventDefault();
     if (queryText.trim()) {
-      onQuery(queryText);
-      setCurrentStep('generate'); // Move to the generation step
+      onRagQuery(queryText);
+      setCurrentStep('retrieve'); // Move to the retrieval step
     }
   };
   
@@ -196,7 +196,6 @@ const RAGWorkflowInterface = ({
               <p className="mb-3">
                 Ask any question about the content of your uploaded documents. The system will retrieve the most relevant information and generate an answer.
               </p>
-              
               <Form onSubmit={handleRAGQuery} className="mb-4">
                 <Form.Group controlId="queryInput" className="mb-3">
                   <Form.Label>Your Question</Form.Label>
@@ -208,7 +207,6 @@ const RAGWorkflowInterface = ({
                     onChange={(e) => setQueryText(e.target.value)}
                   />
                 </Form.Group>
-                
                 <div className="d-grid gap-2">
                   <Button 
                     variant="primary" 
@@ -219,20 +217,12 @@ const RAGWorkflowInterface = ({
                   </Button>
                 </div>
               </Form>
-              
               <div className="d-flex justify-content-between mt-4">
                 <Button 
                   variant="outline-secondary" 
                   onClick={() => handleStepChange('index')}
                 >
                   Previous
-                </Button>
-                <Button 
-                  variant="outline-primary" 
-                  onClick={() => handleStepChange('retrieve')}
-                  disabled={!queryText.trim()}
-                >
-                  Skip to Retrieval
                 </Button>
               </div>
             </Card.Body>

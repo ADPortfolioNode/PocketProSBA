@@ -187,15 +187,12 @@ function App() {
     }
     try {
       // Use endpoint from registry
-      const response = await fetch(apiUrl(endpoints.documents));
-      if (isSuccessResponse(response)) {
-        const data = await response.json();
-        if (data.success && data.documents) {
-          setDocuments(data.documents);
-          console.log(`Fetched ${data.documents.length} documents`);
-        }
-      } else {
-        throw new Error("Document fetch failed");
+      const response = await apiFetch("documents", {
+        method: "GET"
+      });
+      if (response && response.success && response.documents) {
+        setDocuments(response.documents);
+        console.log(`Fetched ${response.documents.length} documents`);
       }
     } catch (error) {
       console.error("Error fetching documents:", error);
@@ -209,10 +206,11 @@ function App() {
       return;
     }
     try {
-      const response = await fetch(apiUrl(endpoints.resources));
-      const data = await response.json();
-      if (data && Array.isArray(data.resources)) {
-        setResources(data.resources);
+      const response = await apiFetch("resources", {
+        method: "GET"
+      });
+      if (response && Array.isArray(response.resources)) {
+        setResources(response.resources);
       }
     } catch (err) {
       console.error("Failed to fetch resources:", err);
@@ -231,7 +229,7 @@ function App() {
     setMessage("");
     if (serverConnected) {
       try {
-        const data = await apiFetch(endpoints.chat, {
+        const data = await apiFetch("chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -247,22 +245,22 @@ function App() {
         setLoading(false);
       } catch (error) {
         console.error("Error calling API:", error);
-        simulateResponse(currentMessage);
+        setMessages((prevMessages) => [
+          ...prevMessages,
+          { id: Date.now() + 1, role: "assistant", content: "Sorry, there was an error processing your request. Please try again later." },
+        ]);
+        setLoading(false);
       }
     } else {
-      simulateResponse(currentMessage);
+      setMessages((prevMessages) => [
+        ...prevMessages,
+        { id: Date.now() + 1, role: "assistant", content: "Server is not connected. Please check your connection and try again." },
+      ]);
+      setLoading(false);
     }
   };
   
-  const simulateResponse = (query) => {
-    setTimeout(() => {
-      setMessages(prevMessages => [
-        ...prevMessages,
-        { id: Date.now() + 1, role: "assistant", content: "Thank you for your message. I am the SBA Assistant and can help you with information about SBA programs and resources." }
-      ]);
-      setLoading(false);
-    }, 1000);
-  };
+  // Removed simulateResponse placeholder. All chat responses now require backend inference.
   
   // Handle document upload for RAG
   const handleDocumentUpload = async (file) => {
@@ -270,7 +268,7 @@ function App() {
     const formData = new FormData();
     formData.append("file", file);
     try {
-      const result = await apiFetch(endpoints.upload, {
+      const result = await apiFetch("upload", {
         method: "POST",
         body: formData,
       });
@@ -286,13 +284,11 @@ function App() {
   const handleSearch = async (query) => {
     if (!query.trim() || !endpoints || !endpoints.search) return;
     try {
-      const results = await apiFetch(
-        endpoints.search,
-        {
-          method: "GET",
-          // If your backend expects query as a param, you may need to adjust apiClient.js
-        }
-      );
+      const results = await apiFetch("search", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query })
+      });
       setSearchResults(results.matches || []);
       return results;
     } catch (error) {
@@ -302,38 +298,49 @@ function App() {
   
   // Handle RAG query
   const handleRagQuery = async (query) => {
-    if (!query.trim() || !endpoints || !endpoints.rag_query) return;
+    if (!query.trim() || !endpoints || !endpoints.search) return;
     setLoading(true);
     try {
-      const result = await apiFetch(endpoints.rag_query, {
+      const result = await apiFetch("search", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ query }),
       });
-      setRagResponse(result);
-      setMessages((prev) => [
-        ...prev,
-        { id: Date.now(), role: "user", content: query },
-        { id: Date.now() + 1, role: "assistant", content: result.response },
-      ]);
+      // If backend returns 'results', use them for context display
+      if (result && result.results && Array.isArray(result.results)) {
+        setRagResponse({ content: result.results.map(r => r.content).join('\n\n'), sources: result.results });
+        setMessages((prev) => [
+          ...prev,
+          { id: Date.now(), role: "user", content: query },
+          { id: Date.now() + 1, role: "assistant", content: result.results.map(r => r.content).join('\n\n') },
+        ]);
+      } else if (result && result.response) {
+        setRagResponse({ content: result.response });
+        setMessages((prev) => [
+          ...prev,
+          { id: Date.now(), role: "user", content: query },
+          { id: Date.now() + 1, role: "assistant", content: result.response },
+        ]);
+      } else {
+        setRagResponse({ content: "No relevant context found." });
+        setMessages((prev) => [
+          ...prev,
+          { id: Date.now(), role: "user", content: query },
+          { id: Date.now() + 1, role: "assistant", content: "No relevant context found." },
+        ]);
+      }
       setLoading(false);
       return result;
     } catch (error) {
       console.error("Error with RAG query:", error);
       setLoading(false);
-      // Mock response
-      const mockResponse = {
-        response:
-          "Based on the documents I've analyzed, the SBA offers various loan programs to help small businesses. The most common is the 7(a) loan program which provides up to $5 million for business purposes.",
-        sources: [{ title: "SBA Loan Programs Guide", page: 12 }],
-      };
-      setRagResponse(mockResponse);
       setMessages((prev) => [
         ...prev,
         { id: Date.now(), role: "user", content: query },
-        { id: Date.now() + 1, role: "assistant", content: mockResponse.response },
+        { id: Date.now() + 1, role: "assistant", content: "Sorry, there was an error processing your RAG query. Please try again later." },
       ]);
-      return mockResponse;
+      setRagResponse({ content: "Sorry, there was an error processing your RAG query. Please try again later." });
+      return null;
     }
   };
   
@@ -367,9 +374,9 @@ function App() {
   const ragTaskStatus = loading ? { progress: 60 } : { progress: 100 };
 
   return (
-    <div className="App bg-light min-vh-100 d-flex flex-column" style={{ minHeight: "100vh", width: "100vw", overflow: "hidden" }}>
+    <div className="App bg-light min-vh-100 d-flex flex-column" style={{ minHeight: "100vh", width: "100vw" }}>
       <SBANavigation activeTab={activeTab} onTabChange={setActiveTab} serverConnected={serverConnected} apiUrl={apiUrl} />
-      <Container fluid className="flex-grow-1 px-0" style={{ maxWidth: "100vw", minHeight: "100vh" }}>
+      <Container fluid className="flex-grow-1 px-0" style={{ maxWidth: "100vw", minHeight: "100vh", overflow: "visible" }}>
         {/* Progress bar for loading sequence */}
         {loading && (
           <div className="mb-3">
@@ -395,7 +402,7 @@ function App() {
           onConnectionChange={handleConnectionChange}
         />
         {/* Adaptive Mosaic Grid Layout */}
-        <div className="mosaic-grid d-flex flex-row flex-wrap w-100 h-100" style={{ minHeight: "calc(100vh - 56px)", gap: "0px" }}>
+        <div className="mosaic-grid d-flex flex-row flex-wrap w-100 h-100" style={{ minHeight: "calc(100vh - 56px)", gap: "0px", overflow: "visible" }}>
           {/* Sidebar: Resources & Assistants */}
           <div
             className="sidebar-col bg-white border-end shadow-sm animate__animated animate__fadeIn d-flex flex-column"
@@ -406,7 +413,8 @@ function App() {
               flex: "1 1 320px",
               zIndex: 2,
               height: "100%",
-              position: "relative"
+              position: "relative",
+              overflow: "visible"
             }}
           >
             <div className="sticky-top" style={{ top: 80 }}>
@@ -498,7 +506,7 @@ function App() {
               flex: "4 1 0px",
               maxWidth: "100vw",
               height: "100%",
-              overflowY: "auto",
+              overflow: "visible",
               position: "relative"
             }}
           >
@@ -525,17 +533,19 @@ function App() {
                     <Card className="shadow-sm">
                       <Card.Body>
                         {/* Chat UI: message history and input */}
-                        <div className="chat-history mb-3" style={{ maxHeight: "50vh", overflowY: "auto" }}>
-                          {messages.length === 0 ? (
-                            <div className="text-muted text-center py-4">Start chatting with your SBA Assistant!</div>
-                          ) : (
-                            messages.map((msg) => (
-                              <div key={msg.id} className={`chat-message chat-message-${msg.role} mb-2`}>
-                                <div className={`fw-bold text-${msg.role === 'user' ? 'primary' : 'success'}`}>{msg.role === 'user' ? userName || 'You' : 'Assistant'}:</div>
-                                <div>{msg.content}</div>
-                              </div>
-                            ))
-                          )}
+                        <div className="chat-history mb-3" style={{ maxHeight: "50vh", overflow: "hidden", position: "relative" }}>
+                          <div style={{ height: "100%", maxHeight: "50vh", overflowY: "auto", paddingRight: "4px" }}>
+                            {messages.length === 0 ? (
+                              <div className="text-muted text-center py-4">Start chatting with your SBA Assistant!</div>
+                            ) : (
+                              messages.map((msg) => (
+                                <div key={msg.id} className={`chat-message chat-message-${msg.role} mb-2`}>
+                                  <div className={`fw-bold text-${msg.role === 'user' ? 'primary' : 'success'}`}>{msg.role === 'user' ? userName || 'You' : 'Assistant'}:</div>
+                                  <div>{msg.content}</div>
+                                </div>
+                              ))
+                            )}
+                          </div>
                         </div>
                         <form onSubmit={handleSubmit} className="d-flex flex-row align-items-center gap-2">
                           <input
@@ -574,8 +584,8 @@ function App() {
                       documents={documents}
                       onUpload={handleDocumentUpload}
                       onSearch={handleSearch}
-                      searchResults={searchResults}
                       onRagQuery={handleRagQuery}
+                      searchResults={searchResults}
                       ragResponse={ragResponse}
                       serverConnected={serverConnected}
                     />

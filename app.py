@@ -255,14 +255,16 @@ How can I help you with your specific business needs?"""
     
     # Default response
     else:
-        return """I'm here to help you with SBA programs and small business resources! I can provide information about:
-
-• **SBA Loan Programs**: 7(a) loans, 504 loans, microloans
-• **Business Resources**: SCORE mentorship, SBDCs, training programs
-• **Funding Options**: Grants, investment programs, disaster assistance
-• **Government Contracting**: Set-aside programs, certifications
-
-What specific area would you like to learn more about?"""
+        # RAG-like response: dynamically list available programs and resources
+        programs = SBA_RESOURCES.get('programs', [])
+        resources = SBA_RESOURCES.get('resources', [])
+        program_lines = '\n'.join([
+            f"• {p['name']}: {p['description']} (Max: {p['max_amount']})" for p in programs
+        ])
+        resource_lines = '\n'.join([
+            f"• {r['name']}: {r['description']}" for r in resources
+        ])
+        return f"Here are the latest SBA programs and resources available to you:\n\nSBA Loan Programs:\n{program_lines}\n\nBusiness Resources:\n{resource_lines}\n\nWhat specific area would you like to learn more about?"
 
 def get_relevant_sources(message):
     """Get relevant sources based on message content"""
