@@ -2,7 +2,7 @@
 
 # Stage 1: Build React frontend
 FROM node:18 AS build_frontend
-WORKDIR /frontend
+WORKDIR /app/frontend
 COPY frontend/package*.json ./
 RUN npm install --legacy-peer-deps
 COPY frontend/ ./
@@ -19,7 +19,7 @@ RUN pip install --upgrade pip setuptools && pip install --no-cache-dir -r requir
 # Copy backend code
 COPY . .
 # Copy React build output to Flask static folder
-COPY --from=build_frontend /frontend/build ./static
+COPY --from=build_frontend /app/frontend/build ./static
 # Expose port
 ENV PORT=5000
 ENV FLASK_ENV=production
