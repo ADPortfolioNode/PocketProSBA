@@ -3,11 +3,11 @@
 # Guaranteed compatibility without complex dependencies
 
 # Core Flask dependencies
-flask==3.0.0
-flask-cors==4.0.
-flask_socketio
+flask==2.3.3
+flask-cors==4.0.0
+flask-socketio==5.1.1
 gunicorn==21.2.0
-eventlet
+eventlet==0.33.3
 
 # Essential utilities
 python-dotenv==1.0.0

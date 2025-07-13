@@ -17,14 +17,15 @@ import { loadEndpoints, getEndpoints, apiFetch } from "./apiClient";
 
 // Use only the React build-time env variable for backend URL
 // Use correct backend URL based on environment
+// Production-ready backend URL logic
 let BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 if (!BACKEND_URL || BACKEND_URL === "") {
   // Default to localhost for development
   BACKEND_URL = "http://localhost:5000";
 }
+// If running in production, use the deployed backend URL from env or fallback
 if (process.env.NODE_ENV === "production") {
-  // Use Render.com backend in production
-  BACKEND_URL = "https://pocketprosba.onrender.com";
+  BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "https://pocketprosba.onrender.com";
 }
 
 // Helper to prefix endpoint paths with BACKEND_URL if not already absolute
@@ -35,6 +36,10 @@ const apiUrl = (path) => {
   if (path === '/api/api' || path.startsWith('/api/api/')) return path;
   // If path starts with /api and BACKEND_URL is /api, avoid double prefix
   if (BACKEND_URL === '/api' && path.startsWith('/api')) return path;
+  // In production, ensure /api is used for proxying if needed
+  if (process.env.NODE_ENV === "production" && path.startsWith('/api')) {
+    return `/api${path.substring(4)}`;
+  }
   // Otherwise, prefix with BACKEND_URL
   return `${BACKEND_URL}${path.startsWith('/') ? '' : '/'}${path}`;
 };
@@ -96,6 +101,8 @@ function App() {
   // Fetch documents and resources only after health check and endpoint registry are loaded
   useEffect(() => {
     if (serverConnected && endpoints) {
+      // Expose endpoints globally for UploadsManager
+      window.endpoints = endpoints;
       fetchDocuments();
       fetchResources();
     }

@@ -4,8 +4,7 @@ Minimal PocketPro SBA Assistant - Render.com Compatible
 Optimized for deployment without ChromaDB dependencies
 """
 
-import eventlet
-eventlet.monkey_patch()
+
 
 import os
 import logging
@@ -24,7 +23,16 @@ logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 CORS(app)
-socketio = SocketIO(app, cors_allowed_origins="*")
+# Conditional async_mode for SocketIO
+render_env = os.environ.get('RENDER', None)
+render_service = os.environ.get('RENDER_SERVICE_ID', None)
+render_external_url = os.environ.get('RENDER_EXTERNAL_URL', None)
+if render_env or render_service or render_external_url:
+    import eventlet
+    eventlet.monkey_patch()
+    socketio = SocketIO(app, cors_allowed_origins="*")
+else:
+    socketio = SocketIO(app, cors_allowed_origins="*", async_mode="threading")
 
 # Configure uploads folder
 UPLOAD_FOLDER = os.environ.get('UPLOAD_FOLDER', os.path.join(os.path.dirname(__file__), 'frontend', 'uploads'))
@@ -468,11 +476,24 @@ def list_documents():
 
 @app.route('/', methods=['GET'])
 def index():
-    """Root endpoint"""
+    """Root endpoint with config mode display"""
+    # Determine config mode
+    render_env = os.environ.get('RENDER', None)
+    render_service = os.environ.get('RENDER_SERVICE_ID', None)
+    render_external_url = os.environ.get('RENDER_EXTERNAL_URL', None)
+    port = os.environ.get('PORT', '5000')
+    if render_env or render_service or render_external_url:
+        config_mode = 'render'
+    else:
+        config_mode = 'local'
     return jsonify({
         'name': 'PocketPro SBA Assistant API',
         'version': '1.0.0',
         'status': 'running',
+        'config_mode': config_mode,
+        'port': port,
+        'render_service_id': render_service,
+        'render_external_url': render_external_url,
         'endpoints': {
             'health': '/api/health',
             'chat': '/api/chat',
@@ -489,7 +510,7 @@ def api_health():
     try:
         return jsonify({
             "status": "ok",
-            "timestamp": datetime.datetime.utcnow().isoformat() + "Z",
+            "timestamp": datetime.datetime.now(datetime.UTC).isoformat(),
             "service": "PocketProSBA"
         }), 200
     except Exception as e:
@@ -524,13 +545,31 @@ def api_registry():
 # Example WebSocket event
 @socketio.on('connect')
 def handle_connect():
-    emit('message', {'data': 'Connected to backend WebSocket!'})
+    print('Client connected')
+    emit('server_response', {'data': 'Connected to backend WebSocket!'})
 
 @socketio.on('chat')
 def handle_chat(data):
-    # Echo chat message
-    emit('message', {'data': f"Echo: {data}"})
+    print(f'Received chat message: {data}')
+    emit('server_response', {'data': f"Echo: {data}"})
+
+@socketio.on('disconnect')
+def handle_disconnect():
+    print('Client disconnected')
+
+@socketio.on('message')
+def handle_message(data):
+    print(f'Received message: {data}')
+    emit('server_response', {'data': f'Server received: {data}'})
 
 if __name__ == '__main__':
+    # Conditional config for local vs. Render.com
+    render_env = os.environ.get('RENDER', None)
+    render_service = os.environ.get('RENDER_SERVICE_ID', None)
+    render_external_url = os.environ.get('RENDER_EXTERNAL_URL', None)
     port = int(os.environ.get('PORT', 5000))
+    if render_env or render_service or render_external_url:
+        print(f"[CONFIG MODE] Render.com detected. Service ID: {render_service}, External URL: {render_external_url}, Port: {port}")
+    else:
+        print(f"[CONFIG MODE] Local development detected. Port: {port}")
     socketio.run(app, host='0.0.0.0', port=port, debug=False)
