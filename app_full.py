@@ -448,8 +448,10 @@ def startup():
             'document_count': 0
         }
 
+from src.services.startup_service import initialize_app_on_startup
+
 # Initialize on startup
-startup_result = startup()
+startup_result = initialize_app_on_startup()
 
 @app.route('/', methods=['GET'])
 def home():

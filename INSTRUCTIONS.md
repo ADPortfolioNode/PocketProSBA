@@ -1,4 +1,33 @@
 # POCKETPRO:SBA EDITION - IMPLEMENTATION GUIDE
+
+## UPDATED STARTUP WORKFLOW (JULY 2025)
+
+### Frontend Startup (App.js)
+1. On load, the React app attempts to connect to the backend by calling `/api/health`.
+2. If the backend responds with HTTP 200, the app loads system info and sets `serverConnected` to true.
+3. The app then requests `/api/registry` and waits for HTTP 200. Endpoint registry is loaded and stored.
+4. Only after both health and registry are confirmed, the app proceeds to fetch documents and resources.
+5. Progress bar updates at each step; errors are caught and displayed.
+6. Connection status is monitored via the `ConnectionStatusIndicator` component, which retries health checks as needed.
+
+### Backend Startup (Flask)
+1. Flask app starts and exposes `/api/health` and `/api/registry` endpoints (plus others).
+2. CORS is enabled for frontend connectivity.
+3. Vector store and RAG system are initialized on startup.
+4. If ChromaDB is available, it is initialized; otherwise, fallback is used.
+5. All API routes are registered and logged.
+6. App is ready to serve requests on port 5000.
+
+### Common Issues & Fixes
+- If you see `ModuleNotFoundError: No module named 'eventlet'`, install it with `pip install eventlet`.
+- If `/api/health` returns 500, ensure the endpoint exists in your Flask app (see backend/run.py for reference).
+- For Docker/Render.com, ensure all requirements files and Dockerfile paths are correct.
+
+### Recent Changes
+- Frontend startup now awaits HTTP 200 from both `/api/health` and `/api/registry` before loading endpoints.
+- Error handling and progress bar improved in App.js.
+- Backend `/api/health` endpoint added to all main Flask apps for compatibility.
+- CORS configuration verified for frontend/backend connectivity.
 Presented by StainlessDeoism.biz  
 Last updated: May 16, 2025
 
