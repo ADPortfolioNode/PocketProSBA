@@ -1,10 +1,26 @@
-import React, { useState } from 'react';
-import { sbaPrograms, businessLifecycleStages, localResourceTypes } from '../sbaResources';
+import React, { useState, useEffect } from 'react';
+import { businessLifecycleStages, localResourceTypes } from '../sbaResources';
+import { apiFetch } from '../apiClient';
 import { Card, Nav, Row, Col, Container, Badge } from 'react-bootstrap';
 
 const SBAContent = ({ onProgramSelect, onResourceSelect }) => {
   const [activeTab, setActiveTab] = useState('programs');
-  
+  const [programs, setPrograms] = useState([]);
+
+  useEffect(() => {
+    // Load SBA programs from backend endpoint on mount
+    async function fetchPrograms() {
+      try {
+        const data = await apiFetch('programs');
+        setPrograms(data);
+      } catch (err) {
+        setPrograms([]);
+        // Optionally log or show error
+      }
+    }
+    fetchPrograms();
+  }, []);
+
   return (
     <Card className="sba-content-explorer">
       <Card.Header>
@@ -40,14 +56,14 @@ const SBAContent = ({ onProgramSelect, onResourceSelect }) => {
         {activeTab === 'programs' && (
           <Container fluid>
             <Row xs={1} md={2} lg={3} className="g-3">
-              {sbaPrograms.map(program => (
+              {programs.map(program => (
                 <Col key={program.id}>
                   <Card 
                     className="program-card h-100" 
                     onClick={() => onProgramSelect && onProgramSelect(program.id)}
                   >
                     <Card.Body className="d-flex">
-                      <div className="program-icon me-3">{program.icon}</div>
+                      <div className="program-icon me-3">{program.icon || '💼'}</div>
                       <div className="program-content">
                         <Card.Title as="h5">{program.name}</Card.Title>
                         <Card.Text className="small text-muted">{program.description}</Card.Text>

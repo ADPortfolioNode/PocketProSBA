@@ -7,8 +7,8 @@ const apiUrl = (path) =>
 
 // Endpoint registry
 export async function loadEndpoints() {
-  // Correct: matches backend @app.route('/api/api')
-  const response = await fetch(apiUrl("/api/api"));
+  // Correct: matches backend @app.route('/api/registry')
+  const response = await fetch(apiUrl("/api/registry"));
   if (!response.ok) throw new Error("Failed to load endpoint registry: " + response.status);
   return response.json();
 }
