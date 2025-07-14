@@ -30,8 +30,11 @@ yarn-debug.log
 yarn-error.log
 build/
 dist/
+# Always ignore node_modules to keep image size down
 frontend/node_modules/
-frontend/build/
+node_modules/
+# Do NOT ignore public/ so index.html is always included
+# frontend/build/ is fine to ignore, but keep public/
 
 # IDE / Editor
 .vscode/

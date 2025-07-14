@@ -8,6 +8,7 @@ EXPOSE 8000
 ENV CHROMA_HOST=0.0.0.0
 ENV CHROMA_PORT=8000
 
+
 # Create data directory
 RUN mkdir -p /chroma/chroma
 

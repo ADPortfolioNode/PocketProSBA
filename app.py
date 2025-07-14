@@ -34,9 +34,21 @@ if render_env or render_service or render_external_url:
 else:
     socketio = SocketIO(app, cors_allowed_origins="*", async_mode="threading")
 
+
 # Configure uploads folder
 UPLOAD_FOLDER = os.environ.get('UPLOAD_FOLDER', os.path.join(os.path.dirname(__file__), 'frontend', 'uploads'))
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)  # Ensure uploads directory exists
+
+# Serve React build as static files for all non-API routes
+from flask import send_from_directory
+
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def serve_react(path):
+    if path != "" and os.path.exists(os.path.join(app.static_folder, path)):
+        return send_from_directory(app.static_folder, path)
+    else:
+        return send_from_directory(app.static_folder, 'index.html')
 
 # SBA Resources mock data for demonstration
 SBA_RESOURCES = {
