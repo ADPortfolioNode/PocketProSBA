@@ -26,8 +26,8 @@ ENV FLASK_ENV=production
 ENV FLASK_APP=app.py
 ENV PYTHONUNBUFFERED=1
 EXPOSE 5000
-# Health check
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:5000/api/health || exit 1
+
 # Start Flask backend (with SocketIO/eventlet if needed)
 CMD ["python", "app.py"]
