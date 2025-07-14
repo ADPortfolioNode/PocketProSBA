@@ -5,6 +5,7 @@ FROM node:18 AS build_frontend
 WORKDIR /app/frontend
 COPY frontend/package*.json ./
 RUN npm install --legacy-peer-deps
+RUN test -f frontend/public/index.html || (echo "ERROR: frontend/public/index.html not found" && exit 1)
 COPY frontend/ ./
 RUN npm run build
 
@@ -16,7 +17,7 @@ RUN apt-get update && apt-get install -y gcc && rm -rf /var/lib/apt/lists/*
 # Copy requirements and install Python dependencies
 COPY requirements.txt ./
 RUN pip install --upgrade pip setuptools && pip install --no-cache-dir -r requirements.txt
-# Copy backend code
+# Copy backend codev
 COPY . .
 # Copy React build output to Flask static folder
 COPY --from=build_frontend /app/frontend/build ./static
