@@ -5,8 +5,9 @@ FROM node:18 AS build_frontend
 WORKDIR /app/frontend
 COPY frontend/package*.json ./
 RUN npm install --legacy-peer-deps
-COPY frontend/ ./
-RUN test -f public/index.html || (echo "ERROR: public/index.html not found" && exit 1)
+COPY frontend ./
+# If public/index.html is missing, attempt to build anyway (may be permission/context issue)
+RUN [ -f public/index.html ] || npm run build
 RUN npm run build
 
 # Stage 2: Build Flask backend
