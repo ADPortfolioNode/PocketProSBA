@@ -2,11 +2,11 @@
 
 # Stage 1: Build React frontend
 FROM node:18 AS build_frontend
-WORKDIR public/index.htm
+WORKDIR /app/frontend
 COPY frontend/package*.json ./
 RUN npm install --legacy-peer-deps
-RUN test -f public/index.html || (echo "ERROR: public/index.html not found" && exit 1)
 COPY frontend/ ./
+RUN test -f public/index.html || (echo "ERROR: public/index.html not found" && exit 1)
 RUN npm run build
  
 # Stage 2: Build Flask backend
