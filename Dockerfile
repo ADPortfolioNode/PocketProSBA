@@ -6,8 +6,7 @@ WORKDIR /app/frontend
 COPY frontend/package*.json ./
 RUN npm install --legacy-peer-deps
 COPY frontend ./
-# If public/index.html is missing, attempt to build anyway (may be permission/context issue)
-RUN [ -f public/index.html ] || npm run build
+# All files are copied before build; just run build
 RUN npm run build
 
 # Stage 2: Build Flask backend
