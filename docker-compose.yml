@@ -1,8 +1,9 @@
+version: '3'
 services:
   backend:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.backend.prod
     ports:
       - "5000:5000"
     volumes:
@@ -14,6 +15,7 @@ services:
       - PORT=5000
       - PYTHONUNBUFFERED=1
       - FLASK_APP=app.py
+      - CHROMADB_URL=http://chromadb:8000
     command: python app.py
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5000/api/health"]
@@ -76,9 +78,7 @@ services:
       - app-network
 
   chromadb:
-    build:
-      context: .
-      dockerfile: Dockerfile.chromadb
+    image: chromadb/chromadb:latest
     ports:
       - "8000:8000"
     environment:
