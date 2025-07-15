@@ -21,11 +21,11 @@ import { loadEndpoints, getEndpoints, apiFetch } from "./apiClient";
 let BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 if (!BACKEND_URL || BACKEND_URL === "") {
   // Default to localhost for development
-  BACKEND_URL = <process.env.NODE_ENV === "development" ? "http://localhost:10000/api" : "https://pocketprosba.onrender.com/api";>
+  BACKEND_URL = <process.env.NODE_ENV === "development" ? "http://localhost:10000/api" : "https://pocketprosba-backend.onrender.com/api";>
 }
 // If running in production, use the deployed backend URL from env or fallback
 if (process.env.NODE_ENV === "production") {
-  BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "https://pocketprosba.onrender.com";
+  BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "https://pocketprosba-backend.onrender.com";
 }
 
 // Helper to prefix endpoint paths with BACKEND_URL if not already absolute
