@@ -99,7 +99,7 @@ def get_rag_manager():
     
     if _rag_manager_instance is None:
         try:
-            from backend.services.chroma import ChromaService
+            from services.chroma import ChromaService
             
             # Initialize ChromaDB service
             chroma_host = os.environ.get('CHROMA_HOST', 'localhost')

@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 
 # Initialize SBA Content API client
 try:
-    from backend.services.SBA_Content import SBAContentAPI
+from services.SBA_Content import SBAContentAPI
     logger.info("Using backend.services.SBA_Content")
 except ImportError:
     try:

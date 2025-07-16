@@ -6,7 +6,7 @@ import uuid
 from datetime import datetime
 
 from .base import BaseAssistant
-from backend.services.rag import RAGManager
+from services.rag import RAGManager
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -27,7 +27,7 @@ class Concierge(BaseAssistant):
         
         # Initialize RAG manager
         try:
-            from backend.services.rag import get_rag_manager
+            from services.rag import get_rag_manager
             self.rag_manager = get_rag_manager()
         except Exception as e:
             logger.error(f"Failed to initialize RAG manager: {str(e)}")

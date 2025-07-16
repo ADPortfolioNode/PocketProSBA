@@ -16,7 +16,7 @@ def get_system_info():
     """Get system information"""
     try:
         # Get RAG manager instance
-        from backend.services.rag import get_rag_manager
+        from services.rag import get_rag_manager
         rag_manager = get_rag_manager()
         
         # Get collection stats
@@ -55,7 +55,7 @@ def decompose_task():
             return jsonify({'error': 'Message is required'}), 400
         
         # Get concierge instance
-        from backend.assistants.concierge import Concierge
+        from assistants.concierge import Concierge
         concierge = Concierge()
         
         # Handle message
@@ -91,12 +91,12 @@ def execute_step():
         
         # Execute based on agent type
         if agent_type == 'SearchAgent':
-            from backend.assistants.search import SearchAgent
+            from assistants.search import SearchAgent
             agent = SearchAgent()
             result = agent.handle_message(instruction)
         else:
             # Default to concierge
-            from backend.assistants.concierge import Concierge
+            from assistants.concierge import Concierge
             agent = Concierge()
             result = agent.handle_message(instruction)
         
@@ -155,7 +155,7 @@ def query_documents():
             return jsonify({'error': 'Query is required'}), 400
         
         # Get RAG manager instance
-        from backend.services.rag import get_rag_manager
+        from services.rag import get_rag_manager
         rag_manager = get_rag_manager()
         
         # Query documents
@@ -199,7 +199,7 @@ def chat():
             return jsonify({'error': 'Message is required'}), 400
         
         # Get concierge instance
-        from backend.assistants.concierge import Concierge
+        from assistants.concierge import Concierge
         concierge = Concierge()
         
         # Handle message
