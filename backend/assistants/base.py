@@ -8,23 +8,27 @@ from flask_socketio import emit
 # Configure logging
 logger = logging.getLogger(__name__)
 
+
+from .search_module import SearchModule
+
 class BaseAssistant:
-    """Base class for all assistants in the system"""
-    
-    def __init__(self, name):
-        """Initialize the assistant with a name"""
+    """Base class for all assistants in the system, with optional search capabilities."""
+    def __init__(self, name, enable_search=True):
         self.name = name
         self.status = "idle"
         self.progress = 0
         self.details = "Initialized"
-        
+        self.search_module = SearchModule() if enable_search else None
+
+    def search(self, query, num_results=5):
+        if self.search_module:
+            return self.search_module.search(query, num_results=num_results)
+        raise NotImplementedError("Search capability not enabled for this assistant.")
+
     def _update_status(self, status, progress, details):
-        """Update the assistant's status and emit a WebSocket event"""
         self.status = status
         self.progress = progress
         self.details = details
-        
-        # Emit WebSocket event with status update
         try:
             from run import socketio
             socketio.emit('assistant_status', {
