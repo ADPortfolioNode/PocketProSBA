@@ -240,7 +240,7 @@ datasets/
 *.csv
 *.json
 *.jsonl
-*.txt
+
 
 # Except configuration files
 !config/*.json
