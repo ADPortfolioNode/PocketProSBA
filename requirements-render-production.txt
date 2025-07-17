@@ -42,3 +42,4 @@ PyJWT==2.8.0  # For token-based auth if needed
 chromadb==0.3.23
 Flask-SocketIO==5.3.6
 eventlet==0.33.3
+PyPDF2
