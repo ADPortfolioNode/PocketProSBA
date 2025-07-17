@@ -6,7 +6,7 @@ import re
 import json
 import math
 from collections import Counter
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import math
 import sys
@@ -814,3 +814,12 @@ try:
     from chromadb.config import Settings
 except ImportError as e:
     raise ImportError("Missing 'chromadb' dependency. Ensure it is installed in your environment.") from e
+
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def serve_frontend(path):
+    static_dir = os.path.join(app.root_path, 'static')
+    if path != "" and os.path.exists(os.path.join(static_dir, path)):
+        return send_from_directory(static_dir, path)
+    else:
+        return send_from_directory(static_dir, 'index.html')
