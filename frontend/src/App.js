@@ -546,7 +546,7 @@ function App() {
                                   <div>{msg.content}</div>
                                 </div>
                               ))
-                            )}
+                            }
                           </div>
                         </div>
                         <form onSubmit={handleSubmit} className="d-flex flex-row align-items-center gap-2">
