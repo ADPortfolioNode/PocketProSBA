@@ -12,6 +12,11 @@ import math
 import sys
 from functools import wraps
 
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 # Handle ChromaDB import gracefully
 try:
     from chromadb.config import Settings
@@ -22,10 +27,6 @@ except ImportError as e:
     CHROMADB_AVAILABLE = False
     Settings = None
     Client = None
-
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 

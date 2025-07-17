@@ -49,5 +49,5 @@ ENV PYTHONUNBUFFERED=1
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:${PORT}/health || exit 1
 
-# Start ChromaDB in the background, then start the app
-CMD bash -c "chromadb --path /app/chroma_storage & gunicorn --bind 0.0.0.0:${PORT} --workers=1 --timeout=120 app_full:app"
+# Start the app only (ChromaDB is used as a Python library)
+CMD gunicorn --bind 0.0.0.0:${PORT} --workers=1 --timeout=120 app_full:app
