@@ -23,11 +23,11 @@ if (!BACKEND_URL || BACKEND_URL === "") {
   // Default to localhost for development
   BACKEND_URL = process.env.NODE_ENV === "development"
     ? "http://localhost:10000/api"
-    : "https://pocketprosba-backend.onrender.com/api";
+    : "https://pocketprosba25.onrender.com/api";
 }
 // If running in production, use the deployed backend URL from env or fallback
 if (process.env.NODE_ENV === "production") {
-  BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "https://pocketprosba-backend.onrender.com";
+  BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "https://pocketprosba25.onrender.com";
 }
 
 // Helper to prefix endpoint paths with BACKEND_URL if not already absolute
@@ -443,7 +443,10 @@ function App() {
                             variant="link"
                             size="sm"
                             className="p-0 mt-2"
-                            onClick={() => window.open(`/resources/${(resource.slug || resource.title || "").replace(/\s+/g, '-').toLowerCase()}`, "_blank")}
+                            onClick={() => {
+                              const slug = (resource.slug || resource.title || "").replace(/\s+/g, '-').toLowerCase();
+                              window.open(`/resources/${slug}`, "_blank");
+                            }}
                           >
                             More &gt;&gt;&gt;
                           </Button>
@@ -546,7 +549,7 @@ function App() {
                                   <div>{msg.content}</div>
                                 </div>
                               ))
-                            )
+                            )}
                           </div>
                         </div>
                         <form onSubmit={handleSubmit} className="d-flex flex-row align-items-center gap-2">
