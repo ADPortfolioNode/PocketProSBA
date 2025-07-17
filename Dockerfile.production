@@ -5,6 +5,7 @@ LABEL version="1.0"
 LABEL description="Production Dockerfile for PocketPro:SBA on Render.com"
 
 # Set working directory
+
 WORKDIR /app
 
 # Install system dependencies
@@ -49,4 +50,4 @@ HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:${PORT}/health || exit 1
 
 # Start command
-CMD gunicorn --bind 0.0.0.0:${PORT} --timeout 60 --workers 2 --access-logfile - --error-logfile - --log-level info minimal_app:app
+CMD gunicorn --bind 0.0.0.0:${PORT} --timeout 60 --workers 2 --access-logfile - --error-logfile - --log-level info app_full:app
