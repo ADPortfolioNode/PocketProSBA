@@ -1,3 +1,5 @@
+# For PDF processing
+PyPDF2
 # RENDER.COM MINIMAL REQUIREMENTS - PYTHON 3.9 COMPATIBLE
 # NO RUST DEPENDENCIES
 # Optimized for deployment stability
