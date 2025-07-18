@@ -24,7 +24,7 @@ COPY --from=build_frontend /app/frontend/build ./static
 # Expose port
 ENV PORT=5000
 ENV FLASK_ENV=production
-ENV FLASK_APP=app.py
+ENV FLASK_APP=app_full.py
 ENV PYTHONUNBUFFERED=1
 EXPOSE 5000
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
