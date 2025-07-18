@@ -2,13 +2,11 @@ services:
   # Production Backend API Service
   - type: web
     name: pocketpro-sba-production
-    runtime: python
-    buildCommand: pip install --upgrade pip setuptools wheel && pip install -r requirements-render-production.txt
-    startCommand: gunicorn --config=gunicorn_render_fixed.py minimal_app:app
+    dockerfilePath: Dockerfile
     plan: standard  # Adjust based on expected traffic (starter, standard, pro)
     envVars:
       - key: PYTHON_VERSION
-        value: 3.9
+        value: 3.11
       - key: FLASK_ENV
         value: production
       - key: FLASK_APP
