@@ -1,3 +1,15 @@
+# --- Serve React Frontend Build for All Non-API Routes ---
+from flask import send_from_directory
+import os
+
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def serve_frontend(path):
+    static_dir = os.path.join(app.root_path, 'static')
+    if path != "" and os.path.exists(os.path.join(static_dir, path)):
+        return send_from_directory(static_dir, path)
+    else:
+        return send_from_directory(static_dir, 'index.html')
 import os
 import logging
 import time
