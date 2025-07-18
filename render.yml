@@ -1,0 +1,48 @@
+services:
+  # Production Backend API Service
+  - type: web
+    name: pocketpro-sba-production
+    runtime: python
+    buildCommand: pip install --upgrade pip setuptools wheel && pip install -r requirements-render-production.txt
+    startCommand: gunicorn --config=gunicorn_render_fixed.py minimal_app:app
+    plan: standard  # Adjust based on expected traffic (starter, standard, pro)
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.9
+      - key: FLASK_ENV
+        value: production
+      - key: FLASK_APP
+        value: app_full.py
+      - key: PORT
+        value: 5000
+      - key: SECRET_KEY
+        generateValue: true
+      - key: PYTHONPATH
+        value: /opt/render/project/src:/opt/render/project
+      - key: CORS_ORIGINS
+        value: "https://your-frontend-domain.com"  # Restrict for production
+      - key: PYTHONUNBUFFERED
+        value: "1"
+      - key: SENTRY_DSN  # If using Sentry for error tracking
+        sync: false  # Will be set in the Render dashboard
+    healthCheckPath: /health
+    healthCheckTimeout: 15
+    autoDeploy: true  # Enable auto-deploy for production
+    numInstances: 2  # Adjust based on expected traffic
+
+  # Production Frontend Static Site
+  - type: static
+    name: pocketpro-sba-frontend-production
+    buildCommand: cd frontend && npm ci && npm run build:production
+    staticPublishPath: ./frontend/build
+    pullRequestPreviewsEnabled: false
+    envVars:
+      - key: NODE_VERSION
+        value: 18.17.0
+      - key: NODE_ENV
+        value: production
+      - key: REACT_APP_BACKEND_URL
+        fromService:
+          type: web
+          name: pocketpro-sba-production
+          property: host
