@@ -90,6 +90,8 @@ def initialize_services():
 # Initialize on startup
 startup_result = initialize_services()
 
+## ...existing code...
+## Ensure NO other route for '/' returns JSON. Only this catch-all route should exist for '/'.
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
 def serve_frontend(path):
