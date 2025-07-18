@@ -14,7 +14,7 @@ from flask_socketio import SocketIO
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-app = Flask(__name__)
+app = Flask(__name__, static_url_path='/static', static_folder='frontend/build')
 CORS(app)
 
 # Configure Flask-SocketIO
@@ -115,9 +115,9 @@ def serve_frontend(path):
                     shutil.copy2(s, d)
     # Serve static file or index.html
     if path != "" and os.path.exists(os.path.join(static_dir, path)):
-        return send_from_directory(static_dir, path)
+        return send_from_directory(app.static_folder, path)
     else:
-        return send_from_directory(static_dir, 'index.html')
+        return send_from_directory(app.static_folder, 'index.html')
 
 @app.route('/health', methods=['GET'])
 def health_check():
