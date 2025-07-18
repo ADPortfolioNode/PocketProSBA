@@ -4,15 +4,15 @@ services:
     name: pocketpro-sba-production
     runtime: python
     buildCommand: pip install --upgrade pip setuptools wheel && pip install -r requirements-render-production.txt
-    startCommand: gunicorn --bind 0.0.0.0:$PORT --timeout 60 --workers 2 --access-logfile - --error-logfile - --log-level info minimal_app:app
-    plan: starter  # Adjust based on expected traffic (starter, standard, pro)
+    startCommand: gunicorn --config=gunicorn_render_fixed.py minimal_app:app
+    plan: standard  # Adjust based on expected traffic (starter, standard, pro)
     envVars:
       - key: PYTHON_VERSION
         value: 3.9
       - key: FLASK_ENV
         value: production
       - key: FLASK_APP
-        value: minimal_app.py
+        value: app_full.py
       - key: PORT
         value: 5000
       - key: SECRET_KEY
@@ -20,15 +20,15 @@ services:
       - key: PYTHONPATH
         value: /opt/render/project/src:/opt/render/project
       - key: CORS_ORIGINS
-        value: "*"  # Consider restricting this for production
+        value: "https://your-frontend-domain.com"  # Restrict for production
       - key: PYTHONUNBUFFERED
         value: "1"
       - key: SENTRY_DSN  # If using Sentry for error tracking
         sync: false  # Will be set in the Render dashboard
     healthCheckPath: /health
     healthCheckTimeout: 15
-    autoDeploy: false  # Disable auto-deploy for production
-    numInstances: 1  # Adjust based on expected traffic
+    autoDeploy: true  # Enable auto-deploy for production
+    numInstances: 2  # Adjust based on expected traffic
 
   # Production Frontend Static Site
   - type: static

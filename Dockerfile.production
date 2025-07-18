@@ -1,26 +1,23 @@
- FROM python:3.9-slim
+FROM python:3.9-slim
 
 LABEL maintainer="PocketPro:SBA Team"
 LABEL version="1.0"
 LABEL description="Production Dockerfile for PocketPro:SBA on Render.com"
 
 # Set working directory
-
 WORKDIR /app
-
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    gcc \
-    g++ \
-    curl \
-    build-essential \
-    && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first for better caching
 COPY requirements-render-production.txt .
 
-# Install Python dependencies with optimizations
-RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
+# Install system dependencies and Python dependencies with optimizations
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    g++ \
+    curl \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/* && \
+    pip install --no-cache-dir --upgrade pip setuptools wheel && \
     pip install --no-cache-dir -r requirements-render-production.txt
 
 # Copy application code
