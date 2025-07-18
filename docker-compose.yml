@@ -15,7 +15,6 @@ services:
       - PORT=5000
       - PYTHONUNBUFFERED=1
       - FLASK_APP=app.py
-      - CHROMADB_URL=http://chromadb:8000
     command: python app.py
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5000/api/health"]
@@ -31,8 +30,6 @@ services:
           memory: 512M
     networks:
       - app-network
-    depends_on:
-      - chromadb
 
   frontend:
     build:
@@ -71,33 +68,9 @@ services:
     depends_on:
       - backend
       - frontend
-      - chromadb
-    environment:
-      - CHROMA_PORT=8000
     networks:
       - app-network
 
-  chromadb:
-    image: chromadb/chromadb:latest
-    ports:
-      - "8000:8000"
-    environment:
-      - CHROMA_HOST=0.0.0.0
-      - CHROMA_PORT=8000
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
-    deploy:
-      resources:
-        limits:
-          memory: 2G
-        reservations:
-          memory: 512M
-    networks:
-      - app-network
 
 networks:
   app-network:

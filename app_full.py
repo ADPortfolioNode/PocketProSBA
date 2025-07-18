@@ -789,13 +789,6 @@ except Exception as e:
     logger.warning(f"⚠️ Failed to register API routes: {str(e)}")
 
 # Log the configured port - CRITICAL for Render.com
-port = int(os.environ.get("PORT", 5000))
-logger.info(f"🔍 Binding to port {port}")
-app.run(host="0.0.0.0", port=port, debug=os.environ.get("FLASK_ENV", "production") == "development", threaded=True)
-logger.info(f"🔍 All environment variables related to ports:")
-for key, value in os.environ.items():
-    if 'PORT' in key.upper() or 'BIND' in key.upper():
-        logger.info(f"   {key}={value}")
 
 # For Render.com, we need to expose the app for Gunicorn to find
 application = app
@@ -803,12 +796,14 @@ application = app
 # Create socketio for compatibility with run.py
 socketio = None
 
-if __name__ == "__main__":
-    # Read port from environment with fallback to 5000
-    port = int(os.environ.get("PORT", 5000))
+def run_app():
+    port = int(os.environ.get("PORT", 10000))
     debug = os.environ.get("FLASK_ENV", "production") == "development"
     logger.info(f"🚀 Starting Flask app on port {port}")
     app.run(host="0.0.0.0", port=port, debug=debug, threaded=True)
+
+if __name__ == "__main__":
+    run_app()
 
 try:
     from chromadb.config import Settings
