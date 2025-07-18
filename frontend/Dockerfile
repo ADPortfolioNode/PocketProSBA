@@ -1,14 +1,14 @@
 ﻿FROM node:16-alpine as build
 
-WORKDIR /app
+WORKDIR /app/frontend
 
 # Copy package files and install dependencies
-COPY package*.json ./
+COPY frontend/package*.json ./
 RUN npm install
 RUN npm install react-bootstrap@2.8.0 --save
 
 # Copy source files
-COPY . .
+COPY frontend/. .
 
 # Set environment variables - prevent ESLint errors from failing the build
 ENV CI=false
@@ -20,7 +20,7 @@ RUN npm run build
 
 # Production environment
 FROM nginx:alpine
-COPY --from=build /frontend/build /usr/share/nginx/html
+COPY --from=build /app/frontend/build /usr/share/nginx/html
 EXPOSE 80
 
 CMD ["nginx", "-g", "daemon off;"]
