@@ -1,3 +1,6 @@
+# PDF and Vector DB dependencies for backend compatibility
+PyPDF2==1.26.0
+chromadb==0.3.23
 # RENDER.COM PRODUCTION REQUIREMENTS - PYTHON 3.13 COMPATIBLE
 # Optimized for deployment stability and performance
 
