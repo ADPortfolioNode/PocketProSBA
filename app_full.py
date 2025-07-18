@@ -457,15 +457,8 @@ from src.services.startup_service import initialize_app_on_startup
 # Initialize on startup
 startup_result = initialize_app_on_startup()
 
-@app.route('/', methods=['GET'])
-def home():
-    """Home endpoint"""
-    return jsonify({
-        'service': 'PocketPro SBA',
-        'version': '1.0.0',
-        'status': 'operational',
-        'message': 'Welcome to PocketPro SBA RAG API'
-    })
+## ...existing code...
+## Removed the '/' JSON endpoint so the catch-all route serves React frontend
 
 @app.route('/health', methods=['GET'])
 def health_check():
