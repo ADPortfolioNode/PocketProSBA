@@ -3,9 +3,8 @@
 .gitignore
 
 # Docker
-Dockerfile*
 docker-compose*
-.dockerignore
+# Do NOT ignore Dockerfile or .dockerignore so builds work
 
 # Environment
 .env*
