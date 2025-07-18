@@ -6,7 +6,7 @@ import re
 import json
 import math
 from collections import Counter
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 from flask_socketio import SocketIO
 
@@ -90,15 +90,17 @@ def initialize_services():
 # Initialize on startup
 startup_result = initialize_services()
 
-@app.route('/', methods=['GET'])
-def home():
-    """Home endpoint"""
-    return jsonify({
-        'service': 'PocketPro SBA',
-        'version': '1.0.0',
-        'status': 'operational',
-        'message': 'Welcome to PocketPro SBA RAG API'
-    })
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def serve_frontend(path):
+    if path.startswith('api/') or path == 'health':
+        return handle_404(None)
+    static_dir = os.path.join(app.root_path, 'static')
+    # ...copy React build if needed...
+    if path != "" and os.path.exists(os.path.join(static_dir, path)):
+        return send_from_directory(static_dir, path)
+    else:
+        return send_from_directory(static_dir, 'index.html')
 
 @app.route('/health', methods=['GET'])
 def health_check():
