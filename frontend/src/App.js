@@ -12,7 +12,7 @@ import ConciergeGreeting from "./components/ConciergeGreeting";
 import LoadingIndicator from "./components/LoadingIndicator";
 import ErrorBoundary from "./components/ErrorBoundary";
 import StatusBar from "./components/StatusBar";
-import UploadsManager from "./components/uploads/UploadsManager";
+import UploadsManager from "./components/UploadsManager";
 import { loadEndpoints, getEndpoints, apiFetch } from "./apiClient";
 
 // Use only the React build-time env variable for backend URL
