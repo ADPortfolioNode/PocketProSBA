@@ -1,15 +1,6 @@
-# --- Serve React Frontend Build for All Non-API Routes ---
 from flask import send_from_directory
 import os
-
-@app.route('/', defaults={'path': ''})
-@app.route('/<path:path>')
-def serve_frontend(path):
-    static_dir = os.path.join(app.root_path, 'static')
-    if path != "" and os.path.exists(os.path.join(static_dir, path)):
-        return send_from_directory(static_dir, path)
-    else:
-        return send_from_directory(static_dir, 'index.html')
+## ...existing code...
 import os
 import logging
 import time
@@ -822,9 +813,16 @@ try:
 except ImportError as e:
     raise ImportError("Missing 'chromadb' dependency. Ensure it is installed in your environment.") from e
 
+
+# --- Serve React Frontend Build for All Non-API Routes ---
+# This catch-all route should be registered LAST, after all API and health routes
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
 def serve_frontend(path):
+    # Only serve frontend for non-API/non-health routes
+    if path.startswith('api/') or path == 'health':
+        # Let Flask route matching handle /api/* and /health
+        return handle_404(None)
     static_dir = os.path.join(app.root_path, 'static')
     if path != "" and os.path.exists(os.path.join(static_dir, path)):
         return send_from_directory(static_dir, path)
