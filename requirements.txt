@@ -1,6 +1,5 @@
-# PDF and Vector DB dependencies for backend compatibility
-PyPDF2==1.26.0
-chromadb==0.3.23
+# For PDF processing
+PyPDF2
 # RENDER.COM PRODUCTION REQUIREMENTS - PYTHON 3.9 COMPATIBLE
 # Optimized for deployment stability and performance
 
@@ -13,6 +12,7 @@ gunicorn==21.2.0
 python-dotenv==1.0.0
 requests==2.31.0
 urllib3>=1.26.0,<3.0.0
+
 
 # Core dependencies
 setuptools>=68.0.0
@@ -41,8 +41,8 @@ flask-talisman==1.1.0  # HTTP security headers
 PyJWT==2.8.0  # For token-based auth if needed
 
 # Additional dependency for Render environment
+chromadb==0.3.23
 Flask-SocketIO==5.3.6
 eventlet==0.33.3
 
-# For PDF processing
-PyPDF2==1.26.0  # Ensure PDF processing is compatible with Python 3.9
+PyPDF2==1.26.0  # Ensure PDF processing is compatible with Python 3.9##PyPDF2
