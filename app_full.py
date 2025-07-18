@@ -784,6 +784,12 @@ try:
 except Exception as e:
     logger.warning(f"⚠️ Failed to register API routes: {str(e)}")
 
+# Attach global assistants to app for routes access
+app.concierge = Concierge(conversation_store)
+app.search_agent = SearchAgent()
+app.file_agent = FileAgent()
+app.function_agent = FunctionAgent()
+
 # Log the configured port - CRITICAL for Render.com
 
 # For Render.com, we need to expose the app for Gunicorn to find

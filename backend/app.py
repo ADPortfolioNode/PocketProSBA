@@ -14,7 +14,7 @@ from flask_socketio import SocketIO
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-app = Flask(__name__, static_url_path='/static', static_folder='frontend/build')
+app = Flask(__name__, static_url_path='/static', static_folder='static')
 CORS(app)
 
 # Configure Flask-SocketIO
@@ -98,23 +98,8 @@ def serve_frontend(path):
     # Only serve frontend for non-API/non-health routes
     if path.startswith('api/') or path == 'health':
         return handle_404(None)
-    static_dir = os.path.join(app.root_path, 'static')
-    react_build_dir = os.path.join(app.root_path, 'frontend', 'build')
-    # Ensure static directory exists, and copy from React build if missing
-    if not os.path.exists(static_dir):
-        os.makedirs(static_dir, exist_ok=True)
-        # Copy React build files if available
-        if os.path.exists(react_build_dir):
-            import shutil
-            for item in os.listdir(react_build_dir):
-                s = os.path.join(react_build_dir, item)
-                d = os.path.join(static_dir, item)
-                if os.path.isdir(s):
-                    shutil.copytree(s, d, dirs_exist_ok=True)
-                else:
-                    shutil.copy2(s, d)
-    # Serve static file or index.html
-    if path != "" and os.path.exists(os.path.join(static_dir, path)):
+    # Serve static file or index.html directly from static folder
+    if path != "" and os.path.exists(os.path.join(app.static_folder, path)):
         return send_from_directory(app.static_folder, path)
     else:
         return send_from_directory(app.static_folder, 'index.html')

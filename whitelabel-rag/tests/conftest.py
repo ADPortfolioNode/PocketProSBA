@@ -160,8 +160,6 @@ def temp_pdf(tmp_path):
 @pytest.fixture
 def client(app) -> FlaskClient:
     return app.test_client()
-        'How do I start a business?'
-    ]
 
 import io
 import pytest
