@@ -7,7 +7,7 @@ flask-cors==4.0.0
 gunicorn==21.2.0
 
 # Essential utilities
-python-dotenv==1.0.0
+python-dotenv==3.1.1
 requests==2.31.0
 urllib3>=1.26.0,<3.0.0
 
@@ -27,69 +27,26 @@ scikit-learn==1.2.2
 google-generativeai==0.3.2
 
 # Production-specific dependencies
-# For monitoring and performance
-prometheus-client==0.17.1
-# For rate limiting
-Flask-Limiter==3.5.0
-# For better error tracking
-sentry-sdk==1.29.2
+prometheus-client==0.17.1  # Monitoring and performance
+Flask-Limiter==3.5.0      # Rate limiting
+sentry-sdk==1.29.2        # Error tracking
 
 # Security enhancements
-flask-talisman==1.1.0  # HTTP security headers
-PyJWT==2.8.0  # For token-based auth if needed
+flask-talisman==1.1.0     # HTTP security headers
+PyJWT==2.8.0              # Token-based auth
 
-# Additional dependency for Render environment
+# Additional dependencies for Render environment
 chromadb==0.3.23
 Flask-SocketIO==5.3.6
 eventlet==0.33.3
-PyPDF2==1.26.0  # Ensure PDF processing is compatible with Python 3.9# For PDF processing
-PyPDF2
-# RENDER.COM PRODUCTION REQUIREMENTS - PYTHON 3.9 COMPATIBLE
-# Optimized for deployment stability and performance
+PyPDF2==1.26.0            # PDF processing, Python 3.9 compatible
 
-# Core Flask dependencies
-flask==2.3.3
-flask-cors==4.0.0
-gunicorn==21.2.0
-
-# Essential utilities
-python-dotenv==1.0.0
-requests==2.31.0
-urllib3>=1.26.0,<3.0.0
-
-
-# Core dependencies
-setuptools>=68.0.0
-werkzeug==2.3.7
-wheel>=0.42.0
-click>=8.0.0
-itsdangerous>=2.0.0
-jinja2>=3.0.0
-markupsafe>=2.0.0
+# Pydantic and settings (Python 3.9 compatible)
 pydantic<2.11
-pydantic-settings==0.5.2
-
-# Add minimal AI capabilities without Rust dependencies
-numpy==1.24.3
-scikit-learn==1.2.2
-google-generativeai==0.3.2
-
-# Production-specific dependencies
-# For monitoring and performance
-prometheus-client==0.17.1
-# For rate limiting
-Flask-Limiter==3.5.0
-# For better error tracking
-sentry-sdk==1.29.2
-
-# Security enhancements
-flask-talisman==1.1.0  # HTTP security headers
-PyJWT==2.8.0  # For token-based auth if needed
-
-# Additional dependency for Render environment
-chromadb==0.3.23
-Flask-SocketIO==5.3.6
-eventlet==0.33.3
-PyPDF2==1.26.0  # Ensure PDF processing is compatible with Python 3.9##PyPDF2
+pydantic-settings==0.2.5   # Only 0.2.5 supports Python 3.9
+PyPDF2==1.26.0  # Ensure PDF processing is compatible with Python 3.9
+python-dotenv==3.1.1
+# pydantic-settings compatibility: Only 0.2.5 works with Python 3.9. Do not use >=1.0.0.
+pydantic-settings==0.2.5
 
 
