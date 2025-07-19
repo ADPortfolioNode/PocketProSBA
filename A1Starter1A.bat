@@ -86,3 +86,16 @@ if [ "$ENCODING_WARN" = true ]; then
 else
   echo "[A1] All Python file operations use encoding."
 fi
+
+REM Start Flask backend
+start "Flask Backend" python app_full.py
+
+REM Start React frontend
+cd frontend
+start "React Frontend" npm start
+
+REM To stop all Python processes (Flask):
+REM taskkill /IM python.exe /F
+
+REM To stop all Node processes (React):
+REM taskkill /IM node.exe /F
