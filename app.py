@@ -21,18 +21,28 @@ from flask_socketio import SocketIO, emit
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-app = Flask(__name__)
-CORS(app)
-# Conditional async_mode for SocketIO
-render_env = os.environ.get('RENDER', None)
-render_service = os.environ.get('RENDER_SERVICE_ID', None)
-render_external_url = os.environ.get('RENDER_EXTERNAL_URL', None)
-if render_env or render_service or render_external_url:
-    import eventlet
-    eventlet.monkey_patch()
-    socketio = SocketIO(app, cors_allowed_origins="*")
-else:
-    socketio = SocketIO(app, cors_allowed_origins="*", async_mode="threading")
+def create_app():
+    from flask import Flask
+    from flask_cors import CORS
+    from flask_socketio import SocketIO
+
+    app = Flask(__name__)
+    CORS(app)
+    render_env = os.environ.get('RENDER', None)
+    render_service = os.environ.get('RENDER_SERVICE_ID', None)
+    render_external_url = os.environ.get('RENDER_EXTERNAL_URL', None)
+    if render_env or render_service or render_external_url:
+        import eventlet
+        eventlet.monkey_patch()
+        socketio = SocketIO(app, cors_allowed_origins="*")
+    else:
+        socketio = SocketIO(app, cors_allowed_origins="*", async_mode="threading")
+
+    # Additional app setup here (routes, etc.)
+
+    return app, socketio
+
+app, socketio = create_app()
 
 
 # Configure uploads folder

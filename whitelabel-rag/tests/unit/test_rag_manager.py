@@ -7,7 +7,7 @@ import json
 import os
 
 # Import the module under test
-from app.services.rag_manager import RAGManager, get_rag_manager
+from rag_manager import RAGManager, get_rag_manager
 
 class TestRAGManager:
     """Tests for the RAG Manager component"""

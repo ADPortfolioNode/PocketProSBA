@@ -157,6 +157,8 @@ def temp_pdf(tmp_path):
     pdf_file.write_bytes(pdf_content)
     return pdf_file
 
+from flask.testing import FlaskClient
+
 @pytest.fixture
 def client(app) -> FlaskClient:
     return app.test_client()

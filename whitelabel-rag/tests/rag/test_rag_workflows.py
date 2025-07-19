@@ -10,7 +10,7 @@ import pytest
 from unittest.mock import patch, MagicMock
 import numpy as np
 
-from app.services.rag_manager import RAGManager, get_sba_service_instance
+from rag_manager import RAGManager, get_sba_service_instance
 from app.services.chroma_service import get_chroma_service_instance
 
 @pytest.fixture(autouse=True)
