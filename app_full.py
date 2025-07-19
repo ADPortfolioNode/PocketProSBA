@@ -1,11 +1,15 @@
 from flask import send_from_directory
+from dotenv import load_dotenv
 import os
+from dotenv import load_dotenv
+load_dotenv()
 ## ...existing code...
 import os
 import logging
 import time
 import hashlib
 import re
+import chromadb  
 import json
 import math
 from collections import Counter
@@ -31,12 +35,17 @@ except ImportError as e:
     Settings = None
     Client = None
 
+
+# Load environment variables from .env file
+load_dotenv()
+
 app = Flask(__name__)
 
-# --- Production Hardening Additions ---
 
-# Required environment variables
+# --- Production Hardening Additions ---
+# Load required environment variables from .env
 REQUIRED_ENV_VARS = ["GEMINI_API_KEY", "SECRET_KEY"]
+
 def check_required_env_vars():
     missing = [var for var in REQUIRED_ENV_VARS if not os.environ.get(var)]
     if missing:

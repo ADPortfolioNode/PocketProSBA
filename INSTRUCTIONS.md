@@ -1,3 +1,52 @@
+# PocketPro:SBA Edition - Build & Deployment Instructions (Full Workflow)
+
+## Full Workflow Build & Deployment (July 2025)
+
+This section summarizes the current build and deployment specs for the full workflow:
+
+---
+
+### Prerequisites
+- Python 3.9+ (or 3.13 for requirements_full.txt)
+- Node.js 16+
+- Docker & Docker Compose
+- Google Gemini API key
+
+### Environment Variables
+- `.env` and `.env.chromadb` must be present and filled:
+  - `GEMINI_API_KEY`, `SECRET_KEY`, `CHROMA_DB_IMPL`, `CHROMA_SERVER_HOST`, `CHROMA_SERVER_PORT`, `FLASK_ENV`, etc.
+
+### Install Dependencies
+- Local: `pip install -r requirements_full.txt` and `npm install` in `frontend`
+- Docker/Render: Dependencies installed via `requirements-render-full.txt` in Dockerfile
+
+### Starting the App
+- Local: `start-dev-full.bat`, `start-dev-full.ps1`, or `./start-dev-full.sh`
+- Docker: `deploy-docker.bat` or `./deploy-docker.sh`
+- Render.com: Uses `Dockerfile.render.full` and `requirements-render-full.txt`, healthcheck on `/health` port `10000`
+
+### Build Specs
+- **Backend:** Flask (`app_full.py`), ChromaDB, all endpoints, loads env vars from `.env` and `.env.chromadb`
+- **Frontend:** React in `/frontend`, served via Flask catch-all route
+- **ChromaDB:** Configured via `.env.chromadb`, DuckDB+Parquet
+- **Docker:** `Dockerfile.render.full`, exposes port `10000`, healthcheck enabled
+
+### Troubleshooting
+- If you see `No module named flask`, run `pip install -r requirements_full.txt`
+- For Unicode errors, use `encoding='utf-8'` in Python file operations
+- For PowerShell script errors, use `powershell.exe` on Windows
+- Check logs: `docker-compose logs -f`
+
+### Health & Verification
+- Health endpoint: `GET /health` on port `10000`
+- Verification scripts: `A1Starter1A.*`, `verify-deployment.ps1`, etc.
+
+### Additional Notes
+- All scripts and configs are optimized for the full workflow
+- For issues, see `README.md` or open a repository issue
+
+---
+
 # POCKETPRO:SBA EDITION - IMPLEMENTATION GUIDE
 
 ## UPDATED STARTUP WORKFLOW (JULY 2025)

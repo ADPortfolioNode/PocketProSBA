@@ -47,21 +47,42 @@ echo 4. Monitor logs with: docker-compose logs -f
 echo.
 echo Workflow finished!
 
-REM Start Flask server (optimal for Render)
-if exist app.py (
-    echo Starting Flask server...
-    set FLASK_APP=app.py
-    set FLASK_ENV=production
-    set PORT=5000
-    python -m flask run --host=0.0.0.0 --port=5000
-)
+REM --- Server Startup & Encoding Check ---
+echo "[A1] Checking for running Flask and React servers..."
+FLASK_PID=$(pgrep -f "flask run")
+REACT_PID=$(pgrep -f "npm start")
+if [ ! -z "$FLASK_PID" ]; then
+  echo "Stopping existing Flask server (PID: $FLASK_PID)..."
+  kill $FLASK_PID
+fi
+if [ ! -z "$REACT_PID" ]; then
+  echo "Stopping existing React server (PID: $REACT_PID)..."
+  kill $REACT_PID
+fi
+echo "Starting fresh Flask and React servers for testing..."
+export FLASK_APP=app.py
+export FLASK_ENV=production
+export PORT=5000
+nohup python3 -m flask run --host=0.0.0.0 --port=5000 > flask.log 2>&1 &
+if [ -f frontend/package.json ]; then
+  cd frontend
+  nohup npm start > react.log 2>&1 &
+  cd ..
+fi
 
-REM Start React frontend (optimal for Render)
-if exist frontend\package.json (
-    echo Starting React frontend...
-    cd frontend
-    npm install
-    npm run build
-    npm start
-    cd ..
-)
+REM --- Encoding Check Helper ---
+echo "[A1] Checking Python scripts for encoding in file operations..."
+ENCODING_WARN=false
+for pyfile in *.py; do
+  if grep -q "open(" "$pyfile"; then
+    if ! grep -q "encoding=" "$pyfile"; then
+      echo "[WARN] $pyfile: open() without encoding specified."
+      ENCODING_WARN=true
+    fi
+  fi
+done
+if [ "$ENCODING_WARN" = true ]; then
+  echo "[A1] Please update above Python scripts to use encoding='utf-8' for file operations."
+else
+  echo "[A1] All Python file operations use encoding."
+fi
