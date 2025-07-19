@@ -12,9 +12,7 @@ RUN npm run build
 # Stage 2: Build Flask backend
 FROM python:3.11-slim AS backend
 WORKDIR /app
-# Install system dependencies including g++ for C++11 support
-RUN apt-get update && apt-get install -y gcc g++ && rm -rf /var/lib/apt/lists/*
-# Copy requirements and install Python dependencies
+RUN apt-get update && apt-get install -y gcc g++ curl && rm -rf /var/lib/apt/lists/*
 COPY requirements.txt ./
 RUN pip install --upgrade pip setuptools wheel && pip install --no-cache-dir -r requirements.txt
 # Copy backend code
@@ -31,4 +29,4 @@ HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:5000/api/health || exit 1
 
 # Start Flask backend (serves React build from /static)
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "2", "--timeout", "60", "app_full:app"]
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "2", "--timeout", "120", "app_full:app"]
