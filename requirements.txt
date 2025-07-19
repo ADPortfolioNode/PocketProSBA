@@ -1,3 +1,9 @@
+# IMPORTANT: Some dependencies (numpy, chromadb) may require Rust for building from source on minimal environments.
+# To avoid build errors, use Python versions with pre-built wheels, or install Rust/build-essential in your Docker image.
+# For Docker, ensure you have 'build-essential' and 'gcc' installed. See Dockerfile.render.full for example.
+# If you encounter Rust build errors, see https://numpy.org/devdocs/user/building.html and https://docs.rs/cargo/latest/cargo/ for help.
+# For most users, pre-built wheels will work and no Rust is needed.
+
 # For PDF processing
 PyPDF2
 # RENDER.COM PRODUCTION REQUIREMENTS - PYTHON 3.9 COMPATIBLE
