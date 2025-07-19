@@ -11,11 +11,8 @@ It checks:
 3. All required environment variables are set
 4. No references to port 10000 remain in deployment files
 """
-import os
 import sys
-import json
 import requests
-import time
 import re
 from urllib.parse import urlparse
 from pathlib import Path
@@ -42,7 +39,7 @@ def verify_deployment(base_url):
     # Check root endpoint
     try:
         print("\n📡 Checking root endpoint...")
-        response = requests.get(f"{base_url}/")
+        response = requests.get(f"{base_url}/", timeout=10)
         if response.status_code == 200:
             data = response.json()
             print(f"  ✅ Status code: {response.status_code}")
@@ -55,14 +52,14 @@ def verify_deployment(base_url):
             print(f"  ❌ Status code: {response.status_code}")
             print(f"  ❌ Response: {response.text}")
             return False
-    except Exception as e:
+    except requests.RequestException as e:
         print(f"  ❌ Error: {e}")
         return False
     
     # Check health endpoint
     try:
         print("\n📡 Checking health endpoint...")
-        response = requests.get(f"{base_url}/health")
+        response = requests.get(f"{base_url}/health", timeout=10)
         if response.status_code == 200:
             data = response.json()
             print(f"  ✅ Status code: {response.status_code}")
@@ -72,38 +69,37 @@ def verify_deployment(base_url):
             print(f"  ❌ Status code: {response.status_code}")
             print(f"  ❌ Response: {response.text}")
             return False
-    except Exception as e:
+    except requests.RequestException as e:
         print(f"  ❌ Error: {e}")
         return False
     
     # Check port-debug endpoint
     try:
         print("\n📡 Checking port-debug endpoint...")
-        response = requests.get(f"{base_url}/port-debug")
+        response = requests.get(f"{base_url}/port-debug", timeout=10)
         if response.status_code == 200:
             data = response.json()
+            print("\n📋 Environment variables:")
             print(f"  ✅ Status code: {response.status_code}")
             print(f"  ✅ Configured port: {data.get('configured_port', 'Unknown')}")
             print(f"  ✅ Hostname: {data.get('hostname', 'Unknown')}")
             print(f"  ✅ IP address: {data.get('ip_address', 'Unknown')}")
             print(f"  ✅ Render deployment: {data.get('render_deployment', 'Unknown')}")
-            
             env_vars = data.get('environment_variables', {})
-            print(f"\n📋 Environment variables:")
             for key, value in env_vars.items():
                 print(f"  ✅ {key}: {value}")
         else:
             print(f"  ❌ Status code: {response.status_code}")
             print(f"  ❌ Response: {response.text}")
             return False
-    except Exception as e:
+    except requests.RequestException as e:
         print(f"  ❌ Error: {e}")
         return False
     
     # All checks passed
     return True
 
-def check_port_references(file_path, bad_port="10000", good_port="5000"):
+def check_port_references(file_path, bad_port="10000"):
     """Check for hard-coded port references"""
     if not Path(file_path).exists():
         return True, f"File {file_path} does not exist - skipping"
