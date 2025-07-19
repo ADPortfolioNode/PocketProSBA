@@ -12,9 +12,9 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first for better caching
-COPY requirements_fill.txt ./requirements_fill.txt
+COPY requirements_full.txt ./requirements_full.txt
 
-# Install Python dependencies (use requirements-render-full.txt only)
+# Install Python dependencies (use requirements_full.txt only)
 RUN pip install --upgrade pip setuptools && \
     pip install --no-cache-dir -r requirements_full.txt
 
