@@ -19,12 +19,13 @@ services:
       - key: CHUNK_SIZE
         value: "500"
 
-  - type: static          # React frontend
+    - type: web             # React frontend
     name: pocketprosba-frontend
+    env: node
     branch: main
     plan: free
     buildCommand: cd frontend && npm install --legacy-peer-deps && npm run build
-    publishPath: frontend/build
+    startCommand: serve -s frontend/build -l $PORT
     envVars:
       - key: REACT_APP_BACKEND_URL
-        value: ""         # ← you’ll fill this in Render UI
+        value: ""         # ← fill in Render UI
