@@ -1,32 +1,50 @@
-### Multi-stage build: React frontend + Flask backend unified for production
+FROM python:3.9-slim
 
-# Stage 1: Build React frontend
-FROM node:18 AS build_frontend
-WORKDIR /app/frontend
-COPY frontend/package*.json ./
-RUN npm install --legacy-peer-deps
-COPY frontend ./
-# All files are copied before build; just run build
-RUN npm run build
+LABEL maintainer="PocketPro:SBA Team"
+LABEL version="1.0"
+LABEL description="Production Dockerfile for PocketPro:SBA on Render.com"
 
-# Stage 2: Build Flask backend
-FROM python:3.11-slim AS backend
+# Set working directory
 WORKDIR /app
-RUN apt-get update && apt-get install -y gcc g++ curl && rm -rf /var/lib/apt/lists/*
-COPY requirements.txt ./
-RUN pip install --upgrade pip setuptools wheel && pip install --no-cache-dir -r requirements.txt
-# Copy backend code
+
+# Copy requirements first for better caching
+COPY requirements-render-production.txt .
+
+# Install system dependencies and Python dependencies with optimizations
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    g++ \
+    curl \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/* && \
+    pip install --no-cache-dir --upgrade pip setuptools wheel && \
+    pip install --no-cache-dir -r requirements-render-production.txt
+
+# Copy application code
 COPY . .
-# Copy React build output to Flask static folder (for production serving)
-COPY --from=build_frontend /app/frontend/build ./static
-# Expose port
+
+# Create non-root user for security
+RUN useradd -m -u 1000 appuser && \
+    chown -R appuser:appuser /app && \
+    mkdir -p /app/logs /app/static && \
+    chown -R appuser:appuser /app/logs /app/static
+
+# Switch to non-root user
+USER appuser
+
+# Environment variables
 ENV PORT=5000
 ENV FLASK_ENV=production
-ENV FLASK_APP=app_full.py
+ENV FLASK_APP=app.py
 ENV PYTHONUNBUFFERED=1
-EXPOSE 5000
-HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:5000/api/health || exit 1
+ENV PYTHONDONTWRITEBYTECODE=1
 
-# Start Flask backend (serves React build from /static)
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "2", "--timeout", "120", "app_full:app"]
+# Expose port
+EXPOSE ${PORT}
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:${PORT}/health || exit 1
+
+# Start command
+CMD gunicorn --bind 0.0.0.0:${PORT} --timeout 60 --workers 2 --access-logfile - --error-logfile - --log-level info app_full:app

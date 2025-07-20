@@ -14,7 +14,7 @@ services:
   - type: web
     name: pocketpro-backend
     env: docker
-    dockerfilePath: Dockerfile.production
+    dockerfilePath: Dockerfile.render.full
     healthCheckPath: /health
     envVars:
       - key: PYTHON_VERSION
@@ -24,7 +24,7 @@ services:
       - key: FLASK_APP
         value: app_full.py
       - key: PORT
-        value: "5000"
+        value: "10000"
       - key: SECRET_KEY
         generateValue: true
       - key: CORS_ORIGINS
