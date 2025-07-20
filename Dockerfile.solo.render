@@ -10,7 +10,7 @@ RUN npm run build
 FROM python:3.9-slim AS backend
 WORKDIR /app
 COPY backend/requirements.txt ./backend/
-RUN pip install --no-cache-dir -r ./backend/requirements.txt
+RUN pip install --no-cache-dir -r ./backend/requirements-render-production.txt
 
 # Copy backend code
 COPY backend/ ./backend/
