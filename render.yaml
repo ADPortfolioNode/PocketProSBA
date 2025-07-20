@@ -28,4 +28,4 @@ services:
     startCommand: serve -s frontend/build -l $PORT
     envVars:
       - key: REACT_APP_BACKEND_URL
-        value: ""         # ← fill in Render UI
+        value: "https://pocketprosba-1.onrender.com/"         # ← fill in Render UI
