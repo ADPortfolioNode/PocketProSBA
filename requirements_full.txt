@@ -7,7 +7,7 @@ flask-cors==4.0.0
 gunicorn==21.2.0
 
 # Essential utilities
-python-dotenv==3.1.1
+python-dotenv==1.0.0
 requests==2.31.0
 urllib3>=1.26.0,<3.0.0
 
@@ -42,7 +42,6 @@ eventlet==0.33.3
 PyPDF2==1.26.0            # PDF processing, Python 3.9 compatible
 
 # Pydantic and settings (Python 3.9 compatible)
-pydantic<2.11
-pydantic-settings==0.2.5   # Only 0.2.5 supports Python 3.9
+...existing code...
 
 
