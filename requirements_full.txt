@@ -44,9 +44,5 @@ PyPDF2==1.26.0            # PDF processing, Python 3.9 compatible
 # Pydantic and settings (Python 3.9 compatible)
 pydantic<2.11
 pydantic-settings==0.2.5   # Only 0.2.5 supports Python 3.9
-PyPDF2==1.26.0  # Ensure PDF processing is compatible with Python 3.9
-python-dotenv==3.1.1
-# pydantic-settings compatibility: Only 0.2.5 works with Python 3.9. Do not use >=1.0.0.
-pydantic-settings==0.2.5
 
 
