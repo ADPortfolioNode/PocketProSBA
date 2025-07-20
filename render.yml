@@ -3,10 +3,10 @@ services:
   - type: web
     name: pocketpro-sba-production
     dockerfilePath: Dockerfile
-    plan: standard  # Adjust based on expected traffic (starter, standard, pro)
+    plan: standard
     envVars:
       - key: PYTHON_VERSION
-        value: 3.11
+        value: 3.11   # or 3.10
       - key: FLASK_ENV
         value: production
       - key: FLASK_APP

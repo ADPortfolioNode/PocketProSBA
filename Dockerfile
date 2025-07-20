@@ -1,4 +1,4 @@
-FROM python:3.9-slim
+FROM python:3.11-slim
 
 LABEL maintainer="PocketPro:SBA Team"
 LABEL version="1.0"
