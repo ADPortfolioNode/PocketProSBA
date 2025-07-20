@@ -19,7 +19,7 @@ services:
       - key: CHUNK_SIZE
         value: "500"
 
-    - type: web             # React frontend
+  - type: web             # React frontend
     name: pocketprosba-frontend
     env: node
     branch: main
