@@ -25,7 +25,7 @@ services:
     branch: main
     plan: free
     buildCommand: cd frontend && npm install --legacy-peer-deps && npm run build
-    startCommand: serve -s frontend/build -l $PORT
+    startCommand: npx serve -s frontend/build -l $PORT
     envVars:
       - key: REACT_APP_BACKEND_URL
         value: "https://pocketprosba-1.onrender.com/"         # ← fill in Render UI
