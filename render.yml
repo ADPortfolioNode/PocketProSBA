@@ -26,7 +26,9 @@ services:
     healthCheckPath: /health
     healthCheckTimeout: 15
     autoDeploy: true  # Enable auto-deploy for production
-    numInstances: 2  # Adjust based on expected traffic
+    numInstances: 2  # Adjust based on expected traffic\
+    env: python
+    pythonVersion: 3.10
 
   # Production Frontend Static Site
   - type: static
