@@ -7,8 +7,8 @@ LABEL description="Production Dockerfile for PocketPro:SBA on Render.com"
 # Set working directory
 WORKDIR /app
 
-# Copy requirements first for better caching
-COPY requirements-render-production.txt .
+## Copy requirements for better caching
+COPY requirements_full.txt ./requirements_full.txt
 
 # Install system dependencies and Python dependencies with optimizations
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -18,7 +18,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     && rm -rf /var/lib/apt/lists/* && \
     pip install --no-cache-dir --upgrade pip setuptools wheel && \
-    pip install --no-cache-dir -r requirements-render-production.txt
+    pip install --no-cache-dir -r requirements_full.txt
 
 # Copy application code
 COPY . .
