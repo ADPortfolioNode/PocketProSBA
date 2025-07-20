@@ -32,19 +32,20 @@ RUN useradd -m -u 1000 appuser && \
 # Switch to non-root user
 USER appuser
 
-# Environment variables
-ENV PORT=5000
+## Environment variables
+ENV PORT=10000
 ENV FLASK_ENV=production
-ENV FLASK_APP=app.py
+ENV FLASK_APP=app_full.py
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONIOENCODING=utf-8
 
-# Expose port
-EXPOSE ${PORT}
+## Expose port
+EXPOSE 10000
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:${PORT}/health || exit 1
 
-# Start command
-CMD gunicorn --bind 0.0.0.0:${PORT} --timeout 60 --workers 2 --access-logfile - --error-logfile - --log-level info app_full:app
+## Start command
+CMD gunicorn --bind 0.0.0.0:10000 --timeout 120 --workers 1 app_full:app
