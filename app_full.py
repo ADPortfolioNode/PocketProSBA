@@ -1,10 +1,6 @@
 from flask import send_from_directory
 from dotenv import load_dotenv
 import os
-from dotenv import load_dotenv
-load_dotenv()
-## ...existing code...
-import os
 import logging
 import time
 import hashlib
@@ -849,6 +845,10 @@ def serve_frontend(path):
     # Serve static file or index.html
     if path != "" and os.path.exists(os.path.join(static_dir, path)):
         return send_from_directory(static_dir, path)
+    else:
+        return send_from_directory(static_dir, 'index.html')
+
+print("pip install -r requirements-full.txt")
     else:
         return send_from_directory(static_dir, 'index.html')
 
