@@ -5,7 +5,7 @@ services:
     env: python
     branch: main
     plan: free
-    buildCommand: pip install --no-cache-dir -r requirements.txt
+    buildCommand: pip install --no-cache-dir -r requirements-full.txt
     startCommand: gunicorn --bind 0.0.0.0:$PORT run:app
     envVars:
       - key: GEMINI_API_KEY
