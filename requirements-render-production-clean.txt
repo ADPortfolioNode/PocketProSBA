@@ -1,19 +1,22 @@
-setuptools>=68.0.0
-wheel>=0.42.0
+
 # RENDER.COM PRODUCTION REQUIREMENTS - PYTHON 3.9 COMPATIBLE
 # Optimized for deployment stability and performance
 
-# Core Flask dependencies
+# --- Build tools (always first for pip stability) ---
+setuptools>=68.0.0
+wheel>=0.42.0
+
+# --- Core Flask dependencies ---
 flask==2.3.3
 flask-cors==4.0.0
 gunicorn==21.2.0
 
-# Essential utilities
+# --- Essential utilities ---
 python-dotenv==1.0.0
 requests==2.31.0
 urllib3>=1.26.0,<3.0.0
 
-# Core dependencies
+# --- Core dependencies ---
 werkzeug==2.3.7
 click>=8.0.0
 itsdangerous>=2.0.0
