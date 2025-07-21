@@ -648,7 +648,7 @@ def rag_chat():
         logger.error(f"RAG chat error: {str(e)}")
         return jsonify({'error': f'Chat failed: {str(e)}'}), 500
 
-@app.route('/api/rag', methods=['POST])
+@app.route('/api/rag', methods=['POST'])
 def rag_query():
     """Perform RAG operations using ChromaDB or fallback"""
     try:
