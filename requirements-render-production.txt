@@ -20,6 +20,8 @@ click>=8.0.0
 itsdangerous>=2.0.0
 jinja2>=3.0.0
 markupsafe>=2.0.0
+pydantic<2.11
+## pydantic-settings removed due to typing-extensions conflict with chromadb
 
 # Add minimal AI capabilities without Rust dependencies
 numpy==1.24.3
@@ -42,9 +44,7 @@ PyJWT==2.8.0  # For token-based auth if needed
 chromadb==0.3.23
 Flask-SocketIO==5.3.6
 eventlet==0.33.3
-PyPDF2==1.26.0  # Ensure PDF processing is compatible with Python 3.9# For PDF processing
-PyPDF2
-# RENDER.COM PRODUCTION REQUIREMENTS - PYTHON 3.9 COMPATIBLE
+PyPDF2==1.26.0  # Ensure PDF processing is compatible with Python 3.9
 # Optimized for deployment stability and performance
 
 # Core Flask dependencies
