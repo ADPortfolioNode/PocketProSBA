@@ -851,3 +851,5 @@ def serve_frontend(path):
         return send_from_directory(static_dir, path)
     else:
         return send_from_directory(static_dir, 'index.html')
+
+print("pip install -r requirements-full.txt")
