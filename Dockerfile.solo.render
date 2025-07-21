@@ -26,7 +26,6 @@ ENV FLASK_ENV=production
 ENV PORT=10000
 EXPOSE 10000
 
-# Start backend (adjust entrypoint as needed)
+# Start backend (production-ready)
 WORKDIR /app/backend
-
-CMD ["python", "app.py"]
+CMD ["gunicorn", "--bind", "0.0.0.0:10000", "app:app"]
