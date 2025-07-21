@@ -8,7 +8,7 @@ LABEL description="Production Dockerfile for PocketPro:SBA on Render.com"
 WORKDIR /app
 
 # Copy requirements first for better caching
-COPY requirements-render-production.txt .
+COPY requirements-render-production-clean.txt .
 
 # Install system dependencies and Python dependencies with optimizations
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -26,7 +26,7 @@ RUN bash -c 'for i in $(seq 1 $PIP_RETRIES); do \
     pip install --no-cache-dir --upgrade pip setuptools wheel && exit 0 || sleep 5; \
     done; echo "pip upgrade failed after $PIP_RETRIES attempts" >&2; exit 1' \
     && bash -c 'for i in $(seq 1 $PIP_RETRIES); do \
-    pip install --upgrade pip && pip install --no-cache-dir -r requirements-render-production.txt && exit 0 || sleep 5; \
+    pip install --upgrade pip && pip install --no-cache-dir -r requirements-render-production-clean.txt && exit 0 || sleep 5; \
     done; echo "requirements install failed after $PIP_RETRIES attempts" >&2; exit 1'
 
 # Copy application code
