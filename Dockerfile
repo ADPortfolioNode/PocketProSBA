@@ -18,7 +18,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     && rm -rf /var/lib/apt/lists/* && \
     pip install --no-cache-dir --upgrade pip setuptools wheel && \
-    pip install --no-cache-dir -r requirements_full.txt
+    pip install --no-cache-dir -r requirements-full.txt
 
 # Copy application code
 COPY . .
