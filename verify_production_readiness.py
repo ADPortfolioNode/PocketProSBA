@@ -170,6 +170,8 @@ def check_requirements():
     print("\n🔍 Checking production requirements...")
     
     try:
+        # Always ensure pip is upgraded before installing requirements in production
+        # Example: pip install --upgrade pip && pip install --no-cache-dir -r requirements-render-production.txt
         with open("requirements-render-production.txt", "r") as f:
             content = f.read()
         

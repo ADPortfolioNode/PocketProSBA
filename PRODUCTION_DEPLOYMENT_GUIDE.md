@@ -37,7 +37,11 @@ render blueprint render render.docker.yaml
 2. Create a new Web Service
 3. Connect your GitHub repository
 4. Select "Python" runtime (or "Docker" if using Docker)
-5. Use the build command: `pip install -r requirements-render-production.txt`
+5. Use the build command:
+   ```bash
+   pip install --upgrade pip
+   pip install --no-cache-dir -r requirements-render-production.txt
+   ```
 6. Use the start command: `gunicorn --bind 0.0.0.0:$PORT --timeout 60 --workers 2 --access-logfile - --error-logfile - minimal_app:app`
 7. Set all environment variables as listed in `render.production.yaml`
 
