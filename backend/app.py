@@ -90,6 +90,20 @@ def initialize_services():
 # Initialize on startup
 startup_result = initialize_services()
 
+# --- Ensure backend is ready before serving frontend ---
+@app.before_first_request
+def wait_for_backend_ready():
+    # Wait until backend services are initialized before serving frontend
+    import time
+    max_wait = 30  # seconds
+    waited = 0
+    while not rag_system_available and waited < max_wait:
+        logger.info("Waiting for backend services to be ready...")
+        time.sleep(1)
+        waited += 1
+    if not rag_system_available:
+        logger.warning("Backend services not fully initialized after wait period.")
+
 ## ...existing code...
 ## Ensure NO other route for '/' returns JSON. Only this catch-all route should exist for '/'.
 @app.route('/', defaults={'path': ''})
@@ -98,11 +112,12 @@ def serve_frontend(path):
     # Only serve frontend for non-API/non-health routes
     if path.startswith('api/') or path == 'health':
         return handle_404(None)
-    # Serve static file or index.html directly from static folder
-    if path != "" and os.path.exists(os.path.join(app.static_folder, path)):
-        return send_from_directory(app.static_folder, path)
+    # Serve React build files from ../frontend/build
+    react_build_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'frontend', 'build'))
+    if path != "" and os.path.exists(os.path.join(react_build_dir, path)):
+        return send_from_directory(react_build_dir, path)
     else:
-        return send_from_directory(app.static_folder, 'index.html')
+        return send_from_directory(react_build_dir, 'index.html')
 
 @app.route('/health', methods=['GET'])
 def health_check():
@@ -437,7 +452,7 @@ def handle_chat_message(data):
         return
     
     try:
-        message = data.get('message', '')
+        message = data.get('message', ''){"environment":"production","host":"0.0.0.0","message":"\ud83d\ude80 PocketPro:SBA is running!","port":5000,"python_version":"3.11.13","render":"Yes","service":"PocketPro Small Business Assistant","status":"success","version":"1.0.0"}
         
         if not message:
             socketio.emit('chat_response', {
