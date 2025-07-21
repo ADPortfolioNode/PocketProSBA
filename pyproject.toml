@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools", "wheel"]
+requires = ["setuptools>=68.0.0", "wheel>=0.42.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -10,7 +10,7 @@ readme = "README.md"
 requires-python = ">=3.9"
 license = {text = "MIT"}
 authors = [
-    {name = "StainlessDeoism.biz", email = "support@stainlessdeoism.biz"}
+    {name = "Anthony Deo Dickerson", email = "DeoFunds@gmail.com"}
 ]
 keywords = ["rag", "sba", "business", "ai", "assistant"]
 classifiers = [
@@ -26,9 +26,9 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/yourusername/pocketpro-sba"
-Repository = "https://github.com/yourusername/pocketpro-sba"
-Issues = "https://github.com/yourusername/pocketpro-sba/issues"
+Homepage = "https://github.com/adportfolionode/pocketpro-sba"
+Repository = "https://github.com/adportfolionode/pocketpro-sba"
+Issues = "https://github.com/adportfolionode/pocketpro-sba/issues"
 
 [tool.setuptools]
 packages = ["src"]
