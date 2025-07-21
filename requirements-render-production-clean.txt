@@ -1,3 +1,5 @@
+setuptools>=68.0.0
+wheel>=0.42.0
 # RENDER.COM PRODUCTION REQUIREMENTS - PYTHON 3.9 COMPATIBLE
 # Optimized for deployment stability and performance
 
