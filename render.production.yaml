@@ -4,6 +4,9 @@ services:
     name: pocketpro-sba-production
     env: docker
     dockerfilePath: Dockerfile.render.full
+    buildCommand: |
+      pip install --upgrade pip setuptools wheel
+      pip install --no-cache-dir -r requirements-render-production.txt
     dockerCommand: gunicorn --bind 0.0.0.0:$PORT --timeout 120 --workers 1 app_full:app
     plan: standard
     envVars:

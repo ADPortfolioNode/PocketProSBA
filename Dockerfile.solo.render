@@ -9,7 +9,7 @@ RUN npm run build
 # Build Flask backend
 FROM python:3.10-slim AS backend
 WORKDIR /app
-COPY backend/requirements.txt ./backend/
+COPY backend/requirements-full.txt ./backend/
 RUN pip install --no-cache-dir -r ./backend/requirements-full.txt
 
 # Copy backend code
