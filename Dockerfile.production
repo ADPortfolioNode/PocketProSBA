@@ -23,11 +23,11 @@ ENV PIP_DEFAULT_TIMEOUT=100
 ENV PIP_RETRIES=5
 
 RUN bash -c 'for i in $(seq 1 $PIP_RETRIES); do \
-    pip install --no-cache-dir --upgrade pip setuptools wheel && break || sleep 5; \
-    done' \
+    pip install --no-cache-dir --upgrade pip setuptools wheel && exit 0 || sleep 5; \
+    done; echo "pip upgrade failed after $PIP_RETRIES attempts" >&2; exit 1' \
     && bash -c 'for i in $(seq 1 $PIP_RETRIES); do \
-    pip install --no-cache-dir -r requirements-render-production.txt && break || sleep 5; \
-    done'
+    pip install --no-cache-dir -r requirements-render-production.txt && exit 0 || sleep 5; \
+    done; echo "requirements install failed after $PIP_RETRIES attempts" >&2; exit 1'
 
 # Copy application code
 COPY . .
