@@ -1,13 +1,14 @@
 # render.yaml
 services:
-  - type: web             # Python/Flask backend
+  - type: docker
     name: pocketprosba-backend
-    env: python
-    branch: main
-    plan: free
-    buildCommand: pip install --no-cache-dir -r requirements-full.txt
-    startCommand: gunicorn --bind 0.0.0.0:$PORT run:app
+    dockerfilePath: Dockerfile.render.full
+    plan: standard
+    autoDeploy: true
+    healthCheckPath: /healthz
     envVars:
+      - key: PORT
+        value: 10000
       - key: GEMINI_API_KEY
         value: ""         # ← you’ll fill this in Render UI
       - key: CHROMA_HOST
@@ -18,6 +19,14 @@ services:
         value: "./uploads"
       - key: CHUNK_SIZE
         value: "500"
+      - key: PYTHONUNBUFFERED
+        value: "1"
+      - key: LOG_LEVEL
+        value: "INFO"
+      - key: FLASK_ENV
+        value: "production"
+      - key: SECRET_KEY
+        generateValue: true
 
   - type: web             # React frontend
     name: pocketprosba-frontend
