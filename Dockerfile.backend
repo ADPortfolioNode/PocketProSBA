@@ -18,11 +18,9 @@ ENV PYTHONUNBUFFERED=1
 ENV PYTHONHASHSEED=random
 
 # Copy requirements and install dependencies
-COPY requirements.txt .
-COPY requirements-render-production.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-RUN pip install --no-cache-dir -r requirements-render-production.txt
-
+COPY requirements-full.txt .
+RUN pip install --no-cache-dir -r requirements-full.txt
+ 
 # Copy the entire application
 COPY . .
 

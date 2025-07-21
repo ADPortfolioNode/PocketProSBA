@@ -13,9 +13,10 @@ RUN apt-get update && apt-get install -y \
 
 # Copy requirements first for better caching
 COPY requirements_full.txt ./requirements-full.txt
+COPY pyproject.toml ./pyproject.toml
 
 # Install Python dependencies (use requirements_full.txt only)
-RUN pip install --upgrade pip setuptools && \
+RUN pip install --upgrade pip setuptools wheel && \
     pip install --no-cache-dir -r requirements-full.txt
 
 # Copy application code
