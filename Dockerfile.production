@@ -16,9 +16,18 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     g++ \
     curl \
     build-essential \
-    && rm -rf /var/lib/apt/lists/* && \
-    pip install --no-cache-dir --upgrade pip setuptools wheel && \
-    pip install --no-cache-dir -r requirements-render-production.txt
+    && rm -rf /var/lib/apt/lists/*
+
+# Set pip timeout and retries for robustness
+ENV PIP_DEFAULT_TIMEOUT=100
+ENV PIP_RETRIES=5
+
+RUN bash -c 'for i in $(seq 1 $PIP_RETRIES); do \
+    pip install --no-cache-dir --upgrade pip setuptools wheel && break || sleep 5; \
+    done' \
+    && bash -c 'for i in $(seq 1 $PIP_RETRIES); do \
+    pip install --no-cache-dir -r requirements-render-production.txt && break || sleep 5; \
+    done'
 
 # Copy application code
 COPY . .
