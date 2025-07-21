@@ -10,7 +10,7 @@ readme = "README.md"
 requires-python = ">=3.9"
 license = {text = "MIT"}
 authors = [
-    {name = "Anthony Deo Dickerson", email = "DeoFunds@gmail.com"}
+    {name = "Anthony `Deo`x Dickerson", email = "DeoFunds@gmail.com"}
 ]
 keywords = ["rag", "sba", "business", "ai", "assistant"]
 classifiers = [
@@ -24,6 +24,7 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
 ]
+
 
 [project.urls]
 Homepage = "https://github.com/adportfolionode/pocketpro-sba"
