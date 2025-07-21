@@ -28,4 +28,5 @@ EXPOSE 10000
 
 # Start backend (adjust entrypoint as needed)
 WORKDIR /app/backend
+
 CMD ["python", "app.py"]
