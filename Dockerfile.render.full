@@ -11,13 +11,13 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements first for better caching
-COPY requirements_full.txt ./requirements-full.txt
-COPY pyproject.toml ./pyproject.toml
 
-# Install Python dependencies (use requirements_full.txt only)
+# Copy production requirements for Render
+COPY requirements-render-production-clean.txt ./requirements-render-production-clean.txt
+
+# Install Python dependencies (use cleaned production requirements)
 RUN pip install --upgrade pip setuptools wheel && \
-    pip install --no-cache-dir -r requirements-full.txt
+    pip install --no-cache-dir -r requirements-render-production-clean.txt
 
 # Copy application code
 COPY . .
