@@ -1,5 +1,5 @@
 services:
-  - type: docker
+  - type: web
     name: pocketprosba-backend
     dockerfilePath: Dockerfile.production
     plan: standard
