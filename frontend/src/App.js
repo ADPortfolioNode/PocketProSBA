@@ -575,13 +575,15 @@ function App() {
                             {messages.length === 0 ? (
                               <div className="text-muted text-center py-4">Start chatting with your SBA Assistant!</div>
                             ) : (
-                              messages.map((msg) => (
-                                <div key={msg.id} className={`chat-message chat-message-${msg.role} mb-2`}>
-                                  <div className={`fw-bold text-${msg.role === 'user' ? 'primary' : 'success'}`}>{msg.role === 'user' ? userName || 'You' : 'Assistant'}:</div>
-                                  <div>{msg.content}</div>
-                                </div>
-                              ))
-                            }
+                              <React.Fragment>
+                                {messages.map((msg) => (
+                                  <div key={msg.id} className={`chat-message chat-message-${msg.role} mb-2`}>
+                                    <div className={`fw-bold text-${msg.role === 'user' ? 'primary' : 'success'}`}>{msg.role === 'user' ? userName || 'You' : 'Assistant'}:</div>
+                                    <div>{msg.content}</div>
+                                  </div>
+                                ))}
+                              </React.Fragment>
+                            )}
                           </div>
                         </div>
                         <form onSubmit={handleSubmit} className="d-flex flex-row align-items-center gap-2">
