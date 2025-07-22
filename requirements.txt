@@ -40,4 +40,4 @@ redis==5.0.4
 # Pydantic v1 for compatibility with chromadb and other libs
 pydantic==1.10.15
 
-# Add any other libraries your project uses below
+# DO NOT include pydantic-settings!
