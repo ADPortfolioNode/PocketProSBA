@@ -14,7 +14,6 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import StatusBar from "./components/StatusBar";
 import UploadsManager from "./components/UploadsManager";
 import { loadEndpoints, getEndpoints, apiFetch } from "./apiClient";
-import { Flask } from 'flask_cors';
 
 // --- Backend URL Logic ---
 // Always use REACT_APP_BACKEND_URL if set, otherwise fallback to Render URL, never append /api
