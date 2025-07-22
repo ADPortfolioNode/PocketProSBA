@@ -15,35 +15,24 @@ import StatusBar from "./components/StatusBar";
 import UploadsManager from "./components/UploadsManager";
 import { loadEndpoints, getEndpoints, apiFetch } from "./apiClient";
 
-// Use only the React build-time env variable for backend URL
-// Use correct backend URL based on environment
-// Production-ready backend URL logic
+
+// --- Backend URL Logic ---
+// Always use REACT_APP_BACKEND_URL if set, otherwise fallback to Render URL, never append /api
 let BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 if (!BACKEND_URL || BACKEND_URL === "") {
-  // Default to localhost for development
   BACKEND_URL = process.env.NODE_ENV === "development"
-    ? "http://localhost:10000/api"
-    : "https://pocketprosba25.onrender.com/api";
-}
-// If running in production, use the deployed backend URL from env or fallback
-if (process.env.NODE_ENV === "production") {
-  BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "https://pocketprosba25.onrender.com";
+    ? "http://localhost:10000"
+    : "https://pocketprosba25.onrender.com";
 }
 
 // Helper to prefix endpoint paths with BACKEND_URL if not already absolute
 const apiUrl = (path) => {
   // If path is absolute (starts with http), return as is
   if (path.startsWith('http')) return path;
-  // If path is exactly /api/api or starts with /api/api/, return as is
-  if (path === '/api/api' || path.startsWith('/api/api/')) return path;
-  // If path starts with /api and BACKEND_URL is /api, avoid double prefix
-  if (BACKEND_URL === '/api' && path.startsWith('/api')) return path;
-  // In production, ensure /api is used for proxying if needed
-  if (process.env.NODE_ENV === "production" && path.startsWith('/api')) {
-    return `/api${path.substring(4)}`;
-  }
-  // Otherwise, prefix with BACKEND_URL
-  return `${BACKEND_URL}${path.startsWith('/') ? '' : '/'}${path}`;
+  // Remove any leading /api from path to avoid double /api/api
+  let cleanPath = path.replace(/^\/api\/?/, '/');
+  // Always prefix with BACKEND_URL, which should NOT have /api at the end
+  return `${BACKEND_URL}${cleanPath.startsWith('/') ? '' : '/'}${cleanPath}`;
 };
 
 // Helper to check response status
@@ -75,15 +64,15 @@ function App() {
       setLoading(true);
       setProgress(10);
       try {
-        // Wait for backend health to be 200
-        let healthRes = await fetch(apiUrl("/api/health"));
+        // Use /health endpoint (not /api/health)
+        let healthRes = await fetch(apiUrl("/health"));
         if (healthRes.status !== 200) throw new Error("Backend not healthy");
         let sysInfo = await healthRes.json();
         setSystemInfo(sysInfo);
         setServerConnected(true);
         setProgress(50);
         // Wait for registry to be 200
-        let regRes = await fetch(apiUrl("/api/registry"));
+        let regRes = await fetch(apiUrl("/registry"));
         if (regRes.status !== 200) throw new Error("API registry not available");
         let eps = await regRes.json();
         setEndpoints(eps);
@@ -133,9 +122,8 @@ function App() {
   const tryFallbackConnection = async () => {
     try {
       const endpoints = [
-        apiUrl("/api/health"),
-        apiUrl("/healthcheck"),
-        apiUrl("/health")
+        apiUrl("/health"),
+        apiUrl("/healthcheck")
       ];
       for (const endpoint of endpoints) {
         try {
@@ -158,12 +146,12 @@ function App() {
     }
   };
 
-  const checkServerConnection = async (healthUrl) => {
+  // Always use /health for health check
+  const checkServerConnection = async () => {
     let healthChecked = false;
     let data = null;
     try {
-      // Use /health endpoint
-      let response = await fetch(apiUrl(healthUrl));
+      let response = await fetch(apiUrl("/health"));
       if (isSuccessResponse(response)) {
         data = await response.json();
         healthChecked = true;
