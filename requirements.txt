@@ -1,21 +1,22 @@
-# For PDF processing
+# PDF and file processing
 PyPDF2
+python-multipart==0.0.9
 
-# RENDER.COM MINIMAL REQUIREMENTS - PYTHON 3.9 COMPATIBLE
-# NO RUST DEPENDENCIES
-# Optimized for deployment stability
-
-# Core Flask dependencies
+# Flask and core web server
 flask==2.3.3
 flask-cors==4.0.0
+flask-socketio==5.3.6
 gunicorn==21.2.0
+eventlet==0.33.3
 
-# Essential utilities
+# Environment and configuration
 python-dotenv==1.0.0
+
+# HTTP and networking
 requests==2.31.0
 urllib3>=1.26.0,<3.0.0
 
-# Core dependencies
+# Core dependencies/utilities
 setuptools>=68.0.0
 werkzeug==2.3.7
 wheel>=0.42.0
@@ -24,34 +25,19 @@ itsdangerous>=2.0.0
 jinja2>=3.0.0
 markupsafe>=2.0.0
 
-# Add minimal AI capabilities without Rust dependencies
+# AI, ML, and vector search
 numpy==1.26.4
 scikit-learn==1.2.2
+pandas==2.2.2
+chromadb
 google-generativeai==0.3.2
+openai==1.30.1
+tiktoken==0.7.0
+
+# Redis (optional, for caching/sessions)
+redis==5.0.4
 
 # Pydantic v1 for compatibility with chromadb and other libs
 pydantic==1.10.15
 
-# ChromaDB (if used for vector storage/RAG)
-chromadb
-
-# If you use Redis for caching or sessions (optional)
-redis==5.0.4
-
-# If you use eventlet for Flask-SocketIO (optional)
-eventlet==0.33.3
-
-# If you use Flask-SocketIO (optional)
-flask-socketio==5.3.6
-
-# If you use OpenAI API (optional)
-openai==1.30.1
-
-# If you use tiktoken for token counting (optional)
-tiktoken==0.7.0
-
-# If you use pandas for data processing (optional)
-pandas==2.2.2
-
-# If you use python-multipart for file uploads (optional)
-python-multipart==0.0.9
+# Add any other libraries your project uses below
