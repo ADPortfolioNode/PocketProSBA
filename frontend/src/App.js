@@ -14,7 +14,7 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import StatusBar from "./components/StatusBar";
 import UploadsManager from "./components/UploadsManager";
 import { loadEndpoints, getEndpoints, apiFetch } from "./apiClient";
-
+import { Flask } from 'flask_cors';
 
 // --- Backend URL Logic ---
 // Always use REACT_APP_BACKEND_URL if set, otherwise fallback to Render URL, never append /api
@@ -22,17 +22,17 @@ let BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 if (!BACKEND_URL || BACKEND_URL === "") {
   BACKEND_URL = process.env.NODE_ENV === "development"
     ? "http://localhost:10000"
-    : "https://pocketprosba25.onrender.com";
+    : "https://pocketprosba.onrender.com";
 }
 
 // Helper to prefix endpoint paths with BACKEND_URL if not already absolute
 const apiUrl = (path) => {
-  // If path is absolute (starts with http), return as is
   if (path.startsWith('http')) return path;
-  // Remove any leading /api from path to avoid double /api/api
-  let cleanPath = path.replace(/^\/api\/?/, '/');
-  // Always prefix with BACKEND_URL, which should NOT have /api at the end
-  return `${BACKEND_URL}${cleanPath.startsWith('/') ? '' : '/'}${cleanPath}`;
+  let cleanPath = path.replace(/^\\/api\\/?/, '/');
+  let base = BACKEND_URL.endsWith('/') ? BACKEND_URL.slice(0, -1) : BACKEND_URL;
+  // Remove leading slash from cleanPath to avoid double slash
+  cleanPath = cleanPath.startsWith('/') ? cleanPath : '/' + cleanPath;
+  return `${base}${cleanPath}`;
 };
 
 // Helper to check response status
@@ -78,10 +78,54 @@ function App() {
         setEndpoints(eps);
         setProgress(100);
         setLoading(false);
+        // Show a visual confirmation for successful backend connection
+        setTimeout(() => {
+          const el = document.createElement('div');
+          el.innerText = 'Backend Connected!';
+          el.style.position = 'fixed';
+          el.style.top = '24px';
+          el.style.right = '24px';
+          el.style.background = '#198754';
+          el.style.color = 'white';
+          el.style.padding = '12px 24px';
+          el.style.borderRadius = '8px';
+          el.style.zIndex = 9999;
+          el.style.fontWeight = 'bold';
+          el.style.boxShadow = '0 2px 8px rgba(0,0,0,0.15)';
+          el.className = 'backend-toast';
+          document.body.appendChild(el);
+          setTimeout(() => {
+            el.style.transition = 'opacity 0.5s';
+            el.style.opacity = 0;
+            setTimeout(() => document.body.removeChild(el), 500);
+          }, 2000);
+        }, 100);
       } catch (err) {
         setLoading(false);
         setProgress(0);
         setConnectionError(err);
+        // Show a visual error toast
+        setTimeout(() => {
+          const el = document.createElement('div');
+          el.innerText = 'Backend Connection Failed';
+          el.style.position = 'fixed';
+          el.style.top = '24px';
+          el.style.right = '24px';
+          el.style.background = '#dc3545';
+          el.style.color = 'white';
+          el.style.padding = '12px 24px';
+          el.style.borderRadius = '8px';
+          el.style.zIndex = 9999;
+          el.style.fontWeight = 'bold';
+          el.style.boxShadow = '0 2px 8px rgba(0,0,0,0.15)';
+          el.className = 'backend-toast';
+          document.body.appendChild(el);
+          setTimeout(() => {
+            el.style.transition = 'opacity 0.5s';
+            el.style.opacity = 0;
+            setTimeout(() => document.body.removeChild(el), 500);
+          }, 2000);
+        }, 100);
         console.error("Failed to load health or endpoints:", err);
       }
     };
@@ -537,7 +581,7 @@ function App() {
                                   <div>{msg.content}</div>
                                 </div>
                               ))
-                            )}
+                            }
                           </div>
                         </div>
                         <form onSubmit={handleSubmit} className="d-flex flex-row align-items-center gap-2">
