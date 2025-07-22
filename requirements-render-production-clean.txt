@@ -22,7 +22,8 @@ itsdangerous>=2.0.0
 jinja2>=3.0.0
 markupsafe>=2.0.0
 pydantic<2.11
-## pydantic-settings removed due to typing-extensions conflict with chromadb
+pydantic-settings
+## pydantic-settings added for chromadb compatibility
 
 # Add minimal AI capabilities without Rust dependencies
 numpy==1.24.3
