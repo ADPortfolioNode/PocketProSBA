@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 # Enable CORS for all routes and all origins (for production, you may want to restrict this to your frontend domain)
-CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
+CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True, allow_headers="*")
 
 # Configure Flask-SocketIO
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet')
@@ -121,7 +121,7 @@ def serve_frontend(path):
     else:
         return send_from_directory(react_build_dir, 'index.html')
 
-@app.route('/health', methods=['GET'])
+@app.route('/health', methods=['GET', 'HEAD'])
 def health_check():
     """Health check endpoint for monitoring"""
     global rag_system_available
@@ -138,6 +138,8 @@ def health_check():
         'document_count': doc_count
     })
     response.headers.add('Access-Control-Allow-Origin', '*')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,HEAD,OPTIONS')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
     return response
 
 @app.route('/api/info', methods=['GET'])
