@@ -28,9 +28,9 @@ if (!BACKEND_URL || BACKEND_URL === "") {
 // Helper to prefix endpoint paths with BACKEND_URL if not already absolute
 const apiUrl = (path) => {
   if (path.startsWith('http')) return path;
-  let cleanPath = path.replace(/^\\/api\\/?/, '/');
+  // Remove any leading /api or //api from path to avoid double /api/api
+  let cleanPath = path.replace(/^\/api\/?/, '/');
   let base = BACKEND_URL.endsWith('/') ? BACKEND_URL.slice(0, -1) : BACKEND_URL;
-  // Remove leading slash from cleanPath to avoid double slash
   cleanPath = cleanPath.startsWith('/') ? cleanPath : '/' + cleanPath;
   return `${base}${cleanPath}`;
 };
