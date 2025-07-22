@@ -1,22 +1,16 @@
+
+# render.yaml
 services:
   - type: web
     name: pocketprosba-backend
     runtime: docker
-    dockerfilePath: Dockerfile.production
+    dockerfilePath: Dockerfile.render.full
     plan: standard
     autoDeploy: true
-    healthCheckPath: /health
+    healthCheckPath: /healthz
     envVars:
       - key: PORT
-        value: 5000
-      - key: FLASK_ENV
-        value: production
-      - key: FLASK_APP
-        value: minimal_app.py
-      - key: PYTHONUNBUFFERED
-        value: "1"
-      - key: PYTHONDONTWRITEBYTECODE
-        value: "1"
+        value: 10000
       - key: GEMINI_API_KEY
         value: ""         # Fill in Render UI
       - key: CHROMA_HOST
@@ -27,7 +21,22 @@ services:
         value: "./uploads"
       - key: CHUNK_SIZE
         value: "500"
+      - key: PYTHONUNBUFFERED
+        value: "1"
       - key: LOG_LEVEL
         value: "INFO"
+      - key: FLASK_ENV
+        value: "production"
       - key: SECRET_KEY
         generateValue: true
+
+  - type: web
+    name: pocketprosba-frontend
+    env: node
+    branch: main
+    plan: free
+    buildCommand: cd frontend && npm install --legacy-peer-deps && npm run build
+    startCommand: npx serve -s frontend/build -l $PORT
+    envVars:
+      - key: REACT_APP_BACKEND_URL
+        value: "https://pocketprosba-backend.onrender.com/"  # Update to your backend's Render URL
