@@ -17,7 +17,8 @@ COPY requirements-render-production-clean.txt ./requirements-render-production-c
 
 # Install Python
 # Uninstall conflicting packages
-RUN pip uninstall -y pydantic pydantic-settings || true dependencies (use cleaned production requirements)
+RUN pip uninstall -y pydantic pydantic-settings || true
+
 RUN pip install --upgrade pip setuptools wheel && \
     pip install --no-cache-dir -r requirements-render-production-clean.txt
 
