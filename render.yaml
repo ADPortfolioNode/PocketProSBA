@@ -11,7 +11,7 @@ services:
       - key: FLASK_ENV
         value: production
       - key: FLASK_APP
-        value: app.py
+        value: minimal_app.py
       - key: PYTHONUNBUFFERED
         value: "1"
       - key: PYTHONDONTWRITEBYTECODE
