@@ -38,16 +38,4 @@ ENV FLASK_APP=app_full.py
 # Expose the port for Render.com
 EXPOSE 10000
 
-# Switch to non-root user
-USER appuser
-
-ENV PORT=10000
-ENV FLASK_APP=app_full.py
-ENV PYTHONUNBUFFERED=1
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:${PORT}/health || exit 1
-
-# Start the app only (ChromaDB is used as a Python library)
-CMD gunicorn --bind 0.0.0.0:10000 --workers=1 --timeout=120 app_full:app
+CMD ["gunicorn", "-b", "0.0.0.0:10000", "app_full:application"]
