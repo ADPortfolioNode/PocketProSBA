@@ -11,6 +11,7 @@ import math
 from collections import Counter
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
+
 import math
 import sys
 from functools import wraps
@@ -49,11 +50,8 @@ def check_required_env_vars():
         sys.exit(1)
 check_required_env_vars()
 
-# Configurable CORS (allow all in dev, restrict in prod)
-if os.environ.get("FLASK_ENV", "production") == "production":
-    CORS(app, origins=[os.environ.get("CORS_ORIGIN", "*")])
-else:
-    CORS(app)
+# --- CORS: Allow all origins and headers for all routes ---
+CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True, allow_headers="*")
 
 # Request logging
 @app.before_request
@@ -465,16 +463,22 @@ startup_result = initialize_app_on_startup()
 ## ...existing code...
 ## Removed the '/' JSON endpoint so the catch-all route serves React frontend
 
-@app.route('/health', methods=['GET'])
+@app.route('/health', methods=['GET', 'HEAD'])
 def health_check():
     """Health check endpoint for monitoring"""
-    return jsonify({
+    global rag_system_available
+    response = jsonify({
         'status': 'healthy',
         'service': 'PocketPro SBA',
         'version': '1.0.0',
         'rag_status': 'available' if rag_system_available else 'unavailable',
         'document_count': vector_store.count()
     })
+    # Add CORS headers explicitly for all methods
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,HEAD,OPTIONS')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+    return response
 
 @app.route('/api/info', methods=['GET'])
 def get_system_info():
@@ -804,7 +808,7 @@ application = app
 socketio = None
 
 def run_app():
-    port = int(os.environ.get("PORT", 10000))
+    port = int(os.environ.get("PORT", 5000))  # Use 5000 for Render, not 10000
     debug = os.environ.get("FLASK_ENV", "production") == "development"
     logger.info(f"🚀 Starting Flask app on port {port}")
     app.run(host="0.0.0.0", port=port, debug=debug, threaded=True)
