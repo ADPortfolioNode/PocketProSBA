@@ -14,8 +14,10 @@ from flask_socketio import SocketIO
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 app = Flask(__name__)
-CORS(app)
+# Enable CORS for all routes and all origins (for production, you may want to restrict this to your frontend domain)
+CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
 
 # Configure Flask-SocketIO
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet')
@@ -127,7 +129,7 @@ def health_check():
     chroma_available = chroma_service.is_available() if chroma_service else False
     doc_count = rag_manager.get_document_count() if rag_manager and rag_system_available else 0
     
-    return jsonify({
+    response = jsonify({
         'status': 'healthy',
         'service': 'PocketPro SBA',
         'version': '1.0.0',
@@ -135,6 +137,8 @@ def health_check():
         'chroma_available': chroma_available,
         'document_count': doc_count
     })
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    return response
 
 @app.route('/api/info', methods=['GET'])
 def get_system_info():
