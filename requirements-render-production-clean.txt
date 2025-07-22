@@ -21,9 +21,8 @@ click>=8.0.0
 itsdangerous>=2.0.0
 jinja2>=3.0.0
 markupsafe>=2.0.0
-pydantic<2.11
-pydantic-settings
-## pydantic-settings added for chromadb compatibility
+chromadb==0.3.26
+pydantic==1.10.15
 
 # Add minimal AI capabilities without Rust dependencies
 numpy==1.24.3

@@ -3,11 +3,10 @@
 # ==============================================================================
 # Environment Variables & Secrets
 # ==============================================================================
+# Environment files (never commit secrets)
 .env
-.env.local
+.env.*
 .env.production
-.env.development
-*.env
 
 # API Keys and secrets
 *secret*
