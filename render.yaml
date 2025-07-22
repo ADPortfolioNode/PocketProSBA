@@ -1,6 +1,7 @@
 services:
   - type: web
     name: pocketprosba-backend
+    runtime: docker
     dockerfilePath: Dockerfile.production
     plan: standard
     autoDeploy: true
