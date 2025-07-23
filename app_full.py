@@ -108,7 +108,7 @@ def api_registry():
         "documents_add": "/api/documents/add",
         "uploads": "/api/uploads",
         "upload": "/api/uploads",  # alias for upload (frontend expects 'upload')
-        "resources": "/api/resources",  # if you have a resources endpoint, otherwise leave as placeholder
+        "resources": "/api/registry",  # replaced with registry endpoint since /api/resources does not exist
         "search": "/api/search",
         "chat": "/api/chat",
         "rag": "/api/rag",
