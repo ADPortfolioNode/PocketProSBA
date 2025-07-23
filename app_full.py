@@ -864,8 +864,17 @@ except ImportError as e:
 @app.route('/<path:path>')
 def serve_frontend(path):
     # Only serve frontend for non-API/non-health routes
-    # If the request is for an API or health route, return 404 (let Flask handle real API routes)
-    if path.startswith('api/') or path == 'health' or path.startswith('static/'):
+    # If the request is for an API or health/registry route, return 404 (let Flask handle real API routes)
+    api_blocked = (
+        path.startswith('api/') or
+        path == 'api' or
+        path == 'api/health' or
+        path == 'api/registry' or
+        path == 'health' or
+        path.startswith('static/')
+    )
+    if api_blocked:
+        logger.info(f"[Catch-all] Blocked attempt to serve frontend for API/health route: {path}")
         return '', 404
     static_dir = os.path.join(app.root_path, 'static')
     react_build_dir = os.path.join(app.root_path, 'frontend', 'build')
@@ -884,6 +893,8 @@ def serve_frontend(path):
                     shutil.copy2(s, d)
     # Serve static file or index.html
     if path != "" and os.path.exists(os.path.join(static_dir, path)):
+        logger.info(f"[Catch-all] Serving static file: {path}")
         return send_from_directory(static_dir, path)
     else:
+        logger.info(f"[Catch-all] Serving index.html for path: {path}")
         return send_from_directory(static_dir, 'index.html')
