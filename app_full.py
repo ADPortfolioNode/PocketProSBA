@@ -92,20 +92,28 @@ def api_health_check():
 def api_registry():
     """Return a registry of available API endpoints for the frontend to discover capabilities."""
     return jsonify({
-        "endpoints": [
-            "/api/health",
-            "/health",
-            "/api/info",
-            "/api/models",
-            "/api/documents",
-            "/api/documents/add",
-            "/api/search",
-            "/api/chat",
-            "/api/rag",
-            "/api/programs/<program_id>/rag",
-            "/api/resources/<resource_id>/rag",
-            "/api/collections/stats"
-        ]
+        "endpoints": {
+            # Health and status
+            "api_health": "/api/health",
+            "health": "/health",
+            "status": "/api/status",
+            "startup": "/startup",
+            # Info and models
+            "info": "/api/info",
+            "models": "/api/models",
+            # Documents
+            "documents": "/api/documents",
+            "documents_add": "/api/documents/add",
+            "uploads": "/api/uploads",
+            # Search and chat
+            "search": "/api/search",
+            "chat": "/api/chat",
+            # RAG and collections
+            "rag": "/api/rag",
+            "programs_rag": "/api/programs/<program_id>/rag",
+            "resources_rag": "/api/resources/<resource_id>/rag",
+            "collections_stats": "/api/collections/stats"
+        }
     }), 200
 
 # Initialize ChromaDB client
