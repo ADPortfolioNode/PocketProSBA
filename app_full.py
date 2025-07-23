@@ -80,6 +80,27 @@ def api_status():
         'document_count': vector_store.count()
     })
 
+# --- API Endpoint Registry for Frontend ---
+@app.route('/api/registry', methods=['GET'])
+def api_registry():
+    """Return a registry of available API endpoints for the frontend to discover capabilities."""
+    return jsonify({
+        "endpoints": [
+            "/api/health",
+            "/health",
+            "/api/info",
+            "/api/models",
+            "/api/documents",
+            "/api/documents/add",
+            "/api/search",
+            "/api/chat",
+            "/api/rag",
+            "/api/programs/<program_id>/rag",
+            "/api/resources/<resource_id>/rag",
+            "/api/collections/stats"
+        ]
+    }), 200
+
 # Initialize ChromaDB client
 if CHROMADB_AVAILABLE:
     try:
