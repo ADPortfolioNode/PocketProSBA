@@ -864,9 +864,9 @@ except ImportError as e:
 @app.route('/<path:path>')
 def serve_frontend(path):
     # Only serve frontend for non-API/non-health routes
-    if path.startswith('api/') or path == 'health':
-        # Let Flask route matching handle /api/* and /health
-        return handle_404(None)
+    # If the request is for an API or health route, return 404 (let Flask handle real API routes)
+    if path.startswith('api/') or path == 'health' or path.startswith('static/'):
+        return '', 404
     static_dir = os.path.join(app.root_path, 'static')
     react_build_dir = os.path.join(app.root_path, 'frontend', 'build')
     # Ensure static directory exists, and copy from React build if missing
