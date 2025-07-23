@@ -458,9 +458,20 @@ def initialize_rag_system():
                 with open(fpath, 'r', encoding='utf-8', errors='ignore') as f:
                     text = f.read()
                 doc_id = f"upload_{fname}"
-                # Avoid duplicate indexing
+                # Avoid duplicate indexing in in-memory vector store
                 if not any(doc.get('id') == doc_id for doc in vector_store.get_all_documents()):
                     vector_store.add_document(doc_id, text, {'source': 'upload', 'filename': fname})
+                    # Also add to ChromaDB if available
+                    if CHROMADB_AVAILABLE and chroma_client is not None:
+                        try:
+                            chroma_client.add(
+                                documents=[text],
+                                metadatas=[{'source': 'upload', 'filename': fname}],
+                                ids=[doc_id]
+                            )
+                            logger.info(f"Document {doc_id} added to ChromaDB.")
+                        except Exception as e:
+                            logger.warning(f"Failed to add document {doc_id} to ChromaDB: {e}")
         
         # Test the vector store
         test_id = vector_store.add_document(
@@ -739,14 +750,14 @@ def rag_chat():
         context_parts = []
         sources = []
 
-        if search_results['documents'][0]:
+        if 'documents' in search_results and search_results['documents'] and search_results['documents'][0]:
             for i, doc in enumerate(search_results['documents'][0]):
                 context_parts.append(f"Source {i+1}: {doc}")
                 sources.append({
-                    'id': search_results['ids'][0][i],
+                    'id': search_results['ids'][0][i] if 'ids' in search_results and search_results['ids'] and len(search_results['ids'][0]) > i else None,
                     'content': doc[:200] + "..." if len(doc) > 200 else doc,
-                    'metadata': search_results['metadatas'][0][i],
-                    'relevance': 1 - search_results['distances'][0][i]
+                    'metadata': search_results['metadatas'][0][i] if 'metadatas' in search_results and search_results['metadatas'] and len(search_results['metadatas'][0]) > i else None,
+                    'relevance': 1 - search_results['distances'][0][i] if 'distances' in search_results and search_results['distances'] and len(search_results['distances'][0]) > i else None
                 })
 
         # Generate response
