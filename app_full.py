@@ -99,7 +99,6 @@ def api_health_check():
     return response
 
 # --- API Endpoint Registry for Frontend ---
-@app.route('/api/registry', methods=['GET'])
 def api_registry():
     """Return a registry of available API endpoints for the frontend to discover capabilities."""
     # Registry keys must match frontend usage exactly
@@ -108,7 +107,7 @@ def api_registry():
         "documents_add": "/api/documents/add",
         "uploads": "/api/uploads",
         "upload": "/api/uploads",  # alias for upload (frontend expects 'upload')
-        "resources": "/api/registry",  # replaced with registry endpoint since /api/resources does not exist
+        "resources": "/api/resources",  # now points to new /api/resources endpoint
         "search": "/api/search",
         "chat": "/api/chat",
         "rag": "/api/rag",
@@ -122,6 +121,26 @@ def api_registry():
         "info": "/api/info",
         "models": "/api/models"
     }), 200
+# --- New: /api/resources endpoint for frontend resource loading ---
+@app.route('/api/resources', methods=['GET'])
+def get_resources():
+    """Return a list of resources for the frontend sidebar (mirrors /api/documents for now)"""
+    try:
+        documents = vector_store.get_all_documents()
+        # Optionally, filter/transform documents to match frontend resource expectations
+        resources = [
+            {
+                'id': doc['id'],
+                'title': doc['metadata'].get('title', doc['id']),
+                'description': doc['metadata'].get('description', doc['text'][:120] + ("..." if len(doc['text']) > 120 else "")),
+                'metadata': doc['metadata']
+            }
+            for doc in documents
+        ]
+        return jsonify({'resources': resources, 'count': len(resources)})
+    except Exception as e:
+        logger.error(f"Error getting resources: {str(e)}")
+        return jsonify({'resources': [], 'count': 0, 'error': str(e)}), 500
 
 # Add /registry and /health routes for frontend compatibility (return same as /api/registry and /api/health)
 @app.route('/registry', methods=['GET'])
