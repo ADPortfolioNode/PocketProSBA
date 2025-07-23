@@ -661,19 +661,24 @@ def rag_chat():
         return jsonify({'error': 'RAG system not available'}), 503
     
     try:
-        data = request.get_json()
+        data = request.get_json(force=True, silent=True)
+        logger.info(f"/api/chat request data: {data}")
+        if not data or not isinstance(data, dict):
+            logger.error("/api/chat: No JSON data or invalid format received.")
+            return jsonify({'error': 'No JSON data provided or invalid format'}), 400
+
         user_query = data.get('message', '')
-        
         if not user_query:
+            logger.error("/api/chat: 'message' field missing in request data.")
             return jsonify({'error': 'Message is required'}), 400
-        
+
         # Retrieve relevant documents
         search_results = vector_store.search(user_query, n_results=3)
-        
+
         # Build context and sources
         context_parts = []
         sources = []
-        
+
         if search_results['documents'][0]:
             for i, doc in enumerate(search_results['documents'][0]):
                 context_parts.append(f"Source {i+1}: {doc}")
@@ -683,15 +688,15 @@ def rag_chat():
                     'metadata': search_results['metadatas'][0][i],
                     'relevance': 1 - search_results['distances'][0][i]
                 })
-        
+
         # Generate response
         context = "\n\n".join(context_parts)
-        
+
         if context:
             response = f"Based on my knowledge base, here's what I found regarding '{user_query}':\n\n{context}"
         else:
             response = f"I don't have specific information about '{user_query}' in my current knowledge base. Please add relevant documents to help me provide better answers."
-        
+
         return jsonify({
             'query': user_query,
             'response': response,
@@ -699,9 +704,11 @@ def rag_chat():
             'context_used': bool(context),
             'response_time': time.time()
         })
-        
+
     except Exception as e:
-        logger.error(f"RAG chat error: {str(e)}")
+        import traceback
+        logger.error(f"RAG chat error: {str(e)}\n{traceback.format_exc()}")
+        logger.error(f"Request data that caused error: {request.get_data(as_text=True)}")
         return jsonify({'error': f'Chat failed: {str(e)}'}), 500
 
 @app.route('/api/rag', methods=['POST'])
