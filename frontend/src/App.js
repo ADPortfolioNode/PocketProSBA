@@ -21,7 +21,7 @@ let BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 if (!BACKEND_URL || BACKEND_URL === "") {
   BACKEND_URL = process.env.NODE_ENV === "development"
     ? "http://localhost:10000"
-    : "https://pocketprosba.onrender.com";
+    : "https://pocketprosba-backend.onrender.com"; // <-- FIXED: use correct backend URL for production
 }
 
 // Helper to prefix endpoint paths with BACKEND_URL if not already absolute
