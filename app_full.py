@@ -465,6 +465,36 @@ def initialize_rag_system():
         logger.info("✅ RAG system initialized successfully")
         rag_system_available = True
         
+
+        # Add an initial document to the vector store and ChromaDB for AI self-awareness and project context
+        initial_doc_id = 'ai_self_awareness'
+        initial_doc_text = (
+            'I am the AI assistant for the PocketPro SBA project. '
+            'My purpose is to help users interact with the Small Business Administration (SBA) resources, answer questions, and assist with RAG (Retrieval-Augmented Generation) workflows. '
+            'I am aware of my project context and can provide guidance on using the system. '
+            'For detailed project instructions and guidelines, see the INSTRUCTIONS.md file: '
+            'https://pocketprosba-backend.onrender.com/static/INSTRUCTIONS.md'
+        )
+        initial_doc_metadata = {
+            'source': 'self_awareness',
+            'type': 'project_info',
+            'category': 'meta',
+            'link': 'https://pocketprosba-backend.onrender.com/static/INSTRUCTIONS.md',
+            'description': 'AI assistant self-awareness and project context.'
+        }
+        vector_store.add_document(initial_doc_id, initial_doc_text, initial_doc_metadata)
+        # If ChromaDB is available, add to ChromaDB as well
+        if CHROMADB_AVAILABLE and chroma_client is not None:
+            try:
+                chroma_client.add(
+                    documents=[initial_doc_text],
+                    metadatas=[initial_doc_metadata],
+                    ids=[initial_doc_id]
+                )
+                logger.info("Initial self-awareness document added to ChromaDB.")
+            except Exception as e:
+                logger.warning(f"Failed to add initial doc to ChromaDB: {e}")
+
         # Add some sample SBA documents
         sample_docs = [
             {
@@ -483,11 +513,9 @@ def initialize_rag_system():
                 'metadata': {'source': 'loan_programs', 'type': 'real_estate', 'category': 'financing'}
             }
         ]
-        
         for doc in sample_docs:
             vector_store.add_document(doc['id'], doc['text'], doc['metadata'])
-        
-        logger.info(f"✅ Added {len(sample_docs)} sample documents")
+        logger.info(f"✅ Added {len(sample_docs) + 1} sample documents (including self-awareness doc)")
         return True
         
     except Exception as e:
