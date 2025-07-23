@@ -99,6 +99,7 @@ def api_health_check():
     return response
 
 # --- API Endpoint Registry for Frontend ---
+@app.route('/api/registry', methods=['GET'])
 def api_registry():
     """Return a registry of available API endpoints for the frontend to discover capabilities."""
     # Registry keys must match frontend usage exactly
