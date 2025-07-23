@@ -1,11 +1,22 @@
 from flask import send_from_directory
+# --- BUILD/DEPLOYMENT REQUIREMENTS FILES ---
+#
+# IMPORTANT: This backend is built and deployed using the following files:
+#   - Docker/Render.com: requirements-full.txt (NOT requirements.txt)
+#   - Local development: requirements.txt (may be missing packages)
+#
+# To match production, always install dependencies with:
+#     pip install -r requirements-full.txt
+#
+# See project documentation for details.
+
 from dotenv import load_dotenv
 import os
 import logging
 import time
 import hashlib
 import re
-import chromadb  
+import chromadb  # (See note above: installed via requirements-full.txt in Docker/Render)
 import json
 import math
 from collections import Counter
