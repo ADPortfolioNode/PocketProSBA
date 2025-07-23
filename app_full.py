@@ -102,29 +102,25 @@ def api_health_check():
 @app.route('/api/registry', methods=['GET'])
 def api_registry():
     """Return a registry of available API endpoints for the frontend to discover capabilities."""
+    # Registry keys must match frontend usage exactly
     return jsonify({
-        "endpoints": {
-            # Health and status
-            "api_health": "/api/health",
-            "health": "/health",
-            "status": "/api/status",
-            "startup": "/startup",
-            # Info and models
-            "info": "/api/info",
-            "models": "/api/models",
-            # Documents
-            "documents": "/api/documents",
-            "documents_add": "/api/documents/add",
-            "uploads": "/api/uploads",
-            # Search and chat
-            "search": "/api/search",
-            "chat": "/api/chat",
-            # RAG and collections
-            "rag": "/api/rag",
-            "programs_rag": "/api/programs/<program_id>/rag",
-            "resources_rag": "/api/resources/<resource_id>/rag",
-            "collections_stats": "/api/collections/stats"
-        }
+        "documents": "/api/documents",
+        "documents_add": "/api/documents/add",
+        "uploads": "/api/uploads",
+        "upload": "/api/uploads",  # alias for upload (frontend expects 'upload')
+        "resources": "/api/resources",  # if you have a resources endpoint, otherwise leave as placeholder
+        "search": "/api/search",
+        "chat": "/api/chat",
+        "rag": "/api/rag",
+        "programs_rag": "/api/programs/<program_id>/rag",
+        "resources_rag": "/api/resources/<resource_id>/rag",
+        "collections_stats": "/api/collections/stats",
+        "api_health": "/api/health",
+        "health": "/health",
+        "status": "/api/status",
+        "startup": "/startup",
+        "info": "/api/info",
+        "models": "/api/models"
     }), 200
 
 # Initialize ChromaDB client
