@@ -123,6 +123,15 @@ def api_registry():
         "models": "/api/models"
     }), 200
 
+# Add /registry and /health routes for frontend compatibility (return same as /api/registry and /api/health)
+@app.route('/registry', methods=['GET'])
+def registry_alias():
+    return api_registry()
+
+@app.route('/health', methods=['GET', 'HEAD'])
+def health_alias():
+    return api_health_check()
+
 # Initialize ChromaDB client
 if CHROMADB_AVAILABLE:
     try:
