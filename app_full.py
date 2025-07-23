@@ -120,8 +120,20 @@ def api_registry():
         "status": "/api/status",
         "startup": "/startup",
         "info": "/api/info",
-        "models": "/api/models"
+        "models": "/api/models",
+        "chromadb_health": "/api/chromadb/health"
     }), 200
+
+# --- ChromaDB health endpoint ---
+@app.route('/api/chromadb/health', methods=['GET'])
+def chromadb_health():
+    """Health/status endpoint for ChromaDB vector DB"""
+    status = {
+        "chroma_enabled": CHROMADB_AVAILABLE,
+        "client_initialized": CHROMADB_AVAILABLE and chroma_client is not None,
+        "persist_directory": getattr(chroma_client, 'persist_directory', None) if CHROMADB_AVAILABLE and chroma_client is not None else None
+    }
+    return jsonify(status)
 # --- New: /api/resources endpoint for frontend resource loading ---
 @app.route('/api/resources', methods=['GET'])
 def get_resources():
