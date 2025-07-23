@@ -874,17 +874,12 @@ except ImportError as e:
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
 def serve_frontend(path):
-    # Only serve frontend for non-API/non-health routes
-    # If the request is for an API or health/registry route, return 404 (let Flask handle real API routes)
-    api_blocked = (
-        path.startswith('api/') or
-        path == 'api' or
-        path == 'api/health' or
-        path == 'api/registry' or
-        path == 'health' or
+    # Block all API and health routes from being served by React
+    if (
+        path.startswith('api') or path.startswith('/api') or
+        path in ['health', '/health'] or
         path.startswith('static/')
-    )
-    if api_blocked:
+    ):
         logger.info(f"[Catch-all] Blocked attempt to serve frontend for API/health route: {path}")
         return '', 404
     static_dir = os.path.join(app.root_path, 'static')
