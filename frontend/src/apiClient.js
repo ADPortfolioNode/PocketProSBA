@@ -5,12 +5,20 @@ const BACKEND_URL = process.env.REACT_APP_API_BASE || process.env.REACT_APP_BACK
 const apiUrl = (path) =>
   path.startsWith("http") ? path : `${BACKEND_URL}${path.startsWith("/") ? "" : "/"}${path}`;
 
+// Centralized fetch wrapper with error handling
+async function fetchWithErrorHandling(url, options = {}) {
+  const response = await fetch(url, options);
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Fetch error: ${response.status} ${response.statusText} - ${errorText}`);
+  }
+  return response.json();
+}
+
 // Endpoint registry
 export async function loadEndpoints() {
   // Correct: matches backend @app.route('/api/registry')
-  const response = await fetch(apiUrl("/api/registry"));
-  if (!response.ok) throw new Error("Failed to load endpoint registry: " + response.status);
-  return response.json();
+  return fetchWithErrorHandling(apiUrl("/api/registry"));
 }
 
 // Dynamic endpoint loader
@@ -31,22 +39,17 @@ export async function apiFetch(endpointKey, options = {}) {
     throw new Error(`Endpoint '${endpointKey}' not found in registry.`);
   }
   const url = apiUrl(endpointPath);
-  const response = await fetch(url, options);
-  if (!response.ok) {
-    throw new Error(`API call to '${endpointKey}' failed: ${response.status}`);
-  }
-  return response.json();
+  return fetchWithErrorHandling(url, options);
 }
 
 // Example for chat endpoint
 export async function chatApi(data) {
   // Correct: matches backend @app.route('/api/chat')
-  const response = await fetch(apiUrl("/api/chat"), {
+  return fetchWithErrorHandling(apiUrl("/api/chat"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
   });
-  return response.json();
 }
 
 // ...repeat for other endpoints...
