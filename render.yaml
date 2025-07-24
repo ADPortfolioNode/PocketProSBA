@@ -5,7 +5,7 @@ services:
     dockerfilePath: Dockerfile.render.full
     plan: standard
     autoDeploy: true
-    healthCheckPath: /healthz
+    healthCheckPath: /health
     envVars:
       - key: PORT
         value: 10000
@@ -36,5 +36,7 @@ services:
     buildCommand: cd frontend && npm install --legacy-peer-deps && npm run build
     startCommand: npx serve -s frontend/build -l $PORT
     envVars:
+      - key: PORT
+        value: "10000"
       - key: REACT_APP_BACKEND_URL
-        value: https://pocketprosba-backend.onrender.com:10000
+        value: https://pocketprosba-backend.onrender.com
