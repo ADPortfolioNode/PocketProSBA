@@ -19,7 +19,7 @@ function Login() {
     // TODO: Implement login API call here
 
     alert('Login successful!');
-    navigate('/dashboard'); // or any post-login page
+    navigate('/'); // or any post-login page
   };
 
   return (
