@@ -67,7 +67,7 @@ CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True, allow_
 # Request logging
 @app.before_request
 def log_request_info():
-    logger.info(f"Request: {request.method} {request.path} | IP: {request.remote_addr}")
+    logger.info(f"Request: {request.method} {request.path} | IP: {request.remote_addr} | Headers: {dict(request.headers)} | Body: {request.get_data(as_text=True)}")
 
 # Global error handler for 500
 @app.errorhandler(500)
@@ -102,27 +102,30 @@ def api_health_check():
 @app.route('/api/registry', methods=['GET'])
 def api_registry():
     """Return a registry of available API endpoints for the frontend to discover capabilities."""
+    # Base URL for API endpoints, configurable via environment variable
+    base_url = os.environ.get('API_BASE_URL', '').rstrip('/')
     # Registry keys must match frontend usage exactly
-    return jsonify({
-        "documents": "/api/documents",
-        "documents_add": "/api/documents/add",
-        "uploads": "/api/uploads",
-        "upload": "/api/uploads",  # alias for upload (frontend expects 'upload')
-        "resources": "/api/resources",  # now points to new /api/resources endpoint
-        "search": "/api/search",
-        "chat": "/api/chat",
-        "rag": "/api/rag",
-        "programs_rag": "/api/programs/<program_id>/rag",
-        "resources_rag": "/api/resources/<resource_id>/rag",
-        "collections_stats": "/api/collections/stats",
-        "api_health": "/api/health",
-        "health": "/health",
-        "status": "/api/status",
-        "startup": "/startup",
-        "info": "/api/info",
-        "models": "/api/models",
-        "chromadb_health": "/api/chromadb/health"
-    }), 200
+    registry = {
+        "documents": f"{base_url}/api/documents" if base_url else "/api/documents",
+        "documents_add": f"{base_url}/api/documents/add" if base_url else "/api/documents/add",
+        "uploads": f"{base_url}/api/uploads" if base_url else "/api/uploads",
+        "upload": f"{base_url}/api/uploads" if base_url else "/api/uploads",  # alias for upload (frontend expects 'upload')
+        "resources": f"{base_url}/api/resources" if base_url else "/api/resources",  # now points to new /api/resources endpoint
+        "search": f"{base_url}/api/search" if base_url else "/api/search",
+        "chat": f"{base_url}/api/chat" if base_url else "/api/chat",
+        "rag": f"{base_url}/api/rag" if base_url else "/api/rag",
+        "programs_rag": f"{base_url}/api/programs/<program_id>/rag" if base_url else "/api/programs/<program_id>/rag",
+        "resources_rag": f"{base_url}/api/resources/<resource_id>/rag" if base_url else "/api/resources/<resource_id>/rag",
+        "collections_stats": f"{base_url}/api/collections/stats" if base_url else "/api/collections/stats",
+        "api_health": f"{base_url}/api/health" if base_url else "/api/health",
+        "health": f"{base_url}/health" if base_url else "/health",
+        "status": f"{base_url}/api/status" if base_url else "/api/status",
+        "startup": f"{base_url}/startup" if base_url else "/startup",
+        "info": f"{base_url}/api/info" if base_url else "/api/info",
+        "models": f"{base_url}/api/models" if base_url else "/api/models",
+        "chromadb_health": f"{base_url}/api/chromadb/health" if base_url else "/api/chromadb/health"
+    }
+    return jsonify(registry), 200
 
 # --- ChromaDB health endpoint ---
 @app.route('/api/chromadb/health', methods=['GET'])
