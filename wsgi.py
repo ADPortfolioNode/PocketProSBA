@@ -24,30 +24,30 @@ for dir_name in required_dirs:
 
 # Import and configure the Flask app
 try:
-    from app import app
-    
+    from app_full import app
+
     # Configure for production
     app.config['DEBUG'] = False
     app.config['TESTING'] = False
-    
+
     # Ensure uploads directory exists
     uploads_dir = project_root / 'uploads'
     uploads_dir.mkdir(exist_ok=True)
-    
+
     print(f"🚀 PocketPro:SBA starting in production mode...")
     print(f"📁 Project root: {project_root}")
     print(f"📁 Python path: {sys.path[:3]}")
     print(f"🌍 Environment: {os.environ.get('FLASK_ENV', 'unknown')}")
-    
+
     # Export the app for Gunicorn
     application = app
-    
+
     if __name__ == "__main__":
         # For local testing - ensure proper host/port binding
         port = int(os.environ.get('PORT', 5000))  # Default to 5000 for Render.com
         print(f"🚀 Starting on host=0.0.0.0, port={port}")
         app.run(host='0.0.0.0', port=port, debug=False)
-        
+
 except Exception as e:
     print(f"❌ Error starting application: {e}")
     import traceback
