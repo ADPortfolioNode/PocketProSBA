@@ -1,42 +1,38 @@
-"""
-Minimal application for Render.com deployment testing
-"""
-import os
-from flask import Flask, jsonify
+import requests
 
-# Create the application
-app = Flask(__name__)
+BACKEND_URL = "https://pocketprosba-backend.onrender.com"
 
-@app.route('/')
-def index():
-    return jsonify({
-        "message": "PocketPro SBA API is running",
-        "status": "online",
-        "port": os.environ.get("PORT", "not set")
-    })
+def check_health():
+    endpoints = ["/health", "/api/health"]
+    for ep in endpoints:
+        url = BACKEND_URL + ep
+        try:
+            response = requests.get(url, timeout=5)
+            if response.status_code == 200:
+                print(f"[PASS] Health check {ep} returned 200 OK: {response.json()}")
+            else:
+                print(f"[FAIL] Health check {ep} returned status code {response.status_code}")
+        except Exception as e:
+            print(f"[ERROR] Health check {ep} failed: {e}")
 
-@app.route('/health')
-def health():
-    return jsonify({
-        "status": "healthy", 
-        "success": True
-    })
+def check_api_registry():
+    url = BACKEND_URL + "/api/registry"
+    try:
+        response = requests.get(url, timeout=5)
+        if response.status_code == 200:
+            print(f"[PASS] API registry returned 200 OK")
+            data = response.json()
+            print(f"Available endpoints: {list(data.keys())}")
+        else:
+            print(f"[FAIL] API registry returned status code {response.status_code}")
+    except Exception as e:
+        print(f"[ERROR] API registry check failed: {e}")
 
-@app.route('/env')
-def env():
-    """Return environment information for debugging"""
-    env_vars = {
-        "PORT": os.environ.get("PORT", "not set"),
-        "FLASK_ENV": os.environ.get("FLASK_ENV", "not set"),
-        "PYTHONPATH": os.environ.get("PYTHONPATH", "not set"),
-        "FLASK_APP": os.environ.get("FLASK_APP", "not set")
-    }
-    return jsonify(env_vars)
-
-# For Gunicorn
-application = app
+def main():
+    print("Starting backend integration tests...")
+    check_health()
+    check_api_registry()
+    print("Tests completed.")
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    print(f"🚀 Starting minimal app on port {port}")
-    app.run(host="0.0.0.0", port=port, debug=True)
+    main()
