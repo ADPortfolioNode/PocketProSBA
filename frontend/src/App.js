@@ -1,8 +1,11 @@
 import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
+import Register from './Register';
+import ForgotPassword from './ForgotPassword';
 
-function App() {
+function Login() {
   return (
     <div className="container-centered">
       <h1 className="text-center mb-4">Welcome to PocketProSBA</h1>
@@ -20,7 +23,23 @@ function App() {
         </div>
         <button type="submit" className="btn btn-primary w-100">Sign In</button>
       </form>
+      <p className="mt-3 text-center">
+        <Link to="/register">Register</Link> | <Link to="/forgot-password">Forgot Password?</Link>
+      </p>
     </div>
+  );
+}
+
+function App() {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<Login />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+      </Routes>
+    </Router>
   );
 }
 
