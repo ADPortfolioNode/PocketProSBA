@@ -1,16 +1,37 @@
 import React, { useState } from 'react';
 import { Container } from 'react-bootstrap';
+import React, { useState } from 'react';
+import { Container } from 'react-bootstrap';
 import SBANavigation from './SBANavigation';
 import Header from './Header';
 import Footer from './Footer';
+import ConciergeChat from './ConciergeChat';
+import SBAContentExplorer from './SBAContentExplorer';
+import RAGWorkflowInterface from './RAGWorkflowInterface';
+import UploadsManagerComponent from './UploadsManager';
 
-function MainLayout({ children }) {
+function MainLayout() {
   const [activeTab, setActiveTab] = useState('chat');
   const [serverConnected, setServerConnected] = React.useState(true); // Placeholder, update as needed
   const apiUrl = () => {}; // Placeholder, update as needed
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
+  };
+
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'chat':
+        return <ConciergeChat />;
+      case 'browse':
+        return <SBAContentExplorer />;
+      case 'rag':
+        return <RAGWorkflowInterface />;
+      case 'documents':
+        return <UploadsManagerComponent />;
+      default:
+        return <ConciergeChat />;
+    }
   };
 
   return (
@@ -23,7 +44,7 @@ function MainLayout({ children }) {
         apiUrl={apiUrl}
       />
       <Container className="flex-grow-1">
-        {children}
+        {renderContent()}
       </Container>
       <Footer />
     </div>
