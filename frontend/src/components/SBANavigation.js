@@ -51,6 +51,16 @@ const SBANavigation = ({ activeTab, onTabChange, serverConnected, apiUrl }) => {
             >
               Document Center
             </Nav.Link>
+            <Nav.Link 
+              href="#sba" 
+              active={activeTab === "sba"}
+              onClick={(e) => {
+                e.preventDefault();
+                onTabChange("sba");
+              }}
+            >
+              SBA Content
+            </Nav.Link>
           </Nav>
           <div className="d-flex align-items-center">
             <ConnectionStatusIndicator connected={serverConnected} apiUrl={apiUrl} />

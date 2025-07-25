@@ -1,7 +1,5 @@
 import React, { useState } from 'react';
 import { Container } from 'react-bootstrap';
-import React, { useState } from 'react';
-import { Container } from 'react-bootstrap';
 import SBANavigation from './SBANavigation';
 import Header from './Header';
 import Footer from './Footer';
@@ -9,6 +7,7 @@ import ConciergeChat from './ConciergeChat';
 import SBAContentExplorer from './SBAContentExplorer';
 import RAGWorkflowInterface from './RAGWorkflowInterface';
 import UploadsManagerComponent from './UploadsManager';
+import SBAContent from './SBAContent';
 
 function MainLayout() {
   const [activeTab, setActiveTab] = useState('chat');
@@ -29,6 +28,8 @@ function MainLayout() {
         return <RAGWorkflowInterface />;
       case 'documents':
         return <UploadsManagerComponent />;
+      case 'sba':
+        return <SBAContent />;
       default:
         return <ConciergeChat />;
     }
