@@ -19,7 +19,7 @@ function Login() {
     // TODO: Implement login API call here
 
     alert('Login successful!');
-    navigate('/'); // or any post-login page
+    navigate('/'); // Navigate to home page after login
   };
 
   return (
@@ -60,4 +60,4 @@ function Login() {
   );
 }
 
-export default Login;
+export default Login; 
