@@ -6,16 +6,19 @@ import Login from './Login';
 import Register from './Register';
 import ForgotPassword from './ForgotPassword';
 import Home from './components/Home';
+import MainLayout from './components/MainLayout';
 
 function App() {
   return (
     <Router>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-      </Routes>
+      <MainLayout>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+        </Routes>
+      </MainLayout>
     </Router>
   );
 }
