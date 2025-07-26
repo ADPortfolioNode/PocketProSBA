@@ -19,18 +19,18 @@ describe('Register Page', () => {
         <Register />
       </MemoryRouter>
     );
-    fireEvent.click(screen.getByRole('button', { name: /Register/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Sign Up/i }));
     expect(screen.getByText(/Email is required/i)).toBeInTheDocument();
     expect(screen.getByText(/Password is required/i)).toBeInTheDocument();
   });
 
   test('navigates back to Login page', () => {
     render(
-      <MemoryRouter initialEntries={['/register']}>
+      <MemoryRouter>
         <Register />
       </MemoryRouter>
     );
-    const loginLink = screen.getByText(/Login/i);
+    const loginLink = screen.getByText(/Log in/i);
     expect(loginLink).toBeInTheDocument();
     // Navigation test would require mocking router or userEvent, omitted here for brevity
   });

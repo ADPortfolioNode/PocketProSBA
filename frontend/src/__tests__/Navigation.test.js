@@ -1,16 +1,11 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import userEvent from '@testing-library/user-event';
 import App from '../App';
 
 describe('Main Navigation', () => {
   test('navigates between pages', async () => {
-    render(
-      <MemoryRouter initialEntries={['/']}>
-        <App />
-      </MemoryRouter>
-    );
+    render(<App />);
 
     // Verify Home page content
     expect(screen.getByText(/Home/i)).toBeInTheDocument();

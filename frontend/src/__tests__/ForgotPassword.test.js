@@ -19,17 +19,17 @@ describe('ForgotPassword Page', () => {
         <ForgotPassword />
       </MemoryRouter>
     );
-    fireEvent.click(screen.getByRole('button', { name: /Submit/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Send Reset Link/i }));
     expect(screen.getByText(/Email is required/i)).toBeInTheDocument();
   });
 
   test('navigates back to Login page', () => {
     render(
-      <MemoryRouter initialEntries={['/forgot-password']}>
+      <MemoryRouter>
         <ForgotPassword />
       </MemoryRouter>
     );
-    const loginLink = screen.getByText(/Login/i);
+    const loginLink = screen.getByText(/Log in/i);
     expect(loginLink).toBeInTheDocument();
     // Navigation test would require mocking router or userEvent, omitted here for brevity
   });

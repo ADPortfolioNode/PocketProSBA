@@ -10,7 +10,7 @@ const sbaTips = [
   "SCORE is an SBA resource partner offering free business mentoring and low-cost training."
 ];
 
-const ConciergeChat = ({ onSend, messages, loading, userName }) => {
+const ConciergeChat = ({ onSend, messages = [], loading, userName }) => {
   const [input, setInput] = useState("");
   const [tipIndex, setTipIndex] = useState(0);
 
