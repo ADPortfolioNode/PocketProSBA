@@ -14,6 +14,8 @@ const ConciergeChat = ({ onSend, messages = [], loading, userName }) => {
   const [input, setInput] = useState("");
   const [tipIndex, setTipIndex] = useState(0);
 
+  const safeMessages = Array.isArray(messages) ? messages : [];
+
   useEffect(() => {
     const timer = setInterval(() => {
       setTipIndex((prev) => (prev + 1) % sbaTips.length);
@@ -37,10 +39,10 @@ const ConciergeChat = ({ onSend, messages = [], loading, userName }) => {
       </div>
       <div className="greeting-body">
         <div className="chat-history mb-3" style={{maxHeight: 300, overflowY: 'auto', width: '100%'}}>
-          {messages.length === 0 && (
+          {safeMessages.length === 0 && (
             <div className="no-messages text-muted text-center mb-3">Start the conversation below!</div>
           )}
-          {messages.map((msg, idx) => (
+          {safeMessages.map((msg, idx) => (
             <div key={idx} className={`message-bubble ${msg.role === 'user' ? 'user' : 'assistant'}`}>{msg.content}</div>
           ))}
           {loading && (
