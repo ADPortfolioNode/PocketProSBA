@@ -5,12 +5,13 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
+    "postinstall": "npm install ajv@8.12.0 ajv-keywords@5.1.0",
     "test": "react-scripts test --env=jsdom",
     "eject": "react-scripts eject"
   },
   "dependencies": {
-    "ajv": "^8.12.0",
-    "ajv-keywords": "^5.1.0",
+    "ajv": "8.12.0",
+    "ajv-keywords": "5.1.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.14.1",
