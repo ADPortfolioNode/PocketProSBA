@@ -88,7 +88,7 @@ const RAGWorkflowInterface = ({
                 </Form.Text>
               </Form.Group>
               
-              {documents.length > 0 && (
+              {Array.isArray(documents) && documents.length > 0 && (
                 <div className="mt-3 mb-3">
                   <h6>Available Documents</h6>
                   <ListGroup>
