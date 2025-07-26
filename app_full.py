@@ -61,13 +61,14 @@ def check_required_env_vars():
         sys.exit(1)
 check_required_env_vars()
 
-    # --- CORS: Allow all origins and headers for all routes ---
+# --- CORS: Allow all origins and headers for all routes ---
+def setup_cors(app):
     CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True, allow_headers="*")
 
-    # Request logging
-    @app.before_request
-    def log_request_info():
-        logger.info(f"Request: {request.method} {request.path} | IP: {request.remote_addr} | Headers: {dict(request.headers)} | Body: {request.get_data(as_text=True)}")
+# Request logging
+@app.before_request
+def log_request_info():
+    logger.info(f"Request: {request.method} {request.path} | IP: {request.remote_addr} | Headers: {dict(request.headers)} | Body: {request.get_data(as_text=True)}")
 
     # Global error handler for 500
     @app.errorhandler(500)

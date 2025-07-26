@@ -33,7 +33,7 @@ services:
     env: node
     branch: main
     plan: free
-    buildCommand: cd frontend && npm install --legacy-peer-deps && npm run build
+    buildCommand: cd frontend && npm install --legacy-peer-deps && npm install react-scripts && npm run build
     startCommand: npx serve -s frontend/build -l $PORT
     envVars:
       - key: PORT
