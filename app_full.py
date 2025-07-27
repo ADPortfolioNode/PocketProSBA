@@ -188,12 +188,13 @@ def log_request_info():
         logger.warning("ChromaDB not available, using fallback vector store")
 
     # --- Advanced Assistant/Session/Task Architecture Additions ---
-    import threading
-    try:
-        import redis
-        REDIS_AVAILABLE = True
-    except ImportError:
-        REDIS_AVAILABLE = False
+import threading
+
+try:
+    import redis
+    REDIS_AVAILABLE = True
+except ImportError:
+    REDIS_AVAILABLE = False
 
 try:
     from flask_socketio import SocketIO, emit
