@@ -1110,7 +1110,11 @@ except ImportError:
 
 # Initialize Flask-SocketIO with gevent async mode to avoid eventlet ssl issue
 if SOCKETIO_AVAILABLE:
-    socketio = SocketIO(app, cors_allowed_origins="*", async_mode='gevent')
+    try:
+        socketio = SocketIO(app, cors_allowed_origins="*", async_mode='gevent')
+    except Exception as e:
+        # Fallback to threading if gevent not available or invalid
+        socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
 else:
     socketio = None
 
