@@ -74,33 +74,33 @@ def setup_cors(app):
 def log_request_info():
     logger.info(f"Request: {request.method} {request.path} | IP: {request.remote_addr} | Headers: {dict(request.headers)} | Body: {request.get_data(as_text=True)}")
 
-    # Global error handler for 500
-    @app.errorhandler(500)
-    def handle_500(e):
-        logger.error(f"Internal server error: {str(e)}", exc_info=True)
-        return jsonify({"error": "Internal server error"}), 500
+# Global error handler for 500
+@app.errorhandler(500)
+def handle_500(e):
+    logger.error(f"Internal server error: {str(e)}", exc_info=True)
+    return jsonify({"error": "Internal server error"}), 500
 
-    # Global error handler for 404
-    @app.errorhandler(404)
-    def handle_404(e):
-        return jsonify({"error": "Not found"}), 404
+# Global error handler for 404
+@app.errorhandler(404)
+def handle_404(e):
+    return jsonify({"error": "Not found"}), 404
 
-    # --- API Health Endpoint for Frontend ---
-    @app.route('/api/health', methods=['GET', 'HEAD'])
-    def api_health_check():
-        """Health check endpoint for monitoring (frontend expects /api/health)"""
-        global rag_system_available
-        response = jsonify({
-            'status': 'healthy',
-            'service': 'PocketPro SBA',
-            'version': '1.0.0',
-            'rag_status': 'available' if rag_system_available else 'unavailable',
-            'document_count': vector_store.count()
-        })
-        response.headers.add('Access-Control-Allow-Origin', '*')
-        response.headers.add('Access-Control-Allow-Methods', 'GET,HEAD,OPTIONS')
-        response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
-        return response
+# --- API Health Endpoint for Frontend ---
+@app.route('/api/health', methods=['GET', 'HEAD'])
+def api_health_check():
+    """Health check endpoint for monitoring (frontend expects /api/health)"""
+    global rag_system_available
+    response = jsonify({
+        'status': 'healthy',
+        'service': 'PocketPro SBA',
+        'version': '1.0.0',
+        'rag_status': 'available' if rag_system_available else 'unavailable',
+        'document_count': vector_store.count()
+    })
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,HEAD,OPTIONS')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+    return response
 
     # --- API Endpoint Registry for Frontend ---
     @app.route('/api/registry', methods=['GET'])
