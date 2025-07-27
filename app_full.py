@@ -103,9 +103,6 @@ def api_health_check():
         'rag_status': 'available' if rag_system_available else 'unavailable',
         'document_count': vector_store.count()
     })
-    response.headers.add('Access-Control-Allow-Origin', '*')
-    response.headers.add('Access-Control-Allow-Methods', 'GET,HEAD,OPTIONS')
-    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
     return response
 
 # --- API Endpoint Registry for Frontend ---
@@ -133,7 +130,8 @@ def api_registry():
         "startup": f"{base_url}/startup" if base_url else "/startup",
         "info": f"{base_url}/api/info" if base_url else "/api/info",
         "models": f"{base_url}/api/models" if base_url else "/api/models",
-        "chromadb_health": f"{base_url}/api/chromadb/health" if base_url else "/api/chromadb/health"
+        "chromadb_health": f"{base_url}/api/chromadb/health" if base_url else "/api/chromadb/health",
+        "chat": f"{base_url}/api/chat" if base_url else "/api/chat"
     }
     return jsonify(registry), 200
 
@@ -607,3 +605,41 @@ application = app
 
 # Create socketio for compatibility with run.py
 socketio = None
+
+import requests
+
+@app.route('/api/chat', methods=['POST'])
+def api_chat():
+    data = request.get_json()
+    user_message = data.get('message', '')
+    if not user_message:
+        return jsonify({'error': 'No message provided'}), 400
+
+    gemini_api_key = os.environ.get('GEMINI_API_KEY')
+    if not gemini_api_key:
+        return jsonify({'error': 'GEMINI_API_KEY not configured'}), 500
+
+    try:
+        # Example Gemini API call - replace with actual endpoint and payload as per Gemini API docs
+        headers = {
+            'Authorization': f'Bearer {gemini_api_key}',
+            'Content-Type': 'application/json'
+        }
+        payload = {
+            'prompt': user_message,
+            'max_tokens': 512,
+            'temperature': 0.7
+        }
+        gemini_api_url = 'https://api.generativeai.googleapis.com/v1beta2/models/text-bison-001:generateText'
+
+        response = requests.post(gemini_api_url, headers=headers, json=payload)
+        response.raise_for_status()
+        result = response.json()
+
+        # Extract generated text from Gemini response
+        generated_text = result.get('candidates', [{}])[0].get('content', '')
+
+        return jsonify({'response': generated_text}), 200
+
+    except requests.exceptions.RequestException as e:
+        return jsonify({'error': f'Gemini API request failed: {str(e)}'}), 500
