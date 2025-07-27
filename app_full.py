@@ -950,14 +950,291 @@ else:
     # Create socketio for compatibility with run.py
     socketio = None
 
-    def run_app():
-        port = int(os.environ.get("PORT", 5000))  # Use 5000 for Render, not 10000
-        debug = os.environ.get("FLASK_ENV", "production") == "development"
-        logger.info(f"🚀 Starting Flask app on port {port}")
-        app.run(host="0.0.0.0", port=port, debug=debug, threaded=True)
+from flask import Flask, request, jsonify, send_from_directory
+from flask_cors import CORS
+from dotenv import load_dotenv
+import os
+import logging
+import time
+import json
+import math
+import re
+from collections import Counter
+import threading
 
-    if __name__ == "__main__":
-        run_app()
+# Optional imports with graceful fallback
+try:
+    import chromadb
+    from chromadb.config import Settings
+    from chromadb.client import Client
+    CHROMADB_AVAILABLE = True
+except ImportError:
+    CHROMADB_AVAILABLE = False
+    Settings = None
+    Client = None
+
+try:
+    import redis
+    REDIS_AVAILABLE = True
+except ImportError:
+    REDIS_AVAILABLE = False
+
+try:
+    from flask_socketio import SocketIO
+    import gevent
+    SOCKETIO_AVAILABLE = True
+except ImportError:
+    SOCKETIO_AVAILABLE = False
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Load environment variables
+load_dotenv()
+
+app = Flask(__name__)
+CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True, allow_headers="*")
+
+# Global variables
+vector_store = None
+rag_system_available = False
+chroma_client = None
+
+# Define SimpleEmbeddingFunction and SimpleVectorStore classes
+class SimpleEmbeddingFunction:
+    def __call__(self, texts):
+        embeddings = []
+        all_words = set()
+        text_words = []
+        for text in texts:
+            words = re.findall(r'\b\w+\b', str(text).lower())
+            text_words.append(words)
+            all_words.update(words)
+        vocab = sorted(list(all_words))[:384]
+        for words in text_words:
+            word_counts = Counter(words)
+            total_words = len(words)
+            embedding = []
+            for word in vocab:
+                tf = word_counts.get(word, 0) / max(total_words, 1)
+                embedding.append(float(tf))
+            while len(embedding) < 384:
+                embedding.append(0.0)
+            embeddings.append(embedding[:384])
+        return embeddings
+
+class SimpleVectorStore:
+    def __init__(self):
+        self.documents = {}
+        self.embeddings = {}
+        self.embedding_function = SimpleEmbeddingFunction()
+
+    def add_document(self, doc_id, text, metadata=None):
+        self.documents[doc_id] = {'text': text, 'metadata': metadata or {}}
+        embedding = self.embedding_function([text])[0]
+        self.embeddings[doc_id] = embedding
+        return doc_id
+
+    def search(self, query, n_results=5):
+        if not self.documents:
+            return {'documents': [], 'metadatas': [], 'distances': [], 'ids': []}
+        query_embedding = self.embedding_function([query])[0]
+        similarities = []
+        for doc_id, doc_embedding in self.embeddings.items():
+            similarity = self._cosine_similarity(query_embedding, doc_embedding)
+            similarities.append((doc_id, similarity))
+        similarities.sort(key=lambda x: x[1], reverse=True)
+        top_results = similarities[:n_results]
+        documents, metadatas, distances, ids = [], [], [], []
+        for doc_id, similarity in top_results:
+            doc = self.documents[doc_id]
+            documents.append(doc['text'])
+            metadatas.append(doc['metadata'])
+            distances.append(1.0 - similarity)
+            ids.append(doc_id)
+        return {'documents': [documents], 'metadatas': [metadatas], 'distances': [distances], 'ids': [ids]}
+
+    def delete_document(self, doc_id):
+        if doc_id in self.documents:
+            del self.documents[doc_id]
+            del self.embeddings[doc_id]
+            return True
+        return False
+
+    def count(self):
+        return len(self.documents)
+
+    def get_all_documents(self):
+        return [{'id': doc_id, 'text': doc['text'], 'metadata': doc['metadata']} for doc_id, doc in self.documents.items()]
+
+    def _cosine_similarity(self, vec1, vec2):
+        dot_product = sum(a * b for a, b in zip(vec1, vec2))
+        magnitude1 = math.sqrt(sum(a * a for a in vec1))
+        magnitude2 = math.sqrt(sum(a * a for a in vec2))
+        if magnitude1 == 0 or magnitude2 == 0:
+            return 0
+        return dot_product / (magnitude1 * magnitude2)
+
+# Initialize vector store and rag system status
+vector_store = SimpleVectorStore()
+rag_system_available = True
+
+# Initialize ChromaDB client if available
+if CHROMADB_AVAILABLE:
+    try:
+        chroma_client = Client(Settings(chroma_db_impl="duckdb+parquet", persist_directory="./chroma_storage"))
+        logger.info("ChromaDB client initialized successfully")
+    except Exception as e:
+        logger.error(f"Failed to initialize ChromaDB client: {e}")
+        chroma_client = None
+        CHROMADB_AVAILABLE = False
+else:
+    chroma_client = None
+    logger.warning("ChromaDB not available, using fallback vector store")
+
+# Initialize Flask-SocketIO if available
+if SOCKETIO_AVAILABLE:
+    try:
+        socketio = SocketIO(app, cors_allowed_origins="*", async_mode='gevent')
+    except Exception as e:
+        socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
+else:
+    socketio = None
+
+# Redis-backed ConversationStore with fallback to in-memory
+class ConversationStore:
+    def __init__(self, redis_url=None):
+        self.use_redis = False
+        self.redis_url = redis_url or os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
+        if REDIS_AVAILABLE:
+            try:
+                self.r = redis.Redis.from_url(self.redis_url)
+                self.r.ping()
+                self.use_redis = True
+            except Exception as e:
+                logger.warning(f"Redis unavailable: {e}. Using in-memory store.")
+                self.r = None
+        else:
+            self.r = None
+        self.memory_store = {}
+        self.lock = threading.Lock()
+
+    def get(self, session_id):
+        if self.use_redis:
+            data = self.r.get(f"conv:{session_id}")
+            if data:
+                return json.loads(data)
+            return []
+        else:
+            with self.lock:
+                return self.memory_store.get(session_id, []).copy()
+
+    def append(self, session_id, message):
+        if self.use_redis:
+            history = self.get(session_id)
+            history.append(message)
+            self.r.set(f"conv:{session_id}", json.dumps(history))
+        else:
+            with self.lock:
+                self.memory_store.setdefault(session_id, []).append(message)
+
+    def clear(self, session_id):
+        if self.use_redis:
+            self.r.delete(f"conv:{session_id}")
+        else:
+            with self.lock:
+                self.memory_store.pop(session_id, None)
+
+conversation_store = ConversationStore()
+
+@app.before_request
+def log_request_info():
+    logger.info(f"Request: {request.method} {request.path} | IP: {request.remote_addr} | Headers: {dict(request.headers)} | Body: {request.get_data(as_text=True)}")
+
+@app.errorhandler(500)
+def handle_500(e):
+    logger.error(f"Internal server error: {str(e)}", exc_info=True)
+    return jsonify({"error": "Internal server error"}), 500
+
+@app.errorhandler(404)
+def handle_404(e):
+    return jsonify({"error": "Not found"}), 404
+
+@app.route('/api/health', methods=['GET', 'HEAD'])
+def api_health_check():
+    global rag_system_available
+    response = jsonify({
+        'status': 'healthy',
+        'service': 'PocketPro SBA',
+        'version': '1.0.0',
+        'rag_status': 'available' if rag_system_available else 'unavailable',
+        'document_count': vector_store.count()
+    })
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,HEAD,OPTIONS')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+    return response
+
+@app.route('/api/registry', methods=['GET'])
+def api_registry():
+    base_url = os.environ.get('API_BASE_URL', '').rstrip('/')
+    registry = {
+        "documents": f"{base_url}/api/documents" if base_url else "/api/documents",
+        "documents_add": f"{base_url}/api/documents/add" if base_url else "/api/documents/add",
+        "uploads": f"{base_url}/api/uploads" if base_url else "/api/uploads",
+        "upload": f"{base_url}/api/uploads" if base_url else "/api/uploads",
+        "resources": f"{base_url}/api/resources" if base_url else "/api/resources",
+        "search": f"{base_url}/api/search" if base_url else "/api/search",
+        "chat": f"{base_url}/api/chat" if base_url else "/api/chat",
+        "rag": f"{base_url}/api/rag" if base_url else "/api/rag",
+        "programs_rag": f"{base_url}/api/programs/<program_id>/rag" if base_url else "/api/programs/<program_id>/rag",
+        "resources_rag": f"{base_url}/api/resources/<resource_id>/rag" if base_url else "/api/resources/<resource_id>/rag",
+        "collections_stats": f"{base_url}/api/collections/stats" if base_url else "/api/collections/stats",
+        "api_health": f"{base_url}/api/health" if base_url else "/api/health",
+        "health": f"{base_url}/health" if base_url else "/health",
+        "status": f"{base_url}/api/status" if base_url else "/api/status",
+        "startup": f"{base_url}/startup" if base_url else "/startup",
+        "info": f"{base_url}/api/info" if base_url else "/api/info",
+        "models": f"{base_url}/api/models" if base_url else "/api/models",
+        "chromadb_health": f"{base_url}/api/chromadb/health" if base_url else "/api/chromadb/health"
+    }
+    return jsonify(registry), 200
+
+@app.route('/api/resources', methods=['GET'])
+def get_resources():
+    try:
+        documents = vector_store.get_all_documents()
+        resources = [
+            {
+                'id': doc['id'],
+                'title': doc['metadata'].get('title', doc['id']),
+                'description': doc['metadata'].get('description', doc['text'][:120] + ("..." if len(doc['text']) > 120 else "")),
+                'metadata': doc['metadata']
+            }
+            for doc in documents
+        ]
+        return jsonify({'resources': resources, 'count': len(resources)})
+    except Exception as e:
+        logger.error(f"Error getting resources: {str(e)}")
+        return jsonify({'resources': [], 'count': 0, 'error': str(e)}), 500
+
+@app.route('/registry', methods=['GET'])
+def registry_alias():
+    return api_registry()
+
+@app.route('/health', methods=['GET', 'HEAD'])
+def health_alias():
+    return api_health_check()
+
+def run_app():
+    port = int(os.environ.get("PORT", 10000))  # Use 10000 for Render as per render.yaml
+    debug = os.environ.get("FLASK_ENV", "production") == "development"
+    logger.info(f"🚀 Starting Flask app on port {port}")
+    app.run(host="0.0.0.0", port=port, debug=debug, threaded=True)
+
+if __name__ == "__main__":
+    run_app()
 
 
 
