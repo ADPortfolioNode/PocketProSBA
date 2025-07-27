@@ -1228,7 +1228,7 @@ def health_alias():
     return api_health_check()
 
 def run_app():
-    port = int(os.environ.get("PORT", 10000))  # Use 10000 for Render as per render.yaml
+    port = int(os.environ.get("PORT", 5000))  # Use 5000 for production
     debug = os.environ.get("FLASK_ENV", "production") == "development"
     logger.info(f"🚀 Starting Flask app on port {port}")
     app.run(host="0.0.0.0", port=port, debug=debug, threaded=True)
