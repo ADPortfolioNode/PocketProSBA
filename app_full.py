@@ -195,17 +195,22 @@ def log_request_info():
     except ImportError:
         REDIS_AVAILABLE = False
 
-    try:
-        from flask_socketio import SocketIO, emit
-        SOCKETIO_AVAILABLE = True
-    except ImportError:
-        SOCKETIO_AVAILABLE = False
+try:
+    from flask_socketio import SocketIO, emit
+    import gevent
+    SOCKETIO_AVAILABLE = True
+except ImportError:
+    SOCKETIO_AVAILABLE = False
 
-    # Initialize Flask-SocketIO with gevent async mode to avoid eventlet ssl issue
-    if SOCKETIO_AVAILABLE:
+# Initialize Flask-SocketIO with gevent async mode if available, else fallback
+if SOCKETIO_AVAILABLE:
+    try:
         socketio = SocketIO(app, cors_allowed_origins="*", async_mode='gevent')
-    else:
-        socketio = None
+    except Exception as e:
+        # Fallback to threading if gevent not available or invalid
+        socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
+else:
+    socketio = None
 
     # Redis-backed ConversationStore with fallback to in-memory
     class ConversationStore:
