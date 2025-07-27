@@ -68,7 +68,12 @@ check_required_env_vars()
 
 # --- CORS: Allow all origins and headers for all routes ---
 def setup_cors(app):
-    CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True, allow_headers="*")
+    CORS(app, resources={r"/*": {"origins": "https://pocketprosba-frontend.onrender.com"}}, supports_credentials=True, allow_headers="*")
+
+app = Flask(__name__)
+setup_cors(app)
+
+application = app  # Expose Flask app as 'application' for Gunicorn compatibility
 
 # Request logging
 @app.before_request
