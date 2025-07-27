@@ -48,6 +48,7 @@ except ImportError as e:
 load_dotenv()
 
 app = Flask(__name__)
+application = app  # Expose Flask app as 'application' for Gunicorn compatibility
 
 def create_app():
     app = Flask(__name__)
@@ -186,6 +187,7 @@ try:
     REDIS_AVAILABLE = True
 except ImportError:
     REDIS_AVAILABLE = False
+    redis = None
 
 try:
     from flask_socketio import SocketIO, emit
@@ -193,9 +195,10 @@ try:
     SOCKETIO_AVAILABLE = True
 except ImportError:
     SOCKETIO_AVAILABLE = False
+    SocketIO = None
 
 # Initialize Flask-SocketIO with gevent async mode if available, else fallback
-if SOCKETIO_AVAILABLE:
+if SOCKETIO_AVAILABLE and SocketIO is not None:
     try:
         socketio = SocketIO(app, cors_allowed_origins="*", async_mode='gevent')
     except Exception as e:
@@ -590,310 +593,12 @@ startup_result = initialize_app_on_startup()
 ## ...existing code...
 ## Removed the '/' JSON endpoint so the catch-all route serves React frontend
 
-@app.route('/health', methods=['GET', 'HEAD'])
-def health_check():
-    """Health check endpoint for monitoring"""
-    global rag_system_available
-    response = jsonify({
-        'status': 'healthy',
-        'service': 'PocketPro SBA',
-        'version': '1.0.0',
-        'rag_status': 'available' if rag_system_available else 'unavailable',
-        'document_count': vector_store.count()
-    })
-    # Add CORS headers explicitly for all methods
-    response.headers.add('Access-Control-Allow-Origin', '*')
-    response.headers.add('Access-Control-Allow-Methods', 'GET,HEAD,OPTIONS')
-    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
-    return response
+# Removed alias routes for /registry and /health to eliminate redundancy
 
-@app.route('/api/info', methods=['GET'])
-def get_system_info():
-    """Get system information"""
-    return jsonify({
-        'service': 'PocketPro SBA',
-        'version': '1.0.0',
-        'status': 'operational',
-        'rag_status': 'available' if rag_system_available else 'unavailable',
-        'vector_store': 'simple-memory',
-        'document_count': vector_store.count()
-    })
+# Log the configured port - CRITICAL for Render.com
 
-@app.route('/api/models', methods=['GET'])
-def get_available_models():
-    """Get available AI models"""
-    return jsonify({'models': ['simple-rag']})
+# For Render.com, we need to expose the app for Gunicorn to find
+application = app
 
-@app.route('/api/documents', methods=['GET'])
-def get_documents():
-    """Get all documents"""
-    try:
-        documents = vector_store.get_all_documents()
-        return jsonify({
-            'documents': documents,
-            'count': len(documents),
-            'rag_status': 'available'
-        })
-    except Exception as e:
-        logger.error(f"Error getting documents: {str(e)}")
-        return jsonify({
-            'documents': [],
-            'count': 0,
-            'rag_status': 'unavailable'
-        })
-
-@app.route('/api/documents/add', methods=['POST'])
-def add_document():
-    """Add a new document to the vector database"""
-    if not rag_system_available:
-        return jsonify({'error': 'RAG system not available'}), 503
-    
-    try:
-        data = request.get_json()
-        if not data:
-            return jsonify({'error': 'No JSON data provided'}), 400
-            
-        document_text = data.get('text', '')
-        document_id = data.get('id')
-        metadata = data.get('metadata', {})
-        
-        if not document_text:
-            return jsonify({'error': 'Document text is required'}), 400
-        
-        # Generate ID if not provided
-        if not document_id:
-            document_id = f'doc_{int(time.time() * 1000)}'
-        
-        # Add timestamp to metadata
-        metadata.update({
-            'added_at': int(time.time()),
-            'content_length': len(document_text),
-            'source': 'api_upload'
-        })
-        
-        # Add to vector store
-        vector_store.add_document(document_id, document_text, metadata)
-        
-        logger.info(f"✅ Document added: {document_id}")
-        return jsonify({
-            'success': True,
-            'document_id': document_id,
-            'message': 'Document added successfully',
-            'metadata': metadata
-        })
-        
-    except Exception as e:
-        logger.error(f"Error adding document: {str(e)}")
-        return jsonify({'error': f'Failed to add document: {str(e)}'}), 500
-
-@app.route('/api/search', methods=['POST'])
-def semantic_search():
-    """Perform semantic search on documents"""
-    if not rag_system_available:
-        return jsonify({'error': 'RAG system not available'}), 503
-    
-    try:
-        data = request.get_json()
-        if not data:
-            return jsonify({'error': 'No JSON data provided'}), 400
-            
-        query = data.get('query', '')
-        n_results = min(int(data.get('n_results', 5)), 20)
-        
-        if not query:
-            return jsonify({'error': 'Query is required'}), 400
-        
-        # Perform search
-        results = vector_store.search(query, n_results=n_results)
-        
-        # Format results
-        formatted_results = []
-        if results['documents'][0]:
-            for i, doc in enumerate(results['documents'][0]):
-                formatted_results.append({
-                    'id': results['ids'][0][i],
-                    'content': doc,
-                    'metadata': results['metadatas'][0][i],
-                    'distance': results['distances'][0][i],
-                    'relevance_score': 1 - results['distances'][0][i]
-                })
-        
-        return jsonify({
-            'query': query,
-            'results': formatted_results,
-            'count': len(formatted_results),
-            'search_time': time.time()
-        })
-        
-    except Exception as e:
-        logger.error(f"Search error: {str(e)}")
-        return jsonify({'error': f'Search failed: {str(e)}'}), 500
-
-@app.route('/api/chat', methods=['POST'])
-def rag_chat():
-    """RAG-powered chat endpoint"""
-    if not rag_system_available:
-        return jsonify({'error': 'RAG system not available'}), 503
-    
-    try:
-        data = request.get_json(force=True, silent=True)
-        logger.info(f"/api/chat request data: {data}")
-        if not data or not isinstance(data, dict):
-            logger.error("/api/chat: No JSON data or invalid format received.")
-            return jsonify({'error': 'No JSON data provided or invalid format'}), 400
-
-        user_query = data.get('message', '')
-        if not user_query:
-            logger.error("/api/chat: 'message' field missing in request data.")
-            return jsonify({'error': 'Message is required'}), 400
-
-        # Retrieve relevant documents
-        search_results = vector_store.search(user_query, n_results=3)
-
-        # Build context and sources
-        context_parts = []
-        sources = []
-
-        if 'documents' in search_results and search_results['documents'] and search_results['documents'][0]:
-            for i, doc in enumerate(search_results['documents'][0]):
-                context_parts.append(f"Source {i+1}: {doc}")
-                sources.append({
-                    'id': search_results['ids'][0][i] if 'ids' in search_results and search_results['ids'] and len(search_results['ids'][0]) > i else None,
-                    'content': doc[:200] + "..." if len(doc) > 200 else doc,
-                    'metadata': search_results['metadatas'][0][i] if 'metadatas' in search_results and search_results['metadatas'] and len(search_results['metadatas'][0]) > i else None,
-                    'relevance': 1 - search_results['distances'][0][i] if 'distances' in search_results and search_results['distances'] and len(search_results['distances'][0]) > i else None
-                })
-
-        # Generate response
-        context = "\n\n".join(context_parts)
-
-        if context:
-            response = f"Based on my knowledge base, here's what I found regarding '{user_query}':\n\n{context}"
-        else:
-            response = f"I don't have specific information about '{user_query}' in my current knowledge base. Please add relevant documents to help me provide better answers."
-
-        return jsonify({
-            'query': user_query,
-            'response': response,
-            'sources': sources,
-            'context_used': bool(context),
-            'response_time': time.time()
-        })
-
-    except Exception as e:
-        import traceback
-        logger.error(f"RAG chat error: {str(e)}\n{traceback.format_exc()}")
-        logger.error(f"Request data that caused error: {request.get_data(as_text=True)}")
-        return jsonify({'error': f'Chat failed: {str(e)}'}), 500
-
-@app.route('/api/rag', methods=['POST'])
-def rag_query():
-    """Perform RAG operations using ChromaDB or fallback"""
-    try:
-        data = request.get_json()
-        query = data.get('query', '')
-        n_results = data.get('n_results', 5)
-
-        if not query:
-            return jsonify({'error': 'Query is required'}), 400
-
-        # Check if ChromaDB is available
-        if not CHROMADB_AVAILABLE or chroma_client is None:
-            return jsonify({
-                'query': query,
-                'results': [],
-                'count': 0,
-                'message': 'ChromaDB not available, using fallback functionality'
-            })
-
-        # Perform search in ChromaDB
-        results = chroma_client.query(query_text=query, n_results=n_results)
-
-        # Format results
-        formatted_results = [
-            {
-                'id': result['id'],
-                'content': result['document'],
-                'metadata': result['metadata'],
-                'distance': result['distance']
-            }
-            for result in results
-        ]
-
-        return jsonify({
-            'query': query,
-            'results': formatted_results,
-            'count': len(formatted_results)
-        })
-    except Exception as e:
-        logger.error(f"RAG query error: {str(e)}")
-        return jsonify({'error': f'Failed to process query: {str(e)}'}), 500
-
-@app.route('/api/programs/<program_id>/rag', methods=['GET'])
-def rag_program(program_id):
-    """RAG response for a selected program"""
-    try:
-        # Find the program document by id
-        all_docs = vector_store.get_all_documents()
-        program_doc = next((doc for doc in all_docs if doc.get('metadata', {}).get('id') == program_id or doc.get('id') == program_id), None)
-        if not program_doc:
-            return jsonify({'error': f'Program {program_id} not found'}), 404
-        # Use the document text as the query/context
-        user_query = program_doc['text']
-        search_results = vector_store.search(user_query, n_results=3)
-        context = '\n\n'.join([f"Source {i+1}: {doc}" for i, doc in enumerate(search_results['documents'][0])]) if search_results['documents'][0] else ""
-        response = f"RAG summary for program '{program_id}':\n\n{context}" if context else f"No relevant information found for program '{program_id}'."
-        return jsonify({
-            'program_id': program_id,
-            'response': response,
-            'sources': search_results['documents'][0],
-            'context_used': bool(context)
-        })
-    except Exception as e:
-        logger.error(f"RAG program error: {str(e)}")
-        return jsonify({'error': f'RAG program failed: {str(e)}'}), 500
-
-@app.route('/api/resources/<resource_id>/rag', methods=['GET'])
-def rag_resource(resource_id):
-    """RAG response for a selected resource"""
-    try:
-        # Find the resource document by id
-        all_docs = vector_store.get_all_documents()
-        resource_doc = next((doc for doc in all_docs if doc.get('metadata', {}).get('id') == resource_id or doc.get('id') == resource_id), None)
-        if not resource_doc:
-            return jsonify({'error': f'Resource {resource_id} not found'}), 404
-        user_query = resource_doc['text']
-        search_results = vector_store.search(user_query, n_results=3)
-        context = '\n\n'.join([f"Source {i+1}: {doc}" for i, doc in enumerate(search_results['documents'][0])]) if search_results['documents'][0] else ""
-        response = f"RAG summary for resource '{resource_id}':\n\n{context}" if context else f"No relevant information found for resource '{resource_id}'."
-        return jsonify({
-            'resource_id': resource_id,
-            'response': response,
-            'sources': search_results['documents'][0],
-            'context_used': bool(context)
-        })
-    except Exception as e:
-        logger.error(f"RAG resource error: {str(e)}")
-        return jsonify({'error': f'RAG resource failed: {str(e)}'}), 500
-
-# Additional endpoints for compatibility
-@app.route('/api/collections/stats', methods=['GET'])
-def get_collection_stats():
-    """Get collection statistics"""
-    return jsonify({
-        'total_documents': vector_store.count(),
-        'collection_name': 'simple_vector_store',
-        'rag_status': 'available' if rag_system_available else 'unavailable'
-    })
-
-@app.route('/startup', methods=['GET'])
-def startup_check():
-    """Startup readiness check"""
-    return jsonify({
-        'ready': True,
-        'rag_available': rag_system_available,
-        'service': 'PocketPro SBA',
-        'document_count': vector_store.count()
-    })
-
-# Utility function to perform search
+# Create socketio for compatibility with run.py
+socketio = None
