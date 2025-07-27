@@ -52,4 +52,9 @@ export async function chatApi(data) {
   });
 }
 
-// ...repeat for other endpoints...
+// Health check endpoint
+export async function healthCheck() {
+  return fetchWithErrorHandling(apiUrl("/api/health"));
+}
+
+// Add other API endpoint functions here as needed
