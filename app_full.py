@@ -47,6 +47,8 @@ except ImportError as e:
 # Load environment variables from .env file
 load_dotenv()
 
+app = Flask(__name__)
+
 def create_app():
     app = Flask(__name__)
 
