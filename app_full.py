@@ -14,6 +14,7 @@ from dotenv import load_dotenv
 import os
 import logging
 import time
+start_time = time.time()
 import hashlib
 import re
 import chromadb  # (See note above: installed via requirements-full.txt in Docker/Render)
@@ -608,38 +609,14 @@ socketio = None
 
 import requests
 
-@app.route('/api/chat', methods=['POST'])
-def api_chat():
-    data = request.get_json()
-    user_message = data.get('message', '')
-    if not user_message:
-        return jsonify({'error': 'No message provided'}), 400
-
-    gemini_api_key = os.environ.get('GEMINI_API_KEY')
-    if not gemini_api_key:
-        return jsonify({'error': 'GEMINI_API_KEY not configured'}), 500
-
-    try:
-        # Example Gemini API call - replace with actual endpoint and payload as per Gemini API docs
-        headers = {
-            'Authorization': f'Bearer {gemini_api_key}',
-            'Content-Type': 'application/json'
-        }
-        payload = {
-            'prompt': user_message,
-            'max_tokens': 512,
-            'temperature': 0.7
-        }
-        gemini_api_url = 'https://api.generativeai.googleapis.com/v1beta2/models/text-bison-001:generateText'
-
-        response = requests.post(gemini_api_url, headers=headers, json=payload)
-        response.raise_for_status()
-        result = response.json()
-
-        # Extract generated text from Gemini response
-        generated_text = result.get('candidates', [{}])[0].get('content', '')
-
-        return jsonify({'response': generated_text}), 200
-
-    except requests.exceptions.RequestException as e:
-        return jsonify({'error': f'Gemini API request failed: {str(e)}'}), 500
+@app.route('/api/info', methods=['GET'])
+def api_info():
+    """Return basic server info for frontend system resources tab"""
+    info = {
+        'version': '1.0.0',
+        'model': 'PocketPro SBA',
+        'status': 'running',
+        'uptime': time.time() - start_time if 'start_time' in globals() else None,
+        'description': 'PocketPro SBA backend server info endpoint'
+    }
+    return jsonify(info)

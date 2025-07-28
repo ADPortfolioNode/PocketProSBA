@@ -15,7 +15,7 @@ const ServerStatusMonitor = ({ onStatusChange }) => {
     
     try {
       // Try health endpoint
-      let response = await fetch(`${API_URL}/api/health`, { 
+      let response = await fetch(`${API_URL}/api/health`, {
         method: 'GET',
         // Add a cache-busting query param
         headers: { 'Cache-Control': 'no-cache' }
