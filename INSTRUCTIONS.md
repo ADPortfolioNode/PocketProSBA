@@ -1361,7 +1361,7 @@ The system can be customized by modifying the following components:
 
 - Render.com sets the `PORT` environment variable (default is 10000).
 - The Dockerfile and docker-compose.yml are configured to use this variable.
-- The app will be available at `https://<your-app-name>.onrender.com` after deployment.
+- The app will be available at `https://pocketprosba-frontend.onrender.com` after deployment.
 - Make sure all required environment variables (e.g., `GEMINI_API_KEY`, `SECRET_KEY`) are set in the Render dashboard.
 
 ### Docker URL
@@ -1378,4 +1378,4 @@ The system can be customized by modifying the following components:
 
 - If running on a remote server, replace `localhost` with your server's IP or domain.
 
-- For Render.com or other cloud platforms, use the provided deployment URL (e.g., `https://<your-app-name>.onrender.com`).
+- For Render.com or other cloud platforms, use the provided deployment URL (e.g., `https://pocketprosba-frontend.onrender.com`).

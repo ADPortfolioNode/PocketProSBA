@@ -44,6 +44,12 @@ except ImportError as e:
     Settings = None
     Client = None
 
+frontend_url = os.getenv("FRONTEND_URL", "https://pocketprosba-frontend.onrender.com")
+CORS(app,
+     resources={r"/api/*": {"origins": [frontend_url, "http://localhost:3000"]}},
+     supports_credentials=True,
+     send_wildcard=False,
+     automatic_options=True)
 
 # Load environment variables from .env file
 load_dotenv()
