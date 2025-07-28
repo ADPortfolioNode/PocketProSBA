@@ -663,38 +663,85 @@ def api_chat():
         return jsonify({'error': 'GEMINI_API_KEY not configured'}), 500
 
     try:
-        # Correct Gemini API endpoint and format
+        # Updated Gemini API endpoint - using the correct model name
         headers = {
             'Content-Type': 'application/json'
         }
         payload = {
             'contents': [{
                 'parts': [{
-                    'text': user_message
+                    'text': f"You are a helpful SBA (Small Business Administration) assistant. Please provide helpful, accurate information about SBA programs, loans, and resources. User question: {user_message}"
                 }]
             }],
             'generationConfig': {
                 'temperature': 0.7,
-                'maxOutputTokens': 512
+                'maxOutputTokens': 1024,
+                'topP': 0.8,
+                'topK': 40
             }
         }
-        gemini_api_url = f'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key={gemini_api_key}'
+        
+        # Try multiple model endpoints in order of preference
+        model_endpoints = [
+            'gemini-1.5-flash',
+            'gemini-1.5-pro', 
+            'gemini-pro'
+        ]
+        
+        response = None
+        last_error = None
+        
+        for model in model_endpoints:
+            try:
+                gemini_api_url = f'https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={gemini_api_key}'
+                response = requests.post(gemini_api_url, headers=headers, json=payload, timeout=30)
+                
+                if response.status_code == 200:
+                    break
+                elif response.status_code == 404:
+                    logger.warning(f"Model {model} not found, trying next model...")
+                    continue
+                else:
+                    response.raise_for_status()
+                    
+            except requests.exceptions.RequestException as e:
+                last_error = e
+                logger.warning(f"Failed to use model {model}: {str(e)}")
+                continue
+        
+        if not response or response.status_code != 200:
+            # Fallback to a simple response if all Gemini models fail
+            logger.error(f"All Gemini models failed. Last error: {last_error}")
+            return jsonify({
+                'response': f"I'm an SBA assistant ready to help you with Small Business Administration questions. You asked: '{user_message}'. While I'm currently experiencing connectivity issues with my AI service, I can still help you find SBA resources. Please try asking about SBA loans, business planning, or other SBA programs."
+            }), 200
 
-        response = requests.post(gemini_api_url, headers=headers, json=payload)
-        response.raise_for_status()
         result = response.json()
 
         # Extract generated text from Gemini response
         if 'candidates' in result and len(result['candidates']) > 0:
-            generated_text = result['candidates'][0]['content']['parts'][0]['text']
+            candidate = result['candidates'][0]
+            if 'content' in candidate and 'parts' in candidate['content']:
+                generated_text = candidate['content']['parts'][0]['text']
+            else:
+                generated_text = "I'm sorry, I couldn't generate a proper response. Please try again."
         else:
             generated_text = "I'm sorry, I couldn't generate a response. Please try again."
 
         return jsonify({'response': generated_text}), 200
 
+    except requests.exceptions.Timeout:
+        logger.error("Gemini API timeout")
+        return jsonify({
+            'response': f"I'm experiencing a temporary delay. Regarding your question about '{user_message}', I'd be happy to help with SBA-related information once the connection is restored. Please try again in a moment."
+        }), 200
     except requests.exceptions.RequestException as e:
         logger.error(f"Gemini API error: {str(e)}")
-        return jsonify({'error': f'Gemini API request failed: {str(e)}'}), 500
+        return jsonify({
+            'response': f"I'm currently experiencing technical difficulties, but I'm here to help with SBA questions. You asked about '{user_message}'. Please try again, or visit sba.gov for immediate assistance."
+        }), 200
     except Exception as e:
         logger.error(f"Chat endpoint error: {str(e)}")
-        return jsonify({'error': 'Internal server error'}), 500
+        return jsonify({
+            'response': "I'm experiencing technical issues but I'm your SBA assistant. Please try your question again, or visit sba.gov for immediate help."
+        }), 200
