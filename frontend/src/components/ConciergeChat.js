@@ -25,8 +25,14 @@ const ConciergeChat = ({ onSend, messages = [], loading, userName }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (input.trim()) {
+    if (!input.trim()) return;
+    
+    if (typeof onSend === 'function') {
       onSend(input.trim());
+      setInput("");
+    } else {
+      console.error('onSend prop is not a function:', typeof onSend);
+      // Fallback behavior when onSend is not provided
       setInput("");
     }
   };
