@@ -651,18 +651,149 @@ socketio = None
 
 import requests
 
-@app.route('/api/chat', methods=['POST'])
-def api_chat():
-    data = request.get_json()
-    user_message = data.get('message', '')
-    if not user_message:
-        return jsonify({'error': 'No message provided'}), 400
+# Cache for available models to avoid repeated API calls
+_available_models_cache = None
+_models_cache_timestamp = None
+MODELS_CACHE_DURATION = 3600  # 1 hour in seconds
 
+def get_available_gemini_models():
+    """Get list of available Gemini models from the API"""
+    global _available_models_cache, _models_cache_timestamp
+    
+    # Check if we have a valid cached result
+    current_time = time.time()
+    if (_available_models_cache is not None and 
+        _models_cache_timestamp is not None and 
+        current_time - _models_cache_timestamp < MODELS_CACHE_DURATION):
+        return _available_models_cache
+    
     gemini_api_key = os.environ.get('GEMINI_API_KEY')
     if not gemini_api_key:
-        return jsonify({'error': 'GEMINI_API_KEY not configured'}), 500
-
+        logger.error("GEMINI_API_KEY not configured")
+        return []
+    
     try:
+        # Get list of available models from Gemini API
+        models_url = f'https://generativelanguage.googleapis.com/v1beta/models?key={gemini_api_key}'
+        response = requests.get(models_url, timeout=10)
+        response.raise_for_status()
+        
+        models_data = response.json()
+        available_models = []
+        
+        if 'models' in models_data:
+            for model in models_data['models']:
+                model_name = model.get('name', '')
+                # Extract model name from full path (e.g., "models/gemini-1.5-flash" -> "gemini-1.5-flash")
+                if model_name.startswith('models/'):
+                    model_name = model_name[7:]  # Remove "models/" prefix
+                
+                # Only include models that support generateContent
+                supported_methods = model.get('supportedGenerationMethods', [])
+                if 'generateContent' in supported_methods:
+                    available_models.append({
+                        'name': model_name,
+                        'displayName': model.get('displayName', model_name),
+                        'description': model.get('description', ''),
+                        'inputTokenLimit': model.get('inputTokenLimit', 0),
+                        'outputTokenLimit': model.get('outputTokenLimit', 0)
+                    })
+        
+        # Cache the results
+        _available_models_cache = available_models
+        _models_cache_timestamp = current_time
+        
+        logger.info(f"Found {len(available_models)} available Gemini models")
+        return available_models
+        
+    except Exception as e:
+        logger.error(f"Failed to get available models: {str(e)}")
+        # Return fallback models if API call fails
+        return [
+            {'name': 'gemini-1.5-flash', 'displayName': 'Gemini 1.5 Flash', 'description': 'Fast and efficient model'},
+            {'name': 'gemini-1.5-pro', 'displayName': 'Gemini 1.5 Pro', 'description': 'Advanced reasoning model'},
+            {'name': 'gemini-pro', 'displayName': 'Gemini Pro', 'description': 'Legacy model'}
+        ]
+
+def select_best_model(available_models):
+    """Select the best available model based on priority"""
+    if not available_models:
+        return 'gemini-1.5-flash'  # Fallback
+    
+    # Priority order for model selection
+    preferred_models = [
+        'gemini-1.5-flash',
+        'gemini-1.5-pro', 
+        'gemini-pro',
+        'gemini-1.0-pro'
+    ]
+    
+    # Find the first preferred model that's available
+    available_names = [model['name'] for model in available_models]
+    
+    for preferred in preferred_models:
+        if preferred in available_names:
+            logger.info(f"Selected model: {preferred}")
+            return preferred
+    
+    # If no preferred model is found, use the first available one
+    if available_models:
+        selected = available_models[0]['name']
+        logger.info(f"Using first available model: {selected}")
+        return selected
+    
+    # Ultimate fallback
+    return 'gemini-1.5-flash'
+
+@app.route('/api/models', methods=['GET'])
+def api_models():
+    """Get list of available models"""
+    try:
+        models = get_available_gemini_models()
+        return jsonify({
+            'models': models,
+            'count': len(models),
+            'cached': _available_models_cache is not None,
+            'cache_age': time.time() - _models_cache_timestamp if _models_cache_timestamp else 0
+        }), 200
+    except Exception as e:
+        logger.error(f"Error getting models: {str(e)}")
+        return jsonify({'error': str(e), 'models': [], 'count': 0}), 500
+
+@app.route('/api/chat', methods=['POST'])
+def api_chat():
+    logger.info("=== /api/chat endpoint called ===")
+    
+    try:
+        # Log request details
+        logger.info(f"Request method: {request.method}")
+        logger.info(f"Request headers: {dict(request.headers)}")
+        logger.info(f"Request content type: {request.content_type}")
+        logger.info(f"Request remote addr: {request.remote_addr}")
+        
+        # Get and validate request data
+        data = request.get_json()
+        logger.info(f"Request JSON data: {data}")
+        
+        if not data:
+            logger.error("No JSON data received in request")
+            return jsonify({'error': 'No JSON data provided'}), 400
+            
+        user_message = data.get('message', '')
+        logger.info(f"Extracted user message: '{user_message}'")
+        
+        if not user_message:
+            logger.error("No message field in request data")
+            return jsonify({'error': 'No message provided'}), 400
+
+        # Check API key
+        gemini_api_key = os.environ.get('GEMINI_API_KEY')
+        if not gemini_api_key:
+            logger.error("GEMINI_API_KEY environment variable not set")
+            return jsonify({'error': 'GEMINI_API_KEY not configured'}), 500
+        
+        logger.info(f"GEMINI_API_KEY found: {gemini_api_key[:10]}...{gemini_api_key[-4:]}")
+
         # Updated Gemini API endpoint - using the correct model name
         headers = {
             'Content-Type': 'application/json'
@@ -681,6 +812,8 @@ def api_chat():
             }
         }
         
+        logger.info(f"Request payload: {payload}")
+        
         # Try multiple model endpoints in order of preference
         model_endpoints = [
             'gemini-1.5-flash',
@@ -690,18 +823,27 @@ def api_chat():
         
         response = None
         last_error = None
+        used_model = None
         
         for model in model_endpoints:
             try:
                 gemini_api_url = f'https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={gemini_api_key}'
+                logger.info(f"Trying model {model} at URL: {gemini_api_url[:80]}...")
+                
                 response = requests.post(gemini_api_url, headers=headers, json=payload, timeout=30)
                 
+                logger.info(f"Model {model} response status: {response.status_code}")
+                logger.info(f"Model {model} response headers: {dict(response.headers)}")
+                
                 if response.status_code == 200:
+                    used_model = model
+                    logger.info(f"Successfully used model: {model}")
                     break
                 elif response.status_code == 404:
-                    logger.warning(f"Model {model} not found, trying next model...")
+                    logger.warning(f"Model {model} not found (404), trying next model...")
                     continue
                 else:
+                    logger.error(f"Model {model} returned status {response.status_code}: {response.text}")
                     response.raise_for_status()
                     
             except requests.exceptions.RequestException as e:
@@ -716,32 +858,59 @@ def api_chat():
                 'response': f"I'm an SBA assistant ready to help you with Small Business Administration questions. You asked: '{user_message}'. While I'm currently experiencing connectivity issues with my AI service, I can still help you find SBA resources. Please try asking about SBA loans, business planning, or other SBA programs."
             }), 200
 
+        # Log raw response for debugging
+        response_text = response.text
+        logger.info(f"Gemini API raw response (first 500 chars): {response_text[:500]}...")
+        
         result = response.json()
+        logger.info(f"Gemini API parsed response: {result}")
 
         # Extract generated text from Gemini response
         if 'candidates' in result and len(result['candidates']) > 0:
             candidate = result['candidates'][0]
+            logger.info(f"First candidate: {candidate}")
+            
             if 'content' in candidate and 'parts' in candidate['content']:
                 generated_text = candidate['content']['parts'][0]['text']
+                logger.info(f"Extracted generated text (first 100 chars): {generated_text[:100]}...")
             else:
+                logger.warning("Unexpected response structure - no content/parts found")
                 generated_text = "I'm sorry, I couldn't generate a proper response. Please try again."
         else:
+            logger.warning("No candidates found in Gemini response")
             generated_text = "I'm sorry, I couldn't generate a response. Please try again."
 
+        logger.info(f"=== /api/chat endpoint successful using model {used_model} ===")
         return jsonify({'response': generated_text}), 200
 
-    except requests.exceptions.Timeout:
-        logger.error("Gemini API timeout")
+    except requests.exceptions.Timeout as e:
+        logger.error(f"Gemini API timeout error: {str(e)}")
+        user_msg = locals().get('user_message', 'your question')
         return jsonify({
-            'response': f"I'm experiencing a temporary delay. Regarding your question about '{user_message}', I'd be happy to help with SBA-related information once the connection is restored. Please try again in a moment."
+            'response': f"I'm experiencing a temporary delay. Regarding your question about '{user_msg}', I'd be happy to help with SBA-related information once the connection is restored. Please try again in a moment."
+        }), 200
+    except requests.exceptions.HTTPError as e:
+        logger.error(f"Gemini API HTTP error: {str(e)}")
+        if hasattr(e, 'response'):
+            logger.error(f"Response status: {e.response.status_code}")
+            logger.error(f"Response text: {e.response.text}")
+        user_msg = locals().get('user_message', 'your question')
+        return jsonify({
+            'response': f"I'm currently experiencing technical difficulties, but I'm here to help with SBA questions. You asked about '{user_msg}'. Please try again, or visit sba.gov for immediate assistance."
         }), 200
     except requests.exceptions.RequestException as e:
-        logger.error(f"Gemini API error: {str(e)}")
+        logger.error(f"Gemini API request error: {str(e)}")
+        user_msg = locals().get('user_message', 'your question')
         return jsonify({
-            'response': f"I'm currently experiencing technical difficulties, but I'm here to help with SBA questions. You asked about '{user_message}'. Please try again, or visit sba.gov for immediate assistance."
+            'response': f"I'm currently experiencing technical difficulties, but I'm here to help with SBA questions. You asked about '{user_msg}'. Please try again, or visit sba.gov for immediate assistance."
+        }), 200
+    except json.JSONDecodeError as e:
+        logger.error(f"JSON decode error: {str(e)}")
+        return jsonify({
+            'response': "I'm experiencing technical issues but I'm your SBA assistant. Please try your question again, or visit sba.gov for immediate help."
         }), 200
     except Exception as e:
-        logger.error(f"Chat endpoint error: {str(e)}")
+        logger.error(f"Unexpected error in chat endpoint: {str(e)}", exc_info=True)
         return jsonify({
             'response': "I'm experiencing technical issues but I'm your SBA assistant. Please try your question again, or visit sba.gov for immediate help."
         }), 200

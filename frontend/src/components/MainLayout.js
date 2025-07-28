@@ -12,7 +12,18 @@ import SBAContent from './SBAContent';
 function MainLayout() {
   const [activeTab, setActiveTab] = useState('chat');
   const [serverConnected, setServerConnected] = React.useState(true); // Placeholder, update as needed
-  const apiUrl = () => {}; // Placeholder, update as needed
+  
+  // Create apiUrl function that returns the correct backend URL
+  const apiUrl = (path) => {
+    const backendUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
+    if (backendUrl.includes('localhost')) {
+      // For localhost, use relative paths (proxy will handle it)
+      return path;
+    } else {
+      // For remote backend, use absolute URLs
+      return `${backendUrl}${path}`;
+    }
+  };
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
@@ -21,7 +32,11 @@ function MainLayout() {
   const handleChatSend = async (message) => {
     try {
       const backendUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
-      const response = await fetch(`${backendUrl}/api/chat`, {
+      const apiUrl = backendUrl.includes('localhost') ? '/api/chat' : `${backendUrl}/api/chat`;
+      
+      console.log('Sending chat message to:', apiUrl);
+      
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
