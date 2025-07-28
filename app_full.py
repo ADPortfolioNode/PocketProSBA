@@ -2,7 +2,7 @@ from flask import send_from_directory
 # --- BUILD/DEPLOYMENT REQUIREMENTS FILES ---
 #
 # IMPORTANT: This backend is built and deployed using the following files:
-#   - Docker/Render.com: requirements-full.txt (NOT requirements.txt)
+#   - Docker/Render.com: requirements-full.txt (NOT ri will provideequirements.txt)
 #   - Local development: requirements.txt (may be missing packages)
 #
 # To match production, always install dependencies with:
@@ -602,10 +602,32 @@ def startup():
             'document_count': 0
         }
 
-from src.services.startup_service import initialize_app_on_startup
-
-# Initialize on startup
-startup_result = initialize_app_on_startup()
+# Initialize startup service with error handling
+startup_result = {}
+try:
+    from src.services.startup_service import initialize_app_on_startup
+    startup_result = initialize_app_on_startup()
+    logger.info(f"Startup service initialized: {startup_result}")
+except ImportError as e:
+    logger.warning(f"Startup service not available: {e}")
+    startup_result = {
+        'startup_completed': False,
+        'error': f'Startup service import failed: {str(e)}',
+        'rag_status': 'unavailable',
+        'available_models': [],
+        'vector_store_available': True,  # We have SimpleVectorStore as fallback
+        'document_count': 0
+    }
+except Exception as e:
+    logger.error(f"Startup service initialization failed: {e}")
+    startup_result = {
+        'startup_completed': False,
+        'error': f'Startup initialization failed: {str(e)}',
+        'rag_status': 'unavailable',
+        'available_models': [],
+        'vector_store_available': True,  # We have SimpleVectorStore as fallback
+        'document_count': 0
+    }
 
 ## ...existing code...
 ## Removed the '/' JSON endpoint so the catch-all route serves React frontend
