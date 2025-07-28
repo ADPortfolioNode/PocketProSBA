@@ -12,7 +12,7 @@ services:
       - key: GEMINI_API_KEY
         value: ""         # Fill in Render UI
       - key: CHROMA_HOST
-        value: "backend"  # Changed from "localhost" to "backend"
+        value: "localhost"
       - key: CHROMA_PORT
         value: "8000"
       - key: UPLOAD_FOLDER
@@ -30,13 +30,11 @@ services:
 
   - type: web
     name: pocketprosba-frontend
-    env: node
+    env: static
     branch: main
     plan: free
-    buildCommand: cd frontend && npm install --legacy-peer-deps --include=dev && npm run build
-    startCommand: npx serve -s frontend/build -l $PORT
+    buildCommand: cd frontend && npm install --legacy-peer-deps && npm run build
+    staticPublishPath: frontend/build
     envVars:
-      - key: PORT
-        value: "10000"
       - key: REACT_APP_BACKEND_URL
         value: https://pocketprosba-backend.onrender.com
