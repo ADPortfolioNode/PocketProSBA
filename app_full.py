@@ -2,7 +2,7 @@ from flask import send_from_directory
 # --- BUILD/DEPLOYMENT REQUIREMENTS FILES ---
 #
 # IMPORTANT: This backend is built and deployed using the following files:
-#   - Docker/Render.com: requirements-full.txt (NOT ri will provideequirements.txt)
+#   - Docker/Render.com: requirements-full.txt (NOT requirements.txt)
 #   - Local development: requirements.txt (may be missing packages)
 #
 # To match production, always install dependencies with:
@@ -474,6 +474,9 @@ def initialize_rag_system():
     global vector_store, rag_system_available
     
     try:
+        # Ensure upload directory exists
+        os.makedirs(UPLOADS_DIR, exist_ok=True)
+        
         # Index new files in uploads directory
         files = os.listdir(UPLOADS_DIR)
         for fname in files:
@@ -602,32 +605,36 @@ def startup():
             'document_count': 0
         }
 
-# Initialize startup service with error handling
-startup_result = {}
-try:
-    from src.services.startup_service import initialize_app_on_startup
-    startup_result = initialize_app_on_startup()
-    logger.info(f"Startup service initialized: {startup_result}")
-except ImportError as e:
-    logger.warning(f"Startup service not available: {e}")
-    startup_result = {
-        'startup_completed': False,
-        'error': f'Startup service import failed: {str(e)}',
-        'rag_status': 'unavailable',
-        'available_models': [],
-        'vector_store_available': True,  # We have SimpleVectorStore as fallback
-        'document_count': 0
-    }
-except Exception as e:
-    logger.error(f"Startup service initialization failed: {e}")
-    startup_result = {
-        'startup_completed': False,
-        'error': f'Startup initialization failed: {str(e)}',
-        'rag_status': 'unavailable',
-        'available_models': [],
-        'vector_store_available': True,  # We have SimpleVectorStore as fallback
-        'document_count': 0
-    }
+# Simple startup initialization without complex dependencies
+def simple_startup_initialization():
+    """Simple startup initialization that doesn't require complex dependencies"""
+    try:
+        # Ensure upload directory exists
+        os.makedirs(UPLOADS_DIR, exist_ok=True)
+        
+        # Initialize the RAG system
+        initialize_rag_system()
+        
+        return {
+            'startup_completed': True,
+            'rag_status': 'available' if rag_system_available else 'unavailable',
+            'vector_store_available': rag_system_available,
+            'document_count': vector_store.count(),
+            'embedding_model': 'simple-tfidf'
+        }
+    except Exception as e:
+        logger.error(f"Simple startup initialization failed: {str(e)}")
+        return {
+            'startup_completed': False,
+            'error': str(e),
+            'rag_status': 'unavailable',
+            'vector_store_available': False,
+            'document_count': 0
+        }
+
+# Initialize with simple startup (avoiding complex dependency chain)
+startup_result = simple_startup_initialization()
+logger.info(f"Startup completed: {startup_result}")
 
 ## ...existing code...
 ## Removed the '/' JSON endpoint so the catch-all route serves React frontend
