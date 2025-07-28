@@ -14,6 +14,7 @@ from dotenv import load_dotenv
 import os
 import logging
 import time
+start_time = time.time()
 import hashlib
 import re
 import chromadb  # (See note above: installed via requirements-full.txt in Docker/Render)
@@ -43,6 +44,12 @@ except ImportError as e:
     Settings = None
     Client = None
 
+frontend_url = os.getenv("FRONTEND_URL", "https://pocketprosba-frontend.onrender.com")
+CORS(app,
+     resources={r"/api/*": {"origins": [frontend_url, "http://localhost:3000"]}},
+     supports_credentials=True,
+     send_wildcard=False,
+     automatic_options=True)
 
 # Load environment variables from .env file
 load_dotenv()
@@ -68,7 +75,11 @@ check_required_env_vars()
 
 # --- CORS: Allow all origins and headers for all routes ---
 def setup_cors(app):
+<<<<<<< HEAD
     CORS(app, resources={r"/*": {"origins": ["https://pocketprosba-frontend.onrender.com", "http://localhost:3000"]}}, supports_credentials=True, allow_headers="*")
+=======
+    CORS(app, resources={r"/*": {"origins": "https://pocketprosba-frontend.onrender.com"}}, supports_credentials=True, allow_headers="*")
+>>>>>>> blackboxai/fix-cors-render-deployment
 
 app = Flask(__name__)
 setup_cors(app)
@@ -125,7 +136,7 @@ def api_registry():
         "resources_rag": f"{base_url}/api/resources/<resource_id>/rag" if base_url else "/api/resources/<resource_id>/rag",
         "collections_stats": f"{base_url}/api/collections/stats" if base_url else "/api/collections/stats",
         "api_health": f"{base_url}/api/health" if base_url else "/api/health",
-        "health": f"{base_url}/health" if base_url else "/health",
+        "health": f"{base_url}/api/health" if base_url else "/api/health",
         "status": f"{base_url}/api/status" if base_url else "/api/status",
         "startup": f"{base_url}/startup" if base_url else "/startup",
         "info": f"{base_url}/api/info" if base_url else "/api/info",
@@ -608,6 +619,19 @@ socketio = None
 
 import requests
 
+<<<<<<< HEAD
+@app.route('/api/info', methods=['GET'])
+def api_info():
+    """Return basic server info for frontend system resources tab"""
+    info = {
+        'version': '1.0.0',
+        'model': 'PocketPro SBA',
+        'status': 'running',
+        'uptime': time.time() - start_time if 'start_time' in globals() else None,
+        'description': 'PocketPro SBA backend server info endpoint'
+    }
+    return jsonify(info)
+=======
 @app.route('/api/chat', methods=['POST'])
 def api_chat():
     data = request.get_json()
@@ -643,3 +667,4 @@ def api_chat():
 
     except requests.exceptions.RequestException as e:
         return jsonify({'error': f'Gemini API request failed: {str(e)}'}), 500
+>>>>>>> blackboxai/fix-cors-render-deployment

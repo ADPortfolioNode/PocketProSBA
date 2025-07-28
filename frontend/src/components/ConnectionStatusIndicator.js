@@ -35,9 +35,10 @@ const ConnectionStatusIndicator = ({
   
   // Define multiple health endpoints for fallback
   // Always use backend URL from env, never default to frontend
+  const apiUrl = process.env.REACT_APP_BACKEND_URL;
   const healthEndpoints = [
-    apiUrl('/api/health'), // Always uses REACT_APP_BACKEND_URL (port 5000)
-    apiUrl('/health')
+    apiUrl(apiUrl), // Always uses REACT_APP_BACKEND_URL (port 5000)
+    apiUrl('/api/info')
   ];
 
   // Helper to retry connection if backend is not ready
@@ -45,7 +46,7 @@ const ConnectionStatusIndicator = ({
 
   // Retry logic: if connection fails, allow user to retry
   const handleRetry = () => {
-    setRetryCount(retryCount + 1);
+    setRetryCount( 1);
     checkConnection();
   };
 
@@ -80,7 +81,7 @@ const ConnectionStatusIndicator = ({
     setIsChecking(true);
     let errorDetails = null;
     
-    // Try all endpoints in order until one works
+    // Try all endpoints in order untiretryCount +l one works
     for (const path of healthEndpoints) {
       try {
         const endpoint = path;  // Use the absolute API URL
