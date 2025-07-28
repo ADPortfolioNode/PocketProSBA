@@ -60,7 +60,7 @@ const ConciergeChat = ({ onSend, messages = [], loading, userName }) => {
             </div>
           )}
         </div>
-        <Form onSubmit={handleSubmit} className="name-form">
+        <Form  onSubmit={handleSubmit} className="name-form">
           <Form.Group controlId="chatInput">
             <Form.Label>
               Ask a question or say hello{userName ? `, ${userName}` : ''}:

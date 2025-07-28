@@ -46,7 +46,7 @@ const ConnectionStatusIndicator = ({
 
   // Retry logic: if connection fails, allow user to retry
   const handleRetry = () => {
-    setRetryCount(retryCount + 1);
+    setRetryCount( 1);
     checkConnection();
   };
 
@@ -81,7 +81,7 @@ const ConnectionStatusIndicator = ({
     setIsChecking(true);
     let errorDetails = null;
     
-    // Try all endpoints in order until one works
+    // Try all endpoints in order untiretryCount +l one works
     for (const path of healthEndpoints) {
       try {
         const endpoint = path;  // Use the absolute API URL

@@ -21,10 +21,38 @@ function MainLayout() {
     setActiveTab(tab);
   };
 
+  const handleChatSend = async (message) => {
+    try {
+      const backendUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
+      const response = await fetch(`${backendUrl}/api/chat`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ message }),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log('Chat response:', data);
+      
+      // Handle the response - this would typically update the messages state
+      // For now, we'll just log it
+      return data;
+      
+    } catch (error) {
+      console.error('Error sending message:', error);
+      throw error;
+    }
+  };
+
   const renderContent = () => {
     switch (activeTab) {
       case 'chat':
-        return <ConciergeChat />;
+        return <ConciergeChat onSend={handleChatSend} />;
       case 'browse':
         return <SBAContentExplorer />;
       case 'rag':
@@ -34,7 +62,7 @@ function MainLayout() {
       case 'sba':
         return <SBAContent />;
       default:
-        return <ConciergeChat />;
+        return <ConciergeChat onSend={handleChatSend} />;
     }
   };
 
