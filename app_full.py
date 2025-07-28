@@ -634,26 +634,38 @@ def api_chat():
         return jsonify({'error': 'GEMINI_API_KEY not configured'}), 500
 
     try:
-        # Example Gemini API call - replace with actual endpoint and payload as per Gemini API docs
+        # Correct Gemini API endpoint and format
         headers = {
-            'Authorization': f'Bearer {gemini_api_key}',
             'Content-Type': 'application/json'
         }
         payload = {
-            'prompt': user_message,
-            'max_tokens': 512,
-            'temperature': 0.7
+            'contents': [{
+                'parts': [{
+                    'text': user_message
+                }]
+            }],
+            'generationConfig': {
+                'temperature': 0.7,
+                'maxOutputTokens': 512
+            }
         }
-        gemini_api_url = 'https://api.generativeai.googleapis.com/v1beta2/models/text-bison-001:generateText'
+        gemini_api_url = f'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key={gemini_api_key}'
 
         response = requests.post(gemini_api_url, headers=headers, json=payload)
         response.raise_for_status()
         result = response.json()
 
         # Extract generated text from Gemini response
-        generated_text = result.get('candidates', [{}])[0].get('content', '')
+        if 'candidates' in result and len(result['candidates']) > 0:
+            generated_text = result['candidates'][0]['content']['parts'][0]['text']
+        else:
+            generated_text = "I'm sorry, I couldn't generate a response. Please try again."
 
         return jsonify({'response': generated_text}), 200
 
     except requests.exceptions.RequestException as e:
+        logger.error(f"Gemini API error: {str(e)}")
         return jsonify({'error': f'Gemini API request failed: {str(e)}'}), 500
+    except Exception as e:
+        logger.error(f"Chat endpoint error: {str(e)}")
+        return jsonify({'error': 'Internal server error'}), 500
