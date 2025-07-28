@@ -105,6 +105,20 @@ def api_health_check():
     })
     return response
 
+# --- Health Endpoint for Render.com ---
+@app.route('/health', methods=['GET', 'HEAD'])
+def health_check():
+    """Health check endpoint for Render.com deployment monitoring"""
+    global rag_system_available
+    response = jsonify({
+        'status': 'healthy',
+        'service': 'PocketPro SBA',
+        'version': '1.0.0',
+        'rag_status': 'available' if rag_system_available else 'unavailable',
+        'document_count': vector_store.count()
+    })
+    return response
+
 # --- API Endpoint Registry for Frontend ---
 @app.route('/api/registry', methods=['GET'])
 def api_registry():
