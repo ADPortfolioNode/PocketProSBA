@@ -12,7 +12,10 @@ import SBAContent from './SBAContent';
 function MainLayout() {
   const [activeTab, setActiveTab] = useState('chat');
   const [serverConnected, setServerConnected] = React.useState(true); // Placeholder, update as needed
-  const apiUrl = () => {}; // Placeholder, update as needed
+  const apiUrl = (path) => {
+    const backendBaseUrl = process.env.REACT_APP_BACKEND_URL || '';
+    return backendBaseUrl + path;
+  };
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);

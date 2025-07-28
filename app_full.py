@@ -126,7 +126,7 @@ def api_registry():
         "resources_rag": f"{base_url}/api/resources/<resource_id>/rag" if base_url else "/api/resources/<resource_id>/rag",
         "collections_stats": f"{base_url}/api/collections/stats" if base_url else "/api/collections/stats",
         "api_health": f"{base_url}/api/health" if base_url else "/api/health",
-        "health": f"{base_url}/health" if base_url else "/health",
+        "health": f"{base_url}/api/health" if base_url else "/api/health",
         "status": f"{base_url}/api/status" if base_url else "/api/status",
         "startup": f"{base_url}/startup" if base_url else "/startup",
         "info": f"{base_url}/api/info" if base_url else "/api/info",
