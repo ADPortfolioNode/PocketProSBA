@@ -112,7 +112,7 @@ def wait_for_backend_ready():
 @app.route('/<path:path>')
 def serve_frontend(path):
     # Only serve frontend for non-API/non-health routes
-    if path.startswith('api/') or path == 'health':
+    if path.startswith('/api/') or path == 'health':
         return handle_404(None)
     # Serve React build files from ../frontend/build
     react_build_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'frontend', 'build'))
@@ -121,7 +121,7 @@ def serve_frontend(path):
     else:
         return send_from_directory(react_build_dir, 'index.html')
 
-@app.route('/health', methods=['GET', 'HEAD'])
+@app.route('/api/health', methods=['GET', 'HEAD'])
 def health_check():
     """Health check endpoint for monitoring"""
     global rag_system_available

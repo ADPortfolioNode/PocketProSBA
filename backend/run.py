@@ -52,7 +52,7 @@ def serve_react(path):
 def api_health_check():
     return jsonify({"status": "ok"}), 200
 
-@app.route('/health', methods=['GET', 'HEAD'])
+@app.route('/api/health', methods=['GET', 'HEAD'])
 def health_check():
     return jsonify({"status": "ok"}), 200
 

@@ -1,4 +1,3 @@
-from flask import send_from_directory
 import os
 import logging
 import time
@@ -9,437 +8,71 @@ import math
 from collections import Counter
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
-import math
-import sys
-from functools import wraps
-
+from flask_socketio import SocketIO
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-class Config:
-    SECRET_KEY = os.environ.get('SECRET_KEY', 'default_secret_key')
-    DATABASE_URI = os.environ.get('DATABASE_URI', 'sqlite:///default.db')
-    # Add other configurations as needed
 
-app.config.from_object(Config)
-# Handle ChromaDB import gracefully
-try:
-    from chromadb.config import Settings
-    from chromadb.client import Client
-    CHROMADB_AVAILABLE = True
-except ImportError as e:
-    logger.warning(f"ChromaDB not available: {e}")
-    CHROMADB_AVAILABLE = False
-    Settings = None
-    Client = None
 
 app = Flask(__name__)
+# Enable CORS for all routes and all origins (for production, you may want to restrict this to your frontend domain)
+CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True, allow_headers="*")
 
-# --- Production Hardening Additions ---
+# Configure Flask-SocketIO
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet')
 
-# Required environment variables
-REQUIRED_ENV_VARS = ["GEMINI_API_KEY", "SECRET_KEY"]
-def check_required_env_vars():
-    missing = [var for var in REQUIRED_ENV_VARS if not os.environ.get(var)]
-    if missing:
-        logger.error(f"Missing required environment variables: {missing}")
-        sys.exit(1)
-check_required_env_vars()
+# Import services after app is created
+from services.chroma import ChromaService
+from services.rag import RAGManager
+from assistants.concierge import Concierge
+from assistants.search import SearchAgent
+from assistants.file import FileAgent
+from assistants.function import FunctionAgent
 
-# Configurable CORS (allow all in dev, restrict in prod)
-if os.environ.get("FLASK_ENV", "production") == "production":
-    CORS(app, resources={r"/api/*": {"origins": "https://pocketprosba-frontend.onrender.com"}})
-else:
-    CORS(app)
+# Initialize services
+chroma_service = None
+rag_manager = None
+rag_system_available = False
 
-# Request logging
-@app.before_request
-def log_request_info():
-    logger.info(f"Request: {request.method} {request.path} | IP: {request.remote_addr}")
+# Global assistants
+concierge = None
+search_agent = None
+file_agent = None
+function_agent = None
 
-# Global error handler for 500
-@app.errorhandler(500)
-def handle_500(e):
-    logger.error(f"Internal server error: {str(e)}", exc_info=True)
-    return jsonify({"error": "Internal server error"}), 500
-
-# Global error handler for 404
-@app.errorhandler(404)
-def handle_404(e):
-    return jsonify({"error": "Not found"}), 404
-
-# /api/status endpoint
-@app.route('/api/status', methods=['GET'])
-def api_status():
-    return jsonify({
-        'service': 'PocketPro SBA',
-        'status': 'ok',
-        'version': '1.0.0',
-        'rag_status': 'available' if rag_system_available else 'unavailable',
-        'document_count': vector_store.count()
-    })
-
-# Initialize ChromaDB client
-if CHROMADB_AVAILABLE:
-    try:
-        chroma_client = Client(Settings(
-            chroma_db_impl="duckdb+parquet",
-            persist_directory="./chroma_storage"
-        ))
-        logger.info("ChromaDB client initialized successfully")
-    except Exception as e:
-        logger.error(f"Failed to initialize ChromaDB client: {e}")
-        chroma_client = None
-        CHROMADB_AVAILABLE = False
-else:
-    chroma_client = None
-    logger.warning("ChromaDB not available, using fallback vector store")
-
-# --- Advanced Assistant/Session/Task Architecture Additions ---
-import threading
-try:
-    import redis
-    REDIS_AVAILABLE = True
-except ImportError:
-    REDIS_AVAILABLE = False
-
-try:
-    from flask_socketio import SocketIO, emit
-    SOCKETIO_AVAILABLE = True
-except ImportError:
-    SOCKETIO_AVAILABLE = False
-
-# Initialize Flask-SocketIO
-if SOCKETIO_AVAILABLE:
-    socketio = SocketIO(app, cors_allowed_origins="*")
-else:
-    socketio = None
-
-# Redis-backed ConversationStore with fallback to in-memory
-class ConversationStore:
-    def __init__(self, redis_url=None):
-        self.use_redis = False
-        self.redis_url = redis_url or os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
-        if REDIS_AVAILABLE:
-            try:
-                self.r = redis.Redis.from_url(self.redis_url)
-                self.r.ping()
-                self.use_redis = True
-            except Exception as e:
-                logger.warning(f"Redis unavailable: {e}. Using in-memory store.")
-                self.r = None
-        else:
-            self.r = None
-        self.memory_store = {}  # {session_id: [messages]}
-        self.lock = threading.Lock()
-
-    def get(self, session_id):
-        if self.use_redis:
-            data = self.r.get(f"conv:{session_id}")
-            if data:
-                return json.loads(data)
-            return []
-        else:
-            with self.lock:
-                return self.memory_store.get(session_id, []).copy()
-
-    def append(self, session_id, message):
-        if self.use_redis:
-            history = self.get(session_id)
-            history.append(message)
-            self.r.set(f"conv:{session_id}", json.dumps(history))
-        else:
-            with self.lock:
-                self.memory_store.setdefault(session_id, []).append(message)
-
-    def clear(self, session_id):
-        if self.use_redis:
-            self.r.delete(f"conv:{session_id}")
-        else:
-            with self.lock:
-                self.memory_store.pop(session_id, None)
-
-conversation_store = ConversationStore()
-
-# --- TaskAssistant and StepAssistant stubs ---
-class TaskAssistant:
-    def __init__(self, store):
-        self.store = store
-        # TODO: Implement task decomposition, execution, validation
-
-    def decompose(self, user_message):
-        # TODO: Use LLM to decompose user_message into steps
-        return []
-
-    def execute(self, task_id):
-        # TODO: Execute steps for a given task_id
-        return []
-
-    def validate(self, task_id):
-        # TODO: Validate results for a given task_id
-        return True
-
-# StepAssistant stubs (to be implemented)
-class SearchAgent:
-    pass
-class FileAgent:
-    pass
-class FunctionAgent:
-    pass
-
-# Intent classification stub
-class Concierge:
-    def __init__(self, store):
-        self.store = store
-
-    def classify_intent(self, message):
-        # TODO: Use LLM to classify intent
-        return "unknown"
-
-    def handle_message(self, session_id, message):
-        # TODO: Route message to correct workflow
-        return {"response": "Not implemented yet."}
-
-concierge = Concierge(conversation_store)
-task_assistant = TaskAssistant(conversation_store)
-
-# --- End Advanced Additions ---
-
-# Simple in-memory vector store
-class SimpleVectorStore:
-    """Simple in-memory vector store for RAG functionality"""
-    
-    def __init__(self):
-        self.documents = {}
-        self.embeddings = {}
-        self.embedding_function = SimpleEmbeddingFunction()
-    
-    def add_document(self, doc_id, text, metadata=None):
-        """Add a document to the store"""
-        self.documents[doc_id] = {
-            'text': text,
-            'metadata': metadata or {}
-        }
-        # Generate embedding
-        embedding = self.embedding_function([text])[0]
-        self.embeddings[doc_id] = embedding
-        return doc_id
-    
-    def search(self, query, n_results=5):
-        """Search for similar documents"""
-        if not self.documents:
-            return {'documents': [], 'metadatas': [], 'distances': [], 'ids': []}
-        
-        # Generate query embedding
-        query_embedding = self.embedding_function([query])[0]
-        
-        # Calculate similarities
-        similarities = []
-        for doc_id, doc_embedding in self.embeddings.items():
-            similarity = self._cosine_similarity(query_embedding, doc_embedding)
-            similarities.append((doc_id, similarity))
-        
-        # Sort by similarity (higher is better)
-        similarities.sort(key=lambda x: x[1], reverse=True)
-        
-        # Get top results
-        top_results = similarities[:n_results]
-        
-        # Format results
-        documents = []
-        metadatas = []
-        distances = []
-        ids = []
-        
-        for doc_id, similarity in top_results:
-            doc = self.documents[doc_id]
-            documents.append(doc['text'])
-            metadatas.append(doc['metadata'])
-            distances.append(1.0 - similarity)  # Convert similarity to distance
-            ids.append(doc_id)
-        
-        return {
-            'documents': [documents],
-            'metadatas': [metadatas], 
-            'distances': [distances],
-            'ids': [ids]
-        }
-    
-    def delete_document(self, doc_id):
-        """Delete a document"""
-        if doc_id in self.documents:
-            del self.documents[doc_id]
-            del self.embeddings[doc_id]
-            return True
-        return False
-    
-    def count(self):
-        """Get document count"""
-        return len(self.documents)
-    
-    def get_all_documents(self):
-        """Get all documents"""
-        return [
-            {
-                'id': doc_id,
-                'text': doc['text'],
-                'metadata': doc['metadata']
-            }
-            for doc_id, doc in self.documents.items()
-        ]
-    
-    def _cosine_similarity(self, vec1, vec2):
-        """Calculate cosine similarity between two vectors"""
-        dot_product = sum(a * b for a, b in zip(vec1, vec2))
-        magnitude1 = math.sqrt(sum(a * a for a in vec1))
-        magnitude2 = math.sqrt(sum(a * a for a in vec2))
-        
-        if magnitude1 == 0 or magnitude2 == 0:
-            return 0
-        
-        return dot_product / (magnitude1 * magnitude2)
-
-class SimpleEmbeddingFunction:
-    """Simple embedding function that works without external dependencies"""
-    
-    def __call__(self, texts):
-        """Convert texts to simple embeddings using TF-IDF style approach"""
-        embeddings = []
-        
-        # Create a vocabulary from all texts
-        all_words = set()
-        text_words = []
-        
-        for text in texts:
-            words = re.findall(r'\b\w+\b', str(text).lower())
-            text_words.append(words)
-            all_words.update(words)
-        
-        # Limit vocabulary size
-        vocab = sorted(list(all_words))[:384]
-        
-        for words in text_words:
-            word_counts = Counter(words)
-            total_words = len(words)
-            
-            embedding = []
-            for word in vocab:
-                tf = word_counts.get(word, 0) / max(total_words, 1)
-                embedding.append(float(tf))
-            
-            # Pad to 384 dimensions
-            while len(embedding) < 384:
-                embedding.append(0.0)
-            
-            embeddings.append(embedding[:384])
-        
-        return embeddings
-
-# Global vector store
-vector_store = SimpleVectorStore()
-rag_system_available = True
-
-UPLOADS_DIR = os.environ.get('UPLOAD_FOLDER', './uploads')
-
-@app.route('/api/uploads', methods=['GET'])
-def list_uploaded_files():
-    """List files in the uploads directory"""
-    try:
-        files = os.listdir(UPLOADS_DIR)
-        file_info = []
-        for fname in files:
-            fpath = os.path.join(UPLOADS_DIR, fname)
-            if os.path.isfile(fpath):
-                stat = os.stat(fpath)
-                file_info.append({
-                    'filename': fname,
-                    'size': stat.st_size,
-                    'modified': stat.st_mtime
-                })
-        return jsonify({'files': file_info, 'count': len(file_info)})
-    except Exception as e:
-        logger.error(f"Error listing uploads: {e}")
-        return jsonify({'error': str(e), 'files': [], 'count': 0}), 500
-
-def initialize_rag_system():
-    """Initialize the RAG system and index new uploads"""
-    global vector_store, rag_system_available
-    
-    try:
-        # Index new files in uploads directory
-        files = os.listdir(UPLOADS_DIR)
-        for fname in files:
-            fpath = os.path.join(UPLOADS_DIR, fname)
-            if os.path.isfile(fpath):
-                with open(fpath, 'r', encoding='utf-8', errors='ignore') as f:
-                    text = f.read()
-                doc_id = f"upload_{fname}"
-                # Avoid duplicate indexing
-                if not any(doc.get('id') == doc_id for doc in vector_store.get_all_documents()):
-                    vector_store.add_document(doc_id, text, {'source': 'upload', 'filename': fname})
-        
-        # Test the vector store
-        test_id = vector_store.add_document(
-            "test_init",
-            "This is a test document for RAG system initialization.",
-            {"type": "test", "timestamp": int(time.time())}
-        )
-        
-        # Test search
-        results = vector_store.search("test document", n_results=1)
-        
-        # Clean up test document
-        vector_store.delete_document(test_id)
-        
-        logger.info("✅ RAG system initialized successfully")
-        rag_system_available = True
-        
-        # Add some sample SBA documents
-        sample_docs = [
-            {
-                'id': 'sba_loans_guide',
-                'text': 'The Small Business Administration (SBA) provides various loan programs to help small businesses start and grow. SBA loans offer favorable terms and lower down payments than conventional business loans.',
-                'metadata': {'source': 'sba_guide', 'type': 'loans', 'category': 'financing'}
-            },
-            {
-                'id': 'business_plan_guide', 
-                'text': 'A business plan is a written document that describes your business concept, how you will make money, and how you will manage the business. It is essential for securing funding from lenders and investors.',
-                'metadata': {'source': 'business_guide', 'type': 'planning', 'category': 'startup'}
-            },
-            {
-                'id': 'sba_504_loans',
-                'text': 'SBA 504 loans are specifically designed for purchasing real estate or equipment. These loans provide long-term, fixed-rate financing for major fixed assets that promote business growth.',
-                'metadata': {'source': 'loan_programs', 'type': 'real_estate', 'category': 'financing'}
-            }
-        ]
-        
-        for doc in sample_docs:
-            vector_store.add_document(doc['id'], doc['text'], doc['metadata'])
-        
-        logger.info(f"✅ Added {len(sample_docs)} sample documents")
-        return True
-        
-    except Exception as e:
-        logger.error(f"❌ RAG system initialization failed: {e}")
-        rag_system_available = False
-        return False
-
-def startup():
+def initialize_services():
     """Initialize all services on startup"""
+    global chroma_service, rag_manager, rag_system_available
+    global concierge, search_agent, file_agent, function_agent
+    
     logger.info("🚀 Initializing PocketPro SBA RAG application...")
     
     try:
-        # Initialize RAG system
-        rag_available = initialize_rag_system()
+        # Initialize ChromaDB service
+        chroma_host = os.environ.get("CHROMA_HOST", "localhost")
+        chroma_port = int(os.environ.get("CHROMA_PORT", 8000))
+        
+        logger.info(f"Connecting to ChromaDB at {chroma_host}:{chroma_port}")
+        chroma_service = ChromaService(host=chroma_host, port=chroma_port)
+        
+        # Initialize RAG manager
+        rag_manager = RAGManager(chroma_service=chroma_service)
+        
+        # Initialize assistants
+        concierge = Concierge()
+        search_agent = SearchAgent()
+        file_agent = FileAgent()
+        function_agent = FunctionAgent()
+        
+        # Test the RAG system
+        rag_system_available = rag_manager.test_connection()
         
         startup_results = {
             'startup_completed': True,
-            'rag_status': 'available' if rag_available else 'unavailable',
-            'available_models': ['simple-rag'] if rag_available else [],
-            'vector_store_available': rag_system_available,
-            'document_count': vector_store.count(),
-            'embedding_model': 'simple-tfidf'
+            'rag_status': 'available' if rag_system_available else 'unavailable',
+            'chroma_available': chroma_service.is_available(),
+            'document_count': rag_manager.get_document_count() if rag_system_available else 0,
         }
         
         logger.info(f"🎯 Startup Results: {startup_results}")
@@ -447,117 +80,176 @@ def startup():
         
     except Exception as e:
         logger.error(f"Startup failed: {str(e)}")
+        rag_system_available = False
         return {
             'startup_completed': False,
             'error': str(e),
             'rag_status': 'unavailable',
-            'available_models': [],
-            'vector_store_available': False,
+            'chroma_available': False,
             'document_count': 0
         }
 
-from src.services.startup_service import initialize_app_on_startup
-
 # Initialize on startup
-startup_result = initialize_app_on_startup()
+startup_result = initialize_services()
+
+# --- Ensure backend is ready before serving frontend ---
+@app.before_first_request
+def wait_for_backend_ready():
+    # Wait until backend services are initialized before serving frontend
+    import time
+    max_wait = 30  # seconds
+    waited = 0
+    while not rag_system_available and waited < max_wait:
+        logger.info("Waiting for backend services to be ready...")
+        time.sleep(1)
+        waited += 1
+    if not rag_system_available:
+        logger.warning("Backend services not fully initialized after wait period.")
 
 ## ...existing code...
-## Removed the '/' JSON endpoint so the catch-all route serves React frontend
+## Ensure NO other route for '/' returns JSON. Only this catch-all route should exist for '/'.
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def serve_frontend(path):
+    # Only serve frontend for non-API/non-health routes
+    if path.startswith('/api/') or path == 'health':
+        return handle_404(None)
+    # Serve React build files from ../frontend/build
+    react_build_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'frontend', 'build'))
+    if path != "" and os.path.exists(os.path.join(react_build_dir, path)):
+        return send_from_directory(react_build_dir, path)
+    else:
+        return send_from_directory(react_build_dir, 'index.html')
 
-@app.route('/api/health', methods=['GET'])
+@app.route('/api/health', methods=['GET', 'HEAD'])
 def health_check():
     """Health check endpoint for monitoring"""
-    return jsonify({
+    global rag_system_available
+    
+    chroma_available = chroma_service.is_available() if chroma_service else False
+    doc_count = rag_manager.get_document_count() if rag_manager and rag_system_available else 0
+    
+    response = jsonify({
         'status': 'healthy',
         'service': 'PocketPro SBA',
         'version': '1.0.0',
         'rag_status': 'available' if rag_system_available else 'unavailable',
-        'document_count': vector_store.count()
+        'chroma_available': chroma_available,
+        'document_count': doc_count
     })
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,HEAD,OPTIONS')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+    return response
 
 @app.route('/api/info', methods=['GET'])
 def get_system_info():
     """Get system information"""
+    global rag_system_available
+    
     return jsonify({
         'service': 'PocketPro SBA',
         'version': '1.0.0',
         'status': 'operational',
         'rag_status': 'available' if rag_system_available else 'unavailable',
-        'vector_store': 'simple-memory',
-        'document_count': vector_store.count()
+        'vector_store': 'chromadb',
+        'document_count': rag_manager.get_document_count() if rag_manager and rag_system_available else 0
     })
 
-@app.route('/api/models', methods=['GET'])
-def get_available_models():
-    """Get available AI models"""
-    return jsonify({'models': ['simple-rag']})
-
-@app.route('/api/documents', methods=['GET'])
-def get_documents():
-    """Get all documents"""
-    try:
-        documents = vector_store.get_all_documents()
-        return jsonify({
-            'documents': documents,
-            'count': len(documents),
-            'rag_status': 'available'
-        })
-    except Exception as e:
-        logger.error(f"Error getting documents: {str(e)}")
-        return jsonify({
-            'documents': [],
-            'count': 0,
-            'rag_status': 'unavailable'
-        })
-
-@app.route('/api/documents/add', methods=['POST'])
-def add_document():
-    """Add a new document to the vector database"""
-    if not rag_system_available:
-        return jsonify({'error': 'RAG system not available'}), 503
+@app.route('/api/decompose', methods=['POST'])
+def decompose_task():
+    """Decompose user task into steps"""
+    if not concierge:
+        return jsonify({'error': 'Concierge agent not initialized'}), 503
     
     try:
         data = request.get_json()
         if not data:
             return jsonify({'error': 'No JSON data provided'}), 400
             
-        document_text = data.get('text', '')
-        document_id = data.get('id')
-        metadata = data.get('metadata', {})
+        message = data.get('message', '')
         
-        if not document_text:
-            return jsonify({'error': 'Document text is required'}), 400
+        if not message:
+            return jsonify({'error': 'Message is required'}), 400
         
-        # Generate ID if not provided
-        if not document_id:
-            document_id = f'doc_{int(time.time() * 1000)}'
+        # Use Concierge to handle the message
+        result = concierge.handle_message(message)
         
-        # Add timestamp to metadata
-        metadata.update({
-            'added_at': int(time.time()),
-            'content_length': len(document_text),
-            'source': 'api_upload'
-        })
-        
-        # Add to vector store
-        vector_store.add_document(document_id, document_text, metadata)
-        
-        logger.info(f"✅ Document added: {document_id}")
-        return jsonify({
-            'success': True,
-            'document_id': document_id,
-            'message': 'Document added successfully',
-            'metadata': metadata
-        })
+        return jsonify(result)
         
     except Exception as e:
-        logger.error(f"Error adding document: {str(e)}")
-        return jsonify({'error': f'Failed to add document: {str(e)}'}), 500
+        logger.error(f"Task decomposition error: {str(e)}")
+        return jsonify({'error': f'Failed to decompose task: {str(e)}'}), 500
 
-@app.route('/api/search', methods=['POST'])
-def semantic_search():
-    """Perform semantic search on documents"""
-    if not rag_system_available:
+@app.route('/api/execute', methods=['POST'])
+def execute_task():
+    """Execute a task step with the appropriate agent"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No JSON data provided'}), 400
+            
+        task = data.get('task', {})
+        if not task:
+            return jsonify({'error': 'Task data is required'}), 400
+        
+        step_number = task.get('step_number')
+        instruction = task.get('instruction')
+        agent_type = task.get('suggested_agent_type')
+        
+        if not all([step_number, instruction, agent_type]):
+            return jsonify({'error': 'Incomplete task data'}), 400
+        
+        # Select the appropriate agent
+        if agent_type == 'SearchAgent' and search_agent:
+            result = search_agent.handle_message(instruction)
+        elif agent_type == 'FileAgent' and file_agent:
+            result = file_agent.handle_message(instruction)
+        elif agent_type == 'FunctionAgent' and function_agent:
+            result = function_agent.handle_message(instruction)
+        else:
+            # Fall back to Concierge
+            result = concierge.handle_message(instruction)
+        
+        # Add step information to result
+        result['step_number'] = step_number
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        logger.error(f"Task execution error: {str(e)}")
+        return jsonify({'error': f'Failed to execute task: {str(e)}'}), 500
+
+@app.route('/api/validate', methods=['POST'])
+def validate_step():
+    """Validate a step result"""
+    if not concierge:
+        return jsonify({'error': 'Concierge agent not initialized'}), 503
+    
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No JSON data provided'}), 400
+            
+        result = data.get('result')
+        task = data.get('task', {})
+        
+        if not result or not task:
+            return jsonify({'error': 'Result and task data are required'}), 400
+        
+        # Use Concierge to validate the step
+        validation = concierge.validate_step(result, task)
+        
+        return jsonify(validation)
+        
+    except Exception as e:
+        logger.error(f"Validation error: {str(e)}")
+        return jsonify({'error': f'Failed to validate step: {str(e)}'}), 500
+
+@app.route('/api/query', methods=['POST'])
+def search():
+    """Search for documents"""
+    if not rag_system_available or not rag_manager:
         return jsonify({'error': 'RAG system not available'}), 503
     
     try:
@@ -566,30 +258,19 @@ def semantic_search():
             return jsonify({'error': 'No JSON data provided'}), 400
             
         query = data.get('query', '')
-        n_results = min(int(data.get('n_results', 5)), 20)
+        top_k = min(int(data.get('top_k', 5)), 20)
         
         if not query:
             return jsonify({'error': 'Query is required'}), 400
         
         # Perform search
-        results = vector_store.search(query, n_results=n_results)
-        
-        # Format results
-        formatted_results = []
-        if results['documents'][0]:
-            for i, doc in enumerate(results['documents'][0]):
-                formatted_results.append({
-                    'id': results['ids'][0][i],
-                    'content': doc,
-                    'metadata': results['metadatas'][0][i],
-                    'distance': results['distances'][0][i],
-                    'relevance_score': 1 - results['distances'][0][i]
-                })
+        results = rag_manager.query_documents(query, top_k=top_k)
         
         return jsonify({
+            'success': True,
             'query': query,
-            'results': formatted_results,
-            'count': len(formatted_results),
+            'results': results,
+            'count': len(results) if isinstance(results, list) else 0,
             'search_time': time.time()
         })
         
@@ -597,252 +278,238 @@ def semantic_search():
         logger.error(f"Search error: {str(e)}")
         return jsonify({'error': f'Search failed: {str(e)}'}), 500
 
-@app.route('/api/chat', methods=['POST'])
-def rag_chat():
-    """RAG-powered chat endpoint"""
-    if not rag_system_available:
-        return jsonify({'error': 'RAG system not available'}), 503
+@app.route('/api/files', methods=['GET'])
+def list_files():
+    """List uploaded files"""
+    if not file_agent:
+        return jsonify({'error': 'File agent not initialized'}), 503
+    
+    try:
+        # Use FileAgent to list files
+        result = file_agent.list_files()
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        logger.error(f"List files error: {str(e)}")
+        return jsonify({'error': f'Failed to list files: {str(e)}'}), 500
+
+@app.route('/api/files', methods=['POST'])
+def upload_file():
+    """Upload a file"""
+    if not file_agent:
+        return jsonify({'error': 'File agent not initialized'}), 503
+    
+    try:
+        if 'file' not in request.files:
+            return jsonify({'error': 'No file part in the request'}), 400
+            
+        file = request.files['file']
+        
+        if file.filename == '':
+            return jsonify({'error': 'No file selected'}), 400
+        
+        # Use FileAgent to upload file
+        result = file_agent.upload_file(file)
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        logger.error(f"File upload error: {str(e)}")
+        return jsonify({'error': f'Failed to upload file: {str(e)}'}), 500
+
+@app.route('/api/documents/upload_and_ingest_document', methods=['POST'])
+def upload_and_ingest():
+    """Upload and ingest a document"""
+    if not file_agent or not rag_manager or not rag_system_available:
+        return jsonify({'error': 'Required services not available'}), 503
+    
+    try:
+        if 'file' not in request.files:
+            return jsonify({'error': 'No file part in the request'}), 400
+            
+        file = request.files['file']
+        
+        if file.filename == '':
+            return jsonify({'error': 'No file selected'}), 400
+        
+        # Upload file
+        upload_result = file_agent.upload_file(file)
+        
+        if 'error' in upload_result:
+            return jsonify(upload_result), 400
+        
+        # Ingest document
+        ingest_result = rag_manager.ingest_document(upload_result['filepath'])
+        
+        return jsonify({
+            'message': 'Document uploaded and ingested successfully',
+            'filename': file.filename,
+            'document_id': ingest_result.get('document_id'),
+            'chunks': ingest_result.get('chunks', 0)
+        })
+        
+    except Exception as e:
+        logger.error(f"Document upload and ingest error: {str(e)}")
+        return jsonify({'error': f'Failed to upload and ingest document: {str(e)}'}), 500
+
+@app.route('/api/chroma/store_document_embedding', methods=['POST'])
+def store_document_embedding():
+    """Store document embedding in ChromaDB"""
+    if not chroma_service or not rag_system_available:
+        return jsonify({'error': 'ChromaDB service not available'}), 503
     
     try:
         data = request.get_json()
-        user_query = data.get('message', '')
+        if not data:
+            return jsonify({'error': 'No JSON data provided'}), 400
+            
+        content = data.get('content', '')
+        metadata = data.get('metadata', {})
         
-        if not user_query:
-            return jsonify({'error': 'Message is required'}), 400
+        if not content:
+            return jsonify({'error': 'Content is required'}), 400
         
-        # Retrieve relevant documents
-        search_results = vector_store.search(user_query, n_results=3)
-        
-        # Build context and sources
-        context_parts = []
-        sources = []
-        
-        if search_results['documents'][0]:
-            for i, doc in enumerate(search_results['documents'][0]):
-                context_parts.append(f"Source {i+1}: {doc}")
-                sources.append({
-                    'id': search_results['ids'][0][i],
-                    'content': doc[:200] + "..." if len(doc) > 200 else doc,
-                    'metadata': search_results['metadatas'][0][i],
-                    'relevance': 1 - search_results['distances'][0][i]
-                })
-        
-        # Generate response
-        context = "\n\n".join(context_parts)
-        
-        if context:
-            response = f"Based on my knowledge base, here's what I found regarding '{user_query}':\n\n{context}"
-        else:
-            response = f"I don't have specific information about '{user_query}' in my current knowledge base. Please add relevant documents to help me provide better answers."
+        # Store document embedding
+        result = rag_manager.store_document(content, metadata)
         
         return jsonify({
-            'query': user_query,
-            'response': response,
-            'sources': sources,
-            'context_used': bool(context),
-            'response_time': time.time()
+            'success': True,
+            'id': result.get('id'),
+            'message': 'Document embedding stored successfully'
         })
         
     except Exception as e:
-        logger.error(f"RAG chat error: {str(e)}")
-        return jsonify({'error': f'Chat failed: {str(e)}'}), 500
+        logger.error(f"Store document embedding error: {str(e)}")
+        return jsonify({'error': f'Failed to store document embedding: {str(e)}'}), 500
 
-@app.route('/api/rag', methods=['POST'])
-def rag_query():
-    """Perform RAG operations using ChromaDB or fallback"""
+@app.route('/api/chroma/store_step_embedding', methods=['POST'])
+def store_step_embedding():
+    """Store step embedding in ChromaDB"""
+    if not chroma_service or not rag_system_available:
+        return jsonify({'error': 'ChromaDB service not available'}), 503
+    
     try:
         data = request.get_json()
-        query = data.get('query', '')
-        n_results = data.get('n_results', 5)
-
-        if not query:
-            return jsonify({'error': 'Query is required'}), 400
-
-        # Check if ChromaDB is available
-        if not CHROMADB_AVAILABLE or chroma_client is None:
-            return jsonify({
-                'query': query,
-                'results': [],
-                'count': 0,
-                'message': 'ChromaDB not available, using fallback functionality'
-            })
-
-        # Perform search in ChromaDB
-        results = chroma_client.query(query_text=query, n_results=n_results)
-
-        # Format results
-        formatted_results = [
-            {
-                'id': result['id'],
-                'content': result['document'],
-                'metadata': result['metadata'],
-                'distance': result['distance']
-            }
-            for result in results
-        ]
-
-        return jsonify({
-            'query': query,
-            'results': formatted_results,
-            'count': len(formatted_results)
-        })
-    except Exception as e:
-        logger.error(f"RAG query error: {str(e)}")
-        return jsonify({'error': f'Failed to process query: {str(e)}'}), 500
-
-@app.route('/api/programs/<program_id>/rag', methods=['GET'])
-def rag_program(program_id):
-    """RAG response for a selected program"""
-    try:
-        # Find the program document by id
-        all_docs = vector_store.get_all_documents()
-        program_doc = next((doc for doc in all_docs if doc.get('metadata', {}).get('id') == program_id or doc.get('id') == program_id), None)
-        if not program_doc:
-            return jsonify({'error': f'Program {program_id} not found'}), 404
-        # Use the document text as the query/context
-        user_query = program_doc['text']
-        search_results = vector_store.search(user_query, n_results=3)
-        context = '\n\n'.join([f"Source {i+1}: {doc}" for i, doc in enumerate(search_results['documents'][0])]) if search_results['documents'][0] else ""
-        response = f"RAG summary for program '{program_id}':\n\n{context}" if context else f"No relevant information found for program '{program_id}'."
-        return jsonify({
-            'program_id': program_id,
-            'response': response,
-            'sources': search_results['documents'][0],
-            'context_used': bool(context)
-        })
-    except Exception as e:
-        logger.error(f"RAG program error: {str(e)}")
-        return jsonify({'error': f'RAG program failed: {str(e)}'}), 500
-
-@app.route('/api/resources/<resource_id>/rag', methods=['GET'])
-def rag_resource(resource_id):
-    """RAG response for a selected resource"""
-    try:
-        # Find the resource document by id
-        all_docs = vector_store.get_all_documents()
-        resource_doc = next((doc for doc in all_docs if doc.get('metadata', {}).get('id') == resource_id or doc.get('id') == resource_id), None)
-        if not resource_doc:
-            return jsonify({'error': f'Resource {resource_id} not found'}), 404
-        user_query = resource_doc['text']
-        search_results = vector_store.search(user_query, n_results=3)
-        context = '\n\n'.join([f"Source {i+1}: {doc}" for i, doc in enumerate(search_results['documents'][0])]) if search_results['documents'][0] else ""
-        response = f"RAG summary for resource '{resource_id}':\n\n{context}" if context else f"No relevant information found for resource '{resource_id}'."
-        return jsonify({
-            'resource_id': resource_id,
-            'response': response,
-            'sources': search_results['documents'][0],
-            'context_used': bool(context)
-        })
-    except Exception as e:
-        logger.error(f"RAG resource error: {str(e)}")
-        return jsonify({'error': f'RAG resource failed: {str(e)}'}), 500
-
-# Additional endpoints for compatibility
-@app.route('/api/collections/stats', methods=['GET'])
-def get_collection_stats():
-    """Get collection statistics"""
-    return jsonify({
-        'total_documents': vector_store.count(),
-        'collection_name': 'simple_vector_store',
-        'rag_status': 'available' if rag_system_available else 'unavailable'
-    })
-
-@app.route('/startup', methods=['GET'])
-def startup_check():
-    """Startup readiness check"""
-    return jsonify({
-        'ready': True,
-        'rag_available': rag_system_available,
-        'service': 'PocketPro SBA',
-        'document_count': vector_store.count()
-    })
-
-# Utility function to perform search
-def perform_search(query, n_results=3):
-    try:
-        results = vector_store.search(query, n_results=n_results)
+        if not data:
+            return jsonify({'error': 'No JSON data provided'}), 400
+            
+        step_id = data.get('step_id', '')
+        embedding = data.get('embedding', [])
+        metadata = data.get('metadata', {})
         
-        # Format results
-        formatted_results = []
-        if results['documents'][0]:
-            for i, doc in enumerate(results['documents'][0]):
-                formatted_results.append({
-                    'id': results['ids'][0][i],
-                    'content': doc,
-                    'metadata': results['metadatas'][0][i],
-                    'distance': results['distances'][0][i],
-                    'relevance_score': 1 - results['distances'][0][i]
-                })
+        if not step_id or not embedding:
+            return jsonify({'error': 'Step ID and embedding are required'}), 400
         
-        return formatted_results
+        # Store step embedding
+        result = rag_manager.store_step_embedding(step_id, embedding, metadata)
+        
+        return jsonify({
+            'message': 'Step embedding stored successfully',
+            'status': 'success',
+            'id': result.get('id')
+        })
         
     except Exception as e:
-        logger.error(f"Search error: {str(e)}")
-        return []
+        logger.error(f"Store step embedding error: {str(e)}")
+        return jsonify({'error': f'Failed to store step embedding: {str(e)}'}), 500
 
-# Register all routes in one place
-try:
-    from routes import register_all_routes
-    register_all_routes(app)
-    logger.info("✅ All API routes registered successfully")
-except Exception as e:
-    logger.warning(f"⚠️ Failed to register API routes: {str(e)}")
+@app.route('/api/tasks/<task_id>/results', methods=['GET'])
+def get_task_results(task_id):
+    """Get task results"""
+    if not concierge:
+        return jsonify({'error': 'Concierge agent not initialized'}), 503
+    
+    try:
+        # Get task results
+        results = concierge.get_task_results(task_id)
+        
+        if not results:
+            return jsonify({'error': f'Task {task_id} not found'}), 404
+        
+        return jsonify(results)
+        
+    except Exception as e:
+        logger.error(f"Get task results error: {str(e)}")
+        return jsonify({'error': f'Failed to get task results: {str(e)}'}), 500
 
-# Attach global assistants to app for routes access
-app.concierge = Concierge(conversation_store)
-app.search_agent = SearchAgent()
-app.file_agent = FileAgent()
-app.function_agent = FunctionAgent()
+# Socket.IO event handlers
+@socketio.on('connect')
+def handle_connect():
+    """Handle client connection"""
+    logger.info(f"Client connected: {request.sid}")
+    socketio.emit('assistant_status', {
+        'status': 'connected',
+        'message': 'Connected to PocketPro SBA server'
+    }, room=request.sid)
 
-# Log the configured port - CRITICAL for Render.com
+@socketio.on('disconnect')
+def handle_disconnect():
+    """Handle client disconnection"""
+    logger.info(f"Client disconnected: {request.sid}")
 
-# For Render.com, we need to expose the app for Gunicorn to find
-application = app
+@socketio.on('chat_message')
+def handle_chat_message(data):
+    """Handle chat message from client"""
+    if not concierge:
+        socketio.emit('chat_response', {
+            'error': 'Concierge agent not initialized'
+        }, room=request.sid)
+        return
+    
+    try:
+        message = data.get('message', ''){"environment":"production","host":"0.0.0.0","message":"\ud83d\ude80 PocketPro:SBA is running!","port":5000,"python_version":"3.11.13","render":"Yes","service":"PocketPro Small Business Assistant","status":"success","version":"1.0.0"}
+        
+        if not message:
+            socketio.emit('chat_response', {
+                'error': 'Message is required'
+            }, room=request.sid)
+            return
+        
+        # Update status
+        socketio.emit('assistant_status', {
+            'status': 'processing',
+            'message': 'Processing your request...'
+        }, room=request.sid)
+        
+        # Use Concierge to handle the message
+        result = concierge.handle_message(message)
+        
+        # Send response
+        socketio.emit('chat_response', result, room=request.sid)
+        
+        # Update status
+        socketio.emit('assistant_status', {
+            'status': 'ready',
+            'message': 'Ready for next request'
+        }, room=request.sid)
+        
+    except Exception as e:
+        logger.error(f"Chat message error: {str(e)}")
+        socketio.emit('chat_response', {
+            'error': f'Failed to process message: {str(e)}'
+        }, room=request.sid)
+        
+        # Update status
+        socketio.emit('assistant_status', {
+            'status': 'error',
+            'message': f'Error: {str(e)}'
+        }, room=request.sid)
 
-# Create socketio for compatibility with run.py
-socketio = None
+@socketio.on('health_check')
+def handle_health_check():
+    """Handle health check from client"""
+    socketio.emit('health_response', {
+        'status': 'healthy',
+        'timestamp': time.time()
+    }, room=request.sid)
 
-def run_app():
-    port = int(os.environ.get("PORT", 10000))
+if __name__ == '__main__':
+    # This block will not be executed when imported
+    port = int(os.environ.get("PORT", 5000))
     debug = os.environ.get("FLASK_ENV", "production") == "development"
-    logger.info(f"🚀 Starting Flask app on port {port}")
-    app.run(host="0.0.0.0", port=port, debug=debug, threaded=True)
-
-if __name__ == "__main__":
-    run_app()
-
-try:
-    from chromadb.config import Settings
-except ImportError as e:
-    raise ImportError("Missing 'chromadb' dependency. Ensure it is installed in your environment.") from e
-
-
-# --- Serve React Frontend Build for All Non-API Routes ---
-# This catch-all route should be registered LAST, after all API and health routes
-@app.route('/', defaults={'path': ''})
-@app.route('/<path:path>')
-def serve_frontend(path):
-    # Only serve frontend for non-API/non-health routes
-    if path.startswith('api/') or path == 'health':
-        # Let Flask route matching handle /api/* and /health
-        return handle_404(None)
-    static_dir = os.path.join(app.root_path, 'static')
-    react_build_dir = os.path.join(app.root_path, 'frontend', 'build')
-    # Ensure static directory exists, and copy from React build if missing
-    if not os.path.exists(static_dir):
-        os.makedirs(static_dir, exist_ok=True)
-        # Copy React build files if available
-        if os.path.exists(react_build_dir):
-            import shutil
-            for item in os.listdir(react_build_dir):
-                s = os.path.join(react_build_dir, item)
-                d = os.path.join(static_dir, item)
-                if os.path.isdir(s):
-                    shutil.copytree(s, d, dirs_exist_ok=True)
-                else:
-                    shutil.copy2(s, d)
-    # Serve static file or index.html
-    if path != "" and os.path.exists(os.path.join(static_dir, path)):
-        return send_from_directory(static_dir, path)
-    else:
-        return send_from_directory(static_dir, 'index.html')
+    
+    logger.info(f"🚀 Starting PocketPro SBA RAG application on port {port}")
+    
+    # Start the application with SocketIO
+    socketio.run(app, host='0.0.0.0', port=port, debug=debug)
