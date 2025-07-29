@@ -18,7 +18,7 @@ CORS(app)
 rag_system_available = False
 collection = None
 
-@app.route('/health', methods=['GET'])
+@app.route('/api/health', methods=['GET'])
 def health_check():
     """Health check endpoint"""
     return jsonify({
@@ -108,7 +108,7 @@ if __name__ == '__main__':
     
     logger.info(f"🚀 Starting PocketPro SBA Simple on 0.0.0.0:{port}")
     logger.info("📋 Available endpoints:")
-    logger.info("   GET  /health - Health check")
+    logger.info("   GET  /api/health - Health check")
     logger.info("   GET  /api/info - System info")
     logger.info("   GET  /api/test-rag - Test RAG functionality")
     logger.info("   POST /api/demo-chat - Demo chat")

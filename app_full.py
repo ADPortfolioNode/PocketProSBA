@@ -460,7 +460,7 @@ startup_result = initialize_app_on_startup()
 ## ...existing code...
 ## Removed the '/' JSON endpoint so the catch-all route serves React frontend
 
-@app.route('/health', methods=['GET'])
+@app.route('/api/health', methods=['GET'])
 def health_check():
     """Health check endpoint for monitoring"""
     return jsonify({
