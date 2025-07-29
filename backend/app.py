@@ -13,12 +13,23 @@ from flask_socketio import SocketIO
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+const API_URL = process.env.REACT_APP_API_URL || 'https://pocketprosba-backend.onrender.com/api';
 
 
-app = Flask(__name__)
-# Enable CORS for all routes and all origins (for production, you may want to restrict this to your frontend domain)
-CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True, allow_headers="*")
+def create_app():
+    app = Flask(__name__)
+    app.config.from_object(Config)
 
+    CORS(app, resources={r"/api/*": {"origins": "https://pocketprosba-frontend.onrender.com"}})
+
+    db.init_app(app)
+
+    # Register blueprints
+    from .routes.chat import chat_bp
+    app.register_blueprint(chat_bp, url_prefix='/api/chat')
+
+    return app
+ 
 # Configure Flask-SocketIO
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet')
 
