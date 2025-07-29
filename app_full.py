@@ -200,6 +200,7 @@ class Concierge:
 
 concierge = Concierge(conversation_store)
 task_assistant = TaskAssistant(conversation_store)
+
 # --- End Advanced Additions ---
 
 # Simple in-memory vector store
