@@ -1,7 +1,5 @@
 from flask import send_from_directory
 import os
-## ...existing code...
-import os
 import logging
 import time
 import hashlib
@@ -19,7 +17,12 @@ from functools import wraps
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+class Config:
+    SECRET_KEY = os.environ.get('SECRET_KEY', 'default_secret_key')
+    DATABASE_URI = os.environ.get('DATABASE_URI', 'sqlite:///default.db')
+    # Add other configurations as needed
 
+app.config.from_object(Config)
 # Handle ChromaDB import gracefully
 try:
     from chromadb.config import Settings
@@ -46,7 +49,7 @@ check_required_env_vars()
 
 # Configurable CORS (allow all in dev, restrict in prod)
 if os.environ.get("FLASK_ENV", "production") == "production":
-    CORS(app, origins=[os.environ.get("CORS_ORIGIN", "*")])
+    CORS(app, resources={r"/api/*": {"origins": "https://pocketprosba-frontend.onrender.com"}})
 else:
     CORS(app)
 

@@ -1,4 +1,8 @@
 // src/apiClient.js
+// Example in a React app
+const API_URL = process.env.REACT_APP_API_URL || 'https://pocketprosba-backend.onrender.com/api';
+
+
 let endpoints = null;
 
 const BACKEND_URL = process.env.REACT_APP_API_BASE || process.env.REACT_APP_BACKEND_URL || "http://localhost:5000";
@@ -45,11 +49,9 @@ export async function apiFetch(endpointKey, options = {}) {
 // Example for chat endpoint
 export async function chatApi(data) {
   // Correct: matches backend @app.route('/api/chat')
-  return fetchWithErrorHandling(apiUrl("/api/chat"), {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
-  });
+  return fetch(`${API_URL}/chat`)
+    .then(response => response.json())
+    .then(data => console.log(data));
 }
 
 // Health check endpoint

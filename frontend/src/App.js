@@ -5,6 +5,7 @@ import './App.css';
 import Login from './Login';
 import Register from './Register';
 import ForgotPassword from './ForgotPassword';
+import ConciergeChat from './ConciergeChat';
 import ConciergeGreeting from './components/ConciergeGreeting';
 import MainLayout from './components/MainLayout';
 
