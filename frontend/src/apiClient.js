@@ -22,7 +22,7 @@ async function fetchWithErrorHandling(url, options = {}) {
 // Endpoint registry
 export async function loadEndpoints() {
   // Correct: matches backend @app.route('/api/registry')
-  return fetchWithErrorHandling(apiUrl("/api/registry"));
+  return fetchWithErrorHandling(apiUrl("/registry"));
 }
 
 // Dynamic endpoint loader
