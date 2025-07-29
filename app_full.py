@@ -1,28 +1,16 @@
 from flask import send_from_directory
-# --- BUILD/DEPLOYMENT REQUIREMENTS FILES ---
-#
-# IMPORTANT: This backend is built and deployed using the following files:
-#   - Docker/Render.com: requirements-full.txt (NOT requirements.txt)
-#   - Local development: requirements.txt (may be missing packages)
-#
-# To match production, always install dependencies with:
-#     pip install -r requirements-full.txt
-#
-# See project documentation for details.
-
-from dotenv import load_dotenv
+import os
+## ...existing code...
 import os
 import logging
 import time
 import hashlib
 import re
-import chromadb  # (See note above: installed via requirements-full.txt in Docker/Render)
 import json
 import math
 from collections import Counter
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
-
 import math
 import sys
 from functools import wraps
@@ -43,22 +31,12 @@ except ImportError as e:
     Settings = None
     Client = None
 
-
-# Load environment variables from .env file
-load_dotenv()
-
 app = Flask(__name__)
-application = app  # Expose Flask app as 'application' for Gunicorn compatibility
 
-def create_app():
-    app = Flask(__name__)
+# --- Production Hardening Additions ---
 
-    # --- Production Hardening Additions ---
-    # Load required environment variables from .env
-    REQUIRED_ENV_VARS = ["GEMINI_API_KEY", "SECRET_KEY"]
-
+# Required environment variables
 REQUIRED_ENV_VARS = ["GEMINI_API_KEY", "SECRET_KEY"]
-
 def check_required_env_vars():
     missing = [var for var in REQUIRED_ENV_VARS if not os.environ.get(var)]
     if missing:
@@ -66,19 +44,16 @@ def check_required_env_vars():
         sys.exit(1)
 check_required_env_vars()
 
-# --- CORS: Allow all origins and headers for all routes ---
-def setup_cors(app):
-    CORS(app, resources={r"/*": {"origins": ["https://pocketprosba-frontend.onrender.com", "http://localhost:3000"]}}, supports_credentials=True, allow_headers="*")
-
-app = Flask(__name__)
-setup_cors(app)
-
-application = app  # Expose Flask app as 'application' for Gunicorn compatibility
+# Configurable CORS (allow all in dev, restrict in prod)
+if os.environ.get("FLASK_ENV", "production") == "production":
+    CORS(app, origins=[os.environ.get("CORS_ORIGIN", "*")])
+else:
+    CORS(app)
 
 # Request logging
 @app.before_request
 def log_request_info():
-    logger.info(f"Request: {request.method} {request.path} | IP: {request.remote_addr} | Headers: {dict(request.headers)} | Body: {request.get_data(as_text=True)}")
+    logger.info(f"Request: {request.method} {request.path} | IP: {request.remote_addr}")
 
 # Global error handler for 500
 @app.errorhandler(500)
@@ -91,94 +66,16 @@ def handle_500(e):
 def handle_404(e):
     return jsonify({"error": "Not found"}), 404
 
-# --- API Health Endpoint for Frontend ---
-@app.route('/api/health', methods=['GET', 'HEAD'])
-def api_health_check():
-    """Health check endpoint for monitoring (frontend expects /api/health)"""
-    global rag_system_available
-    response = jsonify({
-        'status': 'healthy',
+# /api/status endpoint
+@app.route('/api/status', methods=['GET'])
+def api_status():
+    return jsonify({
         'service': 'PocketPro SBA',
+        'status': 'ok',
         'version': '1.0.0',
         'rag_status': 'available' if rag_system_available else 'unavailable',
         'document_count': vector_store.count()
     })
-    return response
-
-# --- Health Endpoint for Render.com ---
-@app.route('/health', methods=['GET', 'HEAD'])
-def health_check():
-    """Health check endpoint for Render.com deployment monitoring"""
-    global rag_system_available
-    response = jsonify({
-        'status': 'healthy',
-        'service': 'PocketPro SBA',
-        'version': '1.0.0',
-        'rag_status': 'available' if rag_system_available else 'unavailable',
-        'document_count': vector_store.count()
-    })
-    return response
-
-# --- API Endpoint Registry for Frontend ---
-@app.route('/api/registry', methods=['GET'])
-def api_registry():
-    """Return a registry of available API endpoints for the frontend to discover capabilities."""
-    # Base URL for API endpoints, configurable via environment variable
-    base_url = os.environ.get('API_BASE_URL', '').rstrip('/')
-    # Registry keys must match frontend usage exactly
-    registry = {
-        "documents": f"{base_url}/api/documents" if base_url else "/api/documents",
-        "documents_add": f"{base_url}/api/documents/add" if base_url else "/api/documents/add",
-        "uploads": f"{base_url}/api/uploads" if base_url else "/api/uploads",
-        "upload": f"{base_url}/api/uploads" if base_url else "/api/uploads",  # alias for upload (frontend expects 'upload')
-        "resources": f"{base_url}/api/resources" if base_url else "/api/resources",  # now points to new /api/resources endpoint
-        "search": f"{base_url}/api/search" if base_url else "/api/search",
-        "chat": f"{base_url}/api/chat" if base_url else "/api/chat",
-        "rag": f"{base_url}/api/rag" if base_url else "/api/rag",
-        "programs_rag": f"{base_url}/api/programs/<program_id>/rag" if base_url else "/api/programs/<program_id>/rag",
-        "resources_rag": f"{base_url}/api/resources/<resource_id>/rag" if base_url else "/api/resources/<resource_id>/rag",
-        "collections_stats": f"{base_url}/api/collections/stats" if base_url else "/api/collections/stats",
-        "api_health": f"{base_url}/api/health" if base_url else "/api/health",
-        "health": f"{base_url}/health" if base_url else "/health",
-        "status": f"{base_url}/api/status" if base_url else "/api/status",
-        "startup": f"{base_url}/startup" if base_url else "/startup",
-        "info": f"{base_url}/api/info" if base_url else "/api/info",
-        "models": f"{base_url}/api/models" if base_url else "/api/models",
-        "chromadb_health": f"{base_url}/api/chromadb/health" if base_url else "/api/chromadb/health",
-        "chat": f"{base_url}/api/chat" if base_url else "/api/chat"
-    }
-    return jsonify(registry), 200
-
-# --- ChromaDB health endpoint ---
-@app.route('/api/chromadb/health', methods=['GET'])
-def chromadb_health():
-    """Health/status endpoint for ChromaDB vector DB"""
-    status = {
-        "chroma_enabled": CHROMADB_AVAILABLE,
-        "client_initialized": CHROMADB_AVAILABLE and chroma_client is not None,
-        "persist_directory": getattr(chroma_client, 'persist_directory', None) if CHROMADB_AVAILABLE and chroma_client is not None else None
-    }
-    return jsonify(status)
-# --- New: /api/resources endpoint for frontend resource loading ---
-@app.route('/api/resources', methods=['GET'])
-def get_resources():
-    """Return a list of resources for the frontend sidebar (mirrors /api/documents for now)"""
-    try:
-        documents = vector_store.get_all_documents()
-        # Optionally, filter/transform documents to match frontend resource expectations
-        resources = [
-            {
-                'id': doc['id'],
-                'title': doc['metadata'].get('title', doc['id']),
-                'description': doc['metadata'].get('description', doc['text'][:120] + ("..." if len(doc['text']) > 120 else "")),
-                'metadata': doc['metadata']
-            }
-            for doc in documents
-        ]
-        return jsonify({'resources': resources, 'count': len(resources)})
-    except Exception as e:
-        logger.error(f"Error getting resources: {str(e)}")
-        return jsonify({'resources': [], 'count': 0, 'error': str(e)}), 500
 
 # Initialize ChromaDB client
 if CHROMADB_AVAILABLE:
@@ -198,29 +95,21 @@ else:
 
 # --- Advanced Assistant/Session/Task Architecture Additions ---
 import threading
-
 try:
     import redis
     REDIS_AVAILABLE = True
 except ImportError:
     REDIS_AVAILABLE = False
-    redis = None
 
 try:
     from flask_socketio import SocketIO, emit
-    import gevent
     SOCKETIO_AVAILABLE = True
 except ImportError:
     SOCKETIO_AVAILABLE = False
-    SocketIO = None
 
-# Initialize Flask-SocketIO with gevent async mode if available, else fallback
-if SOCKETIO_AVAILABLE and SocketIO is not None:
-    try:
-        socketio = SocketIO(app, cors_allowed_origins="*", async_mode='gevent')
-    except Exception as e:
-        # Fallback to threading if gevent not available or invalid
-        socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
+# Initialize Flask-SocketIO
+if SOCKETIO_AVAILABLE:
+    socketio = SocketIO(app, cors_allowed_origins="*")
 else:
     socketio = None
 
@@ -474,9 +363,6 @@ def initialize_rag_system():
     global vector_store, rag_system_available
     
     try:
-        # Ensure upload directory exists
-        os.makedirs(UPLOADS_DIR, exist_ok=True)
-        
         # Index new files in uploads directory
         files = os.listdir(UPLOADS_DIR)
         for fname in files:
@@ -485,20 +371,9 @@ def initialize_rag_system():
                 with open(fpath, 'r', encoding='utf-8', errors='ignore') as f:
                     text = f.read()
                 doc_id = f"upload_{fname}"
-                # Avoid duplicate indexing in in-memory vector store
+                # Avoid duplicate indexing
                 if not any(doc.get('id') == doc_id for doc in vector_store.get_all_documents()):
                     vector_store.add_document(doc_id, text, {'source': 'upload', 'filename': fname})
-                    # Also add to ChromaDB if available
-                    if CHROMADB_AVAILABLE and chroma_client is not None:
-                        try:
-                            chroma_client.add(
-                                documents=[text],
-                                metadatas=[{'source': 'upload', 'filename': fname}],
-                                ids=[doc_id]
-                            )
-                            logger.info(f"Document {doc_id} added to ChromaDB.")
-                        except Exception as e:
-                            logger.warning(f"Failed to add document {doc_id} to ChromaDB: {e}")
         
         # Test the vector store
         test_id = vector_store.add_document(
@@ -516,36 +391,6 @@ def initialize_rag_system():
         logger.info("✅ RAG system initialized successfully")
         rag_system_available = True
         
-
-        # Add an initial document to the vector store and ChromaDB for AI self-awareness and project context
-        initial_doc_id = 'ai_self_awareness'
-        initial_doc_text = (
-            'I am the AI assistant for the PocketPro SBA project. '
-            'My purpose is to help users interact with the Small Business Administration (SBA) resources, answer questions, and assist with RAG (Retrieval-Augmented Generation) workflows. '
-            'I am aware of my project context and can provide guidance on using the system. '
-            'For detailed project instructions and guidelines, see the INSTRUCTIONS.md file: '
-            'https://pocketprosba-backend.onrender.com/static/INSTRUCTIONS.md'
-        )
-        initial_doc_metadata = {
-            'source': 'self_awareness',
-            'type': 'project_info',
-            'category': 'meta',
-            'link': 'https://pocketprosba-backend.onrender.com/static/INSTRUCTIONS.md',
-            'description': 'AI assistant self-awareness and project context.'
-        }
-        vector_store.add_document(initial_doc_id, initial_doc_text, initial_doc_metadata)
-        # If ChromaDB is available, add to ChromaDB as well
-        if CHROMADB_AVAILABLE and chroma_client is not None:
-            try:
-                chroma_client.add(
-                    documents=[initial_doc_text],
-                    metadatas=[initial_doc_metadata],
-                    ids=[initial_doc_id]
-                )
-                logger.info("Initial self-awareness document added to ChromaDB.")
-            except Exception as e:
-                logger.warning(f"Failed to add initial doc to ChromaDB: {e}")
-
         # Add some sample SBA documents
         sample_docs = [
             {
@@ -564,9 +409,11 @@ def initialize_rag_system():
                 'metadata': {'source': 'loan_programs', 'type': 'real_estate', 'category': 'financing'}
             }
         ]
+        
         for doc in sample_docs:
             vector_store.add_document(doc['id'], doc['text'], doc['metadata'])
-        logger.info(f"✅ Added {len(sample_docs) + 1} sample documents (including self-awareness doc)")
+        
+        logger.info(f"✅ Added {len(sample_docs)} sample documents")
         return True
         
     except Exception as e:
@@ -605,41 +452,343 @@ def startup():
             'document_count': 0
         }
 
-# Simple startup initialization without complex dependencies
-def simple_startup_initialization():
-    """Simple startup initialization that doesn't require complex dependencies"""
-    try:
-        # Ensure upload directory exists
-        os.makedirs(UPLOADS_DIR, exist_ok=True)
-        
-        # Initialize the RAG system
-        initialize_rag_system()
-        
-        return {
-            'startup_completed': True,
-            'rag_status': 'available' if rag_system_available else 'unavailable',
-            'vector_store_available': rag_system_available,
-            'document_count': vector_store.count(),
-            'embedding_model': 'simple-tfidf'
-        }
-    except Exception as e:
-        logger.error(f"Simple startup initialization failed: {str(e)}")
-        return {
-            'startup_completed': False,
-            'error': str(e),
-            'rag_status': 'unavailable',
-            'vector_store_available': False,
-            'document_count': 0
-        }
+from src.services.startup_service import initialize_app_on_startup
 
-# Initialize with simple startup (avoiding complex dependency chain)
-startup_result = simple_startup_initialization()
-logger.info(f"Startup completed: {startup_result}")
+# Initialize on startup
+startup_result = initialize_app_on_startup()
 
 ## ...existing code...
 ## Removed the '/' JSON endpoint so the catch-all route serves React frontend
 
-# Removed alias routes for /registry and /health to eliminate redundancy
+@app.route('/health', methods=['GET'])
+def health_check():
+    """Health check endpoint for monitoring"""
+    return jsonify({
+        'status': 'healthy',
+        'service': 'PocketPro SBA',
+        'version': '1.0.0',
+        'rag_status': 'available' if rag_system_available else 'unavailable',
+        'document_count': vector_store.count()
+    })
+
+@app.route('/api/info', methods=['GET'])
+def get_system_info():
+    """Get system information"""
+    return jsonify({
+        'service': 'PocketPro SBA',
+        'version': '1.0.0',
+        'status': 'operational',
+        'rag_status': 'available' if rag_system_available else 'unavailable',
+        'vector_store': 'simple-memory',
+        'document_count': vector_store.count()
+    })
+
+@app.route('/api/models', methods=['GET'])
+def get_available_models():
+    """Get available AI models"""
+    return jsonify({'models': ['simple-rag']})
+
+@app.route('/api/documents', methods=['GET'])
+def get_documents():
+    """Get all documents"""
+    try:
+        documents = vector_store.get_all_documents()
+        return jsonify({
+            'documents': documents,
+            'count': len(documents),
+            'rag_status': 'available'
+        })
+    except Exception as e:
+        logger.error(f"Error getting documents: {str(e)}")
+        return jsonify({
+            'documents': [],
+            'count': 0,
+            'rag_status': 'unavailable'
+        })
+
+@app.route('/api/documents/add', methods=['POST'])
+def add_document():
+    """Add a new document to the vector database"""
+    if not rag_system_available:
+        return jsonify({'error': 'RAG system not available'}), 503
+    
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No JSON data provided'}), 400
+            
+        document_text = data.get('text', '')
+        document_id = data.get('id')
+        metadata = data.get('metadata', {})
+        
+        if not document_text:
+            return jsonify({'error': 'Document text is required'}), 400
+        
+        # Generate ID if not provided
+        if not document_id:
+            document_id = f'doc_{int(time.time() * 1000)}'
+        
+        # Add timestamp to metadata
+        metadata.update({
+            'added_at': int(time.time()),
+            'content_length': len(document_text),
+            'source': 'api_upload'
+        })
+        
+        # Add to vector store
+        vector_store.add_document(document_id, document_text, metadata)
+        
+        logger.info(f"✅ Document added: {document_id}")
+        return jsonify({
+            'success': True,
+            'document_id': document_id,
+            'message': 'Document added successfully',
+            'metadata': metadata
+        })
+        
+    except Exception as e:
+        logger.error(f"Error adding document: {str(e)}")
+        return jsonify({'error': f'Failed to add document: {str(e)}'}), 500
+
+@app.route('/api/search', methods=['POST'])
+def semantic_search():
+    """Perform semantic search on documents"""
+    if not rag_system_available:
+        return jsonify({'error': 'RAG system not available'}), 503
+    
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No JSON data provided'}), 400
+            
+        query = data.get('query', '')
+        n_results = min(int(data.get('n_results', 5)), 20)
+        
+        if not query:
+            return jsonify({'error': 'Query is required'}), 400
+        
+        # Perform search
+        results = vector_store.search(query, n_results=n_results)
+        
+        # Format results
+        formatted_results = []
+        if results['documents'][0]:
+            for i, doc in enumerate(results['documents'][0]):
+                formatted_results.append({
+                    'id': results['ids'][0][i],
+                    'content': doc,
+                    'metadata': results['metadatas'][0][i],
+                    'distance': results['distances'][0][i],
+                    'relevance_score': 1 - results['distances'][0][i]
+                })
+        
+        return jsonify({
+            'query': query,
+            'results': formatted_results,
+            'count': len(formatted_results),
+            'search_time': time.time()
+        })
+        
+    except Exception as e:
+        logger.error(f"Search error: {str(e)}")
+        return jsonify({'error': f'Search failed: {str(e)}'}), 500
+
+@app.route('/api/chat', methods=['POST'])
+def rag_chat():
+    """RAG-powered chat endpoint"""
+    if not rag_system_available:
+        return jsonify({'error': 'RAG system not available'}), 503
+    
+    try:
+        data = request.get_json()
+        user_query = data.get('message', '')
+        
+        if not user_query:
+            return jsonify({'error': 'Message is required'}), 400
+        
+        # Retrieve relevant documents
+        search_results = vector_store.search(user_query, n_results=3)
+        
+        # Build context and sources
+        context_parts = []
+        sources = []
+        
+        if search_results['documents'][0]:
+            for i, doc in enumerate(search_results['documents'][0]):
+                context_parts.append(f"Source {i+1}: {doc}")
+                sources.append({
+                    'id': search_results['ids'][0][i],
+                    'content': doc[:200] + "..." if len(doc) > 200 else doc,
+                    'metadata': search_results['metadatas'][0][i],
+                    'relevance': 1 - search_results['distances'][0][i]
+                })
+        
+        # Generate response
+        context = "\n\n".join(context_parts)
+        
+        if context:
+            response = f"Based on my knowledge base, here's what I found regarding '{user_query}':\n\n{context}"
+        else:
+            response = f"I don't have specific information about '{user_query}' in my current knowledge base. Please add relevant documents to help me provide better answers."
+        
+        return jsonify({
+            'query': user_query,
+            'response': response,
+            'sources': sources,
+            'context_used': bool(context),
+            'response_time': time.time()
+        })
+        
+    except Exception as e:
+        logger.error(f"RAG chat error: {str(e)}")
+        return jsonify({'error': f'Chat failed: {str(e)}'}), 500
+
+@app.route('/api/rag', methods=['POST'])
+def rag_query():
+    """Perform RAG operations using ChromaDB or fallback"""
+    try:
+        data = request.get_json()
+        query = data.get('query', '')
+        n_results = data.get('n_results', 5)
+
+        if not query:
+            return jsonify({'error': 'Query is required'}), 400
+
+        # Check if ChromaDB is available
+        if not CHROMADB_AVAILABLE or chroma_client is None:
+            return jsonify({
+                'query': query,
+                'results': [],
+                'count': 0,
+                'message': 'ChromaDB not available, using fallback functionality'
+            })
+
+        # Perform search in ChromaDB
+        results = chroma_client.query(query_text=query, n_results=n_results)
+
+        # Format results
+        formatted_results = [
+            {
+                'id': result['id'],
+                'content': result['document'],
+                'metadata': result['metadata'],
+                'distance': result['distance']
+            }
+            for result in results
+        ]
+
+        return jsonify({
+            'query': query,
+            'results': formatted_results,
+            'count': len(formatted_results)
+        })
+    except Exception as e:
+        logger.error(f"RAG query error: {str(e)}")
+        return jsonify({'error': f'Failed to process query: {str(e)}'}), 500
+
+@app.route('/api/programs/<program_id>/rag', methods=['GET'])
+def rag_program(program_id):
+    """RAG response for a selected program"""
+    try:
+        # Find the program document by id
+        all_docs = vector_store.get_all_documents()
+        program_doc = next((doc for doc in all_docs if doc.get('metadata', {}).get('id') == program_id or doc.get('id') == program_id), None)
+        if not program_doc:
+            return jsonify({'error': f'Program {program_id} not found'}), 404
+        # Use the document text as the query/context
+        user_query = program_doc['text']
+        search_results = vector_store.search(user_query, n_results=3)
+        context = '\n\n'.join([f"Source {i+1}: {doc}" for i, doc in enumerate(search_results['documents'][0])]) if search_results['documents'][0] else ""
+        response = f"RAG summary for program '{program_id}':\n\n{context}" if context else f"No relevant information found for program '{program_id}'."
+        return jsonify({
+            'program_id': program_id,
+            'response': response,
+            'sources': search_results['documents'][0],
+            'context_used': bool(context)
+        })
+    except Exception as e:
+        logger.error(f"RAG program error: {str(e)}")
+        return jsonify({'error': f'RAG program failed: {str(e)}'}), 500
+
+@app.route('/api/resources/<resource_id>/rag', methods=['GET'])
+def rag_resource(resource_id):
+    """RAG response for a selected resource"""
+    try:
+        # Find the resource document by id
+        all_docs = vector_store.get_all_documents()
+        resource_doc = next((doc for doc in all_docs if doc.get('metadata', {}).get('id') == resource_id or doc.get('id') == resource_id), None)
+        if not resource_doc:
+            return jsonify({'error': f'Resource {resource_id} not found'}), 404
+        user_query = resource_doc['text']
+        search_results = vector_store.search(user_query, n_results=3)
+        context = '\n\n'.join([f"Source {i+1}: {doc}" for i, doc in enumerate(search_results['documents'][0])]) if search_results['documents'][0] else ""
+        response = f"RAG summary for resource '{resource_id}':\n\n{context}" if context else f"No relevant information found for resource '{resource_id}'."
+        return jsonify({
+            'resource_id': resource_id,
+            'response': response,
+            'sources': search_results['documents'][0],
+            'context_used': bool(context)
+        })
+    except Exception as e:
+        logger.error(f"RAG resource error: {str(e)}")
+        return jsonify({'error': f'RAG resource failed: {str(e)}'}), 500
+
+# Additional endpoints for compatibility
+@app.route('/api/collections/stats', methods=['GET'])
+def get_collection_stats():
+    """Get collection statistics"""
+    return jsonify({
+        'total_documents': vector_store.count(),
+        'collection_name': 'simple_vector_store',
+        'rag_status': 'available' if rag_system_available else 'unavailable'
+    })
+
+@app.route('/startup', methods=['GET'])
+def startup_check():
+    """Startup readiness check"""
+    return jsonify({
+        'ready': True,
+        'rag_available': rag_system_available,
+        'service': 'PocketPro SBA',
+        'document_count': vector_store.count()
+    })
+
+# Utility function to perform search
+def perform_search(query, n_results=3):
+    try:
+        results = vector_store.search(query, n_results=n_results)
+        
+        # Format results
+        formatted_results = []
+        if results['documents'][0]:
+            for i, doc in enumerate(results['documents'][0]):
+                formatted_results.append({
+                    'id': results['ids'][0][i],
+                    'content': doc,
+                    'metadata': results['metadatas'][0][i],
+                    'distance': results['distances'][0][i],
+                    'relevance_score': 1 - results['distances'][0][i]
+                })
+        
+        return formatted_results
+        
+    except Exception as e:
+        logger.error(f"Search error: {str(e)}")
+        return []
+
+# Register all routes in one place
+try:
+    from routes import register_all_routes
+    register_all_routes(app)
+    logger.info("✅ All API routes registered successfully")
+except Exception as e:
+    logger.warning(f"⚠️ Failed to register API routes: {str(e)}")
+
+# Attach global assistants to app for routes access
+app.concierge = Concierge(conversation_store)
+app.search_agent = SearchAgent()
+app.file_agent = FileAgent()
+app.function_agent = FunctionAgent()
 
 # Log the configured port - CRITICAL for Render.com
 
@@ -649,268 +798,47 @@ application = app
 # Create socketio for compatibility with run.py
 socketio = None
 
-import requests
+def run_app():
+    port = int(os.environ.get("PORT", 10000))
+    debug = os.environ.get("FLASK_ENV", "production") == "development"
+    logger.info(f"🚀 Starting Flask app on port {port}")
+    app.run(host="0.0.0.0", port=port, debug=debug, threaded=True)
 
-# Cache for available models to avoid repeated API calls
-_available_models_cache = None
-_models_cache_timestamp = None
-MODELS_CACHE_DURATION = 3600  # 1 hour in seconds
+if __name__ == "__main__":
+    run_app()
 
-def get_available_gemini_models():
-    """Get list of available Gemini models from the API"""
-    global _available_models_cache, _models_cache_timestamp
-    
-    # Check if we have a valid cached result
-    current_time = time.time()
-    if (_available_models_cache is not None and 
-        _models_cache_timestamp is not None and 
-        current_time - _models_cache_timestamp < MODELS_CACHE_DURATION):
-        return _available_models_cache
-    
-    gemini_api_key = os.environ.get('GEMINI_API_KEY')
-    if not gemini_api_key:
-        logger.error("GEMINI_API_KEY not configured")
-        return []
-    
-    try:
-        # Get list of available models from Gemini API
-        models_url = f'https://generativelanguage.googleapis.com/v1beta/models?key={gemini_api_key}'
-        response = requests.get(models_url, timeout=10)
-        response.raise_for_status()
-        
-        models_data = response.json()
-        available_models = []
-        
-        if 'models' in models_data:
-            for model in models_data['models']:
-                model_name = model.get('name', '')
-                # Extract model name from full path (e.g., "models/gemini-1.5-flash" -> "gemini-1.5-flash")
-                if model_name.startswith('models/'):
-                    model_name = model_name[7:]  # Remove "models/" prefix
-                
-                # Only include models that support generateContent
-                supported_methods = model.get('supportedGenerationMethods', [])
-                if 'generateContent' in supported_methods:
-                    available_models.append({
-                        'name': model_name,
-                        'displayName': model.get('displayName', model_name),
-                        'description': model.get('description', ''),
-                        'inputTokenLimit': model.get('inputTokenLimit', 0),
-                        'outputTokenLimit': model.get('outputTokenLimit', 0)
-                    })
-        
-        # Cache the results
-        _available_models_cache = available_models
-        _models_cache_timestamp = current_time
-        
-        logger.info(f"Found {len(available_models)} available Gemini models")
-        return available_models
-        
-    except Exception as e:
-        logger.error(f"Failed to get available models: {str(e)}")
-        # Return fallback models if API call fails
-        return [
-            {'name': 'gemini-1.5-flash', 'displayName': 'Gemini 1.5 Flash', 'description': 'Fast and efficient model'},
-            {'name': 'gemini-1.5-pro', 'displayName': 'Gemini 1.5 Pro', 'description': 'Advanced reasoning model'},
-            {'name': 'gemini-pro', 'displayName': 'Gemini Pro', 'description': 'Legacy model'}
-        ]
+try:
+    from chromadb.config import Settings
+except ImportError as e:
+    raise ImportError("Missing 'chromadb' dependency. Ensure it is installed in your environment.") from e
 
-def select_best_model(available_models):
-    """Select the best available model based on priority"""
-    if not available_models:
-        return 'gemini-1.5-flash'  # Fallback
-    
-    # Priority order for model selection
-    preferred_models = [
-        'gemini-1.5-flash',
-        'gemini-1.5-pro', 
-        'gemini-pro',
-        'gemini-1.0-pro'
-    ]
-    
-    # Find the first preferred model that's available
-    available_names = [model['name'] for model in available_models]
-    
-    for preferred in preferred_models:
-        if preferred in available_names:
-            logger.info(f"Selected model: {preferred}")
-            return preferred
-    
-    # If no preferred model is found, use the first available one
-    if available_models:
-        selected = available_models[0]['name']
-        logger.info(f"Using first available model: {selected}")
-        return selected
-    
-    # Ultimate fallback
-    return 'gemini-1.5-flash'
 
-@app.route('/api/models', methods=['GET'])
-def api_models():
-    """Get list of available models"""
-    try:
-        models = get_available_gemini_models()
-        return jsonify({
-            'models': models,
-            'count': len(models),
-            'cached': _available_models_cache is not None,
-            'cache_age': time.time() - _models_cache_timestamp if _models_cache_timestamp else 0
-        }), 200
-    except Exception as e:
-        logger.error(f"Error getting models: {str(e)}")
-        return jsonify({'error': str(e), 'models': [], 'count': 0}), 500
-
-@app.route('/api/chat', methods=['POST'])
-def api_chat():
-    logger.info("=== /api/chat endpoint called ===")
-    
-    try:
-        # Log request details
-        logger.info(f"Request method: {request.method}")
-        logger.info(f"Request headers: {dict(request.headers)}")
-        logger.info(f"Request content type: {request.content_type}")
-        logger.info(f"Request remote addr: {request.remote_addr}")
-        
-        # Get and validate request data
-        data = request.get_json()
-        logger.info(f"Request JSON data: {data}")
-        
-        if not data:
-            logger.error("No JSON data received in request")
-            return jsonify({'error': 'No JSON data provided'}), 400
-            
-        user_message = data.get('message', '')
-        logger.info(f"Extracted user message: '{user_message}'")
-        
-        if not user_message:
-            logger.error("No message field in request data")
-            return jsonify({'error': 'No message provided'}), 400
-
-        # Check API key
-        gemini_api_key = os.environ.get('GEMINI_API_KEY')
-        if not gemini_api_key:
-            logger.error("GEMINI_API_KEY environment variable not set")
-            return jsonify({'error': 'GEMINI_API_KEY not configured'}), 500
-        
-        logger.info(f"GEMINI_API_KEY found: {gemini_api_key[:10]}...{gemini_api_key[-4:]}")
-
-        # Updated Gemini API endpoint - using the correct model name
-        headers = {
-            'Content-Type': 'application/json'
-        }
-        payload = {
-            'contents': [{
-                'parts': [{
-                    'text': f"You are a helpful SBA (Small Business Administration) assistant. Please provide helpful, accurate information about SBA programs, loans, and resources. User question: {user_message}"
-                }]
-            }],
-            'generationConfig': {
-                'temperature': 0.7,
-                'maxOutputTokens': 1024,
-                'topP': 0.8,
-                'topK': 40
-            }
-        }
-        
-        logger.info(f"Request payload: {payload}")
-        
-        # Try multiple model endpoints in order of preference
-        model_endpoints = [
-            'gemini-1.5-flash',
-            'gemini-1.5-pro', 
-            'gemini-pro'
-        ]
-        
-        response = None
-        last_error = None
-        used_model = None
-        
-        for model in model_endpoints:
-            try:
-                gemini_api_url = f'https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={gemini_api_key}'
-                logger.info(f"Trying model {model} at URL: {gemini_api_url[:80]}...")
-                
-                response = requests.post(gemini_api_url, headers=headers, json=payload, timeout=30)
-                
-                logger.info(f"Model {model} response status: {response.status_code}")
-                logger.info(f"Model {model} response headers: {dict(response.headers)}")
-                
-                if response.status_code == 200:
-                    used_model = model
-                    logger.info(f"Successfully used model: {model}")
-                    break
-                elif response.status_code == 404:
-                    logger.warning(f"Model {model} not found (404), trying next model...")
-                    continue
+# --- Serve React Frontend Build for All Non-API Routes ---
+# This catch-all route should be registered LAST, after all API and health routes
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def serve_frontend(path):
+    # Only serve frontend for non-API/non-health routes
+    if path.startswith('api/') or path == 'health':
+        # Let Flask route matching handle /api/* and /health
+        return handle_404(None)
+    static_dir = os.path.join(app.root_path, 'static')
+    react_build_dir = os.path.join(app.root_path, 'frontend', 'build')
+    # Ensure static directory exists, and copy from React build if missing
+    if not os.path.exists(static_dir):
+        os.makedirs(static_dir, exist_ok=True)
+        # Copy React build files if available
+        if os.path.exists(react_build_dir):
+            import shutil
+            for item in os.listdir(react_build_dir):
+                s = os.path.join(react_build_dir, item)
+                d = os.path.join(static_dir, item)
+                if os.path.isdir(s):
+                    shutil.copytree(s, d, dirs_exist_ok=True)
                 else:
-                    logger.error(f"Model {model} returned status {response.status_code}: {response.text}")
-                    response.raise_for_status()
-                    
-            except requests.exceptions.RequestException as e:
-                last_error = e
-                logger.warning(f"Failed to use model {model}: {str(e)}")
-                continue
-        
-        if not response or response.status_code != 200:
-            # Fallback to a simple response if all Gemini models fail
-            logger.error(f"All Gemini models failed. Last error: {last_error}")
-            return jsonify({
-                'response': f"I'm an SBA assistant ready to help you with Small Business Administration questions. You asked: '{user_message}'. While I'm currently experiencing connectivity issues with my AI service, I can still help you find SBA resources. Please try asking about SBA loans, business planning, or other SBA programs."
-            }), 200
-
-        # Log raw response for debugging
-        response_text = response.text
-        logger.info(f"Gemini API raw response (first 500 chars): {response_text[:500]}...")
-        
-        result = response.json()
-        logger.info(f"Gemini API parsed response: {result}")
-
-        # Extract generated text from Gemini response
-        if 'candidates' in result and len(result['candidates']) > 0:
-            candidate = result['candidates'][0]
-            logger.info(f"First candidate: {candidate}")
-            
-            if 'content' in candidate and 'parts' in candidate['content']:
-                generated_text = candidate['content']['parts'][0]['text']
-                logger.info(f"Extracted generated text (first 100 chars): {generated_text[:100]}...")
-            else:
-                logger.warning("Unexpected response structure - no content/parts found")
-                generated_text = "I'm sorry, I couldn't generate a proper response. Please try again."
-        else:
-            logger.warning("No candidates found in Gemini response")
-            generated_text = "I'm sorry, I couldn't generate a response. Please try again."
-
-        logger.info(f"=== /api/chat endpoint successful using model {used_model} ===")
-        return jsonify({'response': generated_text}), 200
-
-    except requests.exceptions.Timeout as e:
-        logger.error(f"Gemini API timeout error: {str(e)}")
-        user_msg = locals().get('user_message', 'your question')
-        return jsonify({
-            'response': f"I'm experiencing a temporary delay. Regarding your question about '{user_msg}', I'd be happy to help with SBA-related information once the connection is restored. Please try again in a moment."
-        }), 200
-    except requests.exceptions.HTTPError as e:
-        logger.error(f"Gemini API HTTP error: {str(e)}")
-        if hasattr(e, 'response'):
-            logger.error(f"Response status: {e.response.status_code}")
-            logger.error(f"Response text: {e.response.text}")
-        user_msg = locals().get('user_message', 'your question')
-        return jsonify({
-            'response': f"I'm currently experiencing technical difficulties, but I'm here to help with SBA questions. You asked about '{user_msg}'. Please try again, or visit sba.gov for immediate assistance."
-        }), 200
-    except requests.exceptions.RequestException as e:
-        logger.error(f"Gemini API request error: {str(e)}")
-        user_msg = locals().get('user_message', 'your question')
-        return jsonify({
-            'response': f"I'm currently experiencing technical difficulties, but I'm here to help with SBA questions. You asked about '{user_msg}'. Please try again, or visit sba.gov for immediate assistance."
-        }), 200
-    except json.JSONDecodeError as e:
-        logger.error(f"JSON decode error: {str(e)}")
-        return jsonify({
-            'response': "I'm experiencing technical issues but I'm your SBA assistant. Please try your question again, or visit sba.gov for immediate help."
-        }), 200
-    except Exception as e:
-        logger.error(f"Unexpected error in chat endpoint: {str(e)}", exc_info=True)
-        return jsonify({
-            'response': "I'm experiencing technical issues but I'm your SBA assistant. Please try your question again, or visit sba.gov for immediate help."
-        }), 200
+                    shutil.copy2(s, d)
+    # Serve static file or index.html
+    if path != "" and os.path.exists(os.path.join(static_dir, path)):
+        return send_from_directory(static_dir, path)
+    else:
+        return send_from_directory(static_dir, 'index.html')
