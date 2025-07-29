@@ -1,7 +1,5 @@
 from flask import send_from_directory
 import os
-## ...existing code...
-import os
 import logging
 import time
 import hashlib
@@ -30,10 +28,19 @@ except ImportError as e:
     CHROMADB_AVAILABLE = False
     Settings = None
     Client = None
+ 
+    app = Flask(__name__)
+    app.config.from_object(Config)
 
-app = Flask(__name__)
+    CORS(app, resources={r"/api/*": {"origins": "https://pocketprosba-frontend.onrender.com"}})
 
-# --- Production Hardening Additions ---
+    db.init_app(app)
+
+    # Register blueprints
+    from .routes.chat import chat_bp
+    app.register_blueprint(chat_bp, url_prefix='/api/chat')
+ 
+ # --- Production Hardening Additions ---
 
 # Required environment variables
 REQUIRED_ENV_VARS = ["GEMINI_API_KEY", "SECRET_KEY"]
@@ -46,7 +53,7 @@ check_required_env_vars()
 
 # Configurable CORS (allow all in dev, restrict in prod)
 if os.environ.get("FLASK_ENV", "production") == "production":
-    CORS(app, origins=[os.environ.get("CORS_ORIGIN", "*")])
+    CORS(app, origins=[os.environ.get("CORS_ORIGIN", "https://pocketprosba-frontend.onrender.com")])
 else:
     CORS(app)
 
