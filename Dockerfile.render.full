@@ -1,45 +1,69 @@
-# Optimized Dockerfile for Render.com deployment of PocketPro:SBA Full Edition
+### STAGE 1: BUILDER ###
+# This stage installs dependencies and builds the application environment.
+FROM python:3.9-slim as builder
+
+# Set working directory
+WORKDIR /app
+
+# Install build-time system dependencies needed for some Python packages.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create and activate a virtual environment.
+ENV VIRTUAL_ENV=/opt/venv
+RUN python3 -m venv $VIRTUAL_ENV
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+
+# Upgrade pip and install wheel for faster package installation.
+RUN pip install --upgrade pip wheel
+
+# Copy only the requirements file to leverage Docker's layer cache.
+# NOTE: The error "ModuleNotFoundError: No module named 'chromadb.client'"
+# indicates 'chromadb' is missing. Ensure your requirements file includes it.
+# e.g., chromadb>=0.4.22,<0.5.0
+COPY requirements-render-production-clean.txt .
+
+# Install Python dependencies into the virtual environment.
+RUN pip install --no-cache-dir -r requirements-render-production-clean.txt
+
+### STAGE 2: FINAL IMAGE ###
+# This stage creates the final, lean production image.
 FROM python:3.9-slim
 
 # Set working directory
 WORKDIR /app
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    gcc \
-    curl \
-    build-essential \
-    && rm -rf /var/lib/apt/lists/*
+# Create a non-root user and group for security.
+RUN groupadd -r appgroup && useradd -r -g appgroup -m -u 1000 appuser
 
+# Copy the virtual environment from the builder stage.
+COPY --from=builder /opt/venv /opt/venv
 
-# Copy production requirements for Render
-COPY requirements-render-production-clean.txt ./requirements-render-production-clean.txt
+# Copy application code with correct ownership.
+COPY --chown=appuser:appgroup . .
 
-# Install Python
-# Uninstall conflicting packages
-RUN pip uninstall -y pydantic pydantic-settings || true
+# Create and set permissions for necessary application directories.
+RUN mkdir -p /app/uploads /app/logs /app/static /app/templates /app/chroma_storage && \
+    chown -R appuser:appgroup /app/uploads /app/logs /app/static /app/templates /app/chroma_storage
 
-RUN pip install --upgrade pip setuptools wheel && \
-    pip install --no-cache-dir -r requirements-render-production-clean.txt
-
-
-# Copy application code
-COPY . .
-
-# Create directory structure
-RUN mkdir -p /app/uploads /app/logs /app/static /app/templates /app/chroma_storage
-
-# Create non-root user for security
-RUN useradd -m -u 1000 appuser && \
-    chown -R appuser:appuser /app && \
-    chown -R appuser:appuser /app/uploads /app/logs /app/static /app/templates /app/chroma_storage
+# Activate the virtual environment for subsequent commands.
+ENV VIRTUAL_ENV=/opt/venv
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
 # Set environment variables for Render.com
-ENV PORT=10000
 ENV FLASK_ENV=production
 ENV FLASK_APP=app_full.py
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
 
-# Expose the port for Render.com
+# Switch to the non-root user.
+USER appuser
+
+# Expose the port the app will run on. Render provides the PORT env var.
 EXPOSE 10000
 
-CMD ["gunicorn", "-b", "0.0.0.0:10000", "app_full:application"]
+# The command to run the application using Gunicorn.
+# It uses the $PORT environment variable provided by Render.
+CMD ["gunicorn", "--bind", "0.0.0.0:$PORT", "app_full:application"]
