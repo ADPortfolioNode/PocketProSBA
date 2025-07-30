@@ -4,7 +4,7 @@ FROM node:16-alpine as frontend-builder
 
 WORKDIR /app
 
-# Cop4y frontend package manifests and install dependencies to leverage caching
+# Copy frontend package manifests and install dependencies to leverage caching
 COPY frontend/package.json frontend/package-lock.json ./frontend/
 # Install dependencies inside the frontend directory
 RUN cd frontend && npm ci
