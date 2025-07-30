@@ -34,12 +34,7 @@ function MainLayout() {
 
   const handleChatSend = async (message) => {
     try {
-      const backendUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
-      const apiUrl = backendUrl.includes('localhost') ? '/api/chat' : `${backendUrl}/api/chat`;
-      
-      console.log('Sending chat message to:', apiUrl);
-      
-      const response = await fetch(apiUrl, {
+      const response = await fetch(apiUrl('/api/chat'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
