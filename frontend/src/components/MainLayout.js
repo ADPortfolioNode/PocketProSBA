@@ -6,6 +6,9 @@ import Footer from './Footer';
 import ConciergeChat from './ConciergeChat';
 import SBAContentExplorer from './SBAContentExplorer';
 import RAGWorkflowInterface from './RAGWorkflowInterface';
+
+import ConciergeChat from './components/ConciergeChat'
+import ConciergeGreeting from './components/ConciergeGreeting';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from './AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -22,6 +25,7 @@ import SBAContent from './SBAContent';
 function MainLayout() {
   const [activeTab, setActiveTab] = useState('chat');
   const [serverConnected, setServerConnected] = React.useState(true); // Placeholder, update as needed
+  
   
   // Create apiUrl function that returns the correct backend URL
   const apiUrl = (path) => {
@@ -70,7 +74,7 @@ function MainLayout() {
   const renderContent = () => {
     switch (activeTab) {
       case 'chat':
-        return <ConciergeChat onSend={handleChatSend} />;
+        return <ChatComonent onSend={handleChatSend} />;
       case 'browse':
         return <SBAContentExplorer />;
       case 'rag':
