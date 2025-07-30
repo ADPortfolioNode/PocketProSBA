@@ -31,6 +31,12 @@ except ImportError as e:
     Settings = None
     Client = None
 
+# --- Configuration Class ---
+class Config:
+    """Flask configuration variables."""
+    SECRET_KEY = os.environ.get('SECRET_KEY') or 'a-default-secret-key-for-development'
+    GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
+
 app = Flask(__name__)
 
 # --- Production Hardening Additions ---
@@ -49,6 +55,9 @@ if os.environ.get("FLASK_ENV", "production") == "production":
     CORS(app, origins=[os.environ.get("CORS_ORIGIN", "*")])
 else:
     CORS(app)
+
+# Load configuration from the Config class
+app.config.from_object(Config)
 
 # Request logging
 @app.before_request
@@ -452,10 +461,8 @@ def startup():
             'document_count': 0
         }
 
-from src.services.startup_service import initialize_app_on_startup
-
 # Initialize on startup
-startup_result = initialize_app_on_startup()
+startup_result = startup()
 
 ## ...existing code...
 ## Removed the '/' JSON endpoint so the catch-all route serves React frontend

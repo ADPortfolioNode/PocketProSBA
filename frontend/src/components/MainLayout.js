@@ -3,21 +3,10 @@ import { Container } from 'react-bootstrap';
 import SBANavigation from './SBANavigation';
 import Header from './Header';
 import Footer from './Footer';
-import ConciergeChat from './ConciergeChat';
 import SBAContentExplorer from './SBAContentExplorer';
 import RAGWorkflowInterface from './RAGWorkflowInterface';
 
-import ConciergeChat from './components/ConciergeChat'
-import ConciergeGreeting from './components/ConciergeGreeting';
-import { useLocation } from 'react-router-dom';
-import { useAuth } from './AuthContext';
-import { useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { getRAGWorkflow } from './api';
-import { useToast } from './ToastContext';
-import { useTheme } from './ThemeContext';
-import { useUser } from './UserContext';
-import { useRAGWorkflow } from './RAGWorkflowContext';
+import ConciergeChat from './ConciergeChat'; // Corrected from './components/ConciergeChat' if it was wrong
 
 import UploadsManagerComponent from './UploadsManager';
 import SBAContent from './SBAContent';
@@ -74,7 +63,7 @@ function MainLayout() {
   const renderContent = () => {
     switch (activeTab) {
       case 'chat':
-        return <ChatComonent onSend={handleChatSend} />;
+        return <ConciergeChat onSend={handleChatSend} />; // Corrected typo from ChatComonent
       case 'browse':
         return <SBAContentExplorer />;
       case 'rag':
