@@ -2,16 +2,15 @@
 # This stage builds the React frontend application.
 FROM node:16-alpine as frontend-builder
 
-# Set working directory
-WORKDIR /app
+WORKDIR /app/frontend
 
 # Copy frontend package manifests and install dependencies to leverage caching
-COPY frontend/package.json frontend/package-lock.json ./frontend/
-RUN cd frontend && npm ci
+COPY frontend/package.json frontend/package-lock.json ./
+RUN npm ci
 
 # Copy the rest of the frontend source code and build it
-COPY frontend/ ./frontend/
-RUN cd frontend && npm run build
+COPY frontend/ ./
+RUN npm run build
 
 ### STAGE 2: BACKEND BUILDER ###
 # This stage installs Python dependencies into a virtual environment.
@@ -25,8 +24,8 @@ ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
 RUN apt-get update && apt-get install -y --no-install-recommends build-essential gcc && rm -rf /var/lib/apt/lists/*
 RUN pip install --upgrade pip wheel
-COPY requirements-render-production-clean.txt .
-RUN pip install --no-cache-dir -r requirements-render-production-clean.txt
+COPY requirements-render-full.txt .
+RUN pip install --no-cache-dir -r requirements-render-full.txt
 
 ### STAGE 3: FINAL IMAGE ###
 # This stage creates the final, lean production image.
