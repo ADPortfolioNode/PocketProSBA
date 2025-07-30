@@ -70,4 +70,4 @@ EXPOSE 10000
 
 # The command to run the application using Gunicorn.
 # It uses the $PORT environment variable provided by Render.
-CMD ["gunicorn", "--bind", "0.0.0.0:$PORT", "app_full:application"]
+CMD ["gunicorn", "--bind", "0.0.0.0:$PORT", "--worker-class", "eventlet", "-w", "1", "app_full:application"]

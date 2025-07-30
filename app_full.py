@@ -801,9 +801,6 @@ app.function_agent = FunctionAgent()
 # For Render.com, we need to expose the app for Gunicorn to find
 application = app
 
-# Create socketio for compatibility with run.py
-socketio = None
-
 def run_app():
     port = int(os.environ.get("PORT", 10000))
     debug = os.environ.get("FLASK_ENV", "production") == "development"
