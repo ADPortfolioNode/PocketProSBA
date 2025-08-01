@@ -18,9 +18,8 @@ services:
     # It is aligned with the CMD in the Dockerfile for consistency.
     # Added --timeout for long-running AI tasks and aligned with best practices.
     dockerCommand: gunicorn --bind 0.0.0.0:$PORT --worker-class eventlet -w 1 --timeout 120 app_full:app
-    healthCheck:
-      path: /health
-      initialDelaySeconds: 60
+    healthCheckPath: /health
+    initialDelaySeconds: 60
     envVars:
       - key: FLASK_ENV
         value: production
@@ -55,9 +54,8 @@ services:
         mountPath: /chroma/chroma
         sizeGB: 1 # Note: Consider increasing size for larger document collections.
     port: 8000 # Explicitly declare the internal port for ChromaDB.
-    healthCheck:
-      path: /api/v1/heartbeat
-      initialDelaySeconds: 40
+    healthCheckPath: /api/v1/heartbeat
+    initialDelaySeconds: 40
 
 envVarGroups:
   - name: pocketpro-secrets
