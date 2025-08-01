@@ -8,12 +8,14 @@ services:
   # --------------------------------------------------
   # Backend Service (Python/Flask API)
   # --------------------------------------------------
-  - type: web
-    name: pocketpro-backend
+  - type: web # This service runs the Flask backend which also serves the React frontend
+    name: pocketpro-sba-app
     runtime: docker
-    dockerfilePath: ./Dockerfile.backend.prod
+    dockerfilePath: ./Dockerfile.render.full # As per INSTRUCTIONS.md
+    # This command starts the production server, which serves both the API and the frontend.
+    dockerCommand: gunicorn --bind 0.0.0.0:$PORT --timeout 120 --workers 1 app_full:app
     healthCheck:
-      path: /api/health
+      path: /health # Aligned with INSTRUCTIONS.md
       initialDelaySeconds: 60
     envVars:
       - key: FLASK_ENV
@@ -27,30 +29,8 @@ services:
         fromService:
           type: pserv
           name: chromadb
-          property: port
-      # NOTE: To break a circular dependency, FRONTEND_URL must be set manually
-      # in the 'pocketpro-secrets' environment group after the first deployment.
-      - key: CORS_ORIGINS
-        fromGroup: pocketpro-secrets
-        envVarKey: FRONTEND_URL
+          property: port # CORS is not needed as Flask serves the frontend
       - fromGroup: pocketpro-secrets
-
-  # --------------------------------------------------
-  # Frontend Service (React Static Site)
-  # --------------------------------------------------
-  - type: static
-    name: pocketpro-frontend
-    buildFilter:
-      paths:
-      - frontend/**
-    buildCommand: cd frontend && npm install && npm run build
-    publishDir: ./frontend/build
-    envVars:
-      - key: REACT_APP_BACKEND_URL
-        fromService:
-          type: web
-          name: pocketpro-backend
-          property: url # Injects the backend's public URL into the build process
 
   # --------------------------------------------------
   # ChromaDB Private Service
@@ -74,5 +54,3 @@ envVarGroups:
       - key: GEMINI_API_KEY
       - key: SECRET_KEY
         generateValue: true # Let Render generate a secure random string
-      - key: FRONTEND_URL
-        value: "https://your-frontend-url.onrender.com" # IMPORTANT: Update this after your first deployment
