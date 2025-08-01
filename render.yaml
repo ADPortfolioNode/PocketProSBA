@@ -1,40 +1,79 @@
-services:
-  - type: web
-    name: pocketprosba-backend
-    runtime: docker
-    dockerfilePath: Dockerfile.render.full
-    plan: standard
-    autoDeploy: true
-    healthCheckPath: /health
-    envVars:
-      - key: PORT
-        value: 10000
-      - key: GEMINI_API_KEY
-        value: ""         # Fill in Render UI
-      - key: CHROMA_HOST
-        value: "localhost"
-      - key: CHROMA_PORT
-        value: "8000"
-      - key: UPLOAD_FOLDER
-        value: "./uploads"
-      - key: CHUNK_SIZE
-        value: "500"
-      - key: PYTHONUNBUFFERED
-        value: "1"
-      - key: LOG_LEVEL
-        value: "INFO"
-      - key: FLASK_ENV
-        value: "production"
-      - key: SECRET_KEY
-        generateValue: true
+# render.yaml
+#
+# This file defines the infrastructure for deploying the PocketPro:SBA application
+# on Render.com. It specifies three services: a backend web service, a frontend
+# static site, and a private ChromaDB service.
 
+services:
+  # --------------------------------------------------
+  # Backend Service (Python/Flask API)
+  # --------------------------------------------------
   - type: web
-    name: pocketprosba-frontend
-    env: static
-    branch: main
-    plan: free
-    buildCommand: cd frontend && npm install --legacy-peer-deps && npm run build
-    staticPublishPath: frontend/build
+    name: pocketpro-backend
+    runtime: docker
+    repo: https://github.com/your-username/your-repo-name # Optional: if in a different repo
+    dockerfilePath: ./Dockerfile.backend.prod
+    healthCheck:
+      path: /api/health
+      initialDelaySeconds: 60
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: CHROMA_HOST
+        fromService:
+          type: pserv
+          name: chromadb
+          property: host
+      - key: CHROMA_PORT
+        fromService:
+          type: pserv
+          name: chromadb
+          property: port
+      - key: CORS_ORIGINS
+        fromService:
+          type: static
+          name: pocketpro-frontend
+          property: url # Dynamically sets CORS to the frontend's public URL
+      - fromGroup: pocketpro-secrets # Group for API keys and other secrets
+
+  # --------------------------------------------------
+  # Frontend Service (React Static Site)
+  # --------------------------------------------------
+  - type: static
+    name: pocketpro-frontend
+    repo: https://github.com/your-username/your-repo-name # Optional: if in a different repo
+    buildFilter:
+      paths:
+      - frontend/**
+    buildCommand: cd frontend && npm install && npm run build
+    publishDir: ./frontend/build
     envVars:
       - key: REACT_APP_BACKEND_URL
-        value: https://pocketprosba-backend.onrender.com
+        fromService:
+          type: web
+          name: pocketpro-backend
+          property: url # Injects the backend's public URL into the build process
+
+  # --------------------------------------------------
+  # ChromaDB Private Service
+  # --------------------------------------------------
+  - type: pserv
+    name: chromadb
+    runtime: docker
+    repo: https://github.com/your-username/your-repo-name # Optional: if in a different repo
+    dockerImageName: chromadb/chroma:latest
+    # Render Disks are required for data persistence
+    disks:
+      - name: chromadb-data
+        mountPath: /chroma/chroma
+        sizeGB: 1 # Adjust size as needed
+    healthCheck:
+      path: /api/v2/heartbeat
+      initialDelaySeconds: 40
+
+envVarGroups:
+  - name: pocketpro-secrets
+    envVars:
+      - key: GEMINI_API_KEY
+      - key: SECRET_KEY
+        generateValue: true # Let Render generate a secure random string
