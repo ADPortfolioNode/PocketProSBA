@@ -11,7 +11,6 @@ services:
   - type: web
     name: pocketpro-backend
     runtime: docker
-    repo: https://github.com/your-username/your-repo-name # Optional: if in a different repo
     dockerfilePath: ./Dockerfile.backend.prod
     healthCheck:
       path: /api/health
@@ -41,7 +40,6 @@ services:
   # --------------------------------------------------
   - type: static
     name: pocketpro-frontend
-    repo: https://github.com/your-username/your-repo-name # Optional: if in a different repo
     buildFilter:
       paths:
       - frontend/**
@@ -60,7 +58,6 @@ services:
   - type: pserv
     name: chromadb
     runtime: docker
-    repo: https://github.com/your-username/your-repo-name # Optional: if in a different repo
     dockerImageName: chromadb/chroma:latest
     # Render Disks are required for data persistence
     disks:
