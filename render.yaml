@@ -1,22 +1,24 @@
 # render.yaml
 #
 # This file defines the infrastructure for deploying the PocketPro:SBA application
-# on Render.com. It specifies three services: a backend web service, a frontend
-# static site, and a private ChromaDB service.
+# on Render.com. It specifies two services: a backend web service that also
+# serves the frontend, and a private ChromaDB service for the vector store.
 
 services:
   # --------------------------------------------------
-  # Backend Service (Python/Flask API)
+  # Backend Service (Python/Flask API + React Frontend)
   # --------------------------------------------------
-  - type: web # This service runs the Flask backend which also serves the React frontend
+  - type: web
     name: pocketpro-sba-app
+    plan: starter
+    region: oregon
     runtime: docker
-    dockerfilePath: ./Dockerfile.render.full # As per INSTRUCTIONS.md
+    dockerfilePath: ./Dockerfile.render.full
     # This command starts the production server, which serves both the API and the frontend.
     # It is aligned with the CMD in the Dockerfile for consistency.
-    dockerCommand: gunicorn --bind 0.0.0.0:$PORT --worker-class eventlet -w 1 app_full:application
+    dockerCommand: gunicorn --bind 0.0.0.0:$PORT --worker-class eventlet -w 1 app_full:app
     healthCheck:
-      path: /api/health # Aligned with INSTRUCTIONS.md
+      path: /health
       initialDelaySeconds: 60
     envVars:
       - key: FLASK_ENV
@@ -30,7 +32,7 @@ services:
         fromService:
           type: pserv
           name: chromadb
-          property: port # CORS is not needed as Flask serves the frontend
+          property: port
       - fromGroup: pocketpro-secrets
 
   # --------------------------------------------------
@@ -38,15 +40,17 @@ services:
   # --------------------------------------------------
   - type: pserv
     name: chromadb
+    plan: starter
+    region: oregon
     runtime: docker
     dockerImageName: chromadb/chroma:0.5.0 # Pin to a specific version for stability
     # Render Disks are required for data persistence
     disks:
       - name: chromadb-data
         mountPath: /chroma/chroma
-        sizeGB: 1 # Adjust size as needed
+        sizeGB: 1
     healthCheck:
-      path: /api/v2/heartbeat
+      path: /api/v1/heartbeat
       initialDelaySeconds: 40
 
 envVarGroups:

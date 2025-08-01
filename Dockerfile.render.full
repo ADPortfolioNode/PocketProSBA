@@ -2,17 +2,15 @@
 # This stage builds the React frontend application.
 FROM node:16-alpine as frontend-builder
 
-WORKDIR /app
+WORKDIR /app/frontend
 
 # Copy frontend package manifests and install dependencies to leverage caching
-COPY frontend/package.json frontend/package-lock.json ./frontend/
-# Install dependencies inside the frontend directory
-RUN cd frontend && npm ci
+COPY frontend/package*.json ./
+RUN npm ci
 
 # Copy the rest of the frontend source code and build it
-COPY frontend/ ./frontend/
-# Build the application inside the frontend directory
-RUN cd frontend && npm run build
+COPY frontend/ ./
+RUN npm run build
 
 ### STAGE 2: BACKEND BUILDER ###
 # This stage installs Python dependencies into a virtual environment.
@@ -43,7 +41,7 @@ COPY --from=backend-builder /opt/venv /opt/venv
 
 # Copy the built React assets from the frontend-builder stage into /app/static.
 # The Flask app is configured to serve files from this directory.
-COPY --from=frontend-builder --chown=appuser:appgroup /app/frontend/build /app/static
+COPY --from=frontend-builder --chown=appuser:appgroup /app/frontend/build ./static
 
 # Copy the rest of the application code with correct ownership.
 COPY --chown=appuser:appgroup . .
@@ -70,4 +68,4 @@ EXPOSE 10000
 
 # The command to run the application using Gunicorn.
 # It uses the $PORT environment variable provided by Render.
-CMD ["gunicorn", "--bind", "0.0.0.0:$PORT", "--worker-class", "eventlet", "-w", "1", "app_full:application"]
+CMD ["gunicorn", "--bind", "0.0.0.0:$PORT", "--worker-class", "eventlet", "-w", "1", "app_full:app"]
