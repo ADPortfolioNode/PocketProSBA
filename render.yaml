@@ -14,9 +14,6 @@ services:
     dockerfilePath: ./Dockerfile.render.full # As per INSTRUCTIONS.md
     # This command starts the production server, which serves both the API and the frontend.
     dockerCommand: gunicorn --bind 0.0.0.0:$PORT --timeout 120 --workers 1 app_full:app
-    healthCheck:
-      path: /health # Aligned with INSTRUCTIONS.md
-      initialDelaySeconds: 60
     envVars:
       - key: FLASK_ENV
         value: production
