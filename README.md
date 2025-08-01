@@ -1,138 +1,23 @@
-# PocketPro:SBA Edition
+# PocketPro:SBA - Production Deployment Guide
 
-A scalable Retrieval-Augmented Generation (RAG) application for SBA and small business resources, powered by AI.
+This project is a Retrieval-Augmented Generation (RAG) application designed for a streamlined, production-ready deployment on Render.com using the "Blueprint" (infrastructure-as-code) model.
 
-## Features
+## Technology Stack
 
-- 🤖 **AI-Powered Chat Interface**: Conversational AI using Google Gemini
-- 📄 **Document Processing**: Upload and process PDF, Word, Markdown, and text files
-- 🔍 **Semantic Search**: Find relevant information using vector similarity
-- 🏗️ **Task Decomposition**: Break down complex tasks into manageable steps
-- 🌐 **Web Interface**: Modern, responsive React frontend
-- 🐳 **Docker Ready**: Easy deployment with Docker Compose
+| Component | Technology | Role |
+|---|---|---|
+| **Web Service** | Python (Flask) + React.js | A single Docker container serves both the backend API and the compiled frontend. |
+| **Vector DB** | ChromaDB | Runs as a separate Private Service on Render for persistent vector storage. |
+| **LLM** | Google Gemini | Provides the generative AI capabilities for the RAG system. |
+| **Deployment** | Docker on Render.com | Infrastructure is defined in `render.yaml` for automated, repeatable deployments. |
 
-## Quick Start
+---
 
 ### Prerequisites
 
 - Python 3.9+
 - Node.js 16+
 - Docker and Docker Compose (for containerized deployment)
-- Google Gemini API key
-
-### 1. Clone and Setup
-
-```bash
-git clone <repository-url>
-cd PocketProSBA
-```
-
-### 2. Configure Environment
-
-```bash
-# Copy the environment template
-cp .env.template .env
-
-# Edit .env and add your Gemini API key
-# GEMINI_API_KEY=your_api_key_here
-```
-
-### 3. Development Mode
-
-#### Option A: Docker (Recommended)
-
-```bash
-# For Windows
-deploy-docker.bat
-
-# For Linux/Mac
-chmod +x deploy-docker.sh
-./deploy-docker.sh
-```
-
-#### Option B: Local Development
-
-```bash
-# For Windows
-start-dev.bat
-
-# For Linux/Mac
-chmod +x start-dev.sh
-./start-dev.sh
-```
-
-### 4. Access the Application
-
-- **Web Interface**: http://localhost:10000 (Docker) or http://localhost:3000 (Local)
-- **Backend API**: http://localhost:5000
-- **ChromaDB**: http://localhost:8000
-
-### 5. Health Check
-
-```bash
-python health_check.py
-```
-
-## Architecture
-
-- **Frontend**: React.js with Bootstrap, served by Nginx
-- **Backend**: Python Flask with SocketIO for real-time updates
-- **Vector DB**: ChromaDB for document embeddings
-- **LLM**: Google Gemini for AI capabilities
-
-## API Endpoints
-
-- `POST /api/decompose` - Process user messages and decompose tasks
-- `POST /api/files` - Upload and process documents
-- `POST /api/query` - Search documents
-- `GET /health` - Health check
-- `GET /api/info` - Application information
-
-## File Upload Support
-
-- PDF (.pdf)
-- Microsoft Word (.docx)
-- Markdown (.md)
-- Plain text (.txt)
-
-## Configuration
-
-Key environment variables:
-
-- `GEMINI_API_KEY` - Required: Google Gemini API key
-- `CHROMA_HOST` - ChromaDB host (default: localhost)
-- `UPLOAD_FOLDER` - File upload directory (default: ./uploads)
-- `CHUNK_SIZE` - Document chunking size (default: 500)
-
-## Troubleshooting
-
-If you encounter connection issues between the frontend and backend, try these steps:
-
-1. **Check if the backend is running:**
-   ```
-   .\check-backend.ps1
-   ```
-   or
-   ```
-   check-backend.bat
-   ```
-
-2. **Run the connection diagnostics:**
-   ```
-   .\diagnose-connection.ps1
-   ```
-   or
-   ```
-   diagnose-connection.bat
-   ```
-
-3. **Ensure the frontend is configured correctly:**
-   - Make sure there's a `.env` file in the `frontend` directory with `REACT_APP_BACKEND_URL=http://localhost:5000`
-   - Check that `package.json` has a proxy entry: `"proxy": "http://localhost:5000"`
-
-4. **Start both backend and frontend together:**
-   ```
-   .\start-dev-full.ps1
    ```
    or
    ```
