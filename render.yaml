@@ -16,7 +16,7 @@ services:
     # It is aligned with the CMD in the Dockerfile for consistency.
     dockerCommand: gunicorn --bind 0.0.0.0:$PORT --worker-class eventlet -w 1 app_full:application
     healthCheck:
-      path: /health # Aligned with INSTRUCTIONS.md
+      path: /api/health # Aligned with INSTRUCTIONS.md
       initialDelaySeconds: 60
     envVars:
       - key: FLASK_ENV
