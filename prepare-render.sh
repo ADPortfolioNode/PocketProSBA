@@ -62,7 +62,7 @@ done
 
 # Test requirements installation with better error handling
 echo "🔧 Testing requirements installation..."
-pip_output=$($python_cmd -m pip install --dry-run -r requirements.txt 2>&1)
+pip_output=$($python_cmd -m pip install --dry-run -r requirements-render-full.txt 2>&1)
 pip_exit_code=$?
 
 if [[ $pip_exit_code -eq 0 ]]; then
@@ -264,7 +264,7 @@ echo "3. 🎯 Set runtime to 'Python 3.11' (RECOMMENDED)"
 if [[ $python_minor -ne 11 ]]; then
     echo "   ⚠️  Current: Python $python_major.$python_minor - consider switching to 3.11"
 fi
-echo "4. ✅ Build command: 'pip install -r requirements.txt'"
+echo "4. ✅ Build command: 'pip install -r requirements-render-full.txt'"
 echo "5. 🚀 Start command: '$START_CMD'"
 echo "6. ⚠️  Add environment variable: GEMINI_API_KEY"
 echo "7. 🌐 Set environment variable: PORT (auto-set by Render)"
