@@ -1,256 +1,193 @@
 import os
 import logging
-import time
-import json
-import math
 import sys
-from collections import Counter
 from flask import Flask, request, jsonify, send_from_directory
-from flask_cors import CORS
 from dotenv import load_dotenv
 
-# Load environment variables
+# Load environment variables from .env file
 load_dotenv()
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
+# --- Logging Configuration ---
+# Direct logs to stdout for containerized environments like Render
+logging.basicConfig(
+    stream=sys.stdout,
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 logger = logging.getLogger(__name__)
 
-# Handle ChromaDB import gracefully
+# --- Dependency Availability Checks ---
 try:
-    from chromadb.config import Settings
-    from chromadb.api.fastapi import FastAPI
-    from chromadb.api.client import Client
+    import chromadb
+    from chromadb.utils import embedding_functions
     CHROMADB_AVAILABLE = True
 except ImportError as e:
-    print(f"Warning: ChromaDB not available: {e}", file=sys.stderr)
+    logger.error("ChromaDB library not found. RAG features will be disabled.")
     CHROMADB_AVAILABLE = False
-    Settings = None
-    Client = None
 
-# Import flask_socketio and define SOCKETIO_AVAILABLE before usage
 try:
-    from flask_socketio import SocketIO
-    SOCKETIO_AVAILABLE = True
+    import google.generativeai as genai
+    GEMINI_AVAILABLE = True
 except ImportError:
-    SOCKETIO_AVAILABLE = False
+    logger.error("Google Generative AI library not found. LLM features will be disabled.")
+    GEMINI_AVAILABLE = False
 
-app = Flask(__name__)
-app.config.from_object(type('Config', (), {
-    "SECRET_KEY": os.environ.get('SECRET_KEY') or 'a-default-secret-key-for-development',
-    "GEMINI_API_KEY": os.environ.get('GEMINI_API_KEY')
-}))
+# --- Flask App Initialization ---
+# The static_folder is set to 'static', where the Dockerfile places the React build.
+# The static_url_path='' makes the root URL serve files from the static folder.
+app = Flask(__name__, static_folder='static', static_url_path='')
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key')
 
-# Configure CORS
-if os.environ.get("FLASK_ENV", "production") == "production":
-    CORS(app, origins=[os.environ.get("CORS_ORIGIN", "*")])
-else:
-    CORS(app)
+# --- Global Service Initialization ---
+chroma_client = None
+rag_collection = None
+embedding_function = None
+llm = None
 
-# Initialize SocketIO
-if SOCKETIO_AVAILABLE:
-    socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet')
-else:
-    socketio = None
+if CHROMADB_AVAILABLE and GEMINI_AVAILABLE:
+    GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
+    CHROMA_HOST = os.environ.get('CHROMA_HOST')
+    CHROMA_PORT = os.environ.get('CHROMA_PORT')
 
-# Use socketio.run to start the app if socketio is available
-def run_app():
-    port = int(os.environ.get("PORT", 5000))
-    debug = os.environ.get("FLASK_ENV", "production") == "development"
-    if socketio:
-        socketio.run(app, host="0.0.0.0", port=port, debug=debug)
+    if not all([GEMINI_API_KEY, CHROMA_HOST, CHROMA_PORT]):
+        logger.warning("Missing one or more environment variables (GEMINI_API_KEY, CHROMA_HOST, CHROMA_PORT). RAG system will be disabled.")
+        CHROMADB_AVAILABLE = False # Disable RAG if config is missing
     else:
-        app.run(host="0.0.0.0", port=port, debug=debug, threaded=True)
+        try:
+            # Configure the embedding function
+            embedding_function = embedding_functions.GoogleGenerativeAiEmbeddingFunction(api_key=GEMINI_API_KEY)
+            
+            # Configure the LLM
+            genai.configure(api_key=GEMINI_API_KEY)
+            llm = genai.GenerativeModel('gemini-pro')
 
-if __name__ == "__main__":
-    run_app()
+            # Connect to the remote ChromaDB service provided by Render
+            logger.info(f"Connecting to ChromaDB at {CHROMA_HOST}:{CHROMA_PORT}...")
+            chroma_client = chromadb.HttpClient(host=CHROMA_HOST, port=CHROMA_PORT)
+            
+            # Get or create the collection for RAG
+            rag_collection = chroma_client.get_or_create_collection(
+                name="sba_documents",
+                embedding_function=embedding_function
+            )
+            logger.info("✅ Successfully connected to ChromaDB and got collection.")
+            logger.info(f"   Collection '{rag_collection.name}' contains {rag_collection.count()} documents.")
 
-# Simple embedding function
-class SimpleEmbeddingFunction:
-    def __call__(self, texts):
-        embeddings = []
-        all_words = set()
-        text_words = []
-        for text in texts:
-            words = [w.lower() for w in text.split()]
-            text_words.append(words)
-            all_words.update(words)
-        vocab = sorted(list(all_words))[:384]
-        for words in text_words:
-            word_counts = Counter(words)
-            total_words = len(words)
-            embedding = [float(word_counts.get(word, 0) / max(total_words, 1)) for word in vocab]
-            while len(embedding) < 384:
-                embedding.append(0.0)
-            embeddings.append(embedding[:384])
-        return embeddings
+        except Exception as e:
+            logger.error(f"Failed to initialize RAG system with ChromaDB and Gemini: {e}", exc_info=True)
+            CHROMADB_AVAILABLE = False # Disable on failure
 
-# Simple in-memory vector store fallback
-class SimpleVectorStore:
-    def __init__(self):
-        self.documents = {}
-        self.embeddings = {}
-        self.embedding_function = SimpleEmbeddingFunction()
-
-    def add_document(self, doc_id, text, metadata=None):
-        self.documents[doc_id] = {'text': text, 'metadata': metadata or {}}
-        embedding = self.embedding_function([text])[0]
-        self.embeddings[doc_id] = embedding
-        return doc_id
-
-    def _cosine_similarity(self, vec1, vec2):
-        dot_product = sum(a * b for a, b in zip(vec1, vec2))
-        mag1 = math.sqrt(sum(a * a for a in vec1))
-        mag2 = math.sqrt(sum(a * a for a in vec2))
-        if mag1 == 0 or mag2 == 0:
-            return 0
-        return dot_product / (mag1 * mag2)
-
-    def search(self, query, n_results=5):
-        if not self.documents:
-            return {'documents': [[]], 'metadatas': [[]], 'distances': [[]], 'ids': [[]]}
-        query_embedding = self.embedding_function([query])[0]
-        similarities = [(doc_id, self._cosine_similarity(query_embedding, emb)) for doc_id, emb in self.embeddings.items()]
-        similarities.sort(key=lambda x: x[1], reverse=True)
-        top_results = similarities[:n_results]
-        documents, metadatas, distances, ids = [], [], [], []
-        for doc_id, sim in top_results:
-            doc = self.documents[doc_id]
-            documents.append(doc['text'])
-            metadatas.append(doc['metadata'])
-            distances.append(1.0 - sim)
-            ids.append(doc_id)
-        return {'documents': [documents], 'metadatas': [metadatas], 'distances': [distances], 'ids': [ids]}
-
-    def count(self):
-        return len(self.documents)
-
-# Initialize vector store and RAG availability
-vector_store = SimpleVectorStore()
-rag_system_available = True
-
-# Initialize ChromaDB client if available
-if CHROMADB_AVAILABLE:
-    try:
-        chroma_client = Client(Settings(
-            chroma_db_impl="duckdb+parquet",
-            persist_directory="./chroma_storage"
-        ))
-        logger.info("ChromaDB client initialized successfully")
-    except Exception as e:
-        logger.error(f"Failed to initialize ChromaDB client: {e}")
-        chroma_client = None
-        CHROMADB_AVAILABLE = False
-else:
-    chroma_client = None
-    logger.warning("ChromaDB not available, using fallback vector store")
-
-# API endpoints
+# --- API Endpoints ---
 
 @app.route('/health', methods=['GET'])
 def health_check():
+    """
+    Provides a health check for the service.
+    For a robust check, it verifies the connection to ChromaDB.
+    """
+    if CHROMADB_AVAILABLE and chroma_client:
+        try:
+            # Heartbeat is a lightweight check to see if the service is up
+            chroma_client.heartbeat()
+            chroma_status = "connected"
+        except Exception as e:
+            logger.error(f"Health check failed to connect to ChromaDB: {e}")
+            chroma_status = "disconnected"
+    else:
+        chroma_status = "disabled"
+
     return jsonify({
-        'status': 'healthy',
-        'service': 'PocketPro SBA',
-        'version': '1.0.0',
-        'rag_status': 'available' if rag_system_available else 'unavailable',
-        'document_count': vector_store.count()
+        "status": "healthy" if chroma_status in ["connected", "disabled"] else "unhealthy",
+        "service": "PocketPro:SBA Backend",
+        "dependencies": {
+            "chromadb": chroma_status
+        }
     })
 
-@app.route('/api/registry', methods=['GET'])
-def api_registry():
-    # Return list of available endpoints
-    endpoints = [
-        '/health',
-        '/api/registry',
-        '/api/documents',
-        '/api/documents/add',
-        '/api/search',
-        '/api/chat',
-        '/api/rag'
-    ]
-    return jsonify({'endpoints': endpoints})
-
-@app.route('/api/documents', methods=['GET'])
-def get_documents():
-    try:
-        documents = vector_store.documents
-        return jsonify({'documents': documents, 'count': len(documents)})
-    except Exception as e:
-        logger.error(f"Error getting documents: {e}")
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/api/documents/add', methods=['POST'])
-def add_document():
-    if not rag_system_available:
-        return jsonify({'error': 'RAG system not available'}), 503
-    data = request.get_json()
-    if not data or 'text' not in data:
-        return jsonify({'error': 'No document text provided'}), 400
-    doc_id = data.get('id') or f'doc_{int(time.time()*1000)}'
-    text = data['text']
-    metadata = data.get('metadata', {})
-    vector_store.add_document(doc_id, text, metadata)
-    return jsonify({'success': True, 'document_id': doc_id})
-
-@app.route('/api/search', methods=['POST'])
-def semantic_search():
-    if not rag_system_available:
-        return jsonify({'error': 'RAG system not available'}), 503
-    data = request.get_json()
-    if not data or 'query' not in data:
-        return jsonify({'error': 'No query provided'}), 400
-    query = data['query']
-    n_results = min(int(data.get('n_results', 5)), 20)
-    results = vector_store.search(query, n_results)
-    return jsonify({'query': query, 'results': results})
+@app.route('/api/info')
+def get_info():
+    """Returns basic information about the application state."""
+    doc_count = rag_collection.count() if rag_collection else 0
+    return jsonify({
+        "service_name": "PocketPro:SBA",
+        "version": "1.0.0",
+        "rag_status": "enabled" if CHROMADB_AVAILABLE else "disabled",
+        "document_count": doc_count
+    })
 
 @app.route('/api/chat', methods=['POST'])
-def rag_chat():
-    if not rag_system_available:
-        return jsonify({'error': 'RAG system not available'}), 503
+def chat():
+    """
+    Handles chat requests, performing RAG to answer questions based on documents.
+    """
     data = request.get_json()
     if not data or 'message' not in data:
-        return jsonify({'error': 'No message provided'}), 400
-    message = data['message']
-    # For simplicity, echo the message with a placeholder response
-    response = f"Echo: {message}"
-    return jsonify({'query': message, 'response': response})
+        return jsonify({"error": "Message is required"}), 400
 
-@app.route('/api/rag', methods=['POST'])
-def rag_query():
-    if not CHROMADB_AVAILABLE or chroma_client is None:
-        return jsonify({'error': 'ChromaDB not available'}), 503
-    data = request.get_json()
-    if not data or 'query' not in data:
-        return jsonify({'error': 'No query provided'}), 400
-    query = data['query']
-    n_results = int(data.get('n_results', 5))
+    user_query = data['message']
+
+    if not CHROMADB_AVAILABLE or not llm:
+        return jsonify({
+            "response": "I'm sorry, the RAG system is currently unavailable. I can only have a basic conversation.",
+            "sources": []
+        })
+ 
     try:
-        results = chroma_client.query(query_text=query, n_results=n_results)
-        return jsonify({'query': query, 'results': results})
-    except Exception as e:
-        logger.error(f"ChromaDB query error: {e}")
-        return jsonify({'error': str(e)}), 500
+        # 1. Retrieve relevant documents from ChromaDB
+        retrieved_docs = rag_collection.query(
+            query_texts=[user_query],
+            n_results=3
+        )
+ 
+        # 2. Build the context for the LLM
+        context = ""
+        sources = []
+        if retrieved_docs and retrieved_docs.get('documents') and retrieved_docs['documents'][0]:
+            context = "\n\n".join(retrieved_docs['documents'][0])
+            sources = [
+                {
+                    "id": mid, 
+                    "metadata": meta, 
+                    "distance": f"{dist:.4f}" # Format distance for clarity
+                } for mid, meta, dist in zip(retrieved_docs['ids'][0], retrieved_docs['metadatas'][0], retrieved_docs['distances'][0])
+            ]
+ 
+        # 3. Construct the prompt for the LLM
+        prompt = f"""
+        You are PocketPro, an expert assistant for the Small Business Administration (SBA).
+        Answer the user's question based on the following context.
+        If the context is not relevant, answer the question to the best of your ability but mention that the information is not from the provided documents.
 
-# Serve React frontend catch-all route
+        Context:
+        ---
+        {context if context else "No relevant documents found."}
+        ---
+
+        User Question: {user_query}
+        """
+
+        # 4. Generate response from the LLM
+        llm_response = llm.generate_content(prompt)
+        
+        return jsonify({
+            "response": llm_response.text,
+            "sources": sources
+        })
+
+    except Exception as e:
+        logger.error(f"Error during chat processing: {e}", exc_info=True)
+        return jsonify({"error": "An error occurred while processing your request."}), 500
+
+# --- Serve React Frontend ---
+# This catch-all route should be registered LAST. It serves the React app's index.html
+# for any path that is not an API route, allowing client-side routing to take over.
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
-def serve_frontend(path):
-    # Serve React build files from /build folder to match React default build output
-    build_dir = os.path.join(app.root_path, 'build')
-    if path != "" and os.path.exists(os.path.join(build_dir, path)):
-        return send_from_directory(build_dir, path)
+def serve(path):
+    if path != "" and os.path.exists(os.path.join(app.static_folder, path)):
+        return send_from_directory(app.static_folder, path)
     else:
-        return send_from_directory(build_dir, 'index.html')
+        return send_from_directory(app.static_folder, 'index.html')
 
-def run_app():
-    port = int(os.environ.get("PORT", 10000))
-    debug = os.environ.get("FLASK_ENV", "production") == "development"
-    if socketio:
-        socketio.run(app, host="0.0.0.0", port=port, debug=debug)
-    else:
-        app.run(host="0.0.0.0", port=port, debug=debug, threaded=True)
-
-if __name__ == "__main__":
-    run_app()
+# Note: The `if __name__ == '__main__':` block is removed because Gunicorn
+# is used to run the application in production. The `app` object is the entry point.

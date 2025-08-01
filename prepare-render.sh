@@ -1,5 +1,5 @@
 #!/bin/bash
-# Render.com deployment preparation script
+# Render.com Deployment Preparation & Validation Script
 
 # CRITICAL: Detect if script is being run with Python instead of bash
 if [[ -n "$PYTHONPATH" ]] && [[ "$0" == *".py" ]] || [[ "$#" -eq 0 && "$BASH_VERSION" == "" ]]; then
@@ -17,22 +17,11 @@ if [[ -n "$PYTHONPATH" ]] && [[ "$0" == *".py" ]] || [[ "$#" -eq 0 && "$BASH_VER
 fi
 
 echo "🚀 Preparing PocketPro:SBA for Render deployment..."
-echo "🎯 Target: Python 3.11 (recommended for best compatibility)"
+echo "🎯 Target Docker Environment: Python 3.9 (based on Dockerfile.render.full)"
 
 # Check if running on Windows and provide instructions
 if [[ "$OSTYPE" == "msys" ]] || [[ -n "$WINDIR" ]] || [[ "$OS" == "Windows_NT" ]]; then
-    echo "🪟 Windows environment detected"
-    echo ""
-    echo "⚠️  ERROR: You tried to run this with Python!"
-    echo "❌ DON'T RUN: python prepare-render.sh"
-    echo ""
-    echo "✅ CORRECT WAYS TO RUN THIS SCRIPT:"
-    echo "   • Git Bash: bash prepare-render.sh"
-    echo "   • WSL: wsl bash prepare-render.sh"
-    echo "   • PowerShell: bash ./prepare-render.sh"
-    echo "   • Command Prompt: bash prepare-render.sh"
-    echo ""
-    echo "💡 If bash is not available, install Git for Windows which includes Git Bash"
+    echo "🪟 Windows environment detected. Ensure you are running this script with Git Bash or WSL."
 fi
 
 # Check Python version
@@ -52,157 +41,22 @@ echo "🐍 Python version: $python_version"
 python_major=$($python_cmd -c "import sys; print(sys.version_info.major)")
 python_minor=$($python_cmd -c "import sys; print(sys.version_info.minor)")
 
-# Function to suggest compatible package versions
-suggest_compatible_versions() {
-    local py_version="$1"
-    echo "💡 Recommended package versions for Python $py_version:"
-    
-    case "$py_version" in
-        "3.11")
-            echo "   Flask==2.3.3"
-            echo "   gunicorn==21.2.0"
-            echo "   gevent==23.7.0"
-            echo "   Werkzeug==2.3.7"
-            echo "   google-generativeai==0.3.2"
-            echo "   python-dotenv==1.0.0"
-            echo "   ✅ RECOMMENDED CONFIGURATION"
-            ;;
-        "3.12")
-            echo "   Flask==3.0.0"
-            echo "   gunicorn==21.2.0"
-            echo "   gevent==23.9.1"
-            echo "   Werkzeug==3.0.1"
-            echo "   google-generativeai==0.3.2"
-            echo "   python-dotenv==1.0.0"
-            echo "   ⚠️  Consider downgrading to Python 3.11 for stability"
-            ;;
-        "3.13")
-            echo "   Flask==3.0.0"
-            echo "   gunicorn==21.2.0"
-            echo "   Werkzeug==3.0.1"
-            echo "   google-generativeai==0.3.2"
-            echo "   python-dotenv==1.0.0"
-            echo "   # Remove: gevent, eventlet (not compatible)"
-            echo "   ❌ STRONGLY RECOMMEND: Downgrade to Python 3.11"
-            ;;
-        *)
-            echo "   Flask==2.3.3"
-            echo "   gunicorn==20.1.0"
-            echo "   gevent==22.10.2"
-            echo "   Werkzeug==2.3.7"
-            echo "   google-generativeai==0.3.2"
-            echo "   python-dotenv==1.0.0"
-            echo "   ⚠️  Consider upgrading to Python 3.11"
-            ;;
-    esac
-}
-
 # Version compatibility assessment
-if [[ $python_major -eq 3 && $python_minor -eq 11 ]]; then
-    echo "🎉 Perfect! Python 3.11 detected - optimal compatibility"
-    suggest_compatible_versions "3.11"
-elif [[ $python_major -eq 3 && $python_minor -ge 13 ]]; then
-    echo "🚨 Warning: Python 3.13+ detected. STRONGLY RECOMMEND downgrading to Python 3.11"
-    
-    # Check if gevent is in requirements
-    if grep -q "gevent" requirements.txt 2>/dev/null; then
-        echo "❌ gevent detected in requirements.txt - not compatible with Python 3.13+"
-        echo "💡 SOLUTION: Downgrade to Python 3.11 for full compatibility"
-        echo ""
-        suggest_compatible_versions "3.13"
-        echo ""
-        echo "🔧 Alternative: Remove gevent and use sync workers:"
-        echo "   gunicorn --bind 0.0.0.0:\$PORT --workers 1 --timeout 120 run:app"
-        
-        # Offer to create a Python 3.11 compatible requirements.txt
-        echo ""
-        echo "🛠️  Create Python 3.11 compatible requirements.txt? (y/n)"
-        read -r create_req
-        if [[ $create_req == "y" || $create_req == "Y" ]]; then
-            backup_requirements
-            create_compatible_requirements "3.11"
-            echo "✅ Created Python 3.11 compatible requirements.txt"
-            echo "🔄 Please switch to Python 3.11 in Render settings"
-        fi
-        exit 1
-    fi
-    
-    suggest_compatible_versions "3.13"
-elif [[ $python_major -eq 3 && $python_minor -eq 12 ]]; then
-    echo "⚠️  Python 3.12 detected - good compatibility, but Python 3.11 is recommended"
-    suggest_compatible_versions "3.12"
+if [[ $python_major -eq 3 && $python_minor -eq 9 ]]; then
+    echo "✅ Your local Python version matches the Dockerfile's Python 3.9."
 else
-    echo "⚠️  Python $python_major.$python_minor detected - recommend upgrading to Python 3.11"
-    suggest_compatible_versions "older"
+    echo "⚠️  Warning: Your local Python version is $python_major.$python_minor, but the production Dockerfile uses Python 3.9."
+    echo "   This may lead to inconsistencies. The Docker build will use Python 3.9 regardless of your local version."
 fi
 
-# Function to backup current requirements
-backup_requirements() {
-    if [[ -f "requirements.txt" ]]; then
-        cp requirements.txt "requirements.txt.backup.$(date +%Y%m%d_%H%M%S)"
-        echo "✅ Backed up requirements.txt"
-    fi
-}
-
-# Function to create compatible requirements.txt
-create_compatible_requirements() {
-    local py_version="$1"
-    echo "📝 Creating Python 3.11 optimized requirements.txt..."
-    
-    # Always create Python 3.11 compatible version as the default
-    cat > requirements.txt << 'EOF'
-# Optimized for Python 3.11 - Production Ready
-Flask==2.3.3
-gunicorn==21.2.0
-gevent==23.7.0
-Werkzeug==2.3.7
-google-generativeai==0.3.2
-python-dotenv==1.0.0
-
-# Core dependencies with proven stability
-Jinja2==3.1.2
-MarkupSafe==2.1.3
-click==8.1.7
-blinker==1.6.3
-itsdangerous==2.1.2
-greenlet==2.0.2
-
-# Additional production dependencies
-certifi==2023.7.22
-charset-normalizer==3.2.0
-idna==3.4
-requests==2.31.0
-urllib3==2.0.4
-
-# Development dependencies (uncomment if needed)
-# pytest==7.4.3
-# black==23.7.0
-# flake8==6.0.0
-EOF
-    
-    echo "✅ Created Python 3.11 optimized requirements.txt"
-    echo "🔍 Contents:"
-    cat requirements.txt
-}
-
 # Check if we have the required files
-required_files=("requirements.txt" "run.py" "app.py")
+required_files=("requirements-render-full.txt" "app_full.py" "Dockerfile.render.full")
 for file in "${required_files[@]}"; do
     if [[ -f "$file" ]]; then
         echo "✅ Found: $file"
     else
         echo "❌ Missing: $file"
-        if [[ "$file" == "requirements.txt" ]]; then
-            echo "🛠️  Create basic requirements.txt? (y/n)"
-            read -r create_basic_req
-            if [[ $create_basic_req == "y" || $create_basic_req == "Y" ]]; then
-                create_compatible_requirements "$python_major.$python_minor"
-            else
-                exit 1
-            fi
-        else
-            exit 1
-        fi
+        echo "   
     fi
 done
 
