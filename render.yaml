@@ -16,13 +16,18 @@ services:
     dockerfilePath: ./Dockerfile.render.full
     # This command starts the production server, which serves both the API and the frontend.
     # It is aligned with the CMD in the Dockerfile for consistency.
-    dockerCommand: gunicorn --bind 0.0.0.0:$PORT --worker-class eventlet -w 1 app_full:app
+    # Added --timeout for long-running AI tasks and aligned with best practices.
+    dockerCommand: gunicorn --bind 0.0.0.0:$PORT --worker-class eventlet -w 1 --timeout 120 app_full:app
     healthCheck:
       path: /health
       initialDelaySeconds: 60
     envVars:
       - key: FLASK_ENV
         value: production
+      - key: PORT # Explicitly define the port for clarity, though Render injects it.
+        value: 10000
+      - key: PYTHONUNBUFFERED # Ensures logs are sent directly to the console for real-time viewing.
+        value: "1"
       - key: CHROMA_HOST
         fromService:
           type: pserv
@@ -48,7 +53,8 @@ services:
     disks:
       - name: chromadb-data
         mountPath: /chroma/chroma
-        sizeGB: 1
+        sizeGB: 1 # Note: Consider increasing size for larger document collections.
+    port: 8000 # Explicitly declare the internal port for ChromaDB.
     healthCheck:
       path: /api/v1/heartbeat
       initialDelaySeconds: 40
