@@ -38,7 +38,7 @@ services:
   # --------------------------------------------------
   # Frontend Service (React Static Site)
   # --------------------------------------------------
-  - type: static
+  - type: web
     name: pocketpro-frontend
     buildFilter:
       paths:
