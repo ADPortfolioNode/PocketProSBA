@@ -38,7 +38,7 @@ services:
   # --------------------------------------------------
   # Frontend Service (React Static Site)
   # --------------------------------------------------
-  - type: static
+  - type: docker
     name: pocketpro-frontend
     buildFilter:
       paths:
@@ -58,7 +58,7 @@ services:
   - type: pserv
     name: chromadb
     runtime: docker
-    dockerImageName: chromadb/chroma:latest
+    dockerImageName: chromadb/chroma:0.5.0 # Pin to a specific version for stability
     # Render Disks are required for data persistence
     disks:
       - name: chromadb-data
