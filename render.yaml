@@ -28,17 +28,17 @@ services:
           type: pserv
           name: chromadb
           property: port
+      # NOTE: To break a circular dependency, FRONTEND_URL must be set manually
+      # in the 'pocketpro-secrets' environment group after the first deployment.
       - key: CORS_ORIGINS
-        fromService:
-          type: static
-          name: pocketpro-frontend
-          property: url # Dynamically sets CORS to the frontend's public URL
-      - fromGroup: pocketpro-secrets # Group for API keys and other secrets
+        fromGroup: pocketpro-secrets
+        envVarKey: FRONTEND_URL
+      - fromGroup: pocketpro-secrets
 
   # --------------------------------------------------
   # Frontend Service (React Static Site)
   # --------------------------------------------------
-  - type: web
+  - type: static
     name: pocketpro-frontend
     buildFilter:
       paths:
@@ -74,3 +74,5 @@ envVarGroups:
       - key: GEMINI_API_KEY
       - key: SECRET_KEY
         generateValue: true # Let Render generate a secure random string
+      - key: FRONTEND_URL
+        value: "https://your-frontend-url.onrender.com" # IMPORTANT: Update this after your first deployment
