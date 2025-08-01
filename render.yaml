@@ -37,10 +37,22 @@ services:
     initialDelaySeconds: 40
 
   # --------------------------------------------------
-  # 3. Main Application Service (Dependent)
+  # 3. Redis Service (Dependency for Scaling)
+  # --------------------------------------------------
+  # A Redis instance is critical for session management and caching in a
+  # production environment, especially if scaling to multiple instances.
+  - type: pwr
+    name: redis
+    plan: starter
+    region: oregon
+    dockerImageName: redis:7-alpine # Use a specific, lightweight Redis image.
+    maxmemoryPolicy: allkeys-lru # Recommended policy for caching and sessions.
+
+  # --------------------------------------------------
+  # 4. Main Application Service (Dependent)
   # --------------------------------------------------
   # This service builds from a Dockerfile and serves both the API and frontend.
-  # It is defined last as it depends on the ChromaDB service and the secret group.
+  # It is defined last as it depends on the ChromaDB, Redis, and secret group.
   - type: web
     name: pocketpro-sba-app
     plan: standard # Use 'standard' plan to prevent the service from spinning down on inactivity.
@@ -73,6 +85,11 @@ services:
         value: "true"
       - key: UPLOAD_FOLDER # Ensures the app writes to the correct persistent disk path.
         value: /app/uploads
+      - key: REDIS_URL # Connect to the Redis service for session management.
+        fromService:
+          type: pwr
+          name: redis
+          property: connectionString
       - key: CHROMA_HOST
         fromService:
           type: pserv
