@@ -94,8 +94,7 @@ class SimpleVectorStore:
             {
                 'id': doc_id,
                 'text': doc['text'],
-                'metadata': doc['metadata']
-            }
+                'metadata': doc['metadata']            }
             for doc_id, doc in self.documents.items()
         ]
     

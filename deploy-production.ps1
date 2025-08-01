@@ -75,7 +75,7 @@ $retryCount = 0
 
 while (-not $healthCheck -and $retryCount -lt $maxRetries) {
     try {
-        $response = Invoke-WebRequest -Uri "http://localhost:5000/health" -TimeoutSec 5
+        $response = Invoke-WebRequest -Uri "http://localhost:5000/correction/api/health" -TimeoutSec 5
         if ($response.StatusCode -eq 200) {
             $healthCheck = $true
             Write-Host "[√] Backend health check passed" -ForegroundColor Green
