@@ -6,6 +6,7 @@
 
 services:
   # --------------------------------------------------
+  
   # 1. ChromaDB Service (Dependency)
   # --------------------------------------------------
   # This service is defined before the main app because the app depends on it.
