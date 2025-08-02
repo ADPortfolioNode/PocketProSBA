@@ -29,6 +29,7 @@ services:
     name: redis
     plan: standard
     region: oregon
+    ipAllowList: []
     maxmemoryPolicy: allkeys-lru
 
   # --------------------------------------------------
