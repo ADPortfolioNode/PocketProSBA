@@ -23,7 +23,7 @@ services:
   # This service is defined before the main app because the app depends on it.
   - type: pserv # Reverted to Private Service for security and proper architecture.
     name: chromadb
-    plan: starter
+    plan: standard
     # Note: For production loads, consider upgrading the plan (e.g., to 'standard').
     region: oregon
     env: docker
@@ -43,7 +43,7 @@ services:
   # Using Render's native Redis service is recommended over a Docker-based one.
   - type: redis
     name: redis
-    plan: starter # Note: For production loads, consider upgrading the plan.
+    plan: standard # Match the plan of the main app for production stability.
     region: oregon
     maxmemoryPolicy: allkeys-lru # Sets the memory policy.
 
@@ -103,20 +103,3 @@ services:
           property: port
       # --- Secret Group Dependency ---
       - fromGroup: pocketpro-secrets
-
-  # --------------------------------------------------
-  # 5. Frontend Static Site Service
-  # --------------------------------------------------
-  # This service builds and deploys the React frontend. It depends on the
-  # backend service to configure its API endpoint URL.
-  - type: static
-    name: pocketpro-sba-frontend
-    region: oregon
-    buildCommand: cd frontend && npm ci && npm run build:production
-    staticPublishPath: frontend/build
-    envVars:
-      - key: REACT_APP_BACKEND_URL
-        fromService:
-          type: web
-          name: pocketpro-sba-app
-          property: url
