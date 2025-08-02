@@ -53,8 +53,10 @@ COPY --from=frontend-builder --chown=appuser:appgroup /app/frontend/build ./stat
 COPY --chown=appuser:appgroup app_full.py ./
 
 # Create and set permissions for necessary application directories.
-RUN mkdir -p /app/uploads /app/logs /app/chroma_storage && \
-    chown -R appuser:appgroup /app/uploads /app/logs /app/chroma_storage
+# The 'uploads' and 'logs' directories are created so permissions can be set.
+# They will be mounted over by persistent disks on Render.
+RUN mkdir -p /app/uploads /app/logs && \
+    chown -R appuser:appgroup /app/uploads /app/logs
 
 # Activate the virtual environment for subsequent commands.
 ENV VIRTUAL_ENV=/opt/venv
@@ -74,4 +76,6 @@ EXPOSE 10000
 
 # The command to run the application using Gunicorn.
 # It uses the $PORT environment variable provided by Render.
-CMD ["gunicorn", "--bind", "0.0.0.0:$PORT", "--worker-class", "eventlet", "-w", "1", "--timeout", "120", "app_full:app"]
+# Use multiple synchronous workers to handle concurrent requests on a single instance.
+# A good starting point for a 'standard' plan (1 CPU) is 2-4 workers.
+CMD ["gunicorn", "--bind", "0.0.0.0:$PORT", "--workers", "3", "--timeout", "120", "app_full:app"]

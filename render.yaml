@@ -4,89 +4,88 @@
 # on Render.com. It has been consolidated from multiple versions to create a single,
 # stable, and production-ready configuration.
 
-# --------------------------------------------------
-# 1. Environment Variable Groups (Shared Configuration)
-# --------------------------------------------------
-# Groups are defined first so they can be referenced by any service below.
 envVarGroups:
+  # This defines a group for managing secrets like API keys. The actual values
+  # must be set in the Render dashboard under the "Environment" section. This
+  # is the secure and recommended way to handle sensitive data.
   - name: pocketpro-secrets
     envVars:
       - key: GEMINI_API_KEY
-        # CRITICAL: This value must be set securely in the Render.com dashboard.
-      - key: SECRET_KEY
-        generateValue: true # Let Render generate a secure random string
 
 services:
   # --------------------------------------------------
-  # 2. ChromaDB Private Service (Dependency)
+  # 1. ChromaDB Private Service (Dependency)
   # --------------------------------------------------
   # This service is defined before the main app because the app depends on it.
-  - type: pserv # Reverted to Private Service for security and proper architecture.
+  - type: pserv
     name: chromadb
     plan: standard
-    # Note: For production loads, consider upgrading the plan (e.g., to 'standard').
     region: oregon
     env: docker
-    dockerImageName: chromadb/chroma:0.5.0 # Pin to a specific version for stability
-    # Render Disks are required for data persistence
+    # The 'image.url' property is the correct way to specify a pre-built Docker
+    # image for services with 'env: docker'.
+    image:
+      url: docker.io/chromadb/chroma:0.5.0
     disks:
       - name: chromadb-data
         mountPath: /chroma/chroma
-        sizeGB: 1 # Note: Consider increasing size for larger document collections.
-    healthCheckPath: /api/v1/heartbeat
-    initialDelaySeconds: 40
+        sizeGB: 1
+    port: 8000
+    healthCheck:
+      path: /api/v1/heartbeat
+      initialDelaySeconds: 40
 
   # --------------------------------------------------
-  # 3. Redis Service (Dependency for Scaling)
+  # 2. Redis Service (Dependency for Scaling)
   # --------------------------------------------------
   # A Redis instance is critical for session management and caching.
-  # Using Render's native Redis service is recommended over a Docker-based one.
   - type: redis
     name: redis
-    plan: standard # Match the plan of the main app for production stability.
+    plan: standard
     region: oregon
-    maxmemoryPolicy: allkeys-lru # Sets the memory policy.
+    maxmemoryPolicy: allkeys-lru
 
   # --------------------------------------------------
-  # 4. Backend API Service (Dependent)
+  # 3. Backend API Service (Dependent)
   # --------------------------------------------------
   # This service builds from a Dockerfile and serves both the API and frontend.
-  # It is defined last as it depends on the ChromaDB, Redis, and the secret group.
   - type: web
     name: pocketpro-sba-app
-    plan: standard # Use 'standard' plan to prevent the service from spinning down on inactivity.
-    numInstances: 2 # Run two instances for high availability and to leverage the Redis session store.
-    # Note: For production loads, consider upgrading the plan and increasing numInstances.
+    plan: standard
+    numInstances: 1
     region: oregon
-    env: docker # Use the modern 'env' key instead of the legacy 'runtime' key.
+    env: docker
     dockerfilePath: ./Dockerfile.render.full
-    # A persistent disk is CRITICAL for storing user-uploaded documents.
-    # Without these, all uploads and log files would be lost on every deploy.
     disks:
       - name: pocketpro-uploads
         mountPath: /app/uploads
-        sizeGB: 1 # Define size for the uploads disk; this is a required property.
+        sizeGB: 1
       - name: pocketpro-logs
         mountPath: /app/logs
-        sizeGB: 1 # Allocate a separate disk for logs for better debugging and isolation.
-    autoDeploy: true # Automatically deploy on new commits to the main branch.
-    # NOTE: Health check path is inconsistent across project files. Most use '/health'.
-    # Verify the correct endpoint in your Flask app.
-    healthCheckPath: /health
-    healthCheckTimeoutSeconds: 30 # Allow more time for health checks to prevent false failures under load.
-    initialDelaySeconds: 60
+        sizeGB: 1
+    autoDeploy: true
+    healthCheck:
+      path: /health
+      timeoutSeconds: 30
+      initialDelaySeconds: 60
     envVars:
       - key: FLASK_ENV
         value: production
-      - key: PYTHON_VERSION # For documentation and clarity
-        value: "3.9"
+      # It's best practice to define all runtime env vars here, even if they
+      # are also in the Dockerfile, to make render.yaml the single source of truth.
+      - key: FLASK_APP
+        value: app_full.py
+      - key: PYTHONDONTWRITEBYTECODE
+        value: "1"
+      - key: PYTHONUNBUFFERED
+        value: "1"
       - key: LOG_LEVEL
         value: INFO
       - key: RAG_SYSTEM_ENABLED
         value: "true"
-      - key: UPLOAD_FOLDER # Ensures the app writes to the correct persistent disk path.
+      - key: UPLOAD_FOLDER
         value: /app/uploads
-      - key: REDIS_URL # Connect to the Redis service for session management.
+      - key: REDIS_URL
         fromService:
           type: redis
           name: redis
@@ -101,5 +100,7 @@ services:
           type: pserv
           name: chromadb
           property: port
+      - key: SECRET_KEY
+        generateValue: true
       # --- Secret Group Dependency ---
       - fromGroup: pocketpro-secrets

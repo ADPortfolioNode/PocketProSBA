@@ -85,6 +85,9 @@ def health_check():
     Provides a health check for the service.
     For a robust check, it verifies the connection to ChromaDB.
     """
+    chroma_status = "disabled"
+    http_status_code = 200
+
     if CHROMADB_AVAILABLE and chroma_client:
         try:
             # Heartbeat is a lightweight check to see if the service is up
@@ -93,16 +96,16 @@ def health_check():
         except Exception as e:
             logger.error(f"Health check failed to connect to ChromaDB: {e}")
             chroma_status = "disconnected"
-    else:
-        chroma_status = "disabled"
+            http_status_code = 503 # Service Unavailable
 
+    # Return a tuple: (JSON response, HTTP status code)
     return jsonify({
-        "status": "healthy" if chroma_status in ["connected", "disabled"] else "unhealthy",
+        "status": "healthy" if http_status_code == 200 else "unhealthy",
         "service": "PocketPro:SBA Backend",
         "dependencies": {
             "chromadb": chroma_status
         }
-    })
+    }), http_status_code
 
 @app.route('/api/info')
 def get_info():
