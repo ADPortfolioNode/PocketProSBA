@@ -46,20 +46,6 @@ services:
     autoDeploy: true
     healthCheckPath: /health
     envVars:
-      - key: FLASK_ENV
-        value: production
-      - key: FLASK_APP
-        value: app_full.py
-      - key: PYTHONDONTWRITEBYTECODE
-        value: "1"
-      - key: PYTHONUNBUFFERED
-        value: "1"
-      - key: LOG_LEVEL
-        value: INFO
-      - key: RAG_SYSTEM_ENABLED
-        value: "true"
-      - key: UPLOAD_FOLDER
-        value: /app/uploads
       - key: REDIS_URL
         fromService:
           type: redis
@@ -75,7 +61,3 @@ services:
           type: web
           name: chromadb
           property: port
-      - key: GEMINI_API_KEY
-        sync: false
-      - key: SECRET_KEY
-        generateValue: true
