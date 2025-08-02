@@ -21,7 +21,7 @@ services:
   # 2. ChromaDB Private Service (Dependency)
   # --------------------------------------------------
   # This service is defined before the main app because the app depends on it.
-  - type: pserv
+  - type: pserv # Reverted to Private Service for security and proper architecture.
     name: chromadb
     plan: starter
     # Note: For production loads, consider upgrading the plan (e.g., to 'standard').
@@ -41,21 +41,23 @@ services:
   # --------------------------------------------------
   # A Redis instance is critical for session management and caching in a
   # production environment, especially if scaling to multiple instances.
-  - type: pwr
+  - type: pserv # Reverted to Private Service. No disk is used to ensure compatibility.
     name: redis
     plan: starter
     region: oregon
     dockerImageName: redis:7-alpine # Use a specific, lightweight Redis image.
-    maxmemoryPolicy: allkeys-lru # Recommended policy for caching and sessions.
+    # This command sets the memory policy. No persistence is configured.
+    dockerCommand: redis-server --maxmemory-policy allkeys-lru
 
   # --------------------------------------------------
   # 4. Main Application Service (Dependent)
   # --------------------------------------------------
   # This service builds from a Dockerfile and serves both the API and frontend.
-  # It is defined last as it depends on the ChromaDB, Redis, and secret group.
+  # It is defined last as it depends on the ChromaDB, Redis, and the secret group.
   - type: web
     name: pocketpro-sba-app
     plan: standard # Use 'standard' plan to prevent the service from spinning down on inactivity.
+    numInstances: 2 # Run two instances for high availability and to leverage the Redis session store.
     # Note: For production loads, consider upgrading the plan and increasing numInstances.
     region: oregon
     # The 'runtime' key is used for compatibility with this project's Render environment.
@@ -73,6 +75,7 @@ services:
         sizeGB: 1 # Allocate a separate disk for logs for better debugging and isolation.
     autoDeploy: true # Automatically deploy on new commits to the main branch.
     healthCheckPath: /api/health # Align with the documented API endpoint for health checks.
+    healthCheckTimeoutSeconds: 30 # Allow more time for health checks to prevent false failures under load.
     initialDelaySeconds: 60
     envVars:
       - key: FLASK_ENV
@@ -87,7 +90,7 @@ services:
         value: /app/uploads
       - key: REDIS_URL # Connect to the Redis service for session management.
         fromService:
-          type: pwr
+          type: pserv
           name: redis
           property: connectionString
       - key: CHROMA_HOST
