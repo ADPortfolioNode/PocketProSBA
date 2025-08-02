@@ -26,7 +26,7 @@ services:
     plan: starter
     # Note: For production loads, consider upgrading the plan (e.g., to 'standard').
     region: oregon
-    runtime: docker
+    env: docker
     dockerImageName: chromadb/chroma:0.5.0 # Pin to a specific version for stability
     # Render Disks are required for data persistence
     disks:
@@ -39,18 +39,16 @@ services:
   # --------------------------------------------------
   # 3. Redis Service (Dependency for Scaling)
   # --------------------------------------------------
-  # A Redis instance is critical for session management and caching in a
-  # production environment, especially if scaling to multiple instances.
-  - type: pserv # Reverted to Private Service. No disk is used to ensure compatibility.
+  # A Redis instance is critical for session management and caching.
+  # Using Render's native Redis service is recommended over a Docker-based one.
+  - type: redis
     name: redis
-    plan: starter
+    plan: starter # Note: For production loads, consider upgrading the plan.
     region: oregon
-    dockerImageName: redis:7-alpine # Use a specific, lightweight Redis image.
-    # This command sets the memory policy. No persistence is configured.
-    dockerCommand: redis-server --maxmemory-policy allkeys-lru
+    maxmemoryPolicy: allkeys-lru # Sets the memory policy.
 
   # --------------------------------------------------
-  # 4. Main Application Service (Dependent)
+  # 4. Backend API Service (Dependent)
   # --------------------------------------------------
   # This service builds from a Dockerfile and serves both the API and frontend.
   # It is defined last as it depends on the ChromaDB, Redis, and the secret group.
@@ -60,9 +58,7 @@ services:
     numInstances: 2 # Run two instances for high availability and to leverage the Redis session store.
     # Note: For production loads, consider upgrading the plan and increasing numInstances.
     region: oregon
-    # The 'runtime' key is used for compatibility with this project's Render environment.
-    # The modern key is 'env', but 'runtime' resolves a known deployment issue.
-    runtime: docker
+    env: docker # Use the modern 'env' key instead of the legacy 'runtime' key.
     dockerfilePath: ./Dockerfile.render.full
     # A persistent disk is CRITICAL for storing user-uploaded documents.
     # Without these, all uploads and log files would be lost on every deploy.
@@ -74,7 +70,9 @@ services:
         mountPath: /app/logs
         sizeGB: 1 # Allocate a separate disk for logs for better debugging and isolation.
     autoDeploy: true # Automatically deploy on new commits to the main branch.
-    healthCheckPath: /api/health # Align with the documented API endpoint for health checks.
+    # NOTE: Health check path is inconsistent across project files. Most use '/health'.
+    # Verify the correct endpoint in your Flask app.
+    healthCheckPath: /health
     healthCheckTimeoutSeconds: 30 # Allow more time for health checks to prevent false failures under load.
     initialDelaySeconds: 60
     envVars:
@@ -90,7 +88,7 @@ services:
         value: /app/uploads
       - key: REDIS_URL # Connect to the Redis service for session management.
         fromService:
-          type: pserv
+          type: redis
           name: redis
           property: connectionString
       - key: CHROMA_HOST
@@ -105,3 +103,20 @@ services:
           property: port
       # --- Secret Group Dependency ---
       - fromGroup: pocketpro-secrets
+
+  # --------------------------------------------------
+  # 5. Frontend Static Site Service
+  # --------------------------------------------------
+  # This service builds and deploys the React frontend. It depends on the
+  # backend service to configure its API endpoint URL.
+  - type: static
+    name: pocketpro-sba-frontend
+    region: oregon
+    buildCommand: cd frontend && npm ci && npm run build:production
+    staticPublishPath: frontend/build
+    envVars:
+      - key: REACT_APP_BACKEND_URL
+        fromService:
+          type: web
+          name: pocketpro-sba-app
+          property: url

@@ -1,61 +1,54 @@
-# Git
+# .dockerignore
+# This file prevents specified files and directories from being sent to the
+# Docker daemon as part of the build context. This speeds up builds and
+# helps create smaller, more secure images.
+
+# Git and CI/CD
 .git
+.github
 .gitignore
 
-# Docker
-docker-compose*
-# Do NOT ignore Dockerfile or .dockerignore so builds work
+# IDE and OS specific
+.vscode/
+.idea/
+.DS_Store
+*.swp
 
-# Environment
-.env*
-.env.template
-venv/
-.python-version
-
-# Python
+# Python specific artifacts
 __pycache__/
 *.pyc
 *.pyo
-*.pyd
-.Python
-.env
 .venv
+venv/
 env/
 
-# Node
-node_modules/
-npm-debug.log
-yarn-debug.log
-yarn-error.log
-build/
-dist/
-# Always ignore node_modules to keep image size down
-frontend/node_modules/
-node_modules/
-# Do NOT ignore public/ so index.html is always included
-# frontend/build/ is fine to ignore, but keep public/
+# Node specific artifacts
+frontend/node_modules
+frontend/build
+frontend/.pnp
+frontend/.pnp.js
+frontend/coverage
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
-# IDE / Editor
-.vscode/
-.idea/
+# Environment files - NEVER include these in an image
+.env
+.env.*
+!/.env.example
 
-# Data and Logs
-chromadb_data/
-logs/
-*.log
-tmp/
-temp/
-__pycache__/
-.pytest_cache/
-.mypy_cache/
+# Local data, logs, and documentation
+/uploads
+/logs
+/chroma_storage
+*.md
 
-# Misc
-.DS_Store
-*.log
-.pytest_cache/
-.coverage
-htmlcov/
-.tox/
-dist/
-build/
-*.egg-info/
+# Scripts and configuration files not needed in the image
+*.sh
+*.ps1
+Dockerfile*
+docker-compose*
+render*.yaml
+render*.yml
+production-test.yml
+nginx.conf
