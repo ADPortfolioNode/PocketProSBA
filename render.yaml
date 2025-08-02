@@ -4,36 +4,22 @@
 # on Render.com. It has been consolidated from multiple versions to create a single,
 # stable, and production-ready configuration.
 
-envVarGroups:
-  # This defines a group for managing secrets like API keys. The actual values
-  # must be set in the Render dashboard under the "Environment" section. This
-  # is the secure and recommended way to handle sensitive data.
-  - name: pocketpro-secrets
-    envVars:
-      - key: GEMINI_API_KEY
-
 services:
   # --------------------------------------------------
-  # 1. ChromaDB Private Service (Dependency)
+  # 1. ChromaDB Service (Dependency)
   # --------------------------------------------------
   # This service is defined before the main app because the app depends on it.
-  - type: pserv
+  - type: web
     name: chromadb
+    runtime: docker
+    image:
+      url: chromadb/chroma:0.5.0
     plan: standard
     region: oregon
-    env: docker
-    # The 'image.url' property is the correct way to specify a pre-built Docker
-    # image for services with 'env: docker'.
-    image:
-      url: docker.io/chromadb/chroma:0.5.0
-    disks:
-      - name: chromadb-data
-        mountPath: /chroma/chroma
-        sizeGB: 1
-    port: 8000
-    healthCheck:
-      path: /api/v1/heartbeat
-      initialDelaySeconds: 40
+    healthCheckPath: /api/v1/heartbeat
+    envVars:
+      - key: CHROMA_SERVER_HOST
+        value: 0.0.0.0
 
   # --------------------------------------------------
   # 2. Redis Service (Dependency for Scaling)
@@ -54,25 +40,13 @@ services:
     plan: standard
     numInstances: 1
     region: oregon
-    env: docker
+    runtime: docker
     dockerfilePath: ./Dockerfile.render.full
-    disks:
-      - name: pocketpro-uploads
-        mountPath: /app/uploads
-        sizeGB: 1
-      - name: pocketpro-logs
-        mountPath: /app/logs
-        sizeGB: 1
     autoDeploy: true
-    healthCheck:
-      path: /health
-      timeoutSeconds: 30
-      initialDelaySeconds: 60
+    healthCheckPath: /health
     envVars:
       - key: FLASK_ENV
         value: production
-      # It's best practice to define all runtime env vars here, even if they
-      # are also in the Dockerfile, to make render.yaml the single source of truth.
       - key: FLASK_APP
         value: app_full.py
       - key: PYTHONDONTWRITEBYTECODE
@@ -92,15 +66,15 @@ services:
           property: connectionString
       - key: CHROMA_HOST
         fromService:
-          type: pserv
+          type: web
           name: chromadb
           property: host
       - key: CHROMA_PORT
         fromService:
-          type: pserv
+          type: web
           name: chromadb
           property: port
+      - key: GEMINI_API_KEY
+        sync: false
       - key: SECRET_KEY
         generateValue: true
-      # --- Secret Group Dependency ---
-      - fromGroup: pocketpro-secrets
