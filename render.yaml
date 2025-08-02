@@ -6,7 +6,6 @@
 
 services:
   # --------------------------------------------------
-  
   # 1. ChromaDB Service (Dependency)
   # --------------------------------------------------
   # This service is defined before the main app because the app depends on it.
@@ -44,7 +43,7 @@ services:
     region: oregon
     runtime: docker
     dockerfilePath: ./Dockerfile.render.full
-    autoDeploy: true
+    autoDeploy: s
     healthCheckPath: /health
     envVars:
       - key: REDIS_URL
@@ -66,3 +65,5 @@ services:
         sync: false
       - key: SECRET_KEY
         generateValue: true
+    blueprint:
+      version: 1
