@@ -43,7 +43,7 @@ services:
     region: oregon
     runtime: docker
     dockerfilePath: ./Dockerfile.render.full
-    autoDeploy: s
+    autoDeploy: true
     healthCheckPath: /health
     envVars:
       - key: REDIS_URL
@@ -65,5 +65,4 @@ services:
         sync: false
       - key: SECRET_KEY
         generateValue: true
-    blueprint:
-      version: 1
+  
