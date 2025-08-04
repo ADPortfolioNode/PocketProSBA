@@ -2,20 +2,21 @@ FROM node:18-alpine
 
 WORKDIR /app
 
-# Copy package.json and package-lock.json
-COPY package.json package-lock.json ./
+# Copy package files
+COPY package*.json ./
 
-# Install dependencies
-RUN npm install
+# Clear npm cache and install dependencies with legacy peer deps
+RUN npm cache clean --force && \
+    npm install --legacy-peer-deps
 
-# Ensure proper file permissions
-RUN chmod -R 777 /app
-
-# Copy the rest of the app
+# Copy source code
 COPY . .
 
-# Expose the port
+# Set proper permissions
+RUN chmod -R 755 /app
+
+# Expose port
 EXPOSE 3000
 
-# Start the app
+# Start development server
 CMD ["npm", "start"]
