@@ -1,54 +1,35 @@
-# .dockerignore
-# This file prevents specified files and directories from being sent to the
-# Docker daemon as part of the build context. This speeds up builds and
-# helps create smaller, more secure images.
-
-# Git and CI/CD
-.git
-.github
-.gitignore
-
-# IDE and OS specific
-.vscode/
-.idea/
-.DS_Store
-*.swp
-
-# Python specific artifacts
+# Ignore Python cache and virtualenv
 __pycache__/
 *.pyc
 *.pyo
-.venv
+*.pyd
 venv/
-env/
 
-# Node specific artifacts
-frontend/node_modules
-frontend/build
-frontend/.pnp
-frontend/.pnp.js
-frontend/coverage
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Environment files - NEVER include these in an image
+# Ignore environment files
 .env
 .env.*
-!/.env.example
 
-# Local data, logs, and documentation
-/uploads
-/logs
-/chroma_storage
+# Ignore node modules and frontend build cache
+node_modules/
+frontend/node_modules/
+frontend/build/
+
+# Ignore git and editor files
+.git/
+.gitignore
+*.swp
+*.swo
+*.bak
+*.tmp
+
+# Ignore logs and uploads (unless you want to persist uploads in Docker)
+logs/
+uploads/
+
+# Ignore test and local config files
+tests/
 *.md
-
-# Scripts and configuration files not needed in the image
-*.sh
-*.ps1
 Dockerfile*
 docker-compose*
-render*.yaml
-render*.yml
-production-test.yml
-nginx.conf
+*.log
+*.DS_Store
