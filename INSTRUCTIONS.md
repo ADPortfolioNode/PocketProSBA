@@ -48,13 +48,13 @@
 
 ---
 
-### Dockerfile.render.full (Production Docker Build)
-- **Multi-stage build:**
-  - Stage 1: Build React frontend with Node 16.20.2-alpine
-  - Stage 2: Build Python backend in a venv
-  - Stage 3: Copy only built assets and production code to a minimal Python image
-- **Frontend static files** are served from `/app/static` by Flask
-- **Backend** runs with Gunicorn, non-root user, and exposes port 10000 (Render.com default)
+### Dockerfile.backend.multi (Production Docker Build)
+- **Multi-stage build** with named targets (`dev` & `prod`):
+- Stage 1 (`dev`): React frontend build with Node 16.20.2-alpine
+- Stage 2 (`dev`): Install backend dependencies for development
+- Stage 3 (`prod`): Copy only production backend code and install production dependencies
+- Uses `Dockerfile.backend.multi` (target `prod`) and `requirements-render-production.txt`
+- Healthcheck on `/health` port `5000`
 - **.dockerignore** is required to avoid copying dev files, node_modules, etc.
 
 ---

@@ -42,7 +42,8 @@ services:
     numInstances: 1
     region: oregon
     runtime: docker
-    dockerfilePath: ./Dockerfile.render.full
+    dockerfilePath: ./Dockerfile.backend.multi
+      dockerBuildTarget: prod
     autoDeploy: true
     healthCheckPath: /health
     envVars:

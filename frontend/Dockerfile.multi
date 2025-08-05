@@ -1,0 +1,41 @@
+# Frontend Dockerfile (Multi-stage: dev & prod)
+# Usage:
+#   docker build --target dev  -f Dockerfile.multi -t pocketpro-sba-frontend:dev  .
+#   docker build --target prod -f Dockerfile.multi -t pocketpro-sba-frontend:prod .
+
+# Base Node image
+ARG NODE_VERSION=18
+FROM node:${NODE_VERSION}-alpine AS base
+WORKDIR /app
+ENV PATH /app/node_modules/.bin:$PATH
+
+# Install dependencies
+COPY package.json package-lock.json ./
+RUN npm ci
+
+# Copy source code
+COPY . .
+
+# ------- Development Stage -------
+FROM base AS dev
+ENV NODE_ENV=development
+# Expose port for React dev server
+EXPOSE 3000
+# Start React app
+CMD ["npm", "start"]
+
+# ------- Production Stage -------
+FROM base AS build
+ENV NODE_ENV=production
+RUN npm run build
+
+# Final stage: serve built assets with a lightweight server
+FROM nginx:alpine AS prod
+# Copy build output
+COPY --from=build /app/build /usr/share/nginx/html
+# Copy custom nginx configuration if exists
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Expose HTTP port
+EXPOSE 80
+# Start Nginx
+CMD ["nginx", "-g", "daemon off;"]

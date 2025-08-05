@@ -8,13 +8,16 @@ import math
 from collections import Counter
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-
-# Configure logging
++from src.utils.config import config
++
++# Load Flask config from environment
++app = Flask(__name__)
++app.config.from_object(config)
++# Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-app = Flask(__name__)
-CORS(app)
+# CORS already configured above
 
 # Simple in-memory vector store
 class SimpleVectorStore:

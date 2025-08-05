@@ -1,0 +1,57 @@
+# Backend Dockerfile (Multi-stage: dev & prod)
+# Usage:
+#   docker build --target dev  -f Dockerfile.backend.multi -t pocketpro-sba-backend:dev  .
+#   docker build --target prod -f Dockerfile.backend.multi -t pocketpro-sba-backend:prod .
+
+# Base image with common setup
+ARG PYTHON_VERSION=3.11-slim
+FROM python:${PYTHON_VERSION} AS base
+WORKDIR /app
+
+# System dependencies required across stages
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+      curl procps build-essential g++ && \
+    rm -rf /var/lib/apt/lists/*
+
+# Python environment variables
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONHASHSEED=random \
+    PORT=5000
+
+# Copy all application source
+COPY . .
+
+# ------- Development Stage -------
+FROM base AS dev
+ENV FLASK_ENV=development \
+    FLASK_APP=run.py
+
+# Install all dependencies for local dev
+RUN pip install --no-cache-dir -r requirements-full.txt
+
+# Expose Flask server port
+EXPOSE 5000
+
+# Default command for dev
+CMD ["flask", "run", "--host=0.0.0.0", "--port=5000"]
+
+# ------- Production Stage -------
+FROM base AS prod
+ENV FLASK_ENV=production \
+    FLASK_APP=run:application
+
+# Install only production dependencies
+COPY requirements-render-production.txt .
+RUN pip install --no-cache-dir -r requirements-render-production.txt
+
+# Expose service port
+EXPOSE 5000
+
+# Health check endpoint
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:5000/health || exit 1
+
+# Default command for production
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "2", "--threads", "2", "run:application"]
