@@ -65,12 +65,12 @@
 - **Docker:**
   - `deploy-docker.bat` or `./deploy-docker.sh`
 - **Render.com:**
-  - Uses `Dockerfile.render.full` and `requirements-render-full.txt`, healthcheck on `/health` port `10000`
+- Uses `Dockerfile.backend.multi` (target `prod`) and `requirements-render-production.txt`, healthcheck on `/health` port `5000`
 
 ---
 
 ### Health & Verification
-- Health endpoint: `GET /health` on port `10000` (proxied by Nginx)
+- Health endpoint: `GET /health` on port `5000` (proxied by Nginx)
 - Use `docker-compose logs -f` for troubleshooting
 - Verification scripts: `A1Starter1A.*`, `verify-deployment.ps1`, etc.
 
@@ -117,7 +117,7 @@
 
 ### Summary
 - Use Node.js 16.x for all builds
-- Use Dockerfile.render.full for production/Render.com
+- Use Dockerfile.backend.multi (target `prod`) for production/Render.com
 - All secrets and config in environment variables
 - Healthcheck and static file serving are production-ready
 - See this file for all future updates and deployment best practices
