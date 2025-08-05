@@ -8,13 +8,16 @@ import math
 from collections import Counter
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+from src.utils.config import config
+
+# Initialize Flask app and load config
 app = Flask(__name__)
+app.config.from_object(config)
 CORS(app)
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-# CORS already configured above
 
 # Simple in-memory vector store
 class SimpleVectorStore:
@@ -479,7 +482,7 @@ def perform_search(query, n_results=3):
         logger.error(f"Search error: {str(e)}")
         return {'error': f'Search failed: {str(e)}'}
 
-        return []
+       
 
 # Register all routes in one place
 try:
