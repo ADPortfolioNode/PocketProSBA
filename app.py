@@ -8,12 +8,9 @@ import math
 from collections import Counter
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-+from src.utils.config import config
-+
-+# Load Flask config from environment
-+app = Flask(__name__)
-+app.config.from_object(config)
-+# Configure logging
+app = Flask(__name__)
+CORS(app)
+# Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -480,9 +477,8 @@ def perform_search(query, n_results=3):
         
     except Exception as e:
         logger.error(f"Search error: {str(e)}")
-<<<<<<< HEAD
         return {'error': f'Search failed: {str(e)}'}
-=======
+
         return []
 
 # Register all routes in one place
@@ -495,7 +491,6 @@ except Exception as e:
 
 # Create socketio for compatibility with run.py
 socketio = None
->>>>>>> 92e99b6 (production ready- fires out)
 
 if __name__ == '__main__':
     # Render.com compatible port binding
