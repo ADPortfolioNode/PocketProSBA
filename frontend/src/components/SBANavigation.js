@@ -18,6 +18,7 @@ const SBANavigation = ({ activeTab, onTabChange, serverConnected, apiUrl }) => {
                 e.preventDefault();
                 onTabChange("chat");
               }}
+              data-testid="nav-chat"
             >
               Chat
             </Nav.Link>
@@ -28,6 +29,7 @@ const SBANavigation = ({ activeTab, onTabChange, serverConnected, apiUrl }) => {
                 e.preventDefault();
                 onTabChange("browse");
               }}
+              data-testid="nav-browse"
             >
               Browse Resources
             </Nav.Link>
@@ -38,6 +40,7 @@ const SBANavigation = ({ activeTab, onTabChange, serverConnected, apiUrl }) => {
                 e.preventDefault();
                 onTabChange("rag");
               }}
+              data-testid="nav-rag"
             >
               RAG
             </Nav.Link>
@@ -48,6 +51,7 @@ const SBANavigation = ({ activeTab, onTabChange, serverConnected, apiUrl }) => {
                 e.preventDefault();
                 onTabChange("documents");
               }}
+              data-testid="nav-documents"
             >
               Document Center
             </Nav.Link>
@@ -58,6 +62,7 @@ const SBANavigation = ({ activeTab, onTabChange, serverConnected, apiUrl }) => {
                 e.preventDefault();
                 onTabChange("sba");
               }}
+              data-testid="nav-sba"
             >
               SBA Content
             </Nav.Link>
