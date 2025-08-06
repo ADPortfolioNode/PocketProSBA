@@ -485,12 +485,7 @@ def perform_search(query, n_results=3):
        
 
 # Register all routes in one place
-try:
-    from routes import register_all_routes
-    register_all_routes(app)
-    logger.info("✅ All API routes registered successfully")
-except Exception as e:
-    logger.warning(f"⚠️ Failed to register API routes: {str(e)}")
+from routes import register_all_routes
 
 # Create socketio for compatibility with run.py
 socketio = None
