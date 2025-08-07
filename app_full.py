@@ -3,6 +3,7 @@ import logging
 import sys
 from flask import Flask, request, jsonify, send_from_directory
 from dotenv import load_dotenv
+from flask_cors import CORS
 
 # Load environment variables from .env file
 load_dotenv()
@@ -37,6 +38,8 @@ except ImportError:
 # The static_url_path='' makes the root URL serve files from the static folder.
 app = Flask(__name__, static_folder='static', static_url_path='')
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key')
+# Enable CORS for your frontend domain
+CORS(app, origins=["https://pocketprosba-frontend.onrender.com"], supports_credentials=True)
 
 # --- Global Service Initialization ---
 chroma_client = None
@@ -106,6 +109,11 @@ def health_check():
             "chromadb": chroma_status
         }
     }), http_status_code
+
+# Add /api/health for frontend compatibility
+@app.route('/api/health', methods=['GET'])
+def api_health():
+    return jsonify({"status": "ok"}), 200
 
 @app.route('/api/info')
 def get_info():
