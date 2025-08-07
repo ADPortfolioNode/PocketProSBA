@@ -43,7 +43,6 @@ services:
     region: oregon
     runtime: docker
     dockerfilePath: ./Dockerfile.backend.multi
-      dockerBuildTarget: prod
     autoDeploy: true
     healthCheckPath: /health
     envVars:
