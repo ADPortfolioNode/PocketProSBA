@@ -1,4 +1,4 @@
-# Backend Dockerfile (Multi-stage: dev & prod)
+# Backend Dockerfile (Multi-stage: dev & prod) - Render.com Deployment Ready
 # Usage:
 #   docker build --target dev  -f Dockerfile.backend.multi -t pocketpro-sba-backend:dev  .
 #   docker build --target prod -f Dockerfile.backend.multi -t pocketpro-sba-backend:prod .
@@ -20,6 +20,11 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONHASHSEED=random \
     PORT=5000
 
+# Render.com specific environment variables
+ENV FLASK_ENV=production \
+    FLASK_APP=run:application \
+    PYTHONPATH=/app
+
 # Copy all application source
 COPY . .
 
@@ -37,7 +42,7 @@ EXPOSE 5000
 # Default command for dev
 CMD ["flask", "run", "--host=0.0.0.0", "--port=5000"]
 
-# ------- Production Stage -------
+# ------- Production Stage - Render.com Ready -------
 FROM base AS prod
 ENV FLASK_ENV=production \
     FLASK_APP=run:application
@@ -46,12 +51,17 @@ ENV FLASK_ENV=production \
 COPY requirements-render-production.txt .
 RUN pip install --no-cache-dir -r requirements-render-production.txt
 
-# Expose service port
+# Create non-root user for security
+RUN useradd --create-home --shell /bin/bash appuser && \
+    chown -R appuser:appuser /app
+USER appuser
+
+# Expose service port (Render will set PORT env var)
 EXPOSE 5000
 
-# Health check endpoint
+# Health check endpoint - Render.com compatible
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:5000/health || exit 1
+  CMD curl -f http://localhost:${PORT:-5000}/health || exit 1
 
-# Default command for production
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "2", "--threads", "2", "run:application"]
+# Default command for production - Render.com compatible
+CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:${PORT:-5000} --workers 2 --threads 2 --timeout 120 --keep-alive 5 run:application"]
