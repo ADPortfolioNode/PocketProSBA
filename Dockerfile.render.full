@@ -78,4 +78,4 @@ EXPOSE 10000
 # It uses the $PORT environment variable provided by Render.
 # Use multiple synchronous workers to handle concurrent requests on a single instance.
 # A good starting point for a 'standard' plan (1 CPU) is 2-4 workers.
-CMD ["gunicorn", "--bind", "0.0.0.0:$PORT", "--workers", "3", "--timeout", "120", "app_full:app"]
+CMD gunicorn --bind 0.0.0.0:$PORT --workers 3 --timeout 120 app_full:app
