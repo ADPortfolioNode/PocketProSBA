@@ -13,7 +13,14 @@ from src.utils.config import config
 # Initialize Flask app and load config
 app = Flask(__name__)
 app.config.from_object(config)
-CORS(app)
+
+# Configure CORS for production
+cors_origins = [
+    "https://pocketprosba-frontend.onrender.com",
+    "http://localhost:3000",  # For local development
+    "http://127.0.0.1:3000"   # For local development
+]
+CORS(app, origins=cors_origins, supports_credentials=True)
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -258,6 +265,25 @@ def health_check():
         'rag_status': 'available' if rag_system_available else 'unavailable',
         'document_count': vector_store.count()
     })
+
+@app.route('/api/health', methods=['GET'])
+def api_health_check():
+    """API health check endpoint for monitoring (matches frontend expectations)"""
+    response = jsonify({
+        'status': 'healthy',
+        'service': 'PocketPro SBA',
+        'version': '1.0.0',
+        'rag_status': 'available' if rag_system_available else 'unavailable',
+        'document_count': vector_store.count(),
+        'endpoint': '/api/health'
+    })
+    
+    # Add CORS headers explicitly for health endpoints
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    response.headers['Access-Control-Allow-Methods'] = 'GET, OPTIONS'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
+    
+    return response
 
 @app.route('/api/info', methods=['GET'])
 def get_system_info():
