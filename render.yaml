@@ -1,16 +1,40 @@
 services:
   - type: web
+    name: chromadb
+    runtime: docker
+    image:
+      url: chromadb/chroma:0.5.0
+    plan: standard
+    autoDeploy: true
+    healthCheckPath: /api/v1/heartbeat
+    envVars:
+      - key: CHROMA_SERVER_HOST
+        value: 0.0.0.0
+
+  - type: web
     name: pocketpro-sba-app
     runtime: docker
     dockerfilePath: ./Dockerfile.optimized
     plan: standard
     autoDeploy: true
     healthCheckPath: /health
+    envVars:
+      - key: CHROMA_HOST
+        fromService:
+          type: web
+          name: chromadb
+          property: host
+      - key: CHROMA_PORT
+        fromService:
+          type: web
+          name: chromadb
+          property: port
 
   - type: web
     name: pocketprosba-frontend
     runtime: static
     buildCommand: "cd frontend && npm ci --legacy-peer-deps && npm run build"
+    staticPublishPath: ./frontend/build
     autoDeploy: true
     envVars:
       - key: REACT_APP_API_URL
