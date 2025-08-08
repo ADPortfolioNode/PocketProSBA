@@ -39,7 +39,7 @@ services:
     numInstances: 1
     region: oregon
     runtime: docker
-    dockerfilePath: ./Dockerfile.backend.multi
+    dockerfilePath: ./Dockerfile.optimized
     autoDeploy: true
     healthCheckPath: /health
     envVars:
