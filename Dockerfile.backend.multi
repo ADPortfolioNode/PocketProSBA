@@ -49,7 +49,8 @@ ENV FLASK_ENV=production \
 
 # Install only production dependencies
 COPY requirements-render-production.txt .
-RUN pip install --no-cache-dir -r requirements-render-production.txt
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
+    pip install --no-cache-dir -r requirements-render-production.txt
 
 # Create non-root user for security
 RUN useradd --create-home --shell /bin/bash appuser && \
