@@ -2,7 +2,6 @@
 #
 # This file fixes the frontend build errors by using proper Node.js version
 # and addressing the ajvKeywords TypeError
-
 services:
   # --------------------------------------------------
   # 1. ChromaDB Service (Dependency)
@@ -77,6 +76,6 @@ services:
         value: "https://pocketpro-sba-app.onrender.com/api"
     buildFilter:
       paths:
-        - "!*.md"
-        - "!docs"
-        - "!tests"
+        - "*.md"
+        - "docs/"
+        - "tests/"
