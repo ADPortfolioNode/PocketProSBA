@@ -1,0 +1,37 @@
+# Backend Dockerfile for Flask-SocketIO app
+
+FROM python:3.9-slim
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    procps \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set environment variables for better memory management
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+# Don't use PYTHONMALLOC=debug in production as it increases memory usage
+ENV PYTHONHASHSEED=random
+
+# Copy requirements and install dependencies
+COPY requirements-full.txt .
+RUN pip install --no-cache-dir -r requirements-full.txt
+ 
+# Copy the entire application
+COPY . .
+
+ENV FLASK_APP=app_full.py
+ENV FLASK_ENV=production
+ENV PORT=5000
+
+EXPOSE 5000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
+  CMD curl -f http://localhost:5000/health || exit 1
+
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--timeout", "60", "--workers", "1", "--threads", "2", "--preload", "--max-requests", "1000", "--max-requests-jitter", "50", "--config=gunicorn.conf.py", "app_full:app"]
