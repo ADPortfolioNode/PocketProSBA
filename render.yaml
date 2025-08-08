@@ -69,7 +69,7 @@ services:
   # --------------------------------------------------
   - type: web
     name: pocketprosba-frontend
-    env: static
+    runtime: static
     buildCommand: "cd frontend && npm ci --legacy-peer-deps && npm run build"
     staticPublishPath: frontend/build
     envVars:
@@ -78,5 +78,5 @@ services:
     buildFilter:
       paths:
         - "!*.md"
-        - "!docs/"
-        - "!tests/"
+        - "!docs"
+        - "!tests"
