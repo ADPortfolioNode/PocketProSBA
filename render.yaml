@@ -1,85 +1,20 @@
-# render.yaml - Fixed Frontend Build Configuration
-#
-# This file fixes the frontend build errors by using proper Node.js version
-# and addressing the ajvKeywords TypeError
 services:
-  # --------------------------------------------------
-  # 1. ChromaDB Service (Dependency)
-  # --------------------------------------------------
-  - type: web
-    name: chromadb
-    runtime: docker
-    image:
-      url: chromadb/chroma:0.5.0
-    plan: standard
-    region: oregon
-    healthCheckPath: /api/v1/heartbeat
-    envVars:
-      - key: CHROMA_SERVER_HOST
-        value: 0.0.0.0
-
-  # --------------------------------------------------
-  # 2. Redis Service (Dependency for Scaling)
-  # --------------------------------------------------
-  - type: redis
-    name: redis
-    plan: standard
-    region: oregon
-    ipAllowList: []
-    maxmemoryPolicy: allkeys-lru
-
-  # --------------------------------------------------
-  # 3. Backend API Service (Dependent)
-  # --------------------------------------------------
   - type: web
     name: pocketpro-sba-app
-    plan: standard
-    numInstances: 1
-    region: oregon
     runtime: docker
     dockerfilePath: ./Dockerfile.optimized
+    plan: standard
+    region: oregon
     autoDeploy: true
     healthCheckPath: /health
-    envVars:
-      - key: REDIS_URL
-        fromService:
-          type: redis
-          name: redis
-          property: connectionString
-      - key: CHROMA_HOST
-        fromService:
-          type: web
-          name: chromadb
-          property: host
-      - key: CHROMA_PORT
-        fromService:
-          type: web
-          name: chromadb
-          property: port
-      - key: GEMINI_API_KEY
-        sync: false
-      - key: SECRET_KEY
-        generateValue: true
-      - key: CORS_ORIGINS
-        value: "https://pocketprosba-frontend.onrender.com,http://localhost:3000"
 
-  # --------------------------------------------------
-  # 4. React Frontend Static Site Service - FIXED
-  # --------------------------------------------------
   - type: web
     name: pocketprosba-frontend
     runtime: static
-    buildCommand: "cd frontend && npm ci --legacy-peer-deps --force && npm run build"
-    staticPublishPath: frontend/build
+    buildCommand: "cd frontend && npm ci --legacy-peer-deps && npm run build"
+    plan: standard
+    region: oregon
+    autoDeploy: true
     envVars:
       - key: REACT_APP_API_URL
         value: "https://pocketpro-sba-app.onrender.com/api"
-      - key: SKIP_PREFLIGHT_CHECK
-        value: "true"
-      - key: NODE_OPTIONS
-        value: "--max-old-space-size=4096"
-    buildFilter:
-      paths:
-        - "*.md"
-        - "docs/"
-        - "tests/"
