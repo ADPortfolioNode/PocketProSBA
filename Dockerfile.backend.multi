@@ -4,7 +4,7 @@
 #   docker build --target prod -f Dockerfile.backend.multi -t pocketpro-sba-backend:prod .
 
 # Base image with common setup
-ARG PYTHON_VERSION=3.11-slim
+ARG PYTHON_VERSION=3.9-slim
 FROM python:${PYTHON_VERSION} AS base
 WORKDIR /app
 
