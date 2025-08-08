@@ -68,12 +68,13 @@ services:
   # --------------------------------------------------
   # 4. React Frontend Static Site Service
   # --------------------------------------------------
-  - type: static
+  - type: web
     name: pocketprosba-frontend
-    env: static
+    runtime: static
     buildCommand: "cd frontend && npm install && npm run build"
     staticPublishPath: "frontend/build"
     envVars:
       - key: REACT_APP_API_URL
         value: "https://pocketpro-sba-app.onrender.com/api"
+  
   
