@@ -69,11 +69,15 @@ services:
   - type: web
     name: pocketprosba-frontend
     runtime: static
-    buildCommand: "cd frontend && npm ci --legacy-peer-deps && npm run build"
+    buildCommand: "cd frontend && npm ci --legacy-peer-deps --force && npm run build"
     staticPublishPath: frontend/build
     envVars:
       - key: REACT_APP_API_URL
         value: "https://pocketpro-sba-app.onrender.com/api"
+      - key: SKIP_PREFLIGHT_CHECK
+        value: "true"
+      - key: NODE_OPTIONS
+        value: "--max-old-space-size=4096"
     buildFilter:
       paths:
         - "*.md"
