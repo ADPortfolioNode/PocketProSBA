@@ -4,7 +4,6 @@ services:
     runtime: docker
     dockerfilePath: ./Dockerfile.optimized
     plan: standard
-    region: oregon
     autoDeploy: true
     healthCheckPath: /health
 
@@ -13,7 +12,6 @@ services:
     runtime: static
     buildCommand: "cd frontend && npm ci --legacy-peer-deps && npm run build"
     plan: standard
-    region: oregon
     autoDeploy: true
     envVars:
       - key: REACT_APP_API_URL
