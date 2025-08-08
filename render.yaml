@@ -8,7 +8,6 @@ services:
   # --------------------------------------------------
   # 1. ChromaDB Service (Dependency)
   # --------------------------------------------------
-  # This service is defined before the main app because the app depends on it.
   - type: web
     name: chromadb
     runtime: docker
@@ -24,7 +23,6 @@ services:
   # --------------------------------------------------
   # 2. Redis Service (Dependency for Scaling)
   # --------------------------------------------------
-  # A Redis instance is critical for session management and caching.
   - type: redis
     name: redis
     plan: standard
@@ -35,7 +33,6 @@ services:
   # --------------------------------------------------
   # 3. Backend API Service (Dependent)
   # --------------------------------------------------
-  # This service builds from a Dockerfile and serves both the API and frontend.
   - type: web
     name: pocketpro-sba-app
     plan: standard
@@ -67,4 +64,16 @@ services:
         generateValue: true
       - key: CORS_ORIGINS
         value: "https://pocketprosba-frontend.onrender.com,http://localhost:3000"
+
+  # --------------------------------------------------
+  # 4. React Frontend Static Site Service
+  # --------------------------------------------------
+  - type: static
+    name: pocketprosba-frontend
+    env: static
+    buildCommand: "cd frontend && npm install && npm run build"
+    staticPublishPath: "frontend/build"
+    envVars:
+      - key: REACT_APP_API_URL
+        value: "https://pocketpro-sba-app.onrender.com/api"
   
