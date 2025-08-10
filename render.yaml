@@ -1,20 +1,13 @@
-services:
-  - type: web
-    name: chromadb
-    runtime: docker
-    image:
-      url: chromadb/chroma:0.5.0
-    plan: standard
-    autoDeploy: true
-    healthCheckPath: /api/v1/heartbeat
-    envVars:
-      - key: CHROMA_SERVER_HOST
-        value: 0.0.0.0
+perform thoughro# Optimized Render.com Configuration for PocketPro SBA
+# Production-ready deployment configuration
 
+services:
+  # Backend API Service
   - type: web
-    name: pocketpro-sba-app
-    runtime: docker
-    dockerfilePath: ./Dockerfile.optimized
+    name: pocketpro-sba-backend
+    runtime: python
+    buildCommand: pip install -r requirements-render.txt
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --workers=2 --threads=4
     plan: standard
     autoDeploy: true
     healthCheckPath: /health
@@ -30,12 +23,29 @@ services:
           name: chromadb
           property: port
 
+  # Frontend React Application
   - type: web
-    name: pocketprosba-frontend
+    name: pocketpro-sba-frontend
     runtime: static
-    buildCommand: "cd frontend && npm ci --legacy-peer-deps && npm run build"
-    staticPublishPath: ./frontend/build
+    buildCommand: cd frontend && npm ci && npm run build
+    staticPublishPath: frontend/build
+    plan: starter
     autoDeploy: true
     envVars:
       - key: REACT_APP_API_URL
-        value: "https://pocketpro-sba-app.onrender.com/api"
+        value: https://pocketpro-sba-backend.onrender.com
+
+  # ChromaDB Vector Database
+  - type: web
+    name: chromadb
+    runtime: docker
+    image:
+      url: chromadb/chroma:0.5.0
+    plan: standard
+    autoDeploy: true
+    healthCheckPath: /api/v1/heartbeat
+    envVars:
+      - key: CHROMA_SERVER_HOST
+        value: 0.0.0.0
+      - key: CHROMA_SERVER_HTTP_PORT
+        value: 8000
