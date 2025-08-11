@@ -1,4 +1,4 @@
-updateimport os
+import os
 import logging
 import time
 import hashlib
