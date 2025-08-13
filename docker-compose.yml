@@ -1,42 +1,36 @@
-version: '3'
-
+version: '3.8'
 services:
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile.dev
-    ports:
-      - "3000:3000"
+  chromadb:
+    image: chromadb/chroma:latest
+    container_name: chromadb
     volumes:
-      - ./frontend:/app
-      - /app/node_modules
-    environment:
-      - NODE_ENV=development
-      - REACT_APP_BACKEND_URL=http://localhost:5000
-      - CHOKIDAR_USEPOLLING=true
-    mem_limit: 4g
-    command: npm start
+      - ./chromadb_data:/data
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
 
   backend:
     build:
       context: .
-      dockerfile: Dockerfile.render
+      dockerfile: Dockerfile.backend.prod
+    depends_on:
+      - chromadb
+    env_file:
+      - .env.example
     ports:
       - "5000:5000"
-    volumes:
-      - .:/app
-    environment:
-      - FLASK_ENV=development
-      - FLASK_DEBUG=1
-      - GEMINI_API_KEY=${GEMINI_API_KEY}
-      - SECRET_KEY=${SECRET_KEY}
+    restart: unless-stopped
 
-  nginx:
-    image: nginx:alpine
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend.prod
     ports:
-      - "10000:80"
-    volumes:
-      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+      - "3000:3000"
     depends_on:
-      - frontend
       - backend
+    restart: unless-stopped
+
+networks:
+  default:
+    name: app-network
