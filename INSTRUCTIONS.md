@@ -6,7 +6,7 @@
 
 ### Prerequisites
 - **Python 3.9+** (or 3.13 for requirements_full.txt)
-- **Node.js 16.x** (Node 20+ is NOT supported due to frontend build issues with ajv/ajv-keywords)
+- **Node.js 18.x LTS** (Updated: Node 20+ now supported with fixes)
 - **Docker & Docker Compose**
 - **Google Gemini API key**
 
@@ -30,27 +30,29 @@
 ---
 
 ### Frontend Build (React)
-- **Node.js 16.x is required.**
-- If you see errors about `ajv-keywords` or `formatMinimum`, add this to `frontend/package.json`:
+- **Node.js 18.x LTS is now supported** (Updated from 16.x)
+- **Conflict-free setup** with updated package.json overrides:
   ```json
   "overrides": {
     "ajv": "8.12.0",
-    "ajv-keywords": "3.5.2"
+    "ajv-keywords": "5.1.0",
+    "ajv-formats": "2.1.1"
   }
   ```
+- **Updated Dockerfile** uses Node 18.20.2-alpine for build stage
+- **Zero ajv-keywords conflicts** with new dependency resolution
 - Then run:
   ```sh
   rm -rf node_modules package-lock.json
   npm install
   npm run build
   ```
-- The Dockerfile will use Node 16.20.2-alpine for the build stage.
 
 ---
 
 ### Dockerfile.backend.multi (Production Docker Build)
 - **Multi-stage build** with named targets (`dev` & `prod`):
-- Stage 1 (`dev`): React frontend build with Node 16.20.2-alpine
+- Stage 1 (`dev`): React frontend build with Node 18.20.2-alpine
 - Stage 2 (`dev`): Install backend dependencies for development
 - Stage 3 (`prod`): Copy only production backend code and install production dependencies
 - Uses `Dockerfile.backend.multi` (target `prod`) and `requirements-render-production.txt`
@@ -103,8 +105,8 @@
 
 ### Troubleshooting
 - **Frontend build fails with ajv/ajv-keywords errors:**
-  - Use Node.js 16.x
-  - Add the `overrides` block above to `package.json`
+  - **Use Node.js 18.x LTS** (Updated from 16.x)
+  - **Updated overrides** in package.json for conflict-free builds
   - Clean and reinstall node_modules
 - **Backend fails to start:**
   - Check for missing environment variables
@@ -116,7 +118,7 @@
 ---
 
 ### Summary
-- Use Node.js 16.x for all builds
+- Use Node.js 18.x LTS for all builds (updated from 16.x)
 - Use Dockerfile.backend.multi (target `prod`) for production/Render.com
 - All secrets and config in environment variables
 - Healthcheck and static file serving are production-ready
