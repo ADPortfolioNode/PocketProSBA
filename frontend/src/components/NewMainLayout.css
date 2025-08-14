@@ -1,0 +1,394 @@
+/* New Main Layout Styles */
+.new-main-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: #f8f9fa;
+}
+
+/* Top Navigation */
+.top-navbar {
+  background: white !important;
+  border-bottom: 1px solid #dee2e6;
+  padding: 0.5rem 1rem;
+  position: sticky;
+  top: 0;
+  z-index: 1020;
+}
+
+.sidebar-toggle {
+  background: none;
+  border: none;
+  color: #6c757d;
+  padding: 0.5rem;
+  margin-right: 1rem;
+}
+
+.sidebar-toggle:hover {
+  color: #007bff;
+}
+
+.notification-btn {
+  position: relative;
+  background: none;
+  border: none;
+  color: #6c757d;
+  padding: 0.5rem;
+}
+
+.notification-btn:hover {
+  color: #007bff;
+}
+
+/* Sidebar */
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 280px;
+  height: 100vh;
+  background: white;
+  border-right: 1px solid #dee2e6;
+  z-index: 1040;
+  transition: transform 0.3s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar.mobile {
+  transform: translateX(-100%);
+}
+
+.sidebar.mobile.open {
+  transform: translateX(0);
+}
+
+.sidebar-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid #dee2e6;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.brand {
+  margin: 0;
+  color: #007bff;
+  font-weight: 600;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  color: #6c757d;
+  padding: 0.25rem;
+}
+
+.close-btn:hover {
+  color: #dc3545;
+}
+
+.sidebar-nav {
+  flex: 1;
+  padding: 1rem 0;
+}
+
+.sidebar-nav-item {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 1.5rem;
+  color: #495057;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  border-left: 3px solid transparent;
+}
+
+.sidebar-nav-item:hover {
+  background-color: #f8f9fa;
+  color: #007bff;
+}
+
+.sidebar-nav-item.active {
+  background-color: #e7f3ff;
+  color: #007bff;
+  border-left-color: #007bff;
+}
+
+.nav-icon {
+  margin-right: 0.75rem;
+}
+
+.sidebar-footer {
+  padding: 1rem;
+  border-top: 1px solid #dee2e6;
+}
+
+.user-profile {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.user-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #007bff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.user-avatar img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.user-info {
+  flex: 1;
+}
+
+.user-name {
+  font-weight: 600;
+  display: block;
+  font-size: 0.9rem;
+}
+
+.user-status {
+  color: #28a745;
+  font-size: 0.75rem;
+}
+
+/* Main Content */
+.main-content {
+  margin-left: 280px;
+  padding: 2rem;
+  transition: margin-left 0.3s ease;
+}
+
+@media (max-width: 767px) {
+  .main-content {
+    margin-left: 0;
+    padding: 1rem;
+  }
+}
+
+.main-content.overlay {
+  position: relative;
+}
+
+.main-content.overlay::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1030;
+}
+
+/* Sidebar Overlay */
+.sidebar-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1035;
+}
+
+/* Section Styles */
+.section-title {
+  margin-bottom: 1.5rem;
+  color: #212529;
+  font-weight: 600;
+}
+
+/* Dashboard Section */
+.dashboard-section {
+  padding: 0;
+}
+
+.stat-card {
+  border: none;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.stat-card .card-body {
+  display: flex;
+  align-items: center;
+  padding: 1.5rem;
+}
+
+.stat-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #007bff, #0056b3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  margin-right: 1rem;
+}
+
+.stat-info h3 {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #212529;
+}
+
+.stat-info p {
+  margin: 0;
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+
+/* Chat Section */
+.chat-section {
+  padding: 0;
+}
+
+/* Documents Section */
+.documents-section {
+  padding: 0;
+}
+
+.documents-section .card {
+  border: none;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.documents-section .card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Analytics Section */
+.analytics-section {
+  padding: 0;
+}
+
+/* Resources Section */
+.resources-section {
+  padding: 0;
+}
+
+/* Settings Section */
+.settings-section {
+  padding: 0;
+}
+
+/* Responsive Design */
+@media (max-width: 991px) {
+  .sidebar {
+    width: 250px;
+  }
+  
+  .main-content {
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 767px) {
+  .sidebar {
+    width: 100%;
+    max-width: 300px;
+  }
+  
+  .stat-card .card-body {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .stat-icon {
+    margin-right: 0;
+    margin-bottom: 1rem;
+  }
+}
+
+@media (max-width: 575px) {
+  .section-title {
+    font-size: 1.5rem;
+  }
+  
+  .stat-info h3 {
+    font-size: 1.75rem;
+  }
+}
+
+/* Animation Classes */
+.fade-in {
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.slide-in {
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+/* Loading States */
+.loading-skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Custom Scrollbar */
+.sidebar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
