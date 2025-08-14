@@ -9,25 +9,38 @@ import MainLayout from './components/MainLayout';
 
 function App() {
   useEffect(() => {
+    // WebSocket connection is optional - don't let it break the app
     const wsUrl = process.env.REACT_APP_BACKEND_WS_URL || 'ws://localhost:10000/ws';
-    const socket = new WebSocket(wsUrl);
+    
+    try {
+      const socket = new WebSocket(wsUrl);
 
-    socket.onopen = () => {
-      console.log('WebSocket connection established to', wsUrl);
-    };
+      socket.onopen = () => {
+        console.log('WebSocket connection established to', wsUrl);
+      };
 
-    socket.onerror = (error) => {
-      console.error('WebSocket error:', error);
-    };
+      socket.onerror = (error) => {
+        console.warn('WebSocket connection error (non-critical):', error);
+        console.log('Note: WebSocket is optional. HTTP endpoints will still work.');
+      };
 
-    socket.onclose = (event) => {
-      console.log('WebSocket connection closed:', event);
-    };
+      socket.onclose = (event) => {
+        console.log('WebSocket connection closed:', event);
+        if (!event.wasClean) {
+          console.log('WebSocket disconnected unexpectedly, but HTTP endpoints remain available');
+        }
+      };
 
-    // Cleanup on unmount
-    return () => {
-      socket.close();
-    };
+      // Cleanup on unmount
+      return () => {
+        if (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING) {
+          socket.close();
+        }
+      };
+    } catch (error) {
+      console.warn('WebSocket initialization failed:', error);
+      console.log('Application will continue to work with HTTP endpoints only');
+    }
   }, []);
 
   return (
@@ -36,9 +49,6 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
-        {/* React Router v7 requires relative splat path syntax */}
-        {/* Change "/*" to "*", or use relative paths as per https://reactrouter.com/en/main/upgrading/v6#v7_relativesplatpath */}
-        {/* So update to: */}
         <Route path="*" element={<MainLayout />} />
         <Route path="/" element={<Navigate to="/chat" replace />} />
       </Routes>

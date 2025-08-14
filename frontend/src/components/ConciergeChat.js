@@ -13,6 +13,8 @@ const sbaTips = [
 const ConciergeChat = ({ onSend, messages = [], loading, userName }) => {
   const [input, setInput] = useState("");
   const [tipIndex, setTipIndex] = useState(0);
+  const [isSending, setIsSending] = useState(false);
+  const [error, setError] = useState(null);
 
   const safeMessages = Array.isArray(messages) ? messages : [];
 
@@ -23,16 +25,26 @@ const ConciergeChat = ({ onSend, messages = [], loading, userName }) => {
     return () => clearInterval(timer);
   }, []);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!input.trim()) return;
     
     if (typeof onSend === 'function') {
-      onSend(input.trim());
-      setInput("");
+      setIsSending(true);
+      setError(null);
+      
+      try {
+        await onSend(input.trim());
+        setInput("");
+      } catch (error) {
+        console.error('Error in chat submission:', error);
+        setError(error.message || 'Failed to send message. Please try again.');
+      } finally {
+        setIsSending(false);
+      }
     } else {
       console.error('onSend prop is not a function:', typeof onSend);
-      // Fallback behavior when onSend is not provided
+      setError('Chat system is not properly configured. Please refresh the page.');
       setInput("");
     }
   };
