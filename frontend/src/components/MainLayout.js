@@ -5,7 +5,7 @@ import Header from './Header';
 import Footer from './Footer';
 import SBAContentExplorer from './SBAContentExplorer';
 import RAGWorkflowInterface from './RAGWorkflowInterface';
-import ConciergeChat from './ConciergeChat';
+import ModernConciergeChat from './ModernConciergeChat';
 import UploadsManagerComponent from './UploadsManager';
 import SBAContent from './SBAContent';
 
