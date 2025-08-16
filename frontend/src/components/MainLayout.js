@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Alert, Button } from 'react-bootstrap';
+import { Container, Alert, Button, Badge, Spinner } from 'react-bootstrap';
 import SBANavigation from './SBANavigation';
 import Header from './Header';
 import Footer from './Footer';
@@ -8,102 +8,103 @@ import RAGWorkflowInterface from './RAGWorkflowInterface';
 import ModernConciergeChat from './ModernConciergeChat';
 import UploadsManagerComponent from './UploadsManager';
 import SBAContent from './SBAContent';
+import connectionService from '../services/connectionService';
+import { buildApiUrl } from '../config/api';
 
 function MainLayout() {
   const [activeTab, setActiveTab] = useState('chat');
-  const [serverConnected, setServerConnected] = useState(true);
+  const [serverConnected, setServerConnected] = useState(false);
   const [backendError, setBackendError] = useState(null);
   const [messages, setMessages] = useState([]);
   const [isCheckingHealth, setIsCheckingHealth] = useState(false);
+  const [connectionInfo, setConnectionInfo] = useState(null);
+  const [diagnostics, setDiagnostics] = useState(null);
 
-  // Create apiUrl function that returns the correct backend URL
+  // Enhanced API URL builder using the new configuration
   const apiUrl = (path) => {
-    const backendUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
-    const cleanPath = path.startsWith('/') ? path : `/${path}`;
-    
-    if (backendUrl.includes('localhost') || backendUrl.includes('127.0.0.1')) {
-      // For localhost, use relative paths (proxy will handle it)
-      return cleanPath;
-    } else {
-      // For remote backend, use absolute URLs
-      return `${backendUrl}${cleanPath}`;
-    }
+    return buildApiUrl(path);
   };
 
-  // Health check function
+  // Enhanced health check function
   const checkServerHealth = async () => {
     setIsCheckingHealth(true);
+    setBackendError(null);
+    
     try {
-      const healthUrl = apiUrl('/api/health');
-      const response = await fetch(healthUrl, {
-        method: 'GET',
-        signal: AbortSignal.timeout(10000), // 10 second timeout for health check
-      });
+      const result = await connectionService.checkConnection();
       
-      if (response.ok) {
+      if (result.connected) {
         setServerConnected(true);
+        setConnectionInfo(result.info || result);
         setBackendError(null);
         return true;
       } else {
         setServerConnected(false);
+        setConnectionInfo(null);
+        setBackendError(result.error || 'Unable to connect to backend server');
         return false;
       }
     } catch (error) {
       console.error('Health check failed:', error);
       setServerConnected(false);
+      setBackendError(error.message || 'Connection failed');
       return false;
     } finally {
       setIsCheckingHealth(false);
     }
   };
 
+  // Initialize connection monitoring
   useEffect(() => {
+    // Initialize connection service
+    connectionService.initialize();
+    
+    // Set up connection status listener
+    const unsubscribe = connectionService.addConnectionListener((status) => {
+      setServerConnected(status.connected);
+      setConnectionInfo(status.info);
+      
+      if (!status.connected && status.error) {
+        setBackendError(status.error);
+      }
+    });
+
     // Initial health check
     checkServerHealth();
     
-    // Set up periodic health checks
-    const healthCheckInterval = setInterval(checkServerHealth, 30000);
-    
-    return () => clearInterval(healthCheckInterval);
+    return () => {
+      unsubscribe();
+      connectionService.stopHealthMonitoring();
+    };
   }, []);
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
-    setBackendError(null); // Clear errors when changing tabs
+    setBackendError(null);
   };
 
   const handleChatSend = async (message) => {
     try {
       setBackendError(null);
       
-      // Add user message to local state
       const userMessage = { role: 'user', content: message };
       setMessages(prev => [...prev, userMessage]);
       
-      const chatUrl = apiUrl('/api/chat');
-      console.log('Sending request to:', chatUrl);
-      
-      const response = await fetch(chatUrl, {
+      const response = await connectionService.apiCall('/api/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ message }),
-        signal: AbortSignal.timeout(30000), // 30 second timeout for chat
+        body: JSON.stringify({ message })
       });
       
-      if (!response.ok) {
-        const errorData = await response.text();
-        throw new Error(`Server error: ${response.status} - ${errorData || response.statusText}`);
-      }
-      
-      const data = await response.json();
-      
-      // Add assistant response to local state
-      const assistantMessage = { role: 'assistant', content: data.response || data.message || 'Response received' };
+      const assistantMessage = { 
+        role: 'assistant', 
+        content: response.response || response.message || 'Response received' 
+      };
       setMessages(prev => [...prev, assistantMessage]);
       
-      return data;
+      return response;
       
     } catch (error) {
       console.error('Error sending message:', error);
@@ -113,16 +114,15 @@ function MainLayout() {
       if (error.name === 'AbortError') {
         errorMessage += 'Request timed out. Please check your connection.';
       } else if (error.message.includes('Failed to fetch')) {
-        errorMessage += 'Unable to connect to server. Please check if the backend is running.';
-      } else if (error.message.includes('504')) {
-        errorMessage += 'Server is taking too long to respond. This might be due to high load or processing time.';
+        errorMessage += 'Unable to connect to server. Checking connection...';
+        // Auto-retry connection
+        await checkServerHealth();
       } else {
         errorMessage += error.message;
       }
       
       setBackendError(errorMessage);
       
-      // Add error message to chat
       const errorChatMessage = { role: 'system', content: errorMessage };
       setMessages(prev => [...prev, errorChatMessage]);
       
@@ -130,36 +130,88 @@ function MainLayout() {
     }
   };
 
-  const renderContent = () => {
-    if (backendError && !serverConnected) {
+  const showDiagnostics = async () => {
+    const diag = await connectionService.getDiagnostics();
+    setDiagnostics(diag);
+    console.log('Connection Diagnostics:', diag);
+  };
+
+  const renderConnectionStatus = () => {
+    if (!serverConnected) {
       return (
         <Alert variant="danger" className="mt-4">
-          <Alert.Heading>Connection Error</Alert.Heading>
-          <p>{backendError}</p>
-          <hr />
-          <p className="mb-0">
-            Please check your internet connection and ensure the backend server is running.
-          </p>
-          <Button 
-            variant="outline-danger" 
-            onClick={checkServerHealth} 
-            className="mt-2"
-            disabled={isCheckingHealth}
-          >
-            {isCheckingHealth ? 'Checking...' : 'Retry Connection'}
-          </Button>
+          <Alert.Heading>
+            <Spinner animation="border" size="sm" className="me-2" />
+            Connection Error
+          </Alert.Heading>
+          <p><strong>Error:</strong> {backendError}</p>
+          
+          <div className="mb-3">
+            <strong>Connection Details:</strong>
+            <ul>
+              <li><Badge bg="secondary">Backend URL</Badge> {apiUrl('')}</li>
+              <li><Badge bg="secondary">Environment</Badge> {connectionInfo?.source || 'Unknown'}</li>
+              <li><Badge bg="secondary">Last checked</Badge> {new Date().toLocaleTimeString()}</li>
+            </ul>
+          </div>
+          
+          <div className="d-flex gap-2">
+            <Button 
+              variant="outline-danger" 
+              onClick={checkServerHealth} 
+              className="me-2"
+              disabled={isCheckingHealth}
+            >
+              {isCheckingHealth ? 'Checking...' : 'Retry Connection'}
+            </Button>
+            <Button 
+              variant="outline-secondary" 
+              onClick={showDiagnostics}
+            >
+              Show Diagnostics
+            </Button>
+            <Button 
+              variant="outline-info" 
+              onClick={async () => {
+                await connectionService.resetConnection();
+                await checkServerHealth();
+              }}
+            >
+              Reset Connection
+            </Button>
+          </div>
+
+          {diagnostics && (
+            <div className="mt-3">
+              <strong>Diagnostics:</strong>
+              <pre className="bg-light p-2 rounded" style={{ fontSize: '0.8em', maxHeight: '200px', overflow: 'auto' }}>
+                {JSON.stringify(diagnostics, null, 2)}
+              </pre>
+            </div>
+          )}
         </Alert>
       );
+    }
+
+    return null;
+  };
+
+  const renderContent = () => {
+    const connectionAlert = renderConnectionStatus();
+    
+    if (connectionAlert) {
+      return connectionAlert;
     }
 
     switch (activeTab) {
       case 'chat':
         return (
-          <ConciergeChat 
+          <ModernConciergeChat 
             onSend={handleChatSend} 
             messages={messages}
             loading={!serverConnected}
             userName="User"
+            connectionInfo={connectionInfo}
           />
         );
       case 'browse':
@@ -172,11 +224,12 @@ function MainLayout() {
         return <SBAContent />;
       default:
         return (
-          <ConciergeChat 
+          <ModernConciergeChat 
             onSend={handleChatSend} 
             messages={messages}
             loading={!serverConnected}
             userName="User"
+            connectionInfo={connectionInfo}
           />
         );
     }
@@ -190,6 +243,7 @@ function MainLayout() {
         onTabChange={handleTabChange}
         serverConnected={serverConnected}
         apiUrl={apiUrl}
+        connectionInfo={connectionInfo}
       />
       <Container className="flex-grow-1">
         {renderContent()}

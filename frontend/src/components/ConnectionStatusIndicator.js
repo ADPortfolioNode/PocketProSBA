@@ -1,16 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Badge, OverlayTrigger, Tooltip, Spinner } from 'react-bootstrap';
 import PropTypes from 'prop-types';
+import connectionService from '../services/connectionService';
+import { buildApiUrl } from '../config/api';
 
 /**
- * Component for displaying the current connection status to the backend
- * 
- * @param {Object} props - Component properties
- * @param {boolean} props.connected - Whether the application is connected to the backend
- * @param {Object} props.systemInfo - System information from the backend
- * @param {string} props.apiUrl - The API URL being used
- * @param {number} props.checkInterval - Interval in ms to check connection (default: 30000)
- * @param {Function} props.onConnectionChange - Callback when connection status changes
+ * Enhanced ConnectionStatusIndicator with comprehensive backend connectivity
+ * Supports multiple environments and provides detailed diagnostics
  */
 const ConnectionStatusIndicator = ({
   connected,
@@ -19,155 +15,92 @@ const ConnectionStatusIndicator = ({
   checkInterval = 30000,
   onConnectionChange
 }) => {
-  // Runtime type check for apiUrl
-  if (typeof apiUrl !== 'function') {
-    console.error('ConnectionStatusIndicator: apiUrl prop must be a function, but received:', typeof apiUrl);
-    return (
-      <div className="connection-status-error text-danger">
-        <strong>Error:</strong> <code>apiUrl</code> prop must be a function, but received <code>{typeof apiUrl}</code>.<br />
-        Please check how <code>apiUrl</code> is passed from <code>App.js</code>.
-      </div>
-    );
-  }
-
   const [isChecking, setIsChecking] = useState(false);
   const [lastChecked, setLastChecked] = useState(new Date());
-  
-  // Define multiple health endpoints for fallback
-  // Always use backend URL from env, never default to frontend
-  const healthEndpoints = [
-    apiUrl('/api/health'), // Always uses REACT_APP_BACKEND_URL (port 5000)
-    apiUrl('/health')
-  ];
-
-  // Helper to retry connection if backend is not ready
+  const [connectionDetails, setConnectionDetails] = useState(null);
   const [retryCount, setRetryCount] = useState(0);
 
-  // Retry logic: if connection fails, allow user to retry
-  const handleRetry = () => {
-    setRetryCount(retryCount + 1);
-    checkConnection();
-  };
-
-  // Function to validate content type and parse response safely
-  const safeParseResponse = async (response) => {
-    try {
-      // Check content-type to make sure it's not HTML
-      const contentType = response.headers.get('content-type');
-      if (contentType && contentType.includes('text/html')) {
-        console.warn('Received HTML response instead of expected JSON');
-        throw new Error('Received HTML instead of JSON');
-      }
-      
-      const text = await response.text();
-      try {
-        // Try to parse as JSON
-        return { isJson: true, data: JSON.parse(text) };
-      } catch (e) {
-        // If parsing fails, return the text
-        console.warn('Failed to parse response as JSON:', e);
-        return { isJson: false, data: text };
-      }
-    } catch (e) {
-      return { isJson: false, error: e };
-    }
-  };
-
-  // Function to check connection with fallback options
+  // Enhanced connection check with multiple strategies
   const checkConnection = async () => {
     if (isChecking) return;
     
     setIsChecking(true);
-    let errorDetails = null;
     
-    // Try all endpoints in order until one works
-    for (const path of healthEndpoints) {
-      try {
-        const endpoint = path;  // Use the absolute API URL
-        
-        // First try with a HEAD request to minimize data transfer
-        try {
-          const headResponse = await fetch(endpoint, { method: 'HEAD' });
-          if (headResponse.ok) {
-            if (onConnectionChange && connected !== true) {
-              onConnectionChange(true, { server_type: 'Unknown (HEAD check)' });
-            }
-            setLastChecked(new Date());
-            setIsChecking(false);
-            return;
-          }
-        } catch (headError) {
-          // If HEAD fails, continue to full GET request
-          console.debug('HEAD request failed, trying GET:', headError);
+    try {
+      const result = await connectionService.checkConnection();
+      
+      if (result.connected) {
+        setConnectionDetails(result);
+        if (onConnectionChange) {
+          onConnectionChange(true, result.data || result.info);
         }
-        
-        // Try a full GET request
-        const response = await fetch(endpoint);
-        if (!response.ok) continue; // Try next endpoint if this one fails
-        
-        const { isJson, data, error } = await safeParseResponse(response);
-        
-        if (isJson && data) {
-          if (onConnectionChange && connected !== true) {
-            onConnectionChange(true, data);
-          }
-          setLastChecked(new Date());
-          setIsChecking(false);
-          return;
-        } else if (response.ok) {
-          // Response is OK but not JSON, still consider connected
-          if (onConnectionChange && connected !== true) {
-            onConnectionChange(true, { server_type: 'Unknown (non-JSON response)' });
-          }
-          setLastChecked(new Date());
-          setIsChecking(false);
-          return;
+      } else {
+        setConnectionDetails(null);
+        if (onConnectionChange) {
+          onConnectionChange(false, null, result.error);
         }
-      } catch (error) {
-        errorDetails = error;
-        console.warn(`Connection check failed for ${path}:`, error);
-        // Continue to next endpoint
       }
+      
+      setLastChecked(new Date());
+    } catch (error) {
+      console.error('Connection check failed:', error);
+      setConnectionDetails(null);
+      if (onConnectionChange) {
+        onConnectionChange(false, null, error.message);
+      }
+    } finally {
+      setIsChecking(false);
     }
-    
-    // If we get here, all endpoints failed
-    console.error('All connection endpoints failed:', errorDetails);
-    if (onConnectionChange && connected !== false) {
-      onConnectionChange(false, null, errorDetails);
-    }
-    
-    setLastChecked(new Date());
-    setIsChecking(false);
   };
-  
-  // Set up interval to check connection periodically and on retry
+
+  // Retry connection with exponential backoff
+  const handleRetry = async () => {
+    setRetryCount(prev => prev + 1);
+    
+    // Exponential backoff delay
+    const delay = Math.min(1000 * Math.pow(2, retryCount), 10000);
+    await new Promise(resolve => setTimeout(resolve, delay));
+    
+    await checkConnection();
+  };
+
+  // Initialize connection monitoring
   useEffect(() => {
+    checkConnection(); // Initial check
+    
     const intervalId = setInterval(checkConnection, checkInterval);
-    checkConnection(); // Initial check on mount and retry
+    
     return () => clearInterval(intervalId);
-  }, [checkInterval, connected, retryCount]);
-  
-  // Format backend info for display
-  const getBackendInfo = () => {
-    if (!systemInfo) return 'No system info available';
+  }, [checkInterval, retryCount]);
+
+  // Format connection info for display
+  const getConnectionInfo = () => {
+    if (!connectionDetails && !systemInfo) {
+      return 'Checking connection...';
+    }
+
+    const info = connectionDetails?.data || systemInfo || {};
     
     return (
       <>
-        <div><strong>Server:</strong> {systemInfo.server_type || 'Unknown'}</div>
-        <div><strong>Version:</strong> {systemInfo.version || 'Unknown'}</div>
-        {systemInfo.uptime && <div><strong>Uptime:</strong> {formatUptime(systemInfo.uptime)}</div>}
-        {systemInfo.models && (
+        <div><strong>Backend:</strong> {apiUrl('')}</div>
+        <div><strong>Status:</strong> {connected ? 'Connected' : 'Disconnected'}</div>
+        {info.server_type && <div><strong>Type:</strong> {info.server_type}</div>}
+        {info.version && <div><strong>Version:</strong> {info.version}</div>}
+        {info.uptime && <div><strong>Uptime:</strong> {formatUptime(info.uptime)}</div>}
+        {info.models && (
           <div>
-            <strong>Models:</strong> {Array.isArray(systemInfo.models) 
-              ? systemInfo.models.join(', ') 
+            <strong>Models:</strong> {Array.isArray(info.models) 
+              ? info.models.join(', ') 
               : 'None available'}
           </div>
         )}
+        {info.source && <div><strong>Source:</strong> {info.source}</div>}
         <div className="text-muted mt-2">Last checked: {formatTime(lastChecked)}</div>
       </>
     );
   };
-  
+
   // Format uptime in a readable way
   const formatUptime = (seconds) => {
     if (!seconds && seconds !== 0) return 'Unknown';
@@ -183,30 +116,35 @@ const ConnectionStatusIndicator = ({
     
     return parts.join(' ');
   };
-  
+
   // Format time for last checked
   const formatTime = (date) => {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
   };
-  
+
   // Determine badge variant based on connection status
   const badgeVariant = connected ? 'success' : 'danger';
   const statusText = connected ? 'Connected' : 'Disconnected';
-  
+
   return (
     <OverlayTrigger
       placement="bottom"
       overlay={
         <Tooltip id="connection-status-tooltip">
-          <div className="connection-tooltip">
-            {getBackendInfo()}
+          <div className="connection-tooltip" style={{ maxWidth: '300px' }}>
+            {getConnectionInfo()}
             <div className="text-center mt-2">
               <small>Click to check connection</small>
               {!connected && (
                 <div className="mt-2">
-                  <button className="btn btn-sm btn-outline-danger" onClick={handleRetry} disabled={isChecking}>
-                    Retry
-                  </button>
+                  <Button 
+                    variant="outline-danger" 
+                    size="sm" 
+                    onClick={handleRetry} 
+                    disabled={isChecking}
+                  >
+                    {isChecking ? 'Checking...' : 'Retry'}
+                  </Button>
                 </div>
               )}
             </div>
