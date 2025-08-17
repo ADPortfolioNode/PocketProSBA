@@ -23,30 +23,29 @@ const API_CONFIG = {
   getBackendUrl: () => {
     const env = API_CONFIG.getEnvironment();
     
-    // Priority order for backend URL resolution
-    const urlSources = [
-      // 1. Environment variable (highest priority)
-      process.env.REACT_APP_BACKEND_URL,
-      
-      // 2. Render-specific
-      env === 'render' ? process.env.REACT_APP_RENDER_BACKEND_URL : null,
-      
-      // 3. Docker-specific
-      env === 'development' && process.env.REACT_APP_DOCKER_BACKEND_URL,
-      
-      // 4. Default ports by environment
-      env === 'development' ? 'http://localhost:5000' : null,
-      env === 'development' ? 'http://localhost:5001' : null,
-      
-      // 5. Production defaults
-      env === 'production' ? '/api' : null,
-      
-      // 6. Render default
-      env === 'render' ? window.location.origin : null
-    ].filter(Boolean);
-
-    // Return first valid URL
-    return urlSources[0] || 'http://localhost:5000';
+    // Check for specific environment variables first
+    if (process.env.REACT_APP_BACKEND_URL) {
+      return process.env.REACT_APP_BACKEND_URL;
+    }
+    
+    // Render deployment - use same origin
+    if (env === 'render') {
+      return window.location.origin;
+    }
+    
+    // Production deployment
+    if (env === 'production') {
+      return window.location.origin;
+    }
+    
+    // Development - check for Docker
+    const isDocker = window.location.hostname === 'localhost' && window.location.port === '3000';
+    if (isDocker) {
+      return 'http://localhost:5000';
+    }
+    
+    // Local development
+    return 'http://localhost:5000';
   },
 
   // Health check endpoints
@@ -54,12 +53,13 @@ const API_CONFIG = {
     '/health',
     '/api/health',
     '/api/status',
-    '/ping'
+    '/ping',
+    '/api/info'
   ],
 
   // Connection timeout settings
   timeouts: {
-    healthCheck: 5000,
+    healthCheck: 8000,
     apiCall: 30000,
     retryDelay: 2000,
     maxRetries: 3
@@ -76,9 +76,13 @@ const API_CONFIG = {
 // Enhanced API URL builder with redundancy
 export const buildApiUrl = (endpoint, options = {}) => {
   const baseUrl = API_CONFIG.getBackendUrl();
-  const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
   
-  // Handle different URL formats
+  // Handle relative URLs
+  if (endpoint.startsWith('http')) {
+    return endpoint;
+  }
+  
+  const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
   const url = new URL(cleanEndpoint, baseUrl);
   
   // Add query parameters if provided
@@ -91,7 +95,7 @@ export const buildApiUrl = (endpoint, options = {}) => {
   return url.toString();
 };
 
-// Connection status checker
+// Connection status checker with better error handling
 export const checkBackendConnection = async (customEndpoints = []) => {
   const endpoints = [...API_CONFIG.healthEndpoints, ...customEndpoints];
   const timeout = API_CONFIG.timeouts.healthCheck;
@@ -134,7 +138,7 @@ export const checkBackendConnection = async (customEndpoints = []) => {
   };
 };
 
-// Retry wrapper for API calls
+// Retry wrapper for API calls with improved error handling
 export const apiCallWithRetry = async (url, options = {}, retries = API_CONFIG.retryConfig.maxRetries) => {
   let lastError;
   

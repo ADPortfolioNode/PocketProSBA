@@ -96,6 +96,7 @@ const ConnectionStatusIndicator = ({
           </div>
         )}
         {info.source && <div><strong>Source:</strong> {info.source}</div>}
+        {info.port && <div><strong>Port:</strong> {info.port}</div>}
         <div className="text-muted mt-2">Last checked: {formatTime(lastChecked)}</div>
       </>
     );

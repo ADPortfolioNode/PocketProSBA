@@ -22,7 +22,7 @@ class ConnectionService {
   // Check connection with multiple fallback strategies
   async checkConnection(customEndpoints = []) {
     try {
-      // Strategy 1: Direct health check
+      // Strategy 1: Direct health check with current configuration
       const result = await checkBackendConnection(customEndpoints);
       
       if (result.connected) {
@@ -30,7 +30,7 @@ class ConnectionService {
         return result;
       }
 
-      // Strategy 2: Try alternative ports
+      // Strategy 2: Try alternative ports for local development
       const altPorts = [5000, 5001, 8080, 8000, 3001];
       for (const port of altPorts) {
         try {
@@ -43,15 +43,15 @@ class ConnectionService {
           if (response.ok) {
             // Update backend URL for this session
             sessionStorage.setItem('backendUrl', altUrl);
-            this.updateConnectionStatus(true, { port });
-            return { connected: true, port };
+            this.updateConnectionStatus(true, { port, source: 'local-alt' });
+            return { connected: true, port, source: 'local-alt' };
           }
         } catch (e) {
           continue;
         }
       }
 
-      // Strategy 3: Check if running in Docker
+      // Strategy 3: Check if running in Docker with proxy
       try {
         const dockerResponse = await fetch('/api/health', {
           method: 'GET',
@@ -66,12 +66,12 @@ class ConnectionService {
         // Continue to next strategy
       }
 
-      // Strategy 4: Render deployment check
+      // Strategy 4: Render deployment check - use relative paths
       if (window.location.hostname.includes('onrender.com')) {
         try {
           const renderResponse = await fetch('/api/health', {
             method: 'GET',
-            signal: AbortSignal.timeout(10000)
+            signal: AbortSignal.timeout(15000) // Longer timeout for Render
           });
           
           if (renderResponse.ok) {
@@ -79,17 +79,36 @@ class ConnectionService {
             return { connected: true, source: 'render' };
           }
         } catch (e) {
-          // Continue
+          console.warn('Render health check failed:', e);
+        }
+      }
+
+      // Strategy 5: Production deployment - use same origin
+      if (window.location.protocol === 'https:') {
+        try {
+          const prodResponse = await fetch('/api/health', {
+            method: 'GET',
+            signal: AbortSignal.timeout(10000)
+          });
+          
+          if (prodResponse.ok) {
+            this.updateConnectionStatus(true, { source: 'production' });
+            return { connected: true, source: 'production' };
+          }
+        } catch (e) {
+          console.warn('Production health check failed:', e);
         }
       }
 
       // All strategies failed
-      this.updateConnectionStatus(false, null, 'All connection strategies failed');
-      return { connected: false, error: 'All connection strategies failed' };
+      const errorMessage = `Unable to connect to backend. Please check if the server is running.`;
+      this.updateConnectionStatus(false, null, errorMessage);
+      return { connected: false, error: errorMessage };
 
     } catch (error) {
-      this.updateConnectionStatus(false, null, error.message);
-      return { connected: false, error: error.message };
+      const errorMessage = `Connection failed: ${error.message}`;
+      this.updateConnectionStatus(false, null, errorMessage);
+      return { connected: false, error: errorMessage };
     }
   }
 

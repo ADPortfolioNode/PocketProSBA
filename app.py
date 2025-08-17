@@ -14,12 +14,28 @@ from src.utils.config import config
 app = Flask(__name__)
 app.config.from_object(config)
 
-# Configure CORS for production
-cors_origins = [
-    "https://pocketprosba-frontend.onrender.com",
-    "http://localhost:3000",  # For local development
-    "http://127.0.0.1:3000"   # For local development
-]
+# Configure CORS for production with dynamic origins
+def get_cors_origins():
+    """Get CORS origins based on environment"""
+    origins = [
+        "http://localhost:3000",  # For local development
+        "http://127.0.0.1:3000",  # For local development
+        "http://localhost:5000",  # For Docker development
+    ]
+    
+    # Add Render origin if available
+    render_origin = os.environ.get('RENDER_EXTERNAL_URL')
+    if render_origin:
+        origins.append(render_origin)
+    
+    # Add any custom origins from environment
+    custom_origins = os.environ.get('CORS_ORIGINS', '')
+    if custom_origins:
+        origins.extend(custom_origins.split(','))
+    
+    return origins
+
+cors_origins = get_cors_origins()
 CORS(app, origins=cors_origins, supports_credentials=True)
 
 # Configure logging
