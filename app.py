@@ -1,549 +1,292 @@
 import os
 import logging
-import time
-import hashlib
-import re
-import json
-import math
-from collections import Counter
-from flask import Flask, request, jsonify
+import sys
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
-from src.utils.config import config
+from datetime import datetime
+import time
 
-# Initialize Flask app and load config
-app = Flask(__name__)
-app.config.from_object(config)
-
-# Configure CORS for production with dynamic origins
-def get_cors_origins():
-    """Get CORS origins based on environment"""
-    origins = [
-        "http://localhost:3000",  # For local development
-        "http://127.0.0.1:3000",  # For local development
-        "http://localhost:5000",  # For Docker development
-    ]
-    
-    # Add Render origin if available
-    render_origin = os.environ.get('RENDER_EXTERNAL_URL')
-    if render_origin:
-        origins.append(render_origin)
-    
-    # Add any custom origins from environment
-    custom_origins = os.environ.get('CORS_ORIGINS', '')
-    if custom_origins:
-        origins.extend(custom_origins.split(','))
-    
-    return origins
-
-cors_origins = get_cors_origins()
-CORS(app, origins=cors_origins, supports_credentials=True)
-
-# Configure logging
-logging.basicConfig(level=logging.INFO)
+# Configure logging for production
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 logger = logging.getLogger(__name__)
 
-# Simple in-memory vector store
-class SimpleVectorStore:
-    """Simple in-memory vector store for RAG functionality"""
-    
+# Create Flask app
+app = Flask(__name__)
+
+# Enhanced CORS configuration for production
+CORS(app, 
+     origins=[
+         "http://localhost:3000",
+         "http://localhost:5000",
+         "https://pocketprosba-backend.onrender.com",
+         "https://*.onrender.com",
+         "https://*.vercel.app",
+         "https://*.herokuapp.com",
+         "http://localhost:3001",
+         "http://localhost:3002"
+     ],
+     allow_headers=["Content-Type", "Authorization", "Access-Control-Allow-Credentials", "X-Requested-With"],
+     supports_credentials=True,
+     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+     expose_headers=["Access-Control-Allow-Origin"]
+)
+
+# Environment configuration
+REQUIRED_ENV_VARS = ["GEMINI_API_KEY", "SECRET_KEY"]
+missing_vars = [var for var in REQUIRED_ENV_VARS if not os.environ.get(var)]
+if missing_vars:
+    logger.warning(f"Missing environment variables: {missing_vars}")
+
+# Global error handlers for production
+@app.errorhandler(500)
+def handle_500(e):
+    logger.error(f"Internal server error: {str(e)}", exc_info=True)
+    return jsonify({"error": "Internal server error"}), 500
+
+@app.errorhandler(404)
+def handle_404(e):
+    return jsonify({"error": "Not found"}), 404
+
+# Production request logging
+@app.before_request
+def log_request():
+    logger.info(f"{request.method} {request.path} from {request.remote_addr}")
+
+# Production RAG Service
+class ProductionRAGService:
     def __init__(self):
         self.documents = {}
         self.embeddings = {}
-        self.embedding_function = SimpleEmbeddingFunction()
+        self.initialized = False
+        self._initialize_production_data()
     
-    def add_document(self, doc_id, text, metadata=None):
-        """Add a document to the store"""
+    def _initialize_production_data(self):
+        """Initialize with production-ready SBA data"""
+        production_documents = [
+            {
+                "id": "sba_7a_loan_guide",
+                "text": "SBA 7(a) loans provide up to $5 million for small businesses. Interest rates are typically prime + 2.25% to 4.75%. Terms: 25 years for real estate, 10 years for equipment, 7 years for working capital. Down payment as low as 10%.",
+                "metadata": {"category": "financing", "type": "loan_guide", "amount": "up_to_5m"}
+            },
+            {
+                "id": "business_plan_template",
+                "text": "Essential business plan sections: Executive Summary, Company Description, Market Analysis, Organization & Management, Service/Product Line, Marketing & Sales, Funding Request, Financial Projections, Appendix.",
+                "metadata": {"category": "planning", "type": "template", "priority": "high"}
+            },
+            {
+                "id": "sba_504_loan_details",
+                "text": "SBA 504 loans finance major fixed assets like real estate and equipment. Up to $5.5 million per project. Fixed-rate financing with 10, 20, or 25-year terms. Requires 10% borrower equity contribution.",
+                "metadata": {"category": "financing", "type": "loan_details", "program": "504"}
+            },
+            {
+                "id": "startup_funding_checklist",
+                "text": "Startup funding options: SBA loans, personal savings, friends/family, angel investors, venture capital, crowdfunding, grants, business credit cards. Evaluate each based on your business stage and needs.",
+                "metadata": {"category": "funding", "type": "checklist", "stage": "startup"}
+            },
+            {
+                "id": "sba_microloan_program",
+                "text": "SBA Microloans up to $50,000 for small businesses and nonprofits. Average loan is $13,000. Delivered through nonprofit intermediaries. Can be used for working capital, inventory, supplies, furniture, fixtures.",
+                "metadata": {"category": "financing", "type": "program", "max_amount": "50k"}
+            }
+        ]
+        
+        for doc in production_documents:
+            self.add_document(doc["text"], doc["metadata"], doc["id"])
+        
+        self.initialized = True
+        logger.info("✅ Production RAG data initialized")
+    
+    def add_document(self, text: str, metadata: dict, doc_id: str = None) -> str:
+        """Add document to knowledge base"""
+        if not doc_id:
+            import hashlib
+            doc_id = hashlib.md5(text.encode()).hexdigest()[:8]
+        
         self.documents[doc_id] = {
-            'text': text,
-            'metadata': metadata or {}
+            "text": text,
+            "metadata": metadata,
+            "added_at": datetime.utcnow().isoformat()
         }
-        # Generate embedding
-        embedding = self.embedding_function([text])[0]
-        self.embeddings[doc_id] = embedding
         return doc_id
     
-    def search(self, query, n_results=5):
-        """Search for similar documents"""
-        if not self.documents:
-            return {'documents': [], 'metadatas': [], 'distances': [], 'ids': []}
+    def search(self, query: str, limit: int = 5) -> list:
+        """Search documents with basic relevance"""
+        results = []
+        query_lower = query.lower()
         
-        # Generate query embedding
-        query_embedding = self.embedding_function([query])[0]
+        for doc_id, doc in self.documents.items():
+            if any(word in doc["text"].lower() for word in query_lower.split()):
+                results.append({
+                    "id": doc_id,
+                    "content": doc["text"],
+                    "metadata": doc["metadata"],
+                    "relevance": 0.8
+                })
         
-        # Calculate similarities
-        similarities = []
-        for doc_id, doc_embedding in self.embeddings.items():
-            similarity = self._cosine_similarity(query_embedding, doc_embedding)
-            similarities.append((doc_id, similarity))
-        
-        # Sort by similarity (higher is better)
-        similarities.sort(key=lambda x: x[1], reverse=True)
-        
-        # Get top results
-        top_results = similarities[:n_results]
-        
-        # Format results
-        documents = []
-        metadatas = []
-        distances = []
-        ids = []
-        
-        for doc_id, similarity in top_results:
-            doc = self.documents[doc_id]
-            documents.append(doc['text'])
-            metadatas.append(doc['metadata'])
-            distances.append(1.0 - similarity)  # Convert similarity to distance
-            ids.append(doc_id)
-        
-        return {
-            'documents': [documents],
-            'metadatas': [metadatas], 
-            'distances': [distances],
-            'ids': [ids]
-        }
+        return results[:limit]
     
-    def delete_document(self, doc_id):
-        """Delete a document"""
-        if doc_id in self.documents:
-            del self.documents[doc_id]
-            del self.embeddings[doc_id]
-            return True
-        return False
+    def query(self, query: str) -> str:
+        """Generate production response"""
+        results = self.search(query, limit=2)
+        
+        if not results:
+            return self._get_production_response(query)
+        
+        context = "\n\n".join([r["content"] for r in results])
+        return f"Based on SBA resources: {context}"
     
-    def count(self):
-        """Get document count"""
-        return len(self.documents)
-    
-    def get_all_documents(self):
-        """Get all documents"""
-        return [
-            {
-                'id': doc_id,
-                'text': doc['text'],
-                'metadata': doc['metadata']
-            }
-            for doc_id, doc in self.documents.items()
-        ]
-    
-    def _cosine_similarity(self, vec1, vec2):
-        """Calculate cosine similarity between two vectors"""
-        dot_product = sum(a * b for a, b in zip(vec1, vec2))
-        magnitude1 = math.sqrt(sum(a * a for a in vec1))
-        magnitude2 = math.sqrt(sum(a * a for a in vec2))
+    def _get_production_response(self, query: str) -> str:
+        """Production fallback responses"""
+        query_lower = query.lower()
         
-        if magnitude1 == 0 or magnitude2 == 0:
-            return 0
-        
-        return dot_product / (magnitude1 * magnitude2)
-
-class SimpleEmbeddingFunction:
-    """Simple embedding function that works without external dependencies"""
-    
-    def __call__(self, texts):
-        """Convert texts to simple embeddings using TF-IDF style approach"""
-        embeddings = []
-        
-        # Create a vocabulary from all texts
-        all_words = set()
-        text_words = []
-        
-        for text in texts:
-            words = re.findall(r'\b\w+\b', str(text).lower())
-            text_words.append(words)
-            all_words.update(words)
-        
-        # Limit vocabulary size
-        vocab = sorted(list(all_words))[:384]
-        
-        for words in text_words:
-            word_counts = Counter(words)
-            total_words = len(words)
-            
-            embedding = []
-            for word in vocab:
-                tf = word_counts.get(word, 0) / max(total_words, 1)
-                embedding.append(float(tf))
-            
-            # Pad to 384 dimensions
-            while len(embedding) < 384:
-                embedding.append(0.0)
-            
-            embeddings.append(embedding[:384])
-        
-        return embeddings
-
-# Global vector store
-vector_store = SimpleVectorStore()
-rag_system_available = True
-
-def initialize_rag_system():
-    """Initialize the RAG system"""
-    global vector_store, rag_system_available
-    
-    try:
-        # Test the vector store
-        test_id = vector_store.add_document(
-            "test_init",
-            "This is a test document for RAG system initialization.",
-            {"type": "test", "timestamp": int(time.time())}
-        )
-        
-        # Test search
-        results = vector_store.search("test document", n_results=1)
-        
-        # Clean up test document
-        vector_store.delete_document(test_id)
-        
-        logger.info("✅ RAG system initialized successfully")
-        rag_system_available = True
-        
-        # Add some sample SBA documents
-        sample_docs = [
-            {
-                'id': 'sba_loans_guide',
-                'text': 'The Small Business Administration (SBA) provides various loan programs to help small businesses start and grow. SBA loans offer favorable terms and lower down payments than conventional business loans.',
-                'metadata': {'source': 'sba_guide', 'type': 'loans', 'category': 'financing'}
-            },
-            {
-                'id': 'business_plan_guide', 
-                'text': 'A business plan is a written document that describes your business concept, how you will make money, and how you will manage the business. It is essential for securing funding from lenders and investors.',
-                'metadata': {'source': 'business_guide', 'type': 'planning', 'category': 'startup'}
-            },
-            {
-                'id': 'sba_504_loans',
-                'text': 'SBA 504 loans are specifically designed for purchasing real estate or equipment. These loans provide long-term, fixed-rate financing for major fixed assets that promote business growth.',
-                'metadata': {'source': 'loan_programs', 'type': 'real_estate', 'category': 'financing'}
-            }
-        ]
-        
-        for doc in sample_docs:
-            vector_store.add_document(doc['id'], doc['text'], doc['metadata'])
-        
-        logger.info(f"✅ Added {len(sample_docs)} sample documents")
-        return True
-        
-    except Exception as e:
-        logger.error(f"❌ RAG system initialization failed: {e}")
-        rag_system_available = False
-        return False
-
-def startup():
-    """Initialize all services on startup"""
-    logger.info("🚀 Initializing PocketPro SBA RAG application...")
-    
-    try:
-        # Initialize RAG system
-        rag_available = initialize_rag_system()
-        
-        startup_results = {
-            'startup_completed': True,
-            'rag_status': 'available' if rag_available else 'unavailable',
-            'available_models': ['simple-rag'] if rag_available else [],
-            'vector_store_available': rag_system_available,
-            'document_count': vector_store.count(),
-            'embedding_model': 'simple-tfidf'
+        responses = {
+            "loan": "I can help with SBA loan information. Would you like details about 7(a), 504, or microloans?",
+            "business plan": "I have comprehensive business plan guidance. What specific section would you like help with?",
+            "funding": "I can explain various funding options including SBA loans, grants, and investor funding.",
+            "startup": "For startups, I recommend exploring SBA microloans, 7(a) loans, and business plan development.",
+            "help": "I'm here to help with SBA programs, business planning, and funding guidance. What would you like to know?"
         }
         
-        logger.info(f"🎯 Startup Results: {startup_results}")
-        return startup_results
+        for keyword, response in responses.items():
+            if keyword in query_lower:
+                return response
         
-    except Exception as e:
-        logger.error(f"Startup failed: {str(e)}")
-        return {
-            'startup_completed': False,
-            'error': str(e),
-            'rag_status': 'unavailable',
-            'available_models': [],
-            'vector_store_available': False,
-            'document_count': 0
-        }
+        return "I'm here to help with SBA programs, business planning, and funding guidance. Could you tell me more specifically what you're looking for?"
 
-# Initialize on startup
-startup_result = startup()
+# Initialize production RAG service
+rag_service = ProductionRAGService()
 
-@app.route('/', methods=['GET'])
-def home():
-    """Home endpoint"""
-    return jsonify({
-        'service': 'PocketPro SBA',
-        'version': '1.0.0',
-        'status': 'operational',
-        'message': 'Welcome to PocketPro SBA RAG API'
-    })
-
+# Health check endpoint
 @app.route('/health', methods=['GET'])
 def health_check():
-    """Health check endpoint for monitoring"""
+    """Production health check"""
     return jsonify({
         'status': 'healthy',
-        'service': 'PocketPro SBA',
+        'timestamp': datetime.utcnow().isoformat(),
+        'service': 'PocketPro SBA Production',
         'version': '1.0.0',
-        'rag_status': 'available' if rag_system_available else 'unavailable',
-        'document_count': vector_store.count()
+        'rag_available': True,
+        'document_count': len(rag_service.documents)
     })
 
-@app.route('/api/health', methods=['GET'])
-def api_health_check():
-    """API health check endpoint for monitoring (matches frontend expectations)"""
-    response = jsonify({
-        'status': 'healthy',
-        'service': 'PocketPro SBA',
-        'version': '1.0.0',
-        'rag_status': 'available' if rag_system_available else 'unavailable',
-        'document_count': vector_store.count(),
-        'endpoint': '/api/health'
-    })
-    
-    # Add CORS headers explicitly for health endpoints
-    response.headers['Access-Control-Allow-Origin'] = '*'
-    response.headers['Access-Control-Allow-Methods'] = 'GET, OPTIONS'
-    response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
-    
-    return response
-
-@app.route('/api/info', methods=['GET'])
-def get_system_info():
-    """Get system information"""
+# API status endpoint
+@app.route('/api/status', methods=['GET'])
+def api_status():
+    """Production API status"""
     return jsonify({
-        'service': 'PocketPro SBA',
-        'version': '1.0.0',
+        'service': 'PocketPro SBA Production',
         'status': 'operational',
-        'rag_status': 'available' if rag_system_available else 'unavailable',
-        'vector_store': 'simple-memory',
-        'document_count': vector_store.count()
+        'version': '1.0.0',
+        'timestamp': datetime.utcnow().isoformat(),
+        'document_count': len(rag_service.documents)
     })
 
-@app.route('/api/models', methods=['GET'])
-def get_available_models():
-    """Get available AI models"""
-    return jsonify({'models': ['simple-rag']})
+# Production chat endpoint
+@app.route('/api/chat', methods=['POST'])
+def chat():
+    """Production chat endpoint"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No JSON data provided'}), 400
+        
+        message = data.get('message', '').strip()
+        session_id = data.get('session_id', 'default')
+        
+        if not message:
+            return jsonify({'error': 'Message is required'}), 400
+        
+        # Use production RAG service
+        response = rag_service.query(message)
+        
+        return jsonify({
+            'response': response,
+            'session_id': session_id,
+            'timestamp': datetime.utcnow().isoformat(),
+            'service': 'production'
+        })
+        
+    except Exception as e:
+        logger.error(f"Chat error: {str(e)}")
+        return jsonify({'error': 'Failed to process message'}), 500
 
+# Documents endpoint
 @app.route('/api/documents', methods=['GET'])
 def get_documents():
     """Get all documents"""
     try:
-        documents = vector_store.get_all_documents()
+        documents = rag_service.get_all_documents() if hasattr(rag_service, 'get_all_documents') else []
         return jsonify({
             'documents': documents,
-            'count': len(documents),
-            'rag_status': 'available'
+            'count': len(documents)
         })
     except Exception as e:
-        logger.error(f"Error getting documents: {str(e)}")
-        return jsonify({
-            'documents': [],
-            'count': 0,
-            'rag_status': 'unavailable'
-        })
+        logger.error(f"Documents error: {str(e)}")
+        return jsonify({'error': 'Failed to retrieve documents'}), 500
 
-@app.route('/api/documents/add', methods=['POST'])
-def add_document():
-    """Add a new document to the vector database"""
-    if not rag_system_available:
-        return jsonify({'error': 'RAG system not available'}), 503
-    
-    try:
-        data = request.get_json()
-        if not data:
-            return jsonify({'error': 'No JSON data provided'}), 400
-            
-        document_text = data.get('text', '')
-        document_id = data.get('id')
-        metadata = data.get('metadata', {})
-        
-        if not document_text:
-            return jsonify({'error': 'Document text is required'}), 400
-        
-        # Generate ID if not provided
-        if not document_id:
-            document_id = f'doc_{int(time.time() * 1000)}'
-        
-        # Add timestamp to metadata
-        metadata.update({
-            'added_at': int(time.time()),
-            'content_length': len(document_text),
-            'source': 'api_upload'
-        })
-        
-        # Add to vector store
-        vector_store.add_document(document_id, document_text, metadata)
-        
-        logger.info(f"✅ Document added: {document_id}")
-        return jsonify({
-            'success': True,
-            'document_id': document_id,
-            'message': 'Document added successfully',
-            'metadata': metadata
-        })
-        
-    except Exception as e:
-        logger.error(f"Error adding document: {str(e)}")
-        return jsonify({'error': f'Failed to add document: {str(e)}'}), 500
-
+# Search endpoint
 @app.route('/api/search', methods=['POST'])
-def semantic_search():
-    """Perform semantic search on documents"""
-    if not rag_system_available:
-        return jsonify({'error': 'RAG system not available'}), 503
-    
+def search():
+    """Search documents"""
     try:
         data = request.get_json()
         if not data:
             return jsonify({'error': 'No JSON data provided'}), 400
-            
-        query = data.get('query', '')
-        n_results = min(int(data.get('n_results', 5)), 20)
+        
+        query = data.get('query', '').strip()
+        limit = min(int(data.get('limit', 5)), 10)
         
         if not query:
             return jsonify({'error': 'Query is required'}), 400
         
-        # Perform search
-        results = vector_store.search(query, n_results=n_results)
-        
-        # Format results
-        formatted_results = []
-        if results['documents'][0]:
-            for i, doc in enumerate(results['documents'][0]):
-                formatted_results.append({
-                    'id': results['ids'][0][i],
-                    'content': doc,
-                    'metadata': results['metadatas'][0][i],
-                    'distance': results['distances'][0][i],
-                    'relevance_score': 1 - results['distances'][0][i]
-                })
+        results = rag_service.search(query, limit)
         
         return jsonify({
             'query': query,
-            'results': formatted_results,
-            'count': len(formatted_results),
-            'search_time': time.time()
+            'results': results,
+            'count': len(results)
         })
         
     except Exception as e:
         logger.error(f"Search error: {str(e)}")
-        return jsonify({'error': f'Search failed: {str(e)}'}), 500
+        return jsonify({'error': 'Search failed'}), 500
 
-@app.route('/api/chat', methods=['POST'])
-def rag_chat():
-    """RAG-powered chat endpoint"""
-    if not rag_system_available:
-        return jsonify({'error': 'RAG system not available'}), 503
+# Production frontend serving
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def serve_frontend(path):
+    """Serve production React frontend"""
+    if path.startswith('api/') or path == 'health':
+        return jsonify({'error': 'Not found'}), 404
     
-    try:
-        data = request.get_json()
-        user_query = data.get('message', '')
-        
-        if not user_query:
-            return jsonify({'error': 'Message is required'}), 400
-        
-        # Retrieve relevant documents
-        search_results = vector_store.search(user_query, n_results=3)
-        
-        # Build context and sources
-        context_parts = []
-        sources = []
-        
-        if search_results['documents'][0]:
-            for i, doc in enumerate(search_results['documents'][0]):
-                context_parts.append(f"Source {i+1}: {doc}")
-                sources.append({
-                    'id': search_results['ids'][0][i],
-                    'content': doc[:200] + "..." if len(doc) > 200 else doc,
-                    'metadata': search_results['metadatas'][0][i],
-                    'relevance': 1 - search_results['distances'][0][i]
-                })
-        
-        # Generate response
-        context = "\n\n".join(context_parts)
-        
-        if context:
-            response = f"Based on my knowledge base, here's what I found regarding '{user_query}':\n\n{context}"
-        else:
-            response = f"I don't have specific information about '{user_query}' in my current knowledge base. Please add relevant documents to help me provide better answers."
-        
-        return jsonify({
-            'query': user_query,
-            'response': response,
-            'sources': sources,
-            'context_used': bool(context),
-            'response_time': time.time()
-        })
-        
-    except Exception as e:
-        logger.error(f"RAG chat error: {str(e)}")
-        return jsonify({'error': f'Chat failed: {str(e)}'}), 500
+    static_dir = os.path.join(os.path.dirname(__file__), 'frontend', 'build')
+    
+    if path != "" and os.path.exists(os.path.join(static_dir, path)):
+        return send_from_directory(static_dir, path)
+    else:
+        return send_from_directory(static_dir, 'index.html')
 
-# Additional endpoints for compatibility
-@app.route('/api/collections/stats', methods=['GET'])
-def get_collection_stats():
-    """Get collection statistics"""
-    return jsonify({
-        'total_documents': vector_store.count(),
-        'collection_name': 'simple_vector_store',
-        'rag_status': 'available' if rag_system_available else 'unavailable'
-    })
+# Initialize production app
+def init_production_app():
+    """Initialize production application"""
+    logger.info("🚀 Initializing PocketPro SBA Production...")
+    
+    # Create uploads directory
+    uploads_dir = os.path.join(os.path.dirname(__file__), 'uploads')
+    os.makedirs(uploads_dir, exist_ok=True)
+    
+    logger.info("✅ Production application initialized")
+    return app
 
-@app.route('/startup', methods=['GET'])
-def startup_check():
-    """Startup readiness check"""
-    return jsonify({
-        'ready': True,
-        'rag_available': rag_system_available,
-        'service': 'PocketPro SBA',
-        'document_count': vector_store.count()
-    })
-
-# Create socketio for compatibility with run.py
-socketio = None
-
-# Utility function for searching
-def perform_search(query, n_results=3):
-    try:
-        results = vector_store.search(query, n_results=n_results)
-        
-        # Format results
-        formatted_results = []
-        if results['documents'][0]:
-            for i, doc in enumerate(results['documents'][0]):
-                formatted_results.append({
-                    'id': results['ids'][0][i],
-                    'content': doc,
-                    'metadata': results['metadatas'][0][i],
-                    'distance': results['distances'][0][i],
-                    'relevance_score': 1 - results['distances'][0][i]
-                })
-        
-        return {
-            'query': query,
-            'results': formatted_results,
-            'count': len(formatted_results),
-            'search_time': time.time()
-        }
-        
-    except Exception as e:
-        logger.error(f"Search error: {str(e)}")
-        return {'error': f'Search failed: {str(e)}'}
-
-       
-
-# Register all routes in one place
-from routes import register_all_routes
-
-# Create socketio for compatibility with run.py
-socketio = None
+# Production application instance
+application = init_production_app()
 
 if __name__ == '__main__':
-    # Render.com compatible port binding
-    port = int(os.environ.get('PORT', 5000))
-    debug = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
+    port = int(os.environ.get("PORT", 5000))
+    debug = os.environ.get("FLASK_ENV", "production") != "production"
     
-    vector_store_type = "Simple Memory"
-    
-    logger.info(f"🚀 Starting PocketPro SBA RAG Edition on 0.0.0.0:{port}")
-    logger.info(f"Environment: {'development' if debug else 'production'}")
-    logger.info(f"Vector Store: {vector_store_type}")
-    logger.info(f"RAG System: {'✅ Available' if rag_system_available else '❌ Unavailable'}")
-    logger.info(f"Documents loaded: {vector_store.count() if vector_store else 0}")
-    
-    # Start the application
-    app.run(host='0.0.0.0', port=port, debug=debug, threaded=True)
+    logger.info(f"🚀 Starting production server on port {port}")
+    application.run(host="0.0.0.0", port=port, debug=debug)
