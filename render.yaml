@@ -1,48 +1,64 @@
+# render.yaml — Single container web + private Chroma
+previews:
+  generation: manual
+
 services:
-  # Backend API Service
+  # 1) Web service: Flask API + compiled React in one Docker image
   - type: web
-    name: pocketpro-sba-backend
-    runtime: python
-    buildCommand: pip install -r requirements-render.txt
-    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --workers=2 --threads=4
-    plan: standard
-    autoDeploy: true
-    healthCheckPath: /health
-    envVars:
-      - key: CHROMA_HOST
-        fromService:
-          type: web
-          name: chromadb
-          property: host
-      - key: CHROMA_PORT
-        fromService:
-          type: web
-          name: chromadb
-          property: port
-
-  # Frontend React Application
-  - type: web
-    name: pocketpro-sba-frontend
-    runtime: static
-    buildCommand: cd frontend && npm ci && npm run build
-    staticPublishPath: frontend/build
+    name: pocketprosba-web
+    runtime: docker
+    repo: https://github.com/Adportfolionode/pocketprosba
+    rootDir: .
+    # Use the Dockerfile that serves BOTH frontend and backend.
+    # Your repo includes several; pick the one that actually starts both.
+    dockerfilePath: Dockerfile.solo.render
     plan: starter
+    branch: main
     autoDeploy: true
+    # Health check hits the root so it works whether you serve index.html or /health.
+    healthCheckPath: /
     envVars:
-      - key: REACT_APP_API_URL
-        value: https://pocketpro-sba-backend.onrender.com
+      # Required secrets — add in Render dashboard
+      - key: GEMINI_API_KEY
+        sync: false
+      # App configuration
+      - key: FLASK_ENV
+        value: production
+      - key: PYTHONUNBUFFERED
+        value: "1"
+      # Internal Chroma connectivity (private service name below)
+      - key: CHROMADB_HOST
+        value: chromadb
+      - key: CHROMADB_PORT
+        value: "8000"
+      # If your app reads PORT, Render will set it; otherwise ensure Dockerfile exposes 10000
+      - key: PORT
+        value: "10000"
+    disk:
+      name: uploads
+      mountPath: /app/uploads
+      sizeGB: 1
 
-  # ChromaDB Vector Database
-  - type: web
+  # 2) Private service: ChromaDB
+  - type: pserv
     name: chromadb
     runtime: docker
-    image:
-      url: chromadb/chroma:0.5.0
-    plan: standard
+    repo: https://github.com/Adportfolionode/pocketprosba
+    rootDir: .
+    dockerfilePath: Dockerfile.chromadb
+    plan: starter
     autoDeploy: true
-    healthCheckPath: /api/v1/heartbeat
+    # Private services use TCP check; no healthCheckPath here on purpose
     envVars:
       - key: CHROMA_SERVER_HOST
         value: 0.0.0.0
       - key: CHROMA_SERVER_HTTP_PORT
-        value: 8000
+        value: "8000"
+      - key: IS_PERSISTENT
+        value: "TRUE"
+      - key: PERSIST_DIRECTORY
+        value: /data
+    disk:
+      name: chroma-data
+      mountPath: /data
+      sizeGB: 2
