@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Badge, OverlayTrigger, Tooltip, Spinner } from 'react-bootstrap';
+import { Badge, OverlayTrigger, Tooltip, Spinner, Button } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import connectionService from '../services/connectionService';
 import { buildApiUrl } from '../config/api';
