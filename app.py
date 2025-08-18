@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 # Create Flask app
 app = Flask(__name__)
 
-# Enhanced CORS configuration for production
+# Enhanced CORS configuration for production and development
 CORS(app, 
      origins=[
          "http://localhost:3000",
@@ -26,12 +26,15 @@ CORS(app,
          "https://*.vercel.app",
          "https://*.herokuapp.com",
          "http://localhost:3001",
-         "http://localhost:3002"
+         "http://localhost:3002",
+         "http://127.0.0.1:3000",
+         "http://127.0.0.1:5000"
      ],
-     allow_headers=["Content-Type", "Authorization", "Access-Control-Allow-Credentials", "X-Requested-With"],
+     allow_headers=["Content-Type", "Authorization", "Access-Control-Allow-Credentials", "X-Requested-With", "Access-Control-Request-Method", "Access-Control-Request-Headers"],
      supports_credentials=True,
      methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-     expose_headers=["Access-Control-Allow-Origin"]
+     expose_headers=["Access-Control-Allow-Origin", "Access-Control-Allow-Credentials"],
+     max_age=3600
 )
 
 # Environment configuration

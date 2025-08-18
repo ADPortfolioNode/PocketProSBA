@@ -10,24 +10,40 @@ import MainLayout from './components/MainLayout';
 function App() {
   useEffect(() => {
     // WebSocket connection is optional - don't let it break the app
-    const wsUrl = process.env.REACT_APP_BACKEND_WS_URL || 'ws://localhost:10000/ws';
+    const backendPort = process.env.REACT_APP_BACKEND_PORT || '5000';
+    const wsUrl = process.env.REACT_APP_BACKEND_WS_URL || `ws://localhost:${backendPort}/ws`;
+    const healthUrl = process.env.REACT_APP_HEALTH_ENDPOINT || `http://localhost:${backendPort}/health`;
     
+    // Test HTTP connection first
+    fetch(healthUrl)
+      .then(response => {
+        if (response.ok) {
+          console.log('✅ HTTP backend connection successful:', healthUrl);
+        } else {
+          console.warn('⚠️ HTTP backend returned:', response.status);
+        }
+      })
+      .catch(error => {
+        console.warn('⚠️ HTTP backend connection failed:', error.message);
+      });
+
+    // Then attempt WebSocket connection
     try {
       const socket = new WebSocket(wsUrl);
 
       socket.onopen = () => {
-        console.log('WebSocket connection established to', wsUrl);
+        console.log('✅ WebSocket connection established to', wsUrl);
       };
 
       socket.onerror = (error) => {
-        console.warn('WebSocket connection error (non-critical):', error);
-        console.log('Note: WebSocket is optional. HTTP endpoints will still work.');
+        console.warn('⚠️ WebSocket connection error (non-critical):', error);
+        console.log('💡 Note: WebSocket is optional. HTTP endpoints will still work.');
       };
 
       socket.onclose = (event) => {
-        console.log('WebSocket connection closed:', event);
+        console.log('🔌 WebSocket connection closed:', event.code, event.reason);
         if (!event.wasClean) {
-          console.log('WebSocket disconnected unexpectedly, but HTTP endpoints remain available');
+          console.log('💡 WebSocket disconnected, but HTTP endpoints remain available');
         }
       };
 
@@ -38,8 +54,8 @@ function App() {
         }
       };
     } catch (error) {
-      console.warn('WebSocket initialization failed:', error);
-      console.log('Application will continue to work with HTTP endpoints only');
+      console.warn('⚠️ WebSocket initialization failed:', error);
+      console.log('💡 Application will continue to work with HTTP endpoints only');
     }
   }, []);
 

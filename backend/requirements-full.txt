@@ -1,0 +1,10 @@
+# Copying contents from requirements.txt
+# Add any additional dependencies here
+# Example:
+# flask
+# flask-cors
+# requests
+# etc.
+
+# Contents from requirements.txt
+# (Please ensure to add the actual dependencies here)
