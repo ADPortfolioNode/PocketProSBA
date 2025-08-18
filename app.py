@@ -17,11 +17,14 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 
 # Enhanced CORS configuration for production and development
+# Allow all origins for maximum compatibility
 CORS(app, 
      origins=[
+         "*",  # Allow all origins
          "http://localhost:3000",
          "http://localhost:5000",
          "https://pocketprosba-backend.onrender.com",
+         "https://pocketprosba-frontend.onrender.com",
          "https://*.onrender.com",
          "https://*.vercel.app",
          "https://*.herokuapp.com",
@@ -30,10 +33,10 @@ CORS(app,
          "http://127.0.0.1:3000",
          "http://127.0.0.1:5000"
      ],
-     allow_headers=["Content-Type", "Authorization", "Access-Control-Allow-Credentials", "X-Requested-With", "Access-Control-Request-Method", "Access-Control-Request-Headers"],
+     allow_headers=["Content-Type", "Authorization", "Access-Control-Allow-Credentials", "X-Requested-With", "Access-Control-Request-Method", "Access-Control-Request-Headers", "X-API-Key"],
      supports_credentials=True,
-     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-     expose_headers=["Access-Control-Allow-Origin", "Access-Control-Allow-Credentials"],
+     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+     expose_headers=["Access-Control-Allow-Origin", "Access-Control-Allow-Credentials", "X-Requested-With"],
      max_age=3600
 )
 
@@ -170,6 +173,19 @@ def health_check():
         'status': 'healthy',
         'timestamp': datetime.utcnow().isoformat(),
         'service': 'PocketPro SBA Production',
+        'version': '1.0.0',
+        'rag_available': True,
+        'document_count': len(rag_service.documents)
+    })
+
+# API health check endpoint
+@app.route('/api/health', methods=['GET'])
+def api_health_check():
+    """API health check endpoint"""
+    return jsonify({
+        'status': 'healthy',
+        'timestamp': datetime.utcnow().isoformat(),
+        'service': 'PocketPro SBA API',
         'version': '1.0.0',
         'rag_available': True,
         'document_count': len(rag_service.documents)
