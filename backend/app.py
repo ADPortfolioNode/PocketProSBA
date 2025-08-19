@@ -53,52 +53,66 @@ file_agent = None
 function_agent = None
 
 def initialize_services():
-    """Initialize all services on startup"""
+    """Initialize all services on startup with detailed feedback"""
     global chroma_service, rag_manager, rag_system_available
     global concierge, search_agent, file_agent, function_agent
     
     logger.info("🚀 Initializing PocketPro SBA RAG application...")
-    
+    startup_details = {}
+
     try:
-        # Initialize ChromaDB service
+        # 1. Initialize ChromaDB service
         chroma_host = os.environ.get("CHROMA_HOST", "localhost")
         chroma_port = int(os.environ.get("CHROMA_PORT", 8000))
-        
-        logger.info(f"Connecting to ChromaDB at {chroma_host}:{chroma_port}")
+        logger.info(f"Attempting to connect to ChromaDB at {chroma_host}:{chroma_port}...")
         chroma_service = ChromaService(host=chroma_host, port=chroma_port)
-        
-        # Initialize RAG manager
+        is_chroma_available = chroma_service.is_available()
+        startup_details['chroma_connection'] = 'Success' if is_chroma_available else 'Failed'
+        logger.info(f"ChromaDB connection status: {startup_details['chroma_connection']}")
+
+        # 2. Initialize RAG manager
+        logger.info("Initializing RAG Manager...")
         rag_manager = RAGManager(chroma_service=chroma_service)
-        
-        # Initialize assistants
+        startup_details['rag_manager_initialized'] = True
+        logger.info("RAG Manager initialized.")
+
+        # 3. Initialize assistants
+        logger.info("Initializing assistant agents...")
         concierge = Concierge()
         search_agent = SearchAgent()
         file_agent = FileAgent()
         function_agent = FunctionAgent()
-        
-        # Test the RAG system
+        startup_details['assistants_initialized'] = True
+        logger.info("All assistant agents initialized.")
+
+        # 4. Test RAG system connection
+        logger.info("Testing RAG system connection...")
         rag_system_available = rag_manager.test_connection()
-        
+        startup_details['rag_system_status'] = 'available' if rag_system_available else 'unavailable'
+        logger.info(f"RAG system status: {startup_details['rag_system_status']}")
+
+        doc_count = rag_manager.get_document_count() if rag_system_available else 0
+        startup_details['document_count'] = doc_count
+
         startup_results = {
             'startup_completed': True,
-            'rag_status': 'available' if rag_system_available else 'unavailable',
-            'chroma_available': chroma_service.is_available(),
-            'document_count': rag_manager.get_document_count() if rag_system_available else 0,
+            'details': startup_details
         }
         
-        logger.info(f"🎯 Startup Results: {startup_results}")
+        logger.info(f"✅ Startup successful. Details: {json.dumps(startup_results, indent=2)}")
         return startup_results
         
     except Exception as e:
-        logger.error(f"Startup failed: {str(e)}")
+        logger.error(f"🚨 Startup failed during initialization: {str(e)}", exc_info=True)
         rag_system_available = False
-        return {
+        
+        startup_results = {
             'startup_completed': False,
             'error': str(e),
-            'rag_status': 'unavailable',
-            'chroma_available': False,
-            'document_count': 0
+            'details': startup_details
         }
+        logger.error(f"🚨 Final startup state: {json.dumps(startup_results, indent=2)}")
+        return startup_results
 
 # Initialize on startup
 startup_result = initialize_services()

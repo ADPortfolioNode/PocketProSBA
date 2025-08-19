@@ -32,6 +32,10 @@ RUN bash -c 'for i in $(seq 1 $PIP_RETRIES); do \
 # Copy application code
 COPY . .
 
+# Copy the wait script and make it executable
+COPY wait-for-chroma.sh /app/wait-for-chroma.sh
+RUN chmod +x /app/wait-for-chroma.sh
+
 # Create non-root user for security
 RUN useradd -m -u 1000 appuser && \
     chown -R appuser:appuser /app && \
@@ -49,11 +53,11 @@ ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 
 # Expose port
-EXPOSE ${PORT}
+EXPOSE 5000
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:${PORT}/health || exit 1
+    CMD curl -f http://localhost:5000/health || exit 1
 
 # Start command
-CMD gunicorn --bind 0.0.0.0:${PORT} --timeout 60 --workers 2 --access-logfile - --error-logfile - --log-level info app_full:app
+CMD ["/app/wait-for-chroma.sh", "chromadb:8000", "gunicorn", "--bind", "0.0.0.0:5000", "--timeout", "60", "--workers", "2", "--access-logfile", "-", "--error-logfile", "-", "--log-level", "info", "app_full:app"]

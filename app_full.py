@@ -48,37 +48,38 @@ embedding_function = None
 llm = None
 
 if CHROMADB_AVAILABLE and GEMINI_AVAILABLE:
+    logger.info("🚀 Initializing RAG system...")
     GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
     CHROMA_HOST = os.environ.get('CHROMA_HOST')
     CHROMA_PORT = os.environ.get('CHROMA_PORT')
 
     if not all([GEMINI_API_KEY, CHROMA_HOST, CHROMA_PORT]):
-        logger.warning("Missing one or more environment variables (GEMINI_API_KEY, CHROMA_HOST, CHROMA_PORT). RAG system will be disabled.")
+        logger.warning("🚨 Missing one or more environment variables (GEMINI_API_KEY, CHROMA_HOST, CHROMA_PORT). RAG system will be disabled.")
         CHROMADB_AVAILABLE = False # Disable RAG if config is missing
     else:
         try:
-            # Configure the embedding function
+            logger.info("Configuring Gemini embedding function and LLM...")
             embedding_function = embedding_functions.GoogleGenerativeAiEmbeddingFunction(api_key=GEMINI_API_KEY)
-            
-            # Configure the LLM
             genai.configure(api_key=GEMINI_API_KEY)
             llm = genai.GenerativeModel('gemini-pro')
+            logger.info("Gemini services configured.")
 
-            # Connect to the remote ChromaDB service provided by Render
             logger.info(f"Connecting to ChromaDB at {CHROMA_HOST}:{CHROMA_PORT}...")
             chroma_client = chromadb.HttpClient(host=CHROMA_HOST, port=CHROMA_PORT)
             
-            # Get or create the collection for RAG
+            logger.info("Getting or creating RAG collection 'sba_documents'...")
             rag_collection = chroma_client.get_or_create_collection(
                 name="sba_documents",
                 embedding_function=embedding_function
             )
-            logger.info("✅ Successfully connected to ChromaDB and got collection.")
+            logger.info("✅ RAG system initialization successful.")
             logger.info(f"   Collection '{rag_collection.name}' contains {rag_collection.count()} documents.")
 
         except Exception as e:
-            logger.error(f"Failed to initialize RAG system with ChromaDB and Gemini: {e}", exc_info=True)
+            logger.error(f"🚨 Failed to initialize RAG system with ChromaDB and Gemini: {e}", exc_info=True)
             CHROMADB_AVAILABLE = False # Disable on failure
+else:
+    logger.warning("🚨 RAG system disabled due to missing dependencies.")
 
 # --- API Endpoints ---
 
