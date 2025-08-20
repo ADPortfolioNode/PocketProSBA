@@ -1,1 +1,1 @@
-This is a test document for the production test suite.
+This is a production test document for PocketProSBA. It contains sample content to verify the RAG system is working correctly. The document discusses various topics including technology, business analysis, and system integration. This content will be used to test document upload, ingestion, and query capabilities in the production environment.

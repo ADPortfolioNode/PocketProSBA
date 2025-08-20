@@ -1,36 +1,56 @@
 version: '3.8'
+
 services:
+  pocketpro-app:
+    build:
+      context: .
+      dockerfile: Dockerfile.production
+      target: production
+    container_name: pocketpro-production
+    ports:
+      - "${PORT:-5000}:5000"
+    environment:
+      - FLASK_ENV=production
+      - PYTHONUNBUFFERED=1
+      - PORT=5000
+      - CHROMADB_HOST=localhost
+      - CHROMADB_PORT=8000
+      - CHROMA_SERVER_HOST=localhost
+      - CHROMA_SERVER_PORT=8000
+    env_file:
+      - .env
+    volumes:
+      - ./uploads:/app/uploads
+      - ./chromadb_data:/app/chromadb_data
+      - ./logs:/app/logs
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
   chromadb:
     image: chromadb/chroma:latest
-    container_name: chromadb
-    volumes:
-      - ./chromadb_data:/data
+    container_name: chromadb-production
     ports:
       - "8000:8000"
+    volumes:
+      - ./chromadb_data:/chroma/chroma
+    environment:
+      - CHROMA_SERVER_HOST=0.0.0.0
+      - CHROMA_SERVER_HTTP_PORT=8000
+      - IS_PERSISTENT=TRUE
+      - PERSIST_DIRECTORY=/chroma/chroma
     restart: unless-stopped
-
-  backend:
-    build:
-      context: .
-      dockerfile: Dockerfile.backend.prod
-    depends_on:
-      - chromadb
-    env_file:
-      - .env.example
-    ports:
-      - "5000:5000"
-    restart: unless-stopped
-
-  frontend:
-    build:
-      context: .
-      dockerfile: Dockerfile.frontend.prod
-    ports:
-      - "3000:3000"
-    depends_on:
-      - backend
-    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/heartbeat"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
 
 networks:
   default:
-    name: app-network
+    name: pocketpro-network
