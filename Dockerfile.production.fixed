@@ -1,27 +1,24 @@
-1# Multi-stage production Dockerfile for PocketPro:SBA
+# Multi-stage production Dockerfile for PocketPro:SBA
 # Optimized for Render.com and local production deployment
+# Build time optimizations applied
 
-# Stage 1: Frontend Build
+# Stage 1: Frontend Build - Optimized
 FROM node:18-alpine AS frontend-build
 WORKDIR /app/frontend
 
-# Copy package files
-COPY frontend/package.json ./
-# Copy package-lock.json if it exists
-COPY frontend/package-lock.json* ./
+# Copy package files first for better caching
+COPY frontend/package*.json ./
+RUN npm ci --only=production && npm cache clean --force
 
-# Install dependencies
-RUN npm install
-
-# Copy frontend source and build
+# Copy source and build
 COPY frontend/ ./
 RUN npm run build
 
-# Stage 2: Backend Base
+# Stage 2: Backend Base - Slim and cached
 FROM python:3.11-slim AS backend-base
 WORKDIR /app
 
-# Install system dependencies
+# Install system dependencies in one layer
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         curl \
@@ -34,32 +31,33 @@ RUN apt-get update && \
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PYTHONHASHSEED=random \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
     PORT=5000
 
-# Stage 3: Production Dependencies
+# Stage 3: Production Dependencies - Cached layer
 FROM backend-base AS production-deps
 COPY requirements-render-production.txt .
-RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
-    pip install --no-cache-dir -r requirements-render-production.txt
+RUN pip install --no-cache-dir -r requirements-render-production.txt
 
-# Stage 4: Production Application
+# Stage 4: Production Application - Minimal final image
 FROM backend-base AS production
 WORKDIR /app
 
-# Copy production dependencies from previous stage
+# Copy only necessary Python packages
 COPY --from=production-deps /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
 COPY --from=production-deps /usr/local/bin /usr/local/bin
 
-# Copy backend application
+# Copy backend application (only necessary files)
 COPY backend/ ./
 
-# Copy built frontend
+# Copy built frontend assets
 COPY --from=frontend-build /app/frontend/build ./static
 
-# Create necessary directories
+# Create directories with proper permissions
 RUN mkdir -p uploads chromadb_data logs
 
-# Create non-root user for security
+# Create non-root user
 RUN useradd --create-home --shell /bin/bash appuser && \
     chown -R appuser:appuser /app
 USER appuser
@@ -71,5 +69,5 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
 # Expose port
 EXPOSE 5000
 
-# Start application
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "2", "--threads", "2", "--timeout", "120", "--keep-alive", "5", "run:app"]
+# Optimized gunicorn configuration
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "1", "--threads", "4", "--timeout", "120", "--keep-alive", "5", "run:app"]
