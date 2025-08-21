@@ -10,6 +10,8 @@ services:
         value: production
       - key: PYTHONUNBUFFERED
         value: "1"
+      - key: PORT
+        value: "5000"
       - key: GEMINI_API_KEY
         sync: false
       - key: CHROMADB_HOST
@@ -41,9 +43,7 @@ services:
           type: web
           name: pocketprosba-backend
           property: url
-          
     buildCommand: "cd frontend && npm install && npm run build"
-    staticPublishPath: "./frontend/build"
 
   - type: pserv
     name: chromadb
