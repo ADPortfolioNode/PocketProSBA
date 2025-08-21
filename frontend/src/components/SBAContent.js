@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { businessLifecycleStages, localResourceTypes } from '../sbaResources';
-import { apiFetch } from '../apiClient';
+import apiClient from '../api/apiClient'; // Corrected import path
 import { Card, Nav, Row, Col, Container, Badge } from 'react-bootstrap';
 
 const SBAContent = ({ onProgramSelect, onResourceSelect }) => {
@@ -11,8 +11,8 @@ const SBAContent = ({ onProgramSelect, onResourceSelect }) => {
     // Load SBA programs from backend endpoint on mount
     async function fetchPrograms() {
       try {
-        const data = await apiFetch('programs');
-        setPrograms(data);
+        const response = await apiClient.get('programs'); // Use apiClient.get
+        setPrograms(response.data);
       } catch (err) {
         setPrograms([]);
         // Optionally log or show error

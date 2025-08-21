@@ -3,18 +3,20 @@ import React, { createContext, useContext, useState } from 'react';
 const AppContext = createContext();
 
 export const AppProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [chatMessages, setChatMessages] = useState([]);
-  // Add other global states as needed
+  const [globalState, setGlobalState] = useState({});
 
-  const value = {
-    user,
-    setUser,
-    chatMessages,
-    setChatMessages,
+  const updateGlobalState = (key, value) => {
+    setGlobalState(prevState => ({
+      ...prevState,
+      [key]: value
+    }));
   };
 
-  return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
+  return (
+    <AppContext.Provider value={{ globalState, updateGlobalState }}>
+      {children}
+    </AppContext.Provider>
+  );
 };
 
 export const useAppContext = () => {

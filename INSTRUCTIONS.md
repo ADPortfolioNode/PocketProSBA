@@ -25,17 +25,16 @@ This document provides instructions for setting up, running, and deploying the P
 
 ### Environment Variables
 
-The application uses environment variables for configuration. Create a `.env` file in the `backend` directory and a `.env` file in the `frontend` directory. You can use the `.env.example` files as a template.
+The application uses environment variables for configuration. You should create `.env` files in the `backend` and `frontend` directories based on the provided `.env.example` files.
 
 **Backend (`backend/.env`):**
 
 ```
-FLASK_ENV=development
 PORT=5000
 FRONTEND_URL=http://localhost:3000
+GEMINI_API_KEY=YOUR_GEMINI_API_KEY # Replace with your actual Gemini API Key
 CHROMADB_HOST=localhost
 CHROMADB_PORT=8000
-GEMINI_API_KEY=YOUR_GEMINI_API_KEY # Replace with your actual Gemini API Key
 ```
 
 **Frontend (`frontend/.env`):
@@ -82,10 +81,48 @@ The frontend will be running at `http://localhost:3000`.
 
 ## Running with Docker
 
-To run the application with Docker, use the `docker-compose.yml` file:
+### Local Development with Docker
+
+To run the application with Docker for local development:
 
 ```bash
+# Build and start all services
 docker-compose up --build
+
+# Or run in detached mode
+docker-compose up --build -d
+
+# View logs
+docker-compose logs -f
+
+# Stop services
+docker-compose down
+```
+
+### Services Overview
+- **Backend**: Runs on port 5000 (http://localhost:5000)
+- **Frontend**: Runs on port 3000 (http://localhost:3000)
+- **ChromaDB**: Runs on port 8000 (http://localhost:8000)
+
+### Environment Setup for Docker
+
+1. **Backend**: Copy `backend/.env.example` to `backend/.env`
+2. **Frontend**: Copy `frontend/.env.example` to `frontend/.env`
+
+### Production Docker Build
+
+For production deployment:
+
+```bash
+# Build production image
+docker build -f Dockerfile.production -t pocketpro-backend .
+
+# Build frontend image
+docker build -f Dockerfile.frontend -t pocketpro-frontend .
+
+# Run production containers
+docker run -p 5000:5000 pocketpro-backend
+docker run -p 3000:80 pocketpro-frontend
 ```
 
 ## Deploying to Render

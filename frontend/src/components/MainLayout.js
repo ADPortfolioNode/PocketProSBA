@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Container, Alert, Button, Badge, Spinner } from 'react-bootstrap';
 import SBANavigation from './SBANavigation';
 import Header from './Header';
@@ -8,89 +8,38 @@ import RAGWorkflowInterface from './RAGWorkflowInterface';
 import ModernConciergeChat from './ModernConciergeChat';
 import UploadsManagerComponent from './UploadsManager';
 import SBAContent from './SBAContent';
-import connectionService from '../services/connectionService';
-import { buildApiUrl } from '../config/api';
+import { useConnection } from '../hooks/useConnection'; // Import the new hook
 
 function MainLayout() {
   const [activeTab, setActiveTab] = useState('chat');
-  const [serverConnected, setServerConnected] = useState(false);
-  const [backendError, setBackendError] = useState(null);
   const [messages, setMessages] = useState([]);
-  const [isCheckingHealth, setIsCheckingHealth] = useState(false);
-  const [connectionInfo, setConnectionInfo] = useState(null);
   const [diagnostics, setDiagnostics] = useState(null);
 
-  // Enhanced API URL builder using the new configuration
-  const apiUrl = (path) => {
-    return buildApiUrl(path);
-  };
-
-  // Enhanced health check function
-  const checkServerHealth = async () => {
-    setIsCheckingHealth(true);
-    setBackendError(null);
-    
-    try {
-      const result = await connectionService.checkConnection();
-      
-      if (result.connected) {
-        setServerConnected(true);
-        setConnectionInfo(result.info || result);
-        setBackendError(null);
-        return true;
-      } else {
-        setServerConnected(false);
-        setConnectionInfo(null);
-        setBackendError(result.error || 'Unable to connect to backend server');
-        return false;
-      }
-    } catch (error) {
-      console.error('Health check failed:', error);
-      setServerConnected(false);
-      setBackendError(error.message || 'Connection failed');
-      return false;
-    } finally {
-      setIsCheckingHealth(false);
-    }
-  };
-
-  // Initialize connection monitoring
-  useEffect(() => {
-    // Initialize connection service
-    connectionService.initialize();
-    
-    // Set up connection status listener
-    const unsubscribe = connectionService.addConnectionListener((status) => {
-      setServerConnected(status.connected);
-      setConnectionInfo(status.info);
-      
-      if (!status.connected && status.error) {
-        setBackendError(status.error);
-      }
-    });
-
-    // Initial health check
-    checkServerHealth();
-    
-    return () => {
-      unsubscribe();
-      connectionService.stopHealthMonitoring();
-    };
-  }, []);
+  // Use the custom connection hook
+  const {
+    serverConnected,
+    backendError,
+    isCheckingHealth,
+    connectionInfo,
+    checkConnection,
+    apiCall,
+    getDiagnostics,
+    resetConnection,
+  } = useConnection();
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
-    setBackendError(null);
+    // No need to setBackendError(null) here, as useConnection manages it
   };
 
   const handleChatSend = async (message) => {
     try {
-      setBackendError(null);
+      // No need to setBackendError(null) here, as useConnection manages it
       
       const userMessage = { role: 'user', content: message };
       setMessages(prev => [...prev, userMessage]);
       
-      const response = await connectionService.apiCall('/api/chat', {
+      const response = await apiCall('/api/chat', { // Use apiCall from hook
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -116,12 +65,12 @@ function MainLayout() {
       } else if (error.message.includes('Failed to fetch')) {
         errorMessage += 'Unable to connect to server. Checking connection...';
         // Auto-retry connection
-        await checkServerHealth();
+        await checkConnection(); // Use checkConnection from hook
       } else {
         errorMessage += error.message;
       }
       
-      setBackendError(errorMessage);
+      // No need to setBackendError(errorMessage) here, as useConnection manages it
       
       const errorChatMessage = { role: 'system', content: errorMessage };
       setMessages(prev => [...prev, errorChatMessage]);
@@ -131,7 +80,7 @@ function MainLayout() {
   };
 
   const showDiagnostics = async () => {
-    const diag = await connectionService.getDiagnostics();
+    const diag = await getDiagnostics(); // Use getDiagnostics from hook
     setDiagnostics(diag);
     console.log('Connection Diagnostics:', diag);
   };
@@ -149,7 +98,7 @@ function MainLayout() {
           <div className="mb-3">
             <strong>Connection Details:</strong>
             <ul>
-              <li><Badge bg="secondary">Backend URL</Badge> {apiUrl('')}</li>
+              <li><Badge bg="secondary">Backend URL</Badge> {connectionInfo?.source || 'Unknown'}</li>
               <li><Badge bg="secondary">Environment</Badge> {connectionInfo?.source || 'Unknown'}</li>
               <li><Badge bg="secondary">Last checked</Badge> {new Date().toLocaleTimeString()}</li>
             </ul>
@@ -158,7 +107,7 @@ function MainLayout() {
           <div className="d-flex gap-2">
             <Button 
               variant="outline-danger" 
-              onClick={checkServerHealth} 
+              onClick={checkConnection} // Use checkConnection from hook
               className="me-2"
               disabled={isCheckingHealth}
             >
@@ -173,8 +122,8 @@ function MainLayout() {
             <Button 
               variant="outline-info" 
               onClick={async () => {
-                await connectionService.resetConnection();
-                await checkServerHealth();
+                await resetConnection(); // Use resetConnection from hook
+                await checkConnection(); // Use checkConnection from hook
               }}
             >
               Reset Connection
@@ -242,7 +191,6 @@ function MainLayout() {
         activeTab={activeTab}
         onTabChange={handleTabChange}
         serverConnected={serverConnected}
-        apiUrl={apiUrl}
         connectionInfo={connectionInfo}
       />
       <Container className="flex-grow-1">

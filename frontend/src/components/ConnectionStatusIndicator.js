@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Badge, OverlayTrigger, Tooltip, Spinner, Button } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import connectionService from '../services/connectionService';
-import { buildApiUrl } from '../config/api';
 
 /**
  * Enhanced ConnectionStatusIndicator with comprehensive backend connectivity
@@ -11,7 +10,6 @@ import { buildApiUrl } from '../config/api';
 const ConnectionStatusIndicator = ({
   connected,
   systemInfo,
-  apiUrl,
   checkInterval = 30000,
   onConnectionChange
 }) => {
@@ -83,7 +81,7 @@ const ConnectionStatusIndicator = ({
     
     return (
       <>
-        <div><strong>Backend:</strong> {apiUrl('')}</div>
+        <div><strong>Backend:</strong> {info.source || 'Unknown'}</div>
         <div><strong>Status:</strong> {connected ? 'Connected' : 'Disconnected'}</div>
         {info.server_type && <div><strong>Type:</strong> {info.server_type}</div>}
         {info.version && <div><strong>Version:</strong> {info.version}</div>}
@@ -178,7 +176,6 @@ const ConnectionStatusIndicator = ({
 ConnectionStatusIndicator.propTypes = {
   connected: PropTypes.bool.isRequired,
   systemInfo: PropTypes.object,
-  apiUrl: PropTypes.func.isRequired,
   checkInterval: PropTypes.number,
   onConnectionChange: PropTypes.func
 };

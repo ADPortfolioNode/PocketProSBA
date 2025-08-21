@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Card, ListGroup, Form, Button, InputGroup, Spinner, Alert, Badge, Row, Col, Pagination } from 'react-bootstrap';
-import { apiFetch } from '../apiClient';
+import apiClient from '../api/apiClient'; // Corrected import path
 
 const SBAContentExplorer = ({ selectedResource, endpoints }) => {
   const [contentType, setContentType] = useState('articles');
@@ -34,20 +34,20 @@ const SBAContentExplorer = ({ selectedResource, endpoints }) => {
   const fetchResourceStatus = async () => {
     try {
       // Flask health
-      const flaskResp = await apiFetch('health', { method: 'GET' });
+      const flaskResp = await apiClient.get('/api/health');
       setResourceStatus(prev => ({
         ...prev,
-        flask: { status: flaskResp.status === 'ok' ? 'online' : 'error', message: flaskResp.message || '' }
+        flask: { status: flaskResp.data.status === 'ok' ? 'online' : 'error', message: flaskResp.data.message || '' }
       }));
     } catch (err) {
       setResourceStatus(prev => ({ ...prev, flask: { status: 'error', message: err.message } }));
     }
     try {
       // ChromaDB health
-      const chromaResp = await apiFetch('chromadb_health', { method: 'GET' });
+      const chromaResp = await apiClient.get('/api/chromadb_health');
       setResourceStatus(prev => ({
         ...prev,
-        chromadb: { status: chromaResp.status === 'ok' ? 'online' : 'error', message: chromaResp.message || '' }
+        chromadb: { status: chromaResp.data.status === 'ok' ? 'online' : 'error', message: chromaResp.data.message || '' }
       }));
     } catch (err) {
       setResourceStatus(prev => ({ ...prev, chromadb: { status: 'error', message: err.message } }));
@@ -72,16 +72,14 @@ const SBAContentExplorer = ({ selectedResource, endpoints }) => {
         setResults([]);
         return;
       }
-      const response = await apiFetch(endpointKey, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' },
-        query: { query: searchQuery, page: pageNum }
+      const response = await apiClient.get(endpoints[endpointKey], {
+        params: { query: searchQuery, page: pageNum }
       });
 
       // Expect response.items to be an array of nodes, each with possible children
-      if (response && response.items) {
-        setResults(response.items);
-        setTotalPages(response.totalPages || 1);
+      if (response.data && response.data.items) {
+        setResults(response.data.items);
+        setTotalPages(response.data.totalPages || 1);
         setPage(pageNum);
         setNodeMap({}); // Reset node map on new search
       } else {
@@ -104,12 +102,10 @@ const SBAContentExplorer = ({ selectedResource, endpoints }) => {
     try {
       const endpointKey = `sba_content_${contentType}_children`;
       if (!endpoints || !endpoints[endpointKey]) throw new Error('Children endpoint not found');
-      const response = await apiFetch(endpointKey, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await apiClient.get(endpoints[endpointKey], {
         params: { id: nodeId }
       });
-      setNodeMap(prev => ({ ...prev, [nodeId]: response.items || [] }));
+      setNodeMap(prev => ({ ...prev, [nodeId]: response.data.items || [] }));
     } catch (err) {
       setError(`Error fetching node children: ${err.message}`);
     } finally {
@@ -138,13 +134,11 @@ const SBAContentExplorer = ({ selectedResource, endpoints }) => {
     try {
       const endpointKey = `sba_content_${contentType}_details`;
       if (!endpoints || !endpoints[endpointKey]) throw new Error('Endpoint not found');
-      const response = await apiFetch(endpointKey, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await apiClient.get(endpoints[endpointKey], {
         params: { id }
       });
       
-      setSelectedItem(response);
+      setSelectedItem(response.data);
     } catch (err) {
       setError(`Error fetching content details: ${err.message}`);
     } finally {
@@ -383,13 +377,11 @@ const SBAContentExplorer = ({ selectedResource, endpoints }) => {
         setLoading(false);
         return;
       }
-      apiFetch(endpointKey, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' },
+      apiClient.get(endpoints[endpointKey], {
         params: { id: selectedResource }
       })
-        .then(data => {
-          setSelectedItem(data);
+        .then(response => {
+          setSelectedItem(response.data);
           setLoading(false);
         })
         .catch(err => {

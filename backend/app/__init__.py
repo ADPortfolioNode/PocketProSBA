@@ -51,14 +51,17 @@ def create_app(config_class=Config):
 
     @app.errorhandler(400)
     def bad_request(error):
+        logger.error('Bad Request: %s', error)
         return jsonify({"error": "Bad Request"}), 400
 
     @app.errorhandler(404)
     def not_found(error):
+        logger.error('Not Found: %s', request.path)
         return jsonify({"error": "Not Found"}), 404
 
     @app.errorhandler(500)
     def internal_server_error(error):
+        logger.exception('Internal Server Error: %s', error)
         return jsonify({"error": "Internal Server Error"}), 500
     
     return app
