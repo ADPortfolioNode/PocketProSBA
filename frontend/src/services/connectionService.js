@@ -1,254 +1,92 @@
-import { buildApiUrl, checkBackendConnection, apiCallWithRetry } from '../config/api';
+import apiClient from '../api/apiClient';
 
-/**
- * Comprehensive connection service for frontend-backend communication
- * Handles all connectivity scenarios with redundancy and fallback mechanisms
- */
-class ConnectionService {
-  constructor() {
-    this.isConnected = false;
-    this.backendInfo = null;
-    this.connectionHistory = [];
-    this.healthCheckInterval = null;
-    this.listeners = new Set();
-  }
+const CONNECTION_CHECK_INTERVAL = 5000; // 5 seconds
+let healthCheckIntervalId = null;
+let connectionListeners = [];
 
-  // Initialize connection monitoring
-  async initialize() {
-    await this.checkConnection();
-    this.startHealthMonitoring();
-  }
+const connectionService = {
+  initialize: () => {
+    // Start periodic health checks
+    connectionService.startHealthMonitoring();
+  },
 
-  // Check connection with multiple fallback strategies
-  async checkConnection(customEndpoints = []) {
-    try {
-      // Strategy 1: Direct health check with current configuration
-      const result = await checkBackendConnection(customEndpoints);
-      
-      if (result.connected) {
-        this.updateConnectionStatus(true, result.data);
-        return result;
-      }
-
-      // Strategy 2: Try alternative ports for local development
-      const altPorts = [5000, 5001, 8080, 8000, 3001];
-      for (const port of altPorts) {
-        try {
-          const altUrl = `http://localhost:${port}`;
-          const response = await fetch(`${altUrl}/health`, {
-            method: 'GET',
-            signal: AbortSignal.timeout(3000)
-          });
-          
-          if (response.ok) {
-            // Update backend URL for this session
-            sessionStorage.setItem('backendUrl', altUrl);
-            this.updateConnectionStatus(true, { port, source: 'local-alt' });
-            return { connected: true, port, source: 'local-alt' };
-          }
-        } catch (e) {
-          continue;
-        }
-      }
-
-      // Strategy 3: Check if running in Docker with proxy
-      try {
-        const dockerResponse = await fetch('/api/health', {
-          method: 'GET',
-          signal: AbortSignal.timeout(5000)
-        });
-        
-        if (dockerResponse.ok) {
-          this.updateConnectionStatus(true, { source: 'docker-proxy' });
-          return { connected: true, source: 'docker-proxy' };
-        }
-      } catch (e) {
-        // Continue to next strategy
-      }
-
-      // Strategy 4: Render deployment check - use relative paths
-      if (window.location.hostname.includes('onrender.com')) {
-        try {
-          const renderResponse = await fetch('/api/health', {
-            method: 'GET',
-            signal: AbortSignal.timeout(15000) // Longer timeout for Render
-          });
-          
-          if (renderResponse.ok) {
-            this.updateConnectionStatus(true, { source: 'render' });
-            return { connected: true, source: 'render' };
-          }
-        } catch (e) {
-          console.warn('Render health check failed:', e);
-        }
-      }
-
-      // Strategy 5: Production deployment - use same origin
-      if (window.location.protocol === 'https:') {
-        try {
-          const prodResponse = await fetch('/api/health', {
-            method: 'GET',
-            signal: AbortSignal.timeout(10000)
-          });
-          
-          if (prodResponse.ok) {
-            this.updateConnectionStatus(true, { source: 'production' });
-            return { connected: true, source: 'production' };
-          }
-        } catch (e) {
-          console.warn('Production health check failed:', e);
-        }
-      }
-
-      // All strategies failed
-      const errorMessage = `Unable to connect to backend. Please check if the server is running.`;
-      this.updateConnectionStatus(false, null, errorMessage);
-      return { connected: false, error: errorMessage };
-
-    } catch (error) {
-      const errorMessage = `Connection failed: ${error.message}`;
-      this.updateConnectionStatus(false, null, errorMessage);
-      return { connected: false, error: errorMessage };
-    }
-  }
-
-  // Start continuous health monitoring
-  startHealthMonitoring(interval = 30000) {
-    if (this.healthCheckInterval) {
-      clearInterval(this.healthCheckInterval);
-    }
-
-    this.healthCheckInterval = setInterval(async () => {
-      await this.checkConnection();
-    }, interval);
-  }
-
-  // Stop health monitoring
-  stopHealthMonitoring() {
-    if (this.healthCheckInterval) {
-      clearInterval(this.healthCheckInterval);
-      this.healthCheckInterval = null;
-    }
-  }
-
-  // Update connection status and notify listeners
-  updateConnectionStatus(connected, info = null, error = null) {
-    const wasConnected = this.isConnected;
-    this.isConnected = connected;
-    this.backendInfo = info;
-
-    // Log connection history
-    this.connectionHistory.push({
-      timestamp: new Date().toISOString(),
-      connected,
-      info,
-      error
-    });
-
-    // Keep only last 50 entries
-    if (this.connectionHistory.length > 50) {
-      this.connectionHistory = this.connectionHistory.slice(-50);
-    }
-
-    // Notify all listeners
-    this.listeners.forEach(listener => {
-      listener({
-        connected,
-        info,
-        error,
-        wasConnected,
-        timestamp: new Date()
-      });
-    });
-  }
-
-  // Add connection status listener
-  addConnectionListener(callback) {
-    this.listeners.add(callback);
-    return () => this.listeners.delete(callback);
-  }
-
-  // Get current connection status
-  getConnectionStatus() {
-    return {
-      connected: this.isConnected,
-      info: this.backendInfo,
-      history: this.connectionHistory
+  addConnectionListener: (listener) => {
+    connectionListeners.push(listener);
+    return () => {
+      connectionListeners = connectionListeners.filter(l => l !== listener);
     };
-  }
+  },
 
-  // Make API call with automatic retry and fallback
-  async apiCall(endpoint, options = {}) {
-    const url = buildApiUrl(endpoint);
-    
+  notifyConnectionListeners: (status) => {
+    connectionListeners.forEach(listener => listener(status));
+  },
+
+  startHealthMonitoring: () => {
+    if (healthCheckIntervalId) {
+      clearInterval(healthCheckIntervalId);
+    }
+    healthCheckIntervalId = setInterval(async () => {
+      await connectionService.checkConnection();
+    }, CONNECTION_CHECK_INTERVAL);
+  },
+
+  stopHealthMonitoring: () => {
+    if (healthCheckIntervalId) {
+      clearInterval(healthCheckIntervalId);
+      healthCheckIntervalId = null;
+    }
+  },
+
+  checkConnection: async () => {
     try {
-      return await apiCallWithRetry(url, options);
+      const response = await apiClient.get('/api/info');
+      const status = {
+        connected: response.status === 200,
+        info: response.data,
+        error: null,
+      };
+      connectionService.notifyConnectionListeners(status);
+      return status;
     } catch (error) {
-      // If call fails, try to reconnect
-      const connectionResult = await this.checkConnection();
-      
-      if (connectionResult.connected) {
-        // Retry the call with new connection
-        return await apiCallWithRetry(buildApiUrl(endpoint), options);
-      }
-      
+      const status = {
+        connected: false,
+        info: null,
+        error: error.message || 'Network Error',
+      };
+      connectionService.notifyConnectionListeners(status);
+      return status;
+    }
+  },
+
+  apiCall: async (url, options = {}) => {
+    try {
+      const response = await apiClient({
+        url,
+        method: options.method || 'GET',
+        data: options.body ? JSON.parse(options.body) : undefined,
+        headers: options.headers,
+      });
+      return response.data;
+    } catch (error) {
       throw error;
     }
-  }
+  },
 
-  // Get connection diagnostics
-  async getDiagnostics() {
-    const diagnostics = {
-      timestamp: new Date().toISOString(),
-      environment: {
-        hostname: window.location.hostname,
-        protocol: window.location.protocol,
-        port: window.location.port,
-        userAgent: navigator.userAgent
-      },
-      backend: {
-        configuredUrl: buildApiUrl(''),
-        sessionUrl: sessionStorage.getItem('backendUrl') || 'not set',
-        connected: this.isConnected,
-        info: this.backendInfo
-      },
-      network: {
-        online: navigator.onLine,
-        connection: navigator.connection ? {
-          effectiveType: navigator.connection.effectiveType,
-          downlink: navigator.connection.downlink,
-          rtt: navigator.connection.rtt
-        } : null
-      },
-      history: this.connectionHistory.slice(-10)
-    };
+  getDiagnostics: async () => {
+    try {
+      const response = await apiClient.get('/api/diagnostics'); // Assuming a diagnostics endpoint
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching diagnostics:', error);
+      return { error: error.message || 'Failed to fetch diagnostics' };
+    }
+  },
 
-    return diagnostics;
-  }
-
-  // Reset connection and clear cache
-  async resetConnection() {
-    sessionStorage.removeItem('backendUrl');
-    this.connectionHistory = [];
-    this.backendInfo = null;
-    await this.checkConnection();
-  }
-}
-
-// Create singleton instance
-const connectionService = new ConnectionService();
-
-// Export for use in components
-export default connectionService;
-
-// React hook for connection status
-export const useConnectionStatus = () => {
-  const [status, setStatus] = React.useState(connectionService.getConnectionStatus());
-
-  React.useEffect(() => {
-    const unsubscribe = connectionService.addConnectionListener(setStatus);
-    return unsubscribe;
-  }, []);
-
-  return status;
+  resetConnection: async () => {
+    // This might involve clearing local storage, re-initializing services, etc.
+    // For now, just re-run health check
+    await connectionService.checkConnection();
+  },
 };
+
+export default connectionService;

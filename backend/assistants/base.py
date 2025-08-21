@@ -30,7 +30,7 @@ class BaseAssistant:
         self.progress = progress
         self.details = details
         try:
-            from run import socketio
+            from app import socketio
             socketio.emit('assistant_status', {
                 'assistant': self.name,
                 'status': status,

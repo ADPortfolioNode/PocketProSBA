@@ -9,7 +9,7 @@ print()
 # Test basic imports
 try:
     from services.chroma import ChromaService
-    from services.rag import RAGManager
+    from rag import RAGManager
     from assistants.concierge import Concierge
     print('✅ All imports successful')
 except ImportError as e:

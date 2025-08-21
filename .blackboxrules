@@ -3,4 +3,85 @@ you are here to make sure this project is completed and functions.
 provide oversite and parse codebase, use INSTRUCTIONS.md as ground truth, and verify docker servers are running.
 get docker status if needed.
 
-while preparing for produciton generate real code and replace all psudo code with funcitonal code.
+while preparing for produciton generate real code and replace all psudo code with functional code.
+
+You are refactoring the PocketPro repo (https://github.com/Adportfolionode/pocketprosba).  
+Goal: Build a lightweight, production-ready RAG application that runs reliably on Render with minimal code, clean design patterns, and strong deployment stability.  
+
+---
+
+### Core Objectives
+1. **Unify Frontend + Backend Communication**
+   - Replace hardcoded localhost URLs with `process.env.REACT_APP_API_URL` in frontend.
+   - Backend should expose `PORT=5000` by default and respect `PORT` env var.
+   - Add `.env.example` files for frontend + backend with clear placeholders.
+
+2. **Stabilize Deployment on Render**
+   - Fix `render.yaml` to declare explicit `buildCommand` and `startCommand` for each service.
+   - Ensure:
+     - Frontend: `npm install && npm run build`
+     - Backend: `pip install -r requirements.txt && gunicorn app:app --bind 0.0.0.0:$PORT`
+   - Align frontend build to serve static files, backend handles API on port 5000.
+
+3. **Apply Clean Design Patterns**
+   - **Backend**
+     - Use Flask Blueprints to group routes (`/auth`, `/data`, `/rag`).
+     - Introduce a `services/` layer for business logic, keep routes thin.
+     - Add `config.py` to manage environment vars + app config.
+   - **Frontend**
+     - Create `/src/api/apiClient.js` with Axios instance (baseURL from env).
+     - Add `/src/context/AppProvider.js` for global state.
+     - Convert repetitive fetch logic into reusable hooks.
+
+4. **Remove Duplication + Improve Maintainability**
+   - Consolidate API call logic.
+   - Audit repo for duplicate config files or unused dependencies.
+   - Ensure consistent naming conventions (`camelCase` in frontend, `snake_case` in backend).
+
+5. **Testing & QA**
+   - Add Jest tests for frontend API calls (mock backend responses).
+   - Add Pytest tests for backend routes and service functions.
+   - Include a lightweight CI step for tests (`npm test` + `pytest`).
+
+---
+
+### Additional Steps (NEW)
+6. **Logging & Monitoring**
+   - Add simple logging middleware to backend (`logging` module).
+   - Log request paths, status codes, and errors.
+
+7. **Error Handling**
+   - Implement global error handlers in Flask for 400/404/500.
+   - Standardize error responses: `{ "error": "<message>" }`.
+
+8. **Security Best Practices**
+   - Enable CORS with explicit frontend origin (not wildcard).
+   - Ensure secrets and API keys are only read from environment variables.
+   - Add `.gitignore` entries for `.env`, build artifacts, and cache files.
+
+9. **Documentation & Developer Experience**
+   - Update `INSTRUCTIONS.md`:
+     - Include how to run locally (`npm start`, `flask run`).
+     - Include how to deploy with Render (`render.yaml`).
+     - Document env variables for both services.
+   - Add API reference (`docs/api.md`) with endpoints, params, and sample responses.
+
+---
+
+### Deliverables
+- Updated **render.yaml** (error-free, production-ready).
+- Updated **backend structure**: blueprints + services + config.
+- Updated **frontend structure**: apiClient + context provider.
+- `.env.example` for frontend & backend.
+- Minimal Jest + Pytest tests.
+- Updated `INSTRUCTIONS.md` with clear local + Render deployment guide.
+- Logs + error handling for reliability.
+
+---
+
+**Final requirement:**  
+Keep the app lightweight, stable, and production-ready.  
+Prefer fewer files over unnecessary abstraction.  
+Ensure Render deployment succeeds end-to-end with frontend and backend communicating properly.
+
+once files have been added to default profile - remove prune unecessary files.

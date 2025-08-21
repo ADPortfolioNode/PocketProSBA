@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from './hooks/useAuth';
 
 function Register() {
   const [email, setEmail] = useState('');
@@ -8,7 +9,9 @@ function Register() {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const { register, loading, error: authError } = useAuth();
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
@@ -21,10 +24,13 @@ function Register() {
       return;
     }
 
-    // TODO: Implement registration API call here
-
-    alert('Registration successful! Please log in.');
-    navigate('/login');
+    try {
+      await register(email, password);
+      alert('Registration successful! Please log in.');
+      navigate('/login');
+    } catch (err) {
+      setError(authError || 'An unexpected error occurred.');
+    }
   };
 
   return (

@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from './hooks/useAuth';
 
 function ForgotPassword() {
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
-  const handleSubmit = (e) => {
+  const { forgotPassword, loading, error: authError } = useAuth();
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setMessage('');
@@ -16,9 +19,12 @@ function ForgotPassword() {
       return;
     }
 
-    // TODO: Implement forgot password API call here
-
-    setMessage('If this email is registered, you will receive password reset instructions.');
+    try {
+      await forgotPassword(email);
+      setMessage('If this email is registered, you will receive password reset instructions.');
+    } catch (err) {
+      setError(authError || 'An unexpected error occurred.');
+    }
   };
 
   return (

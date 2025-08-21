@@ -1,61 +1,70 @@
-# Production Dockerfile for PocketPro:SBA Frontend
-FROM node:16-alpine as build
+import logging
+from services.chroma import ChromaService
+from gemini_rag_service import EnhancedGeminiRAGService
 
-WORKDIR /app
+logger = logging.getLogger(__name__)
 
-# Install dependencies only (leverage Docker cache)
-COPY frontend/package.json frontend/package-lock.json ./
-RUN npm ci --omit=dev
+class RAGManager:
+    """Manages the RAG system, including ChromaDB and Gemini RAG service."""
 
-# Copy source code
-COPY frontend/ ./
+    _instance = None
 
-# Build the application
-RUN npm run build
+    def __new__(cls, *args, **kwargs):
+        if cls._instance is None:
+            cls._instance = super(RAGManager, cls).__new__(cls)
+            cls._instance._initialized = False
+        return cls._instance
 
-# Production stage with nginx
-FROM nginx:alpine
+    def __init__(self, chroma_service: ChromaService = None):
+        if self._initialized:
+            return
 
-# Copy built files
-COPY --from=build /app/build /usr/share/nginx/html
+        self.chroma_service = chroma_service
+        self.gemini_rag_service = EnhancedGeminiRAGService()
+        self.is_ready = False
+        self._initialized = True
+        self.initialize_rag_system()
 
-# Copy nginx configuration
-COPY nginx.prod.conf /etc/nginx/conf.d/default.conf
+    def initialize_rag_system(self):
+        logger.info("Initializing RAG system...")
+        if not self.chroma_service:
+            self.chroma_service = ChromaService()
 
-# Add health check
-RUN apk add --no-cache curl
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost/ || exit 1
+        if not self.chroma_service.is_available():
+            logger.error("ChromaDB service is not available. RAG system cannot be initialized.")
+            self.is_ready = False
+            return
 
-EXPOSE 80
+        if not self.gemini_rag_service.initialize_full_service():
+            logger.error("Gemini RAG service failed to initialize. RAG system cannot be initialized.")
+            self.is_ready = False
+            return
 
-CMD ["nginx", "-g", "daemon off;"]
-# Copy nginx configuration
-COPY nginx.prod.conf /etc/nginx/conf.d/default.conf
+        self.is_ready = True
+        logger.info("RAG system initialized successfully.")
 
-# Add health check
-RUN apk add --no-cache curl
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost/ || exit 1
+    def is_available(self) -> bool:
+        return self.is_ready and self.chroma_service.is_available() and self.gemini_rag_service.is_initialized
 
-EXPOSE 80
+    def get_document_count(self) -> int:
+        if self.is_available():
+            return self.gemini_rag_service.get_service_status().get("document_count", 0)
+        return 0
 
-CMD ["nginx", "-g", "daemon off;"]
+    def query_documents(self, query: str, n_results: int = 5):
+        if not self.is_available():
+            return {"error": "RAG system not available"}
+        return self.gemini_rag_service.query_sba_loans(query)
 
-# Set ChromaDB Server URL
-ENV CHROMADB_URL=http://chromadb:8000
+    def get_collection_stats(self):
+        if self.is_available():
+            return self.chroma_service.get_collection_stats()
+        return {"count": 0}
 
-# Install Python and pip
-RUN apk add --no-cache python3 py3-pip
+_rag_manager_instance = None
 
-# Install ChromaDB client
-RUN pip install chromadb
-
-# Copy backend code
-COPY backend/ /app/backend
-
-# Expose ChromaDB port
-EXPOSE 8000
-
-# Start ChromaDB server
-CMD ["chromadb", "serve", "--host", "0.0.0.0", "--port", "8000"]
+def get_rag_manager() -> RAGManager:
+    global _rag_manager_instance
+    if _rag_manager_instance is None:
+        _rag_manager_instance = RAGManager()
+    return _rag_manager_instance

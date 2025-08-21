@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Alert, Button, Spinner } from 'react-bootstrap';
-
-// API endpoint
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+import apiClient from '../../api/apiClient';
 
 const ServerStatusMonitor = ({ onStatusChange }) => {
   const [status, setStatus] = useState('checking');
@@ -12,40 +10,18 @@ const ServerStatusMonitor = ({ onStatusChange }) => {
 
   const checkServer = async () => {
     setStatus('checking');
-    
     try {
-      // Try health endpoint
-      let response = await fetch(`${API_URL}/api/health`, { 
-        method: 'GET',
-        // Add a cache-busting query param
-        headers: { 'Cache-Control': 'no-cache' }
-      });
-      
-      if (!response.ok) {
-        // Try info endpoint if health doesn't exist
-        response = await fetch(`${API_URL}/api/info`, { 
-          method: 'GET',
-          headers: { 'Cache-Control': 'no-cache' }
-        });
-        
-        if (!response.ok) {
-          throw new Error(`Server responded with status ${response.status}`);
-        }
-      }
-      
-      const data = await response.json();
-      setServerInfo(data);
+      const response = await apiClient.get('/health');
+      setServerInfo(response.data);
       setStatus('online');
       setMessage('Connected to server successfully');
-      
       if (onStatusChange) {
-        onStatusChange('online', data);
+        onStatusChange('online', response.data);
       }
     } catch (err) {
       console.error('Server connection error:', err);
       setStatus('offline');
       setMessage(`Unable to connect to server: ${err.message}`);
-      
       if (onStatusChange) {
         onStatusChange('offline', null);
       }
@@ -54,14 +30,9 @@ const ServerStatusMonitor = ({ onStatusChange }) => {
     }
   };
 
-  // Check on component mount and periodically
   useEffect(() => {
     checkServer();
-    
-    const interval = setInterval(() => {
-      checkServer();
-    }, 30000); // Check every 30 seconds
-    
+    const interval = setInterval(checkServer, 30000); // Check every 30 seconds
     return () => clearInterval(interval);
   }, []);
 

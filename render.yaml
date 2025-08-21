@@ -1,54 +1,57 @@
-# render.yaml — Single container web + private Chroma
-previews:
-  generation: manual
-
 services:
-  # 1) Web service: Flask API + compiled React in one Docker image
   - type: web
-    name: pocketprosba-web
-    runtime: docker
+    name: pocketprosba-backend
+    runtime: python
     repo: https://github.com/Adportfolionode/pocketprosba
-    rootDir: .
-    # Use the Dockerfile that serves BOTH frontend and backend.
-    # Your repo includes several; pick the one that actually starts both.
-    dockerfilePath: Dockerfile.solo.render
-    plan: starter
     branch: main
-    autoDeploy: true
-    # Health check hits the root so it works whether you serve index.html or /health.
-    healthCheckPath: /
+    healthCheckPath: /api/info
     envVars:
-      # Required secrets — add in Render dashboard
-      - key: GEMINI_API_KEY
-        sync: false
-      # App configuration
       - key: FLASK_ENV
         value: production
       - key: PYTHONUNBUFFERED
         value: "1"
-      # Internal Chroma connectivity (private service name below)
+      - key: GEMINI_API_KEY
+        sync: false
       - key: CHROMADB_HOST
-        value: chromadb
+        fromService:
+          type: pserv
+          name: chromadb
+          property: host
       - key: CHROMADB_PORT
-        value: "8000"
-      # If your app reads PORT, Render will set it; otherwise ensure Dockerfile exposes 10000
-      - key: PORT
-        value: "10000"
-    disk:
-      name: uploads
-      mountPath: /app/uploads
-      sizeGB: 1
+        fromService:
+          type: pserv
+          name: chromadb
+          property: port
+      - key: FRONTEND_URL
+        fromService:
+          type: web
+          name: pocketprosba-frontend
+          property: url
+    buildCommand: "pip install -r backend/requirements.txt"
+    startCommand: "gunicorn 'backend.app:create_app()' --bind 0.0.0.0:$PORT"
 
-  # 2) Private service: ChromaDB
+  - type: web
+    name: pocketprosba-frontend
+    runtime: static
+    repo: https://github.com/Adportfolionode/pocketprosba
+    branch: main
+    envVars:
+      - key: REACT_APP_API_URL
+        fromService:
+          type: web
+          name: pocketprosba-backend
+          property: url
+          
+    buildCommand: "cd frontend && npm install && npm run build"
+    staticPublishPath: "./frontend/build"
+
   - type: pserv
     name: chromadb
     runtime: docker
     repo: https://github.com/Adportfolionode/pocketprosba
-    rootDir: .
-    dockerfilePath: Dockerfile.chromadb
+    dockerfilePath: ./Dockerfile.chromadb
     plan: starter
     autoDeploy: true
-    # Private services use TCP check; no healthCheckPath here on purpose
     envVars:
       - key: CHROMA_SERVER_HOST
         value: 0.0.0.0

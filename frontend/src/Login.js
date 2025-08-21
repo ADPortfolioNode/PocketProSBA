@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from './hooks/useAuth';
 
 function Login() {
   const [email, setEmail] = useState('');
@@ -7,7 +8,9 @@ function Login() {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const { login, loading, error: authError } = useAuth();
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
@@ -16,10 +19,14 @@ function Login() {
       return;
     }
 
-    // TODO: Implement login API call here
-
-    alert('Login successful!');
-    navigate('/'); // Navigate to home page after login
+    try {
+      await login(email, password);
+      alert('Login successful!');
+      navigate('/'); // Navigate to home page after login
+    } catch (err) {
+      // Error is already set by useAuth hook, but we can add more specific handling here if needed
+      setError(authError || 'An unexpected error occurred.');
+    }
   };
 
   return (
