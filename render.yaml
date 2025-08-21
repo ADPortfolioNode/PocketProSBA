@@ -25,7 +25,10 @@ services:
           name: chromadb
           property: port
       - key: FRONTEND_URL
-        value: "https://pocketprosba-frontend.onrender.com"
+        fromService:
+          type: web
+          name: pocketprosba-frontend
+          property: url
     buildCommand: "pip install -r backend/requirements.txt"
     startCommand: "gunicorn 'backend.app:create_app()' --bind 0.0.0.0:$PORT"
 
@@ -36,7 +39,10 @@ services:
     branch: main
     envVars:
       - key: REACT_APP_API_URL
-        value: "https://pocketprosba-backend.onrender.com"
+        fromService:
+          type: web
+          name: pocketprosba-backend
+          property: url
     buildCommand: "cd frontend && npm install && npm run build"
 
   - type: pserv
