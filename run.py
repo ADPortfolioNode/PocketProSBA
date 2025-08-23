@@ -68,6 +68,9 @@ try:
     
 except ImportError as e:
     print(f"⚠️  Import warning: {e}")
+    print("Detailed error information:")
+    import traceback
+    traceback.print_exc()
     print("🔄 Creating fallback application...")
     application = create_fallback_app()
     app = application

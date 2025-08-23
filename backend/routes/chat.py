@@ -1,6 +1,6 @@
 # routes/chat.py
 from flask import Blueprint, request, jsonify
-from services.chat_service import create_chat_message, get_all_chat_messages, update_chat_message
+from backend.services.chat_service import create_chat_message, get_all_chat_messages, update_chat_message
 
 chat_bp = Blueprint('chat', __name__)
 
