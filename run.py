@@ -6,10 +6,12 @@ import os
 import sys
 from pathlib import Path
 
-# Set up the Python path for Render deployment
+# Set up the Python path for deployment
 project_root = Path(__file__).parent.absolute()
+backend_path = project_root / "backend"
 src_path = project_root / "src"
 sys.path.insert(0, str(project_root))
+sys.path.insert(0, str(backend_path))
 sys.path.insert(0, str(src_path))
 
 # Set environment defaults for Render
@@ -56,7 +58,9 @@ def create_fallback_app():
 try:
     # Try to import the main application
     print("🔄 Importing PocketPro:SBA application...")
-    from app import app, socketio
+    from backend.app import create_app
+    app = create_app()
+    socketio = None  # SocketIO not currently implemented
     print("✅ Application imported successfully")
     
     # Wrap with WSGI for Gunicorn compatibility
@@ -103,9 +107,9 @@ if __name__ == '__main__':
         import gunicorn.app.wsgiapp as wsgi
         wsgi.run()
     else:
-        app.run(host='0.0.0.0', port=PORT, debug=(FLASK_ENV == 'development'), threaded=True)
         app.run(
             host=HOST,
             port=PORT,
-            debug=(FLASK_ENV == 'development')
+            debug=(FLASK_ENV == 'development'),
+            threaded=True
         )
