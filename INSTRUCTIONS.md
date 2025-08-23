@@ -32,16 +32,25 @@ The application uses environment variables for configuration. You should create 
 ```
 PORT=5000
 FRONTEND_URL=http://localhost:3000
-GEMINI_API_KEY=YOUR_GEMINI_API_KEY # Replace with your actual Gemini API Key
+GEMINI_API_KEY=your_gemini_api_key_here
 CHROMADB_HOST=localhost
 CHROMADB_PORT=8000
+SECRET_KEY=your_secret_key_here
+FLASK_ENV=production
+PYTHONUNBUFFERED=1
 ```
 
-**Frontend (`frontend/.env`):
+**Frontend (`frontend/.env`):**
 
 ```
 REACT_APP_API_URL=http://localhost:5000 # Base URL for the backend API
 ```
+
+**Important Notes:**
+- For Docker deployment, the backend will automatically use `FRONTEND_URL=http://frontend:80`
+- For Docker deployment, the frontend will automatically use `REACT_APP_API_URL=http://backend:5000`
+- The `SECRET_KEY` should be a secure random string for session management
+- The `GEMINI_API_KEY` can be obtained from Google's Gemini API console
 
 ### Installation
 

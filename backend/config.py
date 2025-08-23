@@ -6,3 +6,5 @@ class Config:
     CHROMADB_HOST = os.environ.get('CHROMADB_HOST', 'localhost')
     CHROMADB_PORT = os.environ.get('CHROMADB_PORT', '8000')
     FRONTEND_URL = os.environ.get('FRONTEND_URL', 'http://localhost:3000')
+    DEBUG = os.environ.get('DEBUG', False)
+    TESTING = os.environ.get('TESTING', False)

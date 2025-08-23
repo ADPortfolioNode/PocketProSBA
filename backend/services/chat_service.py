@@ -1,5 +1,5 @@
 # services/chat_service.py
-from ..models.chat import ChatMessage, db
+from models.chat import ChatMessage, db
 
 def create_chat_message(user_id, message):
     new_message = ChatMessage(user_id=user_id, message=message)

@@ -17,10 +17,12 @@ def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(config_class)
     
-    # Configure CORS
+    # Configure CORS - allow all origins for development
     CORS(app, resources={
         r"/api/*": {
-            "origins": os.environ.get('FRONTEND_URL', 'http://localhost:3000')
+            "origins": "*",
+            "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+            "allow_headers": ["Content-Type", "Authorization"]
         }
     })
     

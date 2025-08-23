@@ -18,7 +18,17 @@ class BaseAssistant:
         self.status = "idle"
         self.progress = 0
         self.details = "Initialized"
-        self.search_module = SearchModule() if enable_search else None
+        self.search_module = None
+        
+        if enable_search:
+            try:
+                self.search_module = SearchModule()
+            except ValueError as e:
+                logger.warning(f"Search module disabled: {e}")
+                self.search_module = None
+            except Exception as e:
+                logger.error(f"Failed to initialize search module: {e}")
+                self.search_module = None
 
     def search(self, query, num_results=5):
         if self.search_module:
@@ -30,6 +40,7 @@ class BaseAssistant:
         self.progress = progress
         self.details = details
         try:
+            # Try to import socketio from app (works when app is running)
             from app import socketio
             socketio.emit('assistant_status', {
                 'assistant': self.name,
@@ -39,8 +50,11 @@ class BaseAssistant:
                 'timestamp': datetime.now().isoformat()
             })
             logger.debug(f"Status update emitted for {self.name}: {status} ({progress}%)")
+        except ImportError:
+            # SocketIO not available (normal during testing)
+            logger.debug(f"Status update: {self.name} - {status} ({progress}%) - {details}")
         except Exception as e:
-            logger.error(f"Failed to emit status update: {str(e)}")
+            logger.warning(f"Failed to emit status update: {str(e)}")
     
     def report_success(self, text, sources=None, additional_data=None):
         """Report successful task completion"""

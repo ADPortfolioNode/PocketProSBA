@@ -10,7 +10,7 @@ RUN npm install
 COPY frontend/ .
 
 # Set environment variable for backend URL (will use nginx proxy)
-ENV REACT_APP_BACKEND_URL=""
+ENV REACT_APP_API_URL=""
 
 RUN npm run build
 

@@ -1,9 +1,9 @@
 services:
-  pocketpro-app:
+  backend:
     build:
       context: .
       dockerfile: Dockerfile.production
-    container_name: pocketpro-production
+    container_name: pocketpro-backend
     ports:
       - "${PORT:-5000}:5000"
     environment:
@@ -12,11 +12,9 @@ services:
       - PORT=5000
       - CHROMADB_HOST=chromadb
       - CHROMADB_PORT=8000
-      - CHROMA_SERVER_HOST=chromadb
-      - CHROMA_SERVER_PORT=8000
-      - FRONTEND_URL=http://frontend:3000 # Updated to point to the frontend service
+      - FRONTEND_URL=http://frontend:80
     env_file:
-      - .env
+      - backend/.env
     volumes:
       - ./uploads:/app/uploads
       - ./chromadb_data:/app/chromadb_data
@@ -29,7 +27,6 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 40s
 
   chromadb:
     image: chromadb/chroma:latest
@@ -59,9 +56,9 @@ services:
     ports:
       - "3000:80" # Map host port 3000 to container port 80 (nginx default)
     environment:
-      - REACT_APP_API_URL=http://pocketpro-app:5000 # Point to the backend service
+      - REACT_APP_API_URL=http://backend:5000 # Point to the backend service
     depends_on:
-      - pocketpro-app # Frontend depends on backend
+      - backend # Frontend depends on backend
     restart: unless-stopped
 
 networks:
