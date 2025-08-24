@@ -17,3 +17,10 @@ class Config:
     FRONTEND_URL = os.environ.get('FRONTEND_URL', 'http://localhost:3000')
     DEBUG = os.environ.get('DEBUG', False)
     TESTING = os.environ.get('TESTING', False)
+
+
+class TestConfig(Config):
+    """Configuration for testing environment"""
+    TESTING = True
+    SQLALCHEMY_DATABASE_URI = os.environ.get('TEST_DATABASE_URL') or f'sqlite:///{Config.BASE_DIR / "test.db"}'
+    WTF_CSRF_ENABLED = False
