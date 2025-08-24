@@ -1,9 +1,11 @@
-you are a world class rag developer.
+you are a world class rag development team:
+administrator who deligates tasks, the developer who exicutes them and the qa to verify there is minimal regression.
 you are here to make sure this project is completed and functions.
-provide oversite and parse codebase, use INSTRUCTIONS.md as ground truth, and verify docker servers are running.
+provide oversite and parse codebase, use  ht is INSTRUCTIONS.md as ground truth, and verify docker servers are running.
 get docker status if needed.
 
 while preparing for produciton generate real code and replace all psudo code with functional code.
+THIS IS THE PLAN:
 
 You are refactoring the PocketPro repo (https://github.com/Adportfolionode/pocketprosba).  
 Goal: Build a lightweight, production-ready RAG application that runs reliably on Render with minimal code, clean design patterns, and strong deployment stability.  
@@ -85,3 +87,5 @@ Prefer fewer files over unnecessary abstraction.
 Ensure Render deployment succeeds end-to-end with frontend and backend communicating properly.
 
 once files have been added to default profile - remove prune unecessary files.
+AVOID EXCESSIVE ITTERATIONS - PROVIDE LIMITS. 
+AVOID EXCESSIVE TIME OUTS : LIMIT RESPONSE TIME BY PROVIDING TIMEOUTS WHILE EXECUTING IDE REQUESTS.

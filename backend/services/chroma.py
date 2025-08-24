@@ -26,12 +26,12 @@ class ChromaService:
         """Initialize ChromaDB client and embedding function"""
         try:
             # Initialize ChromaDB client
-            self.client = chromadb.HttpClient(
-                host=self.host,
-                port=self.port,
-                settings=Settings(
+            self.client = chromadb.Client(
+                Settings(
                     chroma_client_auth_provider="chromadb.auth.token.TokenAuthClientProvider",
                     chroma_client_auth_credentials="admin",
+                    host=self.host,
+                    port=self.port,
                     anonymized_telemetry=False
                 )
             )

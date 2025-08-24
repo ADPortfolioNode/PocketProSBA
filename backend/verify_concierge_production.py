@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 def verify_production_concierge():
     """Verify concierge is production ready"""
-    print('🔍 Production Concierge Verification')
+    print('???? Production Concierge Verification')
     print('=' * 60)
     
     # Test 1: Environment variable handling
@@ -27,11 +27,11 @@ def verify_production_concierge():
         os.environ['TEST_ENV'] = 'production'
         from config import Config
         config = Config()
-        print('   ✅ Config module loads successfully')
+        print('   ??? Config module loads successfully')
         print(f'   - Debug mode: {config.DEBUG}')
         print(f'   - Testing: {config.TESTING}')
     except Exception as e:
-        print(f'   ❌ Config loading failed: {e}')
+        print(f'   ??? Config loading failed: {e}')
         return False
     
     # Test 2: Concierge initialization with proper error handling
@@ -45,10 +45,10 @@ def verify_production_concierge():
         
         from assistants.concierge import Concierge
         concierge = Concierge()
-        print('   ✅ Concierge initialized in production mode')
+        print('   ??? Concierge initialized in production mode')
         print(f'   - RAG Status: {"Available" if concierge.rag_manager else "Gracefully degraded"}')
     except Exception as e:
-        print(f'   ❌ Concierge production initialization failed: {e}')
+        print(f'   ??? Concierge production initialization failed: {e}')
         return False
     
     # Test 3: Core concierge functionality
@@ -63,10 +63,10 @@ def verify_production_concierge():
         try:
             intent = concierge._classify_intent(message, {})
             result = concierge.handle_message(message, 'prod-test')
-            status = '✅' if result.get('text') else '⚠️'
-            print(f'   {status} "{message}" → {intent} → Response generated')
+            status = '???' if result.get('text') else '??????'
+            print(f'   {status} "{message}" ??? {intent} ??? Response generated')
         except Exception as e:
-            print(f'   ❌ "{message}" failed: {e}')
+            print(f'   ??? "{message}" failed: {e}')
     
     # Test 4: Error resilience
     print('\n4. Error Resilience Testing:')
@@ -80,11 +80,11 @@ def verify_production_concierge():
         try:
             result = concierge.handle_message(message, 'error-test')
             if result and not result.get('error'):
-                print(f'   ✅ {description}: Handled gracefully')
+                print(f'   ??? {description}: Handled gracefully')
             else:
-                print(f'   ⚠️  {description}: Error response generated')
+                print(f'   ??????  {description}: Error response generated')
         except Exception as e:
-            print(f'   ❌ {description}: Unhandled exception: {e}')
+            print(f'   ??? {description}: Unhandled exception: {e}')
     
     # Test 5: Session persistence
     print('\n5. Session Persistence:')
@@ -101,16 +101,16 @@ def verify_production_concierge():
         
         if session_id in concierge.conversation_store:
             session = concierge.conversation_store[session_id]
-            print(f'   ✅ Session maintained: {len(session["messages"])} messages')
-            print(f'   ✅ Conversation state: {session["conversation_state"]}')
+            print(f'   ??? Session maintained: {len(session["messages"])} messages')
+            print(f'   ??? Conversation state: {session["conversation_state"]}')
         else:
-            print('   ❌ Session not persisted')
+            print('   ??? Session not persisted')
     except Exception as e:
-        print(f'   ❌ Session test failed: {e}')
+        print(f'   ??? Session test failed: {e}')
     
     print('\n' + '=' * 60)
-    print('🎯 PRODUCTION CONCIERGE VERIFICATION COMPLETE!')
-    print('✅ Concierge is production-ready with:')
+    print('???? PRODUCTION CONCIERGE VERIFICATION COMPLETE!')
+    print('??? Concierge is production-ready with:')
     print('   - Proper error handling and graceful degradation')
     print('   - Environment variable compatibility')
     print('   - Session management and persistence')
@@ -124,10 +124,10 @@ if __name__ == '__main__':
     try:
         success = verify_production_concierge()
         if success:
-            print('\n🚀 Concierge workflows are PRODUCTION READY!')
+            print('\n???? Concierge workflows are PRODUCTION READY!')
             print('   All concierge functionality verified and operational')
         else:
-            print('\n❌ Concierge needs additional work for production')
+            print('\n??? Concierge needs additional work for production')
         sys.exit(0 if success else 1)
     except Exception as e:
         logger.error(f"Production verification failed: {e}")
