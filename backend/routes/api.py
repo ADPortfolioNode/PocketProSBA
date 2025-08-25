@@ -1,4 +1,7 @@
 from flask import Blueprint, request, jsonify
+import logging
+
+logger = logging.getLogger(__name__)
 from services.api_service import (
     get_system_info_service,
     decompose_task_service,
@@ -9,6 +12,11 @@ from services.api_service import (
 
 api_bp = Blueprint('api', __name__)
 
+@api_bp.route('/health', methods=['GET'])
+def health_check():
+    """Health check endpoint"""
+    return jsonify({'status': 'healthy'}), 200
+
 @api_bp.route('/info', methods=['GET'])
 def get_system_info():
     """Get system information"""
@@ -16,7 +24,8 @@ def get_system_info():
         info = get_system_info_service()
         return jsonify(info)
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        logger.error(f"Error getting system info: {str(e)}")
+        return jsonify({'error': 'Failed to retrieve system information'}), 500
 
 @api_bp.route('/decompose', methods=['POST'])
 def decompose_task():
@@ -24,19 +33,22 @@ def decompose_task():
     try:
         data = request.get_json()
         if not data:
+            logger.warning("No JSON data provided for decompose task")
             return jsonify({'error': 'No JSON data provided'}), 400
 
         message = data.get('message', '')
         session_id = data.get('session_id')
 
         if not message:
+            logger.warning("Message is required for decompose task")
             return jsonify({'error': 'Message is required'}), 400
 
         response = decompose_task_service(message, session_id)
         return jsonify(response)
 
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        logger.error(f"Error decomposing task: {str(e)}")
+        return jsonify({'error': 'Failed to decompose task'}), 500
 
 @api_bp.route('/execute', methods=['POST'])
 def execute_step():
@@ -44,6 +56,7 @@ def execute_step():
     try:
         data = request.get_json()
         if not data:
+            logger.warning("No JSON data provided for execute step")
             return jsonify({'error': 'No JSON data provided'}), 400
 
         task = data.get('task', {})
@@ -51,7 +64,8 @@ def execute_step():
         return jsonify(result)
 
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        logger.error(f"Error executing step: {str(e)}")
+        return jsonify({'error': 'Failed to execute step'}), 500
 
 @api_bp.route('/validate', methods=['POST'])
 def validate_step():
@@ -59,6 +73,7 @@ def validate_step():
     try:
         data = request.get_json()
         if not data:
+            logger.warning("No JSON data provided for validate step")
             return jsonify({'error': 'No JSON data provided'}), 400
 
         result = data.get('result', '')
@@ -67,7 +82,8 @@ def validate_step():
         return jsonify(validation)
 
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        logger.error(f"Error validating step: {str(e)}")
+        return jsonify({'error': 'Failed to validate step'}), 500
 
 @api_bp.route('/query', methods=['POST'])
 def query_documents():
@@ -75,18 +91,19 @@ def query_documents():
     try:
         data = request.get_json()
         if not data:
+            logger.warning("No JSON data provided for query documents")
             return jsonify({'error': 'No JSON data provided'}), 400
 
         query = data.get('query', '')
         top_k = min(int(data.get('top_k', 5)), 20)
 
         if not query:
+            logger.warning("Query is required for querying documents")
             return jsonify({'error': 'Query is required'}), 400
 
         results = query_documents_service(query, top_k)
         return jsonify(results)
 
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-
+        logger.error(f"Error querying documents: {str(e)}")
+        return jsonify({'error': 'Failed to query documents'}), 500

@@ -1,170 +1,355 @@
-# PocketPro:SBA Edition - Instructions
+# PocketPro:SBA Edition - Production Ready Instructions
 
-This document provides instructions for setting up, running, and deploying the PocketPro:SBA Edition application.
+This document provides comprehensive instructions for setting up, running, testing, and deploying the PocketPro:SBA Edition application in production environments.
 
 ## Table of Contents
 
 - [Prerequisites](#prerequisites)
-- [Getting Started](#getting-started)
-  - [Environment Variables](#environment-variables)
-  - [Installation](#installation)
-- [Running the Application Locally](#running-the-application-locally)
-- [Running with Docker](#running-with-docker)
-- [Deploying to Render](#deploying-to-render)
+- [Quick Start](#quick-start)
+- [Environment Configuration](#environment-configuration)
+- [Local Development](#local-development)
+- [Docker Deployment](#docker-deployment)
+- [Render Deployment](#render-deployment)
 - [Testing](#testing)
 - [API Reference](#api-reference)
+- [Troubleshooting](#troubleshooting)
 
 ## Prerequisites
 
-- [Node.js](https://nodejs.org/) (v16 or higher)
-- [Python](https://www.python.org/) (v3.9 or higher)
-- [Docker](https://www.docker.com/)
-- [Render CLI](https://render.com/docs/cli)
+- **Node.js** v16 or higher - [Download](https://nodejs.org/)
+- **Python** v3.9 or higher - [Download](https://www.python.org/)
+- **Docker** (for containerized deployment) - [Download](https://www.docker.com/)
+- **Git** - [Download](https://git-scm.com/)
 
-## Getting Started
+## Quick Start
 
-### Environment Variables
-
-The application uses environment variables for configuration. You should create `.env` files in the `backend` and `frontend` directories based on the provided `.env.example` files.
-
-**Backend (`backend/.env`):**
-
-```
-PORT=5000
-FRONTEND_URL=http://localhost:3000
-GEMINI_API_KEY=your_gemini_api_key_here
-CHROMADB_HOST=localhost
-CHROMADB_PORT=8000
-SECRET_KEY=your_secret_key_here
-FLASK_ENV=production
-PYTHONUNBUFFERED=1
-```
-
-**Frontend (`frontend/.env`):**
-
-```
-REACT_APP_API_URL=http://localhost:5000 # Base URL for the backend API
-```
-
-**Important Notes:**
-- For Docker deployment, the backend will automatically use `FRONTEND_URL=http://frontend:80`
-- For Docker deployment, the frontend will automatically use `REACT_APP_API_URL=http://backend:5000`
-- The `SECRET_KEY` should be a secure random string for session management
-- The `GEMINI_API_KEY` can be obtained from Google's Gemini API console
-
-### Installation
-
-**Backend:**
-
+### 1. Clone and Setup
 ```bash
+git clone <your-repo-url>
+cd pocketprosba
+```
+
+### 2. Environment Setup
+```bash
+# Backend
+cp backend/.env.example backend/.env
+# Edit backend/.env with your actual values
+
+# Frontend  
+cp frontend/.env.example frontend/.env
+# Edit frontend/.env with your actual values
+```
+
+### 3. Install Dependencies
+```bash
+# Backend
 cd backend
 pip install -r requirements.txt
-```
 
-**Frontend:**
-
-```bash
-cd frontend
+# Frontend
+cd ../frontend
 npm install
 ```
 
-## Running the Application Locally
-
-**Backend:**
-
+### 4. Run Locally
 ```bash
+# Terminal 1 - Backend
 cd backend
 flask run
-```
 
-The backend will be running at `http://localhost:5000`.
-
-**Frontend:**
-
-```bash
+# Terminal 2 - Frontend  
 cd frontend
 npm start
 ```
 
-The frontend will be running at `http://localhost:3000`.
+## Environment Configuration
 
-## Running with Docker
+### Backend Environment (`backend/.env`)
+```env
+PORT=5000
+FLASK_ENV=production
+DEBUG=False
+TESTING=False
 
-### Local Development with Docker
+# Database
+DATABASE_URL=sqlite:///app.db
 
-To run the application with Docker for local development:
+# Security - REQUIRED FOR PRODUCTION
+SECRET_KEY=your_secure_random_secret_key_here
 
+# API Keys - REQUIRED
+GEMINI_API_KEY=your_gemini_api_key_here
+
+# ChromaDB
+CHROMADB_HOST=localhost
+CHROMADB_PORT=8000
+
+# Frontend URL (for CORS)
+FRONTEND_URL=http://localhost:3000
+
+# Python Configuration
+PYTHONUNBUFFERED=1
+```
+
+### Frontend Environment (`frontend/.env`)
+```env
+REACT_APP_API_URL=http://localhost:5000
+GENERATE_SOURCEMAP=false
+```
+
+**Important Security Notes:**
+- Never commit `.env` files to version control
+- Use strong, randomly generated `SECRET_KEY` in production
+- Keep `GEMINI_API_KEY` secure and never expose it publicly
+- For production, set `DEBUG=False` and `FLASK_ENV=production`
+
+## Local Development
+
+### Backend Development
 ```bash
-# Build and start all services
-docker-compose up --build
+cd backend
 
-# Or run in detached mode
-docker-compose up --build -d
+# Development mode with auto-reload
+flask run --debug
+
+# Or with custom port
+FLASK_ENV=development flask run --port=5000
+```
+
+### Frontend Development
+```bash
+cd frontend
+
+# Development server
+npm start
+
+# Build for production
+npm run build
+```
+
+## Docker Deployment
+
+### Development with Docker Compose
+```bash
+# Start all services with hot-reload
+docker-compose -f docker-compose.dev.yml up --build
+
+# Run in background
+docker-compose -f docker-compose.dev.yml up --build -d
 
 # View logs
-docker-compose logs -f
+docker-compose -f docker-compose.dev.yml logs -f
 
 # Stop services
-docker-compose down
+docker-compose -f docker-compose.dev.yml down
+```
+
+### Production Docker Build
+```bash
+# Build backend image
+docker build -f Dockerfile.production -t pocketpro-backend:latest .
+
+# Build frontend image  
+docker build -f Dockerfile.frontend -t pocketpro-frontend:latest .
+
+# Run production containers
+docker run -d -p 5000:5000 --env-file backend/.env pocketpro-backend:latest
+docker run -d -p 3000:80 pocketpro-frontend:latest
 ```
 
 ### Services Overview
-- **Backend**: Runs on port 5000 (http://localhost:5000)
-- **Frontend**: Runs on port 3000 (http://localhost:3000)
-- **ChromaDB**: Runs on port 8000 (http://localhost:8000)
+- **Backend API**: http://localhost:5000
+- **Frontend App**: http://localhost:3000  
+- **ChromaDB**: http://localhost:8000
 
-### Environment Setup for Docker
+## Render Deployment
 
-1. **Backend**: Copy `backend/.env.example` to `backend/.env`
-2. **Frontend**: Copy `frontend/.env.example` to `frontend/.env`
+The application is configured for seamless deployment to Render using the `render.yaml` blueprint.
 
-### Production Docker Build
+### Deployment Steps:
+1. Connect your GitHub repository to Render
+2. Create a new "Blueprint" service in Render dashboard
+3. Render will automatically detect and deploy using `render.yaml`
+4. Set environment variables in Render dashboard:
+   - `GEMINI_API_KEY`: Your Gemini API key
+   - `SECRET_KEY`: Auto-generated by Render
+   - Other variables are set automatically
 
-For production deployment:
+### Render Services:
+- **Backend**: Python web service with Gunicorn
+- **Frontend**: Static site with React build
+- **ChromaDB**: Persistent service with disk storage
 
-```bash
-# Build production image
-docker build -f Dockerfile.production -t pocketpro-backend .
+### Build Commands:
+- **Backend**: `pip install -r backend/requirements.txt`
+- **Frontend**: `cd frontend && npm install && npm run build`
 
-# Build frontend image
-docker build -f Dockerfile.frontend -t pocketpro-frontend .
-
-# Run production containers
-docker run -p 5000:5000 pocketpro-backend
-docker run -p 3000:80 pocketpro-frontend
-```
-
-## Deploying to Render
-
-The application is configured for deployment to Render using the `render.yaml` file. You can deploy the application by creating a new "Blueprint" service in the Render dashboard and connecting it to your GitHub repository.
-
-Render will automatically build and deploy the frontend and backend services based on the `render.yaml` file.
-
-**Build Commands:**
-
-- **Backend:** `pip install -r backend/requirements.txt`
-- **Frontend:** `cd frontend && npm install && npm run build`
-
-**Start Commands:**
-
-- **Backend:** `gunicorn 'backend.app:create_app()' --bind 0.0.0.0:$PORT`
+### Start Commands:
+- **Backend**: `gunicorn 'backend.app:create_app()' --bind 0.0.0.0:$PORT --workers 2 --threads 4 --timeout 60`
 
 ## Testing
 
-**Backend:**
-
+### Backend Testing
 ```bash
 cd backend
+
+# Run all tests
 pytest
+
+# Run with coverage
+pytest --cov=.
+
+# Run specific test file
+pytest tests/test_api.py -v
 ```
 
-**Frontend:**
-
+### Frontend Testing
 ```bash
 cd frontend
+
+# Run tests
 npm test
+
+# Run tests with coverage
+npm test -- --coverage
+
+# Run tests in watch mode
+npm test -- --watch
 ```
+
+### Test Coverage
+- Backend: Comprehensive API endpoint testing
+- Frontend: Component and integration testing
+- Both: Error handling and edge case coverage
 
 ## API Reference
 
-For details on the API endpoints, please see the [API Reference](docs/api.md).
+### Base URL
+- Local: `http://localhost:5000/api`
+- Production: `https://your-render-backend-url.onrender.com/api`
+
+### Endpoints
+
+#### Health Check
+```http
+GET /api/health
+```
+Returns service health status.
+
+#### System Information  
+```http
+GET /api/info
+```
+Returns system metadata and version.
+
+#### Task Decomposition
+```http
+POST /api/decompose
+Content-Type: application/json
+
+{
+  "message": "user task description",
+  "session_id": "optional_session_id"
+}
+```
+
+#### Step Execution
+```http
+POST /api/execute
+Content-Type: application/json
+
+{
+  "task": {
+    "step": "task details"
+  }
+}
+```
+
+#### Step Validation
+```http
+POST /api/validate
+Content-Type: application/json
+
+{
+  "result": "step result",
+  "task": {
+    "step": "task details"
+  }
+}
+```
+
+#### Document Query
+```http
+POST /api/query
+Content-Type: application/json
+
+{
+  "query": "search query",
+  "top_k": 5
+}
+```
+
+## Troubleshooting
+
+### Common Issues
+
+**Backend won't start:**
+- Check Python version (requires 3.9+)
+- Verify all dependencies are installed: `pip install -r backend/requirements.txt`
+- Check environment variables are set correctly
+
+**Frontend build fails:**
+- Check Node.js version (requires 16+)
+- Clear node_modules and reinstall: `rm -rf node_modules && npm install`
+
+**CORS errors:**
+- Ensure `FRONTEND_URL` matches your frontend domain
+- Check backend CORS configuration
+
+**ChromaDB connection issues:**
+- Verify ChromaDB is running on correct port
+- Check `CHROMADB_HOST` and `CHROMADB_PORT` environment variables
+
+### Logs and Debugging
+
+**Backend logs:**
+```bash
+# Flask development logs
+FLASK_ENV=development flask run
+
+# Gunicorn production logs  
+gunicorn 'backend.app:create_app()' --bind 0.0.0.0:5000 --log-level debug
+```
+
+**Frontend logs:**
+- Browser developer tools console
+- Network tab for API requests
+
+**Docker logs:**
+```bash
+docker-compose logs -f
+docker logs <container_name>
+```
+
+### Performance Optimization
+
+**Backend:**
+- Use Gunicorn with multiple workers
+- Enable response compression
+- Implement caching where appropriate
+
+**Frontend:**
+- Build with `npm run build` for production
+- Enable code splitting
+- Optimize bundle size
+
+## Support
+
+For issues and support:
+1. Check the troubleshooting section above
+2. Review application logs
+3. Verify environment configuration
+4. Check Render deployment status
+
+---
+*Last Updated: $(date +%Y-%m-%d)*

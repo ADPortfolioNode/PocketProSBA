@@ -8,7 +8,21 @@ The base URL for the API is `/api`.
 
 ## Endpoints
 
-### 1. GET /api/info
+### 1. GET /api/health
+
+Health check endpoint for monitoring and deployment verification.
+
+- **Method:** `GET`
+- **Description:** Returns the health status of the service.
+- **Response:**
+
+```json
+{
+  "status": "healthy"
+}
+```
+
+### 2. GET /api/info
 
 Retrieves system information about the PocketPro SBA service.
 
@@ -24,7 +38,7 @@ Retrieves system information about the PocketPro SBA service.
 }
 ```
 
-### 2. POST /api/decompose
+### 3. POST /api/decompose
 
 Decomposes a user task into actionable steps.
 
@@ -47,7 +61,7 @@ Decomposes a user task into actionable steps.
 }
 ```
 
-### 3. POST /api/execute
+### 4. POST /api/execute
 
 Executes a decomposed task step.
 
@@ -69,7 +83,7 @@ Executes a decomposed task step.
 }
 ```
 
-### 4. POST /api/validate
+### 5. POST /api/validate
 
 Validates the result of a task step.
 
@@ -92,7 +106,7 @@ Validates the result of a task step.
 }
 ```
 
-### 5. POST /api/query
+### 6. POST /api/query
 
 Queries documents based on a given query.
 
@@ -115,7 +129,7 @@ Queries documents based on a given query.
 }
 ```
 
-### 6. GET /api/chat/
+### 7. GET /api/chat/
 
 Retrieves all chat messages.
 
@@ -134,7 +148,7 @@ Retrieves all chat messages.
 ]
 ```
 
-### 7. POST /api/chat/
+### 8. POST /api/chat/
 
 Creates a new chat message.
 
@@ -160,7 +174,7 @@ Creates a new chat message.
 }
 ```
 
-### 8. PUT /api/chat/<int:message_id>
+### 9. PUT /api/chat/<int:message_id>
 
 Updates an existing chat message.
 
