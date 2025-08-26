@@ -8,7 +8,7 @@ print()
 
 # Test basic imports
 try:
-    from services.chroma import ChromaService
+    from services.chroma_fixed import ChromaService
     from rag import RAGManager
     from assistants.concierge import Concierge
     print('✅ All imports successful')

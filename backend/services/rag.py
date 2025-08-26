@@ -2,6 +2,7 @@ import os
 import logging
 import time
 import json
+import re
 from functools import lru_cache
 
 # Configure logging
@@ -99,7 +100,7 @@ def get_rag_manager():
     
     if _rag_manager_instance is None:
         try:
-            from services.chroma import ChromaService
+            from services.chroma_fixed import ChromaService
             
             # Initialize ChromaDB service
             chroma_host = os.environ.get('CHROMA_HOST', 'localhost')
