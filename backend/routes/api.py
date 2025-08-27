@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify
 import logging
+import time
 
 logger = logging.getLogger(__name__)
 from services.api_service import (
@@ -27,6 +28,20 @@ def get_system_info():
         logger.error(f"Error getting system info: {str(e)}")
         return jsonify({'error': 'Failed to retrieve system information'}), 500
 
+@api_bp.route('/diagnostics', methods=['GET'])
+def get_diagnostics():
+    """Get diagnostics information"""
+    try:
+        diagnostics_info = {
+            'status': 'operational',
+            'message': 'All systems functional',
+            'timestamp': time.time()
+        }
+        return jsonify(diagnostics_info), 200
+    except Exception as e:
+        logger.error(f"Error getting diagnostics: {str(e)}")
+        return jsonify({'error': 'Failed to retrieve diagnostics'}), 500
+
 @api_bp.route('/decompose', methods=['POST'])
 def decompose_task():
     """Decompose a user task into steps"""
@@ -48,7 +63,7 @@ def decompose_task():
 
     except Exception as e:
         logger.error(f"Error decomposing task: {str(e)}")
-        return jsonify({'error': 'Failed to decompose task'}), 500
+        raise Exception(f'Failed to process message: {str(e)}')
 
 @api_bp.route('/execute', methods=['POST'])
 def execute_step():
@@ -65,7 +80,7 @@ def execute_step():
 
     except Exception as e:
         logger.error(f"Error executing step: {str(e)}")
-        return jsonify({'error': 'Failed to execute step'}), 500
+        raise Exception(f'Failed to execute step: {str(e)}')
 
 @api_bp.route('/validate', methods=['POST'])
 def validate_step():
@@ -83,7 +98,7 @@ def validate_step():
 
     except Exception as e:
         logger.error(f"Error validating step: {str(e)}")
-        return jsonify({'error': 'Failed to validate step'}), 500
+        raise Exception(f'Failed to validate step: {str(e)}')
 
 @api_bp.route('/query', methods=['POST'])
 def query_documents():

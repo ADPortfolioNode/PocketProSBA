@@ -40,5 +40,11 @@
   },
   "engines": {
     "node": ">=16.x"
+  },
+  "jest": {
+    "testEnvironment": "jsdom",
+    "transformIgnorePatterns": [
+      "node_modules/(?!(axios)/)"
+    ]
   }
 }

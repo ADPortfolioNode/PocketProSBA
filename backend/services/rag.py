@@ -103,8 +103,8 @@ def get_rag_manager():
             from services.chroma_fixed import ChromaService
             
             # Initialize ChromaDB service
-            chroma_host = os.environ.get('CHROMA_HOST', 'localhost')
-            chroma_port = int(os.environ.get('CHROMA_PORT', 8000))
+            chroma_host = os.environ.get('CHROMADB_HOST', 'localhost')
+            chroma_port = int(os.environ.get('CHROMADB_PORT', 8000))
             
             logger.info(f"🔌 Connecting to ChromaDB at {chroma_host}:{chroma_port}")
             chroma_service = ChromaService(host=chroma_host, port=chroma_port)

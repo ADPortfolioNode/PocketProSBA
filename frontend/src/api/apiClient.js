@@ -29,4 +29,25 @@ apiClient.interceptors.request.use(
   }
 );
 
+// Endpoint registry
+const endpointRegistry = {
+  api_health: '/api/health',
+  api_info: '/api/info',
+  api_decompose: '/api/decompose',
+  api_execute: '/api/execute',
+  api_validate: '/api/validate',
+  api_query: '/api/query',
+  api_chat: '/api/chat',
+  api_diagnostics: '/api/diagnostics'
+};
+
+// Function to load endpoints (used in tests)
+export const loadEndpoints = async () => {
+  return {
+    endpoints: endpointRegistry,
+    baseURL: apiClient.defaults.baseURL,
+    timestamp: new Date().toISOString()
+  };
+};
+
 export default apiClient;

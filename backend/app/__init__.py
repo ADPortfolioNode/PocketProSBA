@@ -18,12 +18,20 @@ def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(config_class)
     
+    # Log database configuration
+    logger.info(f"Database URI: {app.config['SQLALCHEMY_DATABASE_URI']}")
+    
     # Initialize database
     db.init_app(app)
     
     # Create database tables
     with app.app_context():
-        db.create_all()
+        try:
+            db.create_all()
+            logger.info("Database tables created successfully")
+        except Exception as e:
+            logger.error(f"Failed to create database tables: {e}")
+            raise
     
     # Configure CORS - allow all origins for development
     CORS(app, resources={

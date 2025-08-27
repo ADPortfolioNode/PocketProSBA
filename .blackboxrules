@@ -9,7 +9,7 @@ THIS IS THE PLAN:
 
 You are refactoring the PocketPro repo (https://github.com/Adportfolionode/pocketprosba).  
 Goal: Build a lightweight, production-ready RAG application that runs reliably on Render with minimal code, clean design patterns, and strong deployment stability.  
-
+alsways check ide terminal and match syntax to terminal expected syntax.
 ---
 
 ### Core Objectives
