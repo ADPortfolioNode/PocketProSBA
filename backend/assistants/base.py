@@ -23,17 +23,18 @@ class BaseAssistant:
         if enable_search:
             try:
                 self.search_module = SearchModule()
-            except ValueError as e:
-                logger.warning(f"Search module disabled: {e}")
-                self.search_module = None
+                if not self.search_module.is_available():
+                    logger.warning("Search module is not available (missing API keys)")
+                    self.search_module = None
             except Exception as e:
                 logger.error(f"Failed to initialize search module: {e}")
                 self.search_module = None
 
     def search(self, query, num_results=5):
-        if self.search_module:
+        if self.search_module and self.search_module.is_available():
             return self.search_module.search(query, num_results=num_results)
-        raise NotImplementedError("Search capability not enabled for this assistant.")
+        logger.warning("Search capability not available for this assistant.")
+        return []
 
     def _update_status(self, status, progress, details):
         self.status = status

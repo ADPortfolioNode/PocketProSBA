@@ -19,7 +19,14 @@ def safe_print(message):
     try:
         print(message)
     except UnicodeEncodeError:
-        print(message.encode('utf-8', 'replace').decode('utf-8'))
+        # Replace common Unicode characters with ASCII equivalents
+        safe_message = message.replace('ℹ', '[INFO]')
+        safe_message = safe_message.replace('✅', '[OK]')
+        safe_message = safe_message.replace('❌', '[FAIL]')
+        safe_message = safe_message.replace('⚠', '[WARN]')
+        safe_message = safe_message.replace('🔍', '[SEARCH]')
+        safe_message = safe_message.replace('📄', '[DOC]')
+        print(safe_message)
 
 def test_concierge_basic():
     """Test basic concierge functionality"""
@@ -100,7 +107,7 @@ def test_rag_integration():
                 safe_print(f"[OK] Query '{test_query}' returned {doc_count} documents")
                 
         else:
-            safe_print("ℹ RAG system not available (this is expected if ChromaDB is not running)")
+            safe_print("[INFO] RAG system not available (this is expected if ChromaDB is not running)")
             
         safe_print("=== RAG Integration Tests Completed ===")
         return True

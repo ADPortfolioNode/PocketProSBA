@@ -10,6 +10,7 @@ from services.api_service import (
     validate_step_service,
     query_documents_service,
 )
+from services.rag import get_rag_manager
 
 api_bp = Blueprint('api', __name__)
 
@@ -17,6 +18,29 @@ api_bp = Blueprint('api', __name__)
 def health_check():
     """Health check endpoint"""
     return jsonify({'status': 'healthy'}), 200
+
+@api_bp.route('/chromadb_health', methods=['GET'])
+def chromadb_health_check():
+    """ChromaDB health check endpoint"""
+    try:
+        rag_manager = get_rag_manager()
+        if rag_manager.is_available():
+            return jsonify({
+                'status': 'ok',
+                'message': 'ChromaDB is available and connected',
+                'document_count': rag_manager.get_document_count()
+            }), 200
+        else:
+            return jsonify({
+                'status': 'error',
+                'message': 'ChromaDB is not available'
+            }), 503
+    except Exception as e:
+        logger.error(f"Error checking ChromaDB health: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': f'Failed to check ChromaDB health: {str(e)}'
+        }), 500
 
 @api_bp.route('/info', methods=['GET'])
 def get_system_info():

@@ -86,7 +86,9 @@ class Concierge(BaseAssistant):
             
         except Exception as e:
             logger.error(f"Error processing message: {str(e)}")
-            return self.report_failure(f"I encountered an error while processing your request: {str(e)}")
+            # Provide fallback response to minimize regression
+            fallback_text = "Sorry, I encountered an error but I'm here to help. Please try rephrasing your request."
+            return self.report_failure(fallback_text)
     
     def _get_or_create_conversation(self, session_id):
         """Get or create a conversation context for a session"""
@@ -194,7 +196,28 @@ class Concierge(BaseAssistant):
             # Use RAG to generate a response
             results = self.rag_manager.query_documents(message, n_results=2)
             
-            if "error" not in results and results.get("documents", [[]])[0]:
+            if "error" not in results and results.get("answer"):
+                # Enhanced Gemini RAG service response format
+                answer = results.get("answer", "")
+                source_documents = results.get("source_documents", [])
+                
+                # Format sources
+                sources = []
+                for i, source in enumerate(source_documents):
+                    source_name = source.get("metadata", {}).get("source", f"Document {i+1}")
+                    sources.append({
+                        "id": f"source_{i}",
+                        "name": source_name,
+                        "content": source.get("content", ""),
+                        "metadata": source.get("metadata", {})
+                    })
+                
+                return {
+                    "text": answer,
+                    "sources": sources
+                }
+            elif "error" not in results and results.get("documents", [[]])[0]:
+                # Legacy RAG service response format (fallback)
                 documents = results.get("documents", [[]])[0]
                 metadatas = results.get("metadatas", [[]])[0]
                 ids = results.get("ids", [[]])[0]
