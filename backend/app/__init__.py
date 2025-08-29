@@ -35,12 +35,6 @@ def create_app(config_class=Config):
     
     # Configure CORS - allow all origins for development
     CORS(app, resources={
-        r"/api/*": {
-            "origins": "*",
-            "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-            "allow_headers": ["Content-Type", "Authorization"]
-        }
-    })
     
     # Register blueprints
     from routes.api import api_bp

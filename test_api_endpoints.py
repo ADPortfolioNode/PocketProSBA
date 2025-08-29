@@ -15,27 +15,28 @@ def test_endpoint(endpoint, method='GET', data=None):
         elif method == 'POST':
             response = requests.post(url, json=data, timeout=5)
         else:
-            print(f"❌ Unsupported method: {method}")
+            print(f"[ERROR] Unsupported method: {method}")
             return False
             
-        print(f"🔍 {method} {endpoint}: Status {response.status_code}")
-        if response.status_code == 200:
-            print(f"✅ Response: {response.text[:100]}...")
+        print(f"[INFO] {method} {endpoint}: Status {response.status_code}")
+        # Accept both 200 and 201 as success status codes
+        if response.status_code in [200, 201]:
+            print(f"[SUCCESS] Response: {response.text[:100]}...")
             return True
         else:
-            print(f"❌ Error: {response.text}")
+            print(f"[ERROR] Error: {response.text}")
             return False
             
     except requests.exceptions.ConnectionError:
-        print(f"❌ Connection failed: Cannot connect to {url}")
+        print(f"[ERROR] Connection failed: Cannot connect to {url}")
         return False
     except Exception as e:
-        print(f"❌ Unexpected error: {e}")
+        print(f"[ERROR] Unexpected error: {e}")
         return False
 
 def main():
     """Test all API endpoints"""
-    print("🧪 Testing API Endpoints")
+    print("Testing API Endpoints")
     print("=" * 50)
     
     endpoints = [
@@ -63,22 +64,22 @@ def main():
         print()
     
     # Summary
-    print("📊 Test Results Summary")
+    print("Test Results Summary")
     print("=" * 50)
     passed = sum(1 for _, success in results if success)
     total = len(results)
     
     for endpoint, success in results:
-        status = "✅ PASS" if success else "❌ FAIL"
+        status = "[PASS]" if success else "[FAIL]"
         print(f"{status} {endpoint}")
     
     print(f"\nOverall: {passed}/{total} endpoints passed")
     
     if passed == total:
-        print("🎉 All API endpoints are working correctly!")
+        print("All API endpoints are working correctly!")
         return 0
     else:
-        print("⚠️  Some endpoints need attention")
+        print("Some endpoints need attention")
         return 1
 
 if __name__ == "__main__":

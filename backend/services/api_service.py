@@ -9,13 +9,24 @@ def get_system_info_service():
     """Get system information"""
     try:
         rag_manager = get_rag_manager()
-        collection_stats = rag_manager.get_collection_stats() if rag_manager.is_available() else {"count": 0}
+        
+        # Check if RAG manager is available without causing connection issues
+        rag_available = False
+        collection_stats = {"count": 0}
+        
+        try:
+            rag_available = rag_manager.is_available()
+            if rag_available:
+                collection_stats = rag_manager.get_collection_stats() or {"count": 0}
+        except Exception as rag_error:
+            logger.warning(f"RAG system check failed: {str(rag_error)}")
+            rag_available = False
         
         return {
             'service': 'PocketPro:SBA Edition',
             'version': '1.0.0',
             'status': 'operational',
-            'rag_status': 'available' if rag_manager.is_available() else 'unavailable',
+            'rag_status': 'available' if rag_available else 'unavailable',
             'vector_store': 'ChromaDB',
             'document_count': collection_stats.get("count", 0)
         }
@@ -26,7 +37,7 @@ def get_system_info_service():
             'version': '1.0.0',
             'status': 'operational',
             'rag_status': 'unavailable',
-            'error': str(e)
+            'error': 'System information unavailable'
         }
 
 def decompose_task_service(message, session_id):
@@ -55,9 +66,21 @@ def execute_step_service(task):
         if not instruction:
             raise ValueError('Instruction is required')
         
+        # Try to create the requested agent, fall back to Concierge if SearchAgent fails
         if agent_type == 'SearchAgent':
-            agent = SearchAgent()
-            result = agent.handle_message(instruction)
+            try:
+                agent = SearchAgent()
+                result = agent.handle_message(instruction)
+            except ValueError as e:
+                # Fall back to Concierge if SearchAgent cannot be initialized
+                logger.warning(f"SearchAgent initialization failed: {str(e)}. Falling back to Concierge.")
+                agent = Concierge()
+                result = agent.handle_message(instruction)
+            except Exception as e:
+                # Handle other exceptions from SearchAgent
+                logger.error(f"SearchAgent failed: {str(e)}. Falling back to Concierge.")
+                agent = Concierge()
+                result = agent.handle_message(instruction)
         else:
             agent = Concierge()
             result = agent.handle_message(instruction)

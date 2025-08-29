@@ -36,7 +36,7 @@ export const useConnection = () => {
       const response = await apiClient({
         url,
         method: options.method || 'GET',
-        data: options.body ? JSON.parse(options.body) : undefined,
+        data: options.body ? (typeof options.body === 'string' ? JSON.parse(options.body) : options.body) : undefined,
         headers: options.headers,
       });
       return response.data;

@@ -44,7 +44,7 @@ function MainLayout() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ message })
+        body: JSON.stringify({ user_id: 1, message }) // Include user_id in the request
       });
       
       const assistantMessage = { 

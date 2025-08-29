@@ -4,12 +4,12 @@ from services.chat_service import create_chat_message, get_all_chat_messages, up
 
 chat_bp = Blueprint('chat', __name__)
 
-@chat_bp.route('/', methods=['GET'])
+@chat_bp.route('', methods=['GET'])
 def get_messages():
     messages = get_all_chat_messages()
     return jsonify([{'id': msg.id, 'user_id': msg.user_id, 'message': msg.message, 'timestamp': msg.timestamp} for msg in messages])
 
-@chat_bp.route('/', methods=['POST'])
+@chat_bp.route('', methods=['POST'])
 def post_message():
     data = request.json
     user_id = data.get('user_id')

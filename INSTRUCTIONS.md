@@ -289,6 +289,12 @@ Content-Type: application/json
 }
 ```
 
+#### Diagnostics
+```http
+GET /api/diagnostics
+```
+Returns system diagnostics information.
+
 ## Troubleshooting
 
 ### Common Issues
