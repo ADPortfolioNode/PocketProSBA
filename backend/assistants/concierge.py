@@ -33,7 +33,7 @@ class Concierge(BaseAssistant):
             self.rag_manager = None
     
     def handle_message(self, message, session_id=None, metadata=None):
-        """Handle a message from the user"""
+        """Handle a message from the user with improved dialogue flow"""
         if not session_id:
             session_id = str(uuid.uuid4())
             
@@ -50,19 +50,32 @@ class Concierge(BaseAssistant):
             "timestamp": datetime.now().isoformat()
         })
         
-        # Classify the message intent
+        # Classify the message intent with improved context awareness
         intent = self._classify_intent(message, conversation)
         logger.info(f"Message classified as: {intent}")
         
         # Update status based on intent
         self._update_status("processing", 30, f"Handling {intent} request...")
         
-        # Process based on intent
+        # Process based on intent with improved dialogue flow
         try:
             if intent == "document_search":
                 response = self._handle_document_search(message, conversation)
             elif intent == "task_request":
                 response = self._handle_task_decomposition(message, conversation)
+            elif intent == "greeting":
+                response = {
+                    "text": "Hello! I'm your SBA assistant. I'm here to help you navigate Small Business Administration programs, loans, and resources. What can I help you with today?",
+                    "sources": []
+                }
+            elif intent == "acknowledgment":
+                response = {
+                    "text": "You're very welcome! I'm glad I could help. Is there anything else you'd like to know about SBA programs or small business resources?",
+                    "sources": []
+                }
+            elif intent == "follow_up_query":
+                # Handle follow-up questions with context from previous messages
+                response = self._handle_follow_up_query(message, conversation)
             else:
                 response = self._generate_direct_response(message, conversation)
                 
@@ -77,6 +90,9 @@ class Concierge(BaseAssistant):
             # Update conversation last activity
             conversation["last_activity"] = datetime.now().isoformat()
             
+            # Log successful interaction for monitoring dialogue quality
+            self._log_dialogue_quality(session_id, message, response.get("text", ""), intent)
+            
             # Success!
             return self.report_success(
                 text=response.get("text", ""),
@@ -86,8 +102,13 @@ class Concierge(BaseAssistant):
             
         except Exception as e:
             logger.error(f"Error processing message: {str(e)}")
-            # Provide fallback response to minimize regression
-            fallback_text = "Sorry, I encountered an error but I'm here to help. Please try rephrasing your request."
+            # Provide more natural fallback response to minimize regression
+            fallback_texts = [
+                "I apologize, but I encountered a technical issue. Could you please try rephrasing your question?",
+                "I'm having trouble processing that request right now. Please try asking in a different way.",
+                "It seems there's a temporary issue. Let's try that again - could you rephrase your question?"
+            ]
+            fallback_text = fallback_texts[hash(message) % len(fallback_texts)]
             return self.report_failure(fallback_text)
     
     def _get_or_create_conversation(self, session_id):
@@ -103,20 +124,166 @@ class Concierge(BaseAssistant):
         return self.conversation_store[session_id]
     
     def _classify_intent(self, message, conversation):
-        """Classify the intent of a user message"""
+        """Classify the intent of a user message with improved natural language understanding"""
         # Handle None or empty messages gracefully
-        if not message:
+        if not message or not message.strip():
             return "simple_query"
             
-        # Simple keyword-based classification for now
-        message_lower = message.lower()
+        message_lower = message.lower().strip()
         
-        if any(term in message_lower for term in ["find", "search", "look for", "any documents"]):
+        # Enhanced intent classification with better pattern matching
+        # Document search intent
+        search_patterns = [
+            "find", "search", "look for", "any documents", "document", "file", 
+            "information about", "details on", "what is", "tell me about",
+            "how to get", "where can i find", "show me", "locate"
+        ]
+        
+        # Task request intent
+        task_patterns = [
+            "help me", "create", "build", "develop", "make", "do", "assist with",
+            "guide me", "walk me through", "step by step", "process for",
+            "how do i", "what's the process", "need help with", "want to"
+        ]
+        
+        # Check for document search intent with better context awareness
+        if any(pattern in message_lower for pattern in search_patterns):
+            # Additional context: if previous messages were about documents, maintain context
+            if self._is_follow_up_search(conversation, message_lower):
+                return "document_search"
             return "document_search"
-        elif any(term in message_lower for term in ["help me", "create", "build", "develop", "make", "do"]):
+        
+        # Check for task request intent
+        elif any(pattern in message_lower for pattern in task_patterns):
+            # Check if this is a continuation of a previous task
+            if self._is_task_continuation(conversation, message_lower):
+                return "task_request"
             return "task_request"
+        
+        # Check for greetings and small talk
+        elif any(greeting in message_lower for greeting in ["hello", "hi", "hey", "good morning", "good afternoon"]):
+            return "greeting"
+            
+        # Check for thanks and acknowledgments
+        elif any(thanks in message_lower for thanks in ["thank", "thanks", "appreciate", "grateful"]):
+            return "acknowledgment"
+            
+        # Default to simple query for everything else
         else:
+            # Check if this is a follow-up to previous conversation
+            if self._is_follow_up_query(conversation, message_lower):
+                return "follow_up_query"
             return "simple_query"
+    
+    def _is_follow_up_search(self, conversation, current_message):
+        """Check if this is a follow-up to a previous search"""
+        messages = conversation.get("messages", [])
+        if len(messages) < 2:
+            return False
+            
+        # Check if previous assistant message was about search results
+        last_assistant_msg = next((msg for msg in reversed(messages) if msg.get("role") == "assistant"), None)
+        if last_assistant_msg and any(term in last_assistant_msg.get("content", "").lower() for term in ["found", "search", "document", "result"]):
+            return any(term in current_message for term in ["more", "another", "different", "other", "also"])
+        return False
+    
+    def _is_task_continuation(self, conversation, current_message):
+        """Check if this is a continuation of a previous task"""
+        messages = conversation.get("messages", [])
+        if len(messages) < 2:
+            return False
+            
+        # Check if we were previously discussing a task
+        last_assistant_msg = next((msg for msg in reversed(messages) if msg.get("role") == "assistant"), None)
+        if last_assistant_msg and any(term in last_assistant_msg.get("content", "").lower() for term in ["task", "step", "process", "guide"]):
+            return any(term in current_message for term in ["next", "then", "after", "continue", "proceed"])
+        return False
+    
+    def _is_follow_up_query(self, conversation, current_message):
+        """Check if this is a follow-up to previous conversation"""
+        messages = conversation.get("messages", [])
+        if len(messages) < 2:
+            return False
+            
+        # Simple check: if the message is short and seems like a follow-up
+        if len(current_message.split()) <= 3:
+            return any(term in current_message for term in ["that", "it", "what", "how", "why", "when"])
+        return False
+    
+    def _handle_follow_up_query(self, message, conversation):
+        """Handle follow-up questions with context from previous conversation"""
+        messages = conversation.get("messages", [])
+        
+        # Look for the last assistant message to understand context
+        last_assistant_msg = next((msg for msg in reversed(messages) if msg.get("role") == "assistant"), None)
+        
+        if last_assistant_msg:
+            assistant_content = last_assistant_msg.get("content", "").lower()
+            
+            # Provide context-aware follow-up responses
+            if any(term in assistant_content for term in ["loan", "funding", "financing"]):
+                return {
+                    "text": "Regarding the loan information I provided, would you like me to search for more specific details about application requirements, eligibility criteria, or different loan programs?",
+                    "sources": []
+                }
+            elif any(term in assistant_content for term in ["business plan", "planning"]):
+                return {
+                    "text": "About the business planning resources, I can help you find templates, guides, or specific sections like market analysis or financial projections. What particular aspect would you like to explore further?",
+                    "sources": []
+                }
+            elif any(term in assistant_content for term in ["grant", "funding"]):
+                return {
+                    "text": "Following up on the funding discussion, would you like me to search for information on specific grant opportunities, alternative funding sources, or eligibility requirements for different programs?",
+                    "sources": []
+                }
+        
+        # Generic follow-up response
+        return {
+            "text": "I'd be happy to provide more details about our previous discussion. Could you clarify what specific aspect you'd like me to expand on or search for more information about?",
+            "sources": []
+        }
+    
+    def _log_dialogue_quality(self, session_id, user_message, assistant_response, intent):
+        """Log dialogue interactions for quality monitoring and regression detection"""
+        try:
+            dialogue_metrics = {
+                "session_id": session_id,
+                "timestamp": datetime.now().isoformat(),
+                "user_message_length": len(user_message),
+                "assistant_response_length": len(assistant_response),
+                "intent": intent,
+                "response_quality": self._assess_response_quality(user_message, assistant_response),
+                "has_sources": len(assistant_response) > 0  # Simplified check
+            }
+            
+            logger.info(f"Dialogue quality metrics: {dialogue_metrics}")
+            
+        except Exception as e:
+            logger.warning(f"Failed to log dialogue quality: {str(e)}")
+    
+    def _assess_response_quality(self, user_message, assistant_response):
+        """Simple assessment of response quality to detect regression"""
+        user_lower = user_message.lower()
+        response_lower = assistant_response.lower()
+        
+        # Check for repetitive or generic responses
+        generic_phrases = [
+            "i understand you're asking about",
+            "as an sba assistant",
+            "could you provide more details",
+            "what specific information"
+        ]
+        
+        if any(phrase in response_lower for phrase in generic_phrases):
+            return "generic"
+        
+        # Check if response addresses the user's question
+        question_terms = ["what", "how", "why", "when", "where", "which"]
+        if any(term in user_lower for term in question_terms) and "?" in user_message:
+            if not any(term in response_lower for term in ["answer", "explain", "information", "detail"]):
+                return "possibly_missing_answer"
+        
+        return "good"
     
     def _handle_document_search(self, message, conversation):
         """Handle a document search request"""
@@ -175,78 +342,138 @@ class Concierge(BaseAssistant):
         }
     
     def _handle_task_decomposition(self, message, conversation):
-        """Handle a complex task request by decomposing it into steps"""
-        self._update_status("planning", 40, "Breaking down your request into steps...")
+        """Handle a complex task request with improved natural responses"""
+        self._update_status("planning", 40, "Analyzing your request...")
         
-        # For now, return a simple response
+        # More natural and varied responses based on the type of task
+        message_lower = message.lower()
+        
+        if any(term in message_lower for term in ["business plan", "business planning"]):
+            response_text = "I'd be happy to help you with business planning! The SBA offers excellent resources for creating a business plan. I can guide you through the key components like executive summary, market analysis, and financial projections. Would you like me to search for specific SBA business planning templates and resources?"
+        
+        elif any(term in message_lower for term in ["loan", "funding", "financing"]):
+            response_text = "Great question about SBA loans and funding options! The SBA offers several loan programs including 7(a) loans, microloans, and disaster assistance. I can help you understand eligibility requirements and application processes. Would you like me to find specific information about SBA loan programs that might fit your needs?"
+        
+        elif any(term in message_lower for term in ["grant", "free money"]):
+            response_text = "While the SBA itself doesn't typically offer grants for starting or expanding a business, they do provide information about federal grant opportunities. I can help you explore SBA resources on grants and other funding options. Would you like me to search for information on small business grants and alternative funding sources?"
+        
+        elif any(term in message_lower for term in ["start", "launch", "new business"]):
+            response_text = "Exciting! Starting a new business is a big step. The SBA has comprehensive resources for entrepreneurs including business planning guides, market research tools, and licensing information. I can help you navigate the process step by step. What specific aspect of starting your business would you like to focus on first?"
+        
+        else:
+            # Generic but more helpful response
+            response_text = f"I understand you're looking for help with '{message}'. While I'm still developing my task decomposition capabilities, I can provide you with comprehensive information about SBA resources related to this topic. I can search for relevant documents, guides, and program information to help you get started. Would that be helpful?"
+        
         return {
-            "text": "I understand you want me to help with a complex task. Currently, I'm not fully equipped to handle complex task decomposition, but I can provide information about small business resources and SBA programs.",
+            "text": response_text,
             "sources": []
         }
     
     def _generate_direct_response(self, message, conversation):
-        """Generate a direct response to a simple query"""
-        self._update_status("thinking", 60, "Generating a response...")
+        """Generate a direct response to a simple query with improved natural language"""
+        self._update_status("thinking", 60, "Generating a helpful response...")
         
         # Handle None or empty messages gracefully
-        if not message:
+        if not message or not message.strip():
             message = "your question"
+            return {
+                "text": "I'm here to help! What would you like to know about SBA programs, loans, or small business resources?",
+                "sources": []
+            }
+        
+        message_lower = message.lower().strip()
+        
+        # Handle greetings naturally
+        if any(greeting in message_lower for greeting in ["hello", "hi", "hey", "good morning", "good afternoon", "good evening"]):
+            return {
+                "text": "Hello! I'm your SBA assistant. I'm here to help you navigate Small Business Administration programs, loans, and resources. What can I help you with today?",
+                "sources": []
+            }
+        
+        # Handle thanks and acknowledgments
+        if any(thanks in message_lower for thanks in ["thank", "thanks", "appreciate", "grateful"]):
+            return {
+                "text": "You're very welcome! I'm glad I could help. Is there anything else you'd like to know about SBA programs or small business resources?",
+                "sources": []
+            }
+        
+        # Handle follow-up questions with context awareness
+        messages = conversation.get("messages", [])
+        if len(messages) > 1 and self._is_follow_up_query(conversation, message_lower):
+            last_assistant_msg = next((msg for msg in reversed(messages) if msg.get("role") == "assistant"), None)
+            if last_assistant_msg:
+                return {
+                    "text": f"Regarding your previous question, I'd be happy to provide more details. Could you clarify what specific aspect you'd like me to expand on?",
+                    "sources": []
+                }
         
         if self.rag_manager:
-            # Use RAG to generate a response
-            results = self.rag_manager.query_documents(message, n_results=2)
-            
-            if "error" not in results and results.get("answer"):
-                # Enhanced Gemini RAG service response format
-                answer = results.get("answer", "")
-                source_documents = results.get("source_documents", [])
+            try:
+                # Use RAG to generate a response
+                results = self.rag_manager.query_documents(message, n_results=2)
                 
-                # Format sources
-                sources = []
-                for i, source in enumerate(source_documents):
-                    source_name = source.get("metadata", {}).get("source", f"Document {i+1}")
-                    sources.append({
-                        "id": f"source_{i}",
-                        "name": source_name,
-                        "content": source.get("content", ""),
-                        "metadata": source.get("metadata", {})
-                    })
-                
-                return {
-                    "text": answer,
-                    "sources": sources
-                }
-            elif "error" not in results and results.get("documents", [[]])[0]:
-                # Legacy RAG service response format (fallback)
-                documents = results.get("documents", [[]])[0]
-                metadatas = results.get("metadatas", [[]])[0]
-                ids = results.get("ids", [[]])[0]
-                
-                # Build context
-                context = "\n".join(documents)
-                
-                # Format sources
-                sources = []
-                for i, (doc, meta, doc_id) in enumerate(zip(documents, metadatas, ids)):
-                    source_name = meta.get("source", f"Document {i+1}")
-                    sources.append({
-                        "id": doc_id,
-                        "name": source_name,
-                        "content": doc[:200] + "..." if len(doc) > 200 else doc,
-                        "metadata": meta
-                    })
-                
-                # Generate response
-                response_text = f"Based on the information I have, {message.strip()}\n\n"
-                response_text += f"Here's what I know: {context}"
-                
-                return {
-                    "text": response_text,
-                    "sources": sources
-                }
+                if "error" not in results and results.get("answer"):
+                    # Enhanced Gemini RAG service response format
+                    answer = results.get("answer", "")
+                    source_documents = results.get("source_documents", [])
+                    
+                    # Format sources
+                    sources = []
+                    for i, source in enumerate(source_documents):
+                        source_name = source.get("metadata", {}).get("source", f"Document {i+1}")
+                        sources.append({
+                            "id": f"source_{i}",
+                            "name": source_name,
+                            "content": source.get("content", ""),
+                            "metadata": source.get("metadata", {})
+                        })
+                    
+                    return {
+                        "text": answer,
+                        "sources": sources
+                    }
+                elif "error" not in results and results.get("documents", [[]])[0]:
+                    # Legacy RAG service response format (fallback)
+                    documents = results.get("documents", [[]])[0]
+                    metadatas = results.get("metadatas", [[]])[0]
+                    ids = results.get("ids", [[]])[0]
+                    
+                    # Build context
+                    context = "\n".join(documents)
+                    
+                    # Format sources
+                    sources = []
+                    for i, (doc, meta, doc_id) in enumerate(zip(documents, metadatas, ids)):
+                        source_name = meta.get("source", f"Document {i+1}")
+                        sources.append({
+                            "id": doc_id,
+                            "name": source_name,
+                            "content": doc[:200] + "..." if len(doc) > 200 else doc,
+                            "metadata": meta
+                        })
+                    
+                    # Generate more natural response
+                    response_text = f"Based on SBA resources, here's what I found about {message.strip()}:\n\n{context}"
+                    
+                    return {
+                        "text": response_text,
+                        "sources": sources
+                    }
+            except Exception as e:
+                logger.warning(f"RAG query failed, falling back to direct response: {str(e)}")
+                # Continue to fallback response
         
-        # Fallback to direct response without RAG
-        response_text = f"I understand you're asking about {message.strip()}. As an SBA assistant, I can help with small business questions, loan information, and business planning resources. Could you provide more details about what specific information you're looking for?"
+        # Fallback to direct response without RAG - more natural and varied
+        fallback_responses = [
+            f"I'd be happy to help you with {message.strip()}. The SBA offers various resources that might be relevant. Could you tell me a bit more about what specific information you're looking for?",
+            f"That's a great question about {message.strip()}! The Small Business Administration has programs and resources that could help. What aspect of this are you most interested in learning about?",
+            f"I understand you're asking about {message.strip()}. As an SBA assistant, I can help you explore loan options, business planning resources, and program eligibility. Would you like me to search for specific information on this topic?",
+            f"Thanks for your question about {message.strip()}. The SBA provides comprehensive support for small businesses. I can help you find information about relevant programs and resources. What specific area would you like to focus on?"
+        ]
+        
+        # Use conversation context to choose appropriate response
+        response_index = hash(message) % len(fallback_responses)
+        response_text = fallback_responses[response_index]
         
         return {
             "text": response_text,

@@ -39,20 +39,47 @@ def test_concierge_basic():
         concierge = Concierge()
         safe_print("[OK] Concierge imported and instantiated successfully")
         
-        # Test intent classification
+        # Test intent classification with enhanced patterns
         test_cases = [
             ("find SBA loan documents", "document_search"),
             ("search for business grants", "document_search"),
             ("help me create a business plan", "task_request"),
             ("build a marketing strategy", "task_request"),
-            ("hello how are you", "simple_query"),
-            ("what is SBA", "simple_query")
+            ("hello how are you", "greeting"),
+            ("hi there", "greeting"),
+            ("good morning", "greeting"),
+            ("thank you", "acknowledgment"),
+            ("thanks for your help", "acknowledgment"),
+            ("what is SBA", "simple_query"),
+            ("tell me about small business loans", "document_search"),
+            ("how do I get funding", "task_request"),
+            ("information about business planning", "document_search")
         ]
         
         for message, expected_intent in test_cases:
             intent = concierge._classify_intent(message, {})
             status = "[OK]" if intent == expected_intent else "[FAIL]"
             safe_print(f"{status} '{message}' -> {intent} (expected: {expected_intent})")
+        
+        # Test follow-up intent detection
+        safe_print("\n=== Testing Follow-up Intent Detection ===")
+        conversation_with_context = {
+            "messages": [
+                {"role": "user", "content": "find SBA loan information"},
+                {"role": "assistant", "content": "I found some documents about SBA loans..."}
+            ]
+        }
+        
+        follow_up_test_cases = [
+            ("more information", "follow_up_query"),
+            ("what about grants", "document_search"),
+            ("next step", "follow_up_query")
+        ]
+        
+        for message, expected_intent in follow_up_test_cases:
+            intent = concierge._classify_intent(message, conversation_with_context)
+            status = "[OK]" if intent == expected_intent else "[FAIL]"
+            safe_print(f"{status} Follow-up '{message}' -> {intent} (expected: {expected_intent})")
         
         # Test message handling
         safe_print("\n=== Testing Message Handling ===")

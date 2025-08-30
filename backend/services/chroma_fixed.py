@@ -11,21 +11,21 @@ logger = logging.getLogger(__name__)
 class ChromaService:
     """Service for interacting with ChromaDB"""
     
-    def __init__(self, host="localhost", port=8000):
-        self.host = host
-        self.port = port
+    def __init__(self, host=None, port=None):
+        # Read from environment variables or use defaults
+        self.host = host or os.environ.get("CHROMADB_HOST", "localhost")
+        self.port = port or int(os.environ.get("CHROMADB_PORT", "8000"))
         self.client = None
         self.embedding_function = None
         self.collections = {}
         self.initialized = False
         
-        # Initialize ChromaDB client
+        # Initialize ChromaDB client with HTTP client for remote connection
         self.initialize()
     
     def initialize(self):
         """Initialize ChromaDB client and embedding function"""
         try:
-            # Initialize ChromaDB client with HTTP client for remote connection
             self.client = chromadb.HttpClient(
                 host=self.host,
                 port=self.port,
@@ -36,12 +36,10 @@ class ChromaService:
                 )
             )
             
-            # Initialize embedding function
             self.embedding_function = embedding_functions.SentenceTransformerEmbeddingFunction(
                 model_name="all-MiniLM-L6-v2"
             )
             
-            # Initialize collections
             self._initialize_collections()
             
             self.initialized = True
@@ -56,15 +54,10 @@ class ChromaService:
     def _initialize_collections(self):
         """Initialize standard collections"""
         try:
-            # Documents collection
             self.collections["documents"] = self._get_or_create_collection("documents")
-            
-            # Steps collection
             self.collections["steps"] = self._get_or_create_collection("steps")
-            
             logger.info(f"✅ ChromaDB collections initialized")
             return True
-            
         except Exception as e:
             logger.error(f"❌ ChromaDB collections initialization failed: {str(e)}")
             return False
@@ -87,7 +80,6 @@ class ChromaService:
             return False
         
         try:
-            # Try to list collections as a health check
             self.client.list_collections()
             return True
         except Exception as e:
@@ -100,11 +92,9 @@ class ChromaService:
             return {"error": "ChromaDB not initialized"}
         
         try:
-            # Generate IDs if not provided
             if not ids:
                 ids = [str(uuid.uuid4()) for _ in range(len(texts))]
             
-            # Add documents
             self.collections["documents"].add(
                 documents=texts,
                 metadatas=metadatas,
@@ -127,7 +117,6 @@ class ChromaService:
             return {"error": "ChromaDB not initialized"}
         
         try:
-            # Query documents
             results = self.collections["documents"].query(
                 query_texts=[query_text],
                 n_results=n_results
@@ -145,7 +134,6 @@ class ChromaService:
             return {"error": "ChromaDB not initialized"}
         
         try:
-            # Add step
             self.collections["steps"].add(
                 documents=[text],
                 metadatas=[metadata or {}],
@@ -167,18 +155,13 @@ class ChromaService:
             return {"error": f"Collection {collection_name} not initialized"}
         
         try:
-            # Get collection
             collection = self.collections[collection_name]
-            
-            # Get count
             count = collection.count()
-            
             return {
                 "name": collection_name,
                 "count": count,
                 "available": True
             }
-            
         except Exception as e:
             logger.error(f"❌ Failed to get collection stats: {str(e)}")
             return {
@@ -194,14 +177,11 @@ class ChromaService:
             return {"error": "ChromaDB not initialized"}
         
         try:
-            # Delete document
             self.collections["documents"].delete(ids=[doc_id])
-            
             return {
                 "success": True,
                 "id": doc_id
             }
-            
         except Exception as e:
             logger.error(f"❌ Failed to delete document: {str(e)}")
             return {"error": str(e)}
