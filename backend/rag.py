@@ -1,6 +1,6 @@
 import logging
 from services.chroma import ChromaService
-from gemini_rag_service import EnhancedGeminiRAGService
+from enhanced_gemini_rag_service import EnhancedGeminiRAGService
 
 logger = logging.getLogger(__name__)
 

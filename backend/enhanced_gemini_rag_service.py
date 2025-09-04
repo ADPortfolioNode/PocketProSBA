@@ -639,8 +639,22 @@ Answer:"""
                     doc_count = collection.count()
                 except:
                     doc_count = 0
-            
+
             return {
+                "service_name": "Enhanced Gemini RAG Service",
+                "is_initialized": self.is_initialized,
+                "document_count": doc_count,
+                "collection_name": self.collection_name,
+                "model_name": self.model_name,
+                "temperature": self.temperature
+            }
+
+        except Exception as e:
+            return {
+                "error": str(e),
+                "is_initialized": False,
+                "document_count": 0
+            }
 
 # Global enhanced RAG service instance
 enhanced_rag_service = EnhancedGeminiRAGService()

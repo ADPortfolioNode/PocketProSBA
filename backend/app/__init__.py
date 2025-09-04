@@ -17,13 +17,13 @@ def create_app(config_class=Config):
     """Application factory pattern"""
     app = Flask(__name__)
     app.config.from_object(config_class)
-    
+
     # Log database configuration
     logger.info(f"Database URI: {app.config['SQLALCHEMY_DATABASE_URI']}")
-    
+
     # Initialize database
     db.init_app(app)
-    
+
     # Create database tables
     with app.app_context():
         try:
@@ -32,23 +32,24 @@ def create_app(config_class=Config):
         except Exception as e:
             logger.error(f"Failed to create database tables: {e}")
             raise
-    
-    # Configure CORS - allow all origins for development
+
+    # Configure CORS - use explicit frontend origin for security
+    frontend_url = app.config.get('FRONTEND_URL', 'http://localhost:3000')
     CORS(app, resources={
         r"/api/*": {
-            "origins": "*",
+            "origins": [frontend_url],
             "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
             "allow_headers": ["Content-Type", "Authorization"]
         }
     })
-    
+
     # Register blueprints
     from routes.api import api_bp
     from routes.chat import chat_bp
-    
+
     app.register_blueprint(api_bp, url_prefix='/api')
     app.register_blueprint(chat_bp, url_prefix='/api/chat')
-    
+
     # Root route
     @app.route('/')
     def index():
@@ -81,5 +82,5 @@ def create_app(config_class=Config):
     def internal_server_error(error):
         logger.exception('Internal Server Error: %s', error)
         return jsonify({"error": "Internal Server Error"}), 500
-    
+
     return app

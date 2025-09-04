@@ -1,8 +1,8 @@
 import pytest
 import os
-from backend.app import create_app
-from backend.config import TestConfig
-from backend.models.chat import db
+from app import create_app
+from config import TestConfig
+from models.chat import db
 
 @pytest.fixture
 def app():
