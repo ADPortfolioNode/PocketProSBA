@@ -36,6 +36,10 @@ class Config:
         if self.DEBUG and not self.TESTING:
             logger.warning("Running in DEBUG mode - not recommended for production")
 
+        # Additional validation for CORS origin
+        if not self.FRONTEND_URL.startswith("http"):
+            logger.warning(f"FRONTEND_URL '{self.FRONTEND_URL}' does not appear to be a valid URL")
+
 
 class TestConfig(Config):
     """Configuration for testing environment"""

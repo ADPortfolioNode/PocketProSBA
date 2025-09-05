@@ -23,7 +23,7 @@ services:
     depends_on:
       - chromadb
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:5000/api/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -56,7 +56,7 @@ services:
     ports:
       - "3000:80" # Map host port 3000 to container port 80 (nginx default)
     environment:
-      - REACT_APP_API_URL=http://backend:5000 # Point to the backend service
+      - REACT_APP_API_URL=http://localhost:5000 # Point to the backend service on host
     depends_on:
       - backend # Frontend depends on backend
     restart: unless-stopped

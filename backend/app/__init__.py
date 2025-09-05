@@ -33,13 +33,21 @@ def create_app(config_class=Config):
             logger.error(f"Failed to create database tables: {e}")
             raise
 
-    # Configure CORS - use explicit frontend origin for security
-    frontend_url = app.config.get('FRONTEND_URL', 'http://localhost:3000')
+    # Configure CORS - allow multiple origins for local dev and Docker
+    allowed_origins = [
+        'http://localhost:3000',
+        'http://frontend:80'
+    ]
+    cors_origins = app.config.get('FRONTEND_URL')
+    if cors_origins and cors_origins not in allowed_origins:
+        allowed_origins.append(cors_origins)
+
     CORS(app, resources={
         r"/api/*": {
-            "origins": [frontend_url],
+            "origins": allowed_origins,
             "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-            "allow_headers": ["Content-Type", "Authorization"]
+            "allow_headers": ["Content-Type", "Authorization"],
+            "supports_credentials": True
         }
     })
 
@@ -58,6 +66,11 @@ def create_app(config_class=Config):
             'version': '1.0.0',
             'status': 'running'
         })
+
+    # Test CORS route
+    @app.route('/test-cors')
+    def test_cors():
+        return jsonify({'message': 'CORS test successful'})
 
     @app.before_request
     def log_request_info():
