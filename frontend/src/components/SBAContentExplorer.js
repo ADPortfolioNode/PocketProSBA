@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Card, ListGroup, Form, Button, InputGroup, Spinner, Alert, Badge, Row, Col, Pagination } from 'react-bootstrap';
+import { Card, ListGroup, Form, Button, InputGroup, Spinner, Alert, Badge, Row, Col, Pagination, Container, Navbar, Nav, Dropdown } from 'react-bootstrap';
 import apiClient from '../api/apiClient'; // Corrected import path
 
 const SBAContentExplorer = ({ selectedResource, endpoints }) => {
@@ -23,6 +23,17 @@ const SBAContentExplorer = ({ selectedResource, endpoints }) => {
     { value: 'documents', label: 'Documents' },
     { value: 'offices', label: 'Offices' }
   ];
+
+  // Endpoint registry for SBA content
+  const endpointRegistry = {
+    sba_content_articles: '/api/sba/content/articles',
+    sba_content_blogs: '/api/sba/content/blogs',
+    sba_content_courses: '/api/sba/content/courses',
+    sba_content_events: '/api/sba/content/events',
+    sba_content_documents: '/api/sba/content/documents',
+    sba_content_offices: '/api/sba/content/offices',
+    sba_content_details: '/api/sba/content/node'
+  };
 
   // Resource status (chromadb, flask)
   const [resourceStatus, setResourceStatus] = useState({
@@ -67,12 +78,13 @@ const SBAContentExplorer = ({ selectedResource, endpoints }) => {
 
     try {
       const endpointKey = `sba_content_${contentType}`;
-      if (!endpoints || !endpoints[endpointKey]) {
+      const endpoint = endpointRegistry[endpointKey];
+      if (!endpoint) {
         setError('SBA content endpoint not found. Please check your backend configuration or registry.');
         setResults([]);
         return;
       }
-      const response = await apiClient.get(endpoints[endpointKey], {
+      const response = await apiClient.get(endpoint, {
         params: { query: searchQuery, page: pageNum }
       });
 
@@ -130,14 +142,14 @@ const SBAContentExplorer = ({ selectedResource, endpoints }) => {
   const viewContentDetails = async (id) => {
     setLoading(true);
     setError(null);
-    
+
     try {
-      const endpointKey = `sba_content_${contentType}_details`;
-      if (!endpoints || !endpoints[endpointKey]) throw new Error('Endpoint not found');
-      const response = await apiClient.get(endpoints[endpointKey], {
+      const endpoint = endpointRegistry.sba_content_details;
+      if (!endpoint) throw new Error('Endpoint not found');
+      const response = await apiClient.get(endpoint, {
         params: { id }
       });
-      
+
       setSelectedItem(response.data);
     } catch (err) {
       setError(`Error fetching content details: ${err.message}`);
@@ -195,111 +207,191 @@ const SBAContentExplorer = ({ selectedResource, endpoints }) => {
   // Render content item details
   const renderContentDetails = () => {
     if (!selectedItem) return null;
-    
+
     let details;
-    
+
     switch (contentType) {
       case 'articles':
         details = (
           <>
-            <h3>{selectedItem.title}</h3>
-            <p className="text-muted">Published: {formatDate(selectedItem.created)}</p>
-            {selectedItem.summary && <p className="lead">{selectedItem.summary}</p>}
-            {selectedItem.body && <div dangerouslySetInnerHTML={{ __html: selectedItem.body }} />}
+            <div className="d-flex align-items-center mb-3">
+              <i className="fas fa-newspaper text-primary me-3 fs-2"></i>
+              <div>
+                <h3 className="mb-1">{selectedItem.title}</h3>
+                <small className="text-muted">Published: {formatDate(selectedItem.created)}</small>
+              </div>
+            </div>
+            {selectedItem.summary && <p className="lead text-muted">{selectedItem.summary}</p>}
+            {selectedItem.body && <div className="content-body" dangerouslySetInnerHTML={{ __html: selectedItem.body }} />}
           </>
         );
         break;
-        
+
       case 'blogs':
         details = (
           <>
-            <h3>{selectedItem.title}</h3>
-            <p className="text-muted">Published: {formatDate(selectedItem.created)} | Author: {selectedItem.author || 'Unknown'}</p>
-            {selectedItem.summary && <p className="lead">{selectedItem.summary}</p>}
-            {selectedItem.body && <div dangerouslySetInnerHTML={{ __html: selectedItem.body }} />}
+            <div className="d-flex align-items-center mb-3">
+              <i className="fas fa-blog text-success me-3 fs-2"></i>
+              <div>
+                <h3 className="mb-1">{selectedItem.title}</h3>
+                <small className="text-muted">Published: {formatDate(selectedItem.created)} | Author: {selectedItem.author || 'Unknown'}</small>
+              </div>
+            </div>
+            {selectedItem.summary && <p className="lead text-muted">{selectedItem.summary}</p>}
+            {selectedItem.body && <div className="content-body" dangerouslySetInnerHTML={{ __html: selectedItem.body }} />}
           </>
         );
         break;
-        
+
       case 'courses':
         details = (
           <>
-            <h3>{selectedItem.title}</h3>
-            <Badge bg="primary" className="mb-2">{selectedItem.type || 'Course'}</Badge>
-            <p className="lead">{selectedItem.summary}</p>
-            {selectedItem.description && <div dangerouslySetInnerHTML={{ __html: selectedItem.description }} />}
+            <div className="d-flex align-items-center mb-3">
+              <i className="fas fa-graduation-cap text-info me-3 fs-2"></i>
+              <div>
+                <h3 className="mb-1">{selectedItem.title}</h3>
+                <Badge bg="primary" className="mb-2">{selectedItem.type || 'Course'}</Badge>
+              </div>
+            </div>
+            <p className="lead text-muted">{selectedItem.summary}</p>
+            {selectedItem.description && <div className="content-body" dangerouslySetInnerHTML={{ __html: selectedItem.description }} />}
             {selectedItem.link && (
-              <Button variant="primary" href={selectedItem.link} target="_blank" className="mt-3">
+              <Button
+                variant="primary"
+                href={selectedItem.link}
+                target="_blank"
+                className="mt-3"
+                style={{ background: 'linear-gradient(45deg, #667eea, #764ba2)', border: 'none' }}
+              >
+                <i className="fas fa-external-link-alt me-2"></i>
                 Access Course
               </Button>
             )}
           </>
         );
         break;
-        
+
       case 'events':
         details = (
           <>
-            <h3>{selectedItem.title}</h3>
-            <p className="text-muted">
-              {formatDate(selectedItem.startDate)} 
-              {selectedItem.endDate && ` - ${formatDate(selectedItem.endDate)}`}
-            </p>
+            <div className="d-flex align-items-center mb-3">
+              <i className="fas fa-calendar-alt text-warning me-3 fs-2"></i>
+              <div>
+                <h3 className="mb-1">{selectedItem.title}</h3>
+                <small className="text-muted">
+                  {formatDate(selectedItem.startDate)}
+                  {selectedItem.endDate && ` - ${formatDate(selectedItem.endDate)}`}
+                </small>
+              </div>
+            </div>
             <p><strong>Location:</strong> {selectedItem.location || 'Online'}</p>
-            {selectedItem.description && <div dangerouslySetInnerHTML={{ __html: selectedItem.description }} />}
+            {selectedItem.description && <div className="content-body" dangerouslySetInnerHTML={{ __html: selectedItem.description }} />}
             {selectedItem.registrationLink && (
-              <Button variant="primary" href={selectedItem.registrationLink} target="_blank" className="mt-3">
+              <Button
+                variant="primary"
+                href={selectedItem.registrationLink}
+                target="_blank"
+                className="mt-3"
+                style={{ background: 'linear-gradient(45deg, #667eea, #764ba2)', border: 'none' }}
+              >
+                <i className="fas fa-user-plus me-2"></i>
                 Register for Event
               </Button>
             )}
           </>
         );
         break;
-        
+
       case 'documents':
         details = (
           <>
-            <h3>{selectedItem.title}</h3>
-            <p className="text-muted">Published: {formatDate(selectedItem.created)}</p>
-            {selectedItem.description && <p className="lead">{selectedItem.description}</p>}
+            <div className="d-flex align-items-center mb-3">
+              <i className="fas fa-file-alt text-secondary me-3 fs-2"></i>
+              <div>
+                <h3 className="mb-1">{selectedItem.title}</h3>
+                <small className="text-muted">Published: {formatDate(selectedItem.created)}</small>
+              </div>
+            </div>
+            {selectedItem.description && <p className="lead text-muted">{selectedItem.description}</p>}
             {selectedItem.fileUrl && (
-              <Button variant="primary" href={selectedItem.fileUrl} target="_blank" className="mt-3">
+              <Button
+                variant="primary"
+                href={selectedItem.fileUrl}
+                target="_blank"
+                className="mt-3"
+                style={{ background: 'linear-gradient(45deg, #667eea, #764ba2)', border: 'none' }}
+              >
+                <i className="fas fa-download me-2"></i>
                 Download Document
               </Button>
             )}
           </>
         );
         break;
-        
+
       case 'offices':
         details = (
           <>
-            <h3>{selectedItem.title}</h3>
-            <p><strong>Address:</strong> {selectedItem.address || 'N/A'}</p>
-            <p><strong>Phone:</strong> {selectedItem.phone || 'N/A'}</p>
-            <p><strong>Email:</strong> {selectedItem.email || 'N/A'}</p>
-            {selectedItem.hours && <p><strong>Hours:</strong> {selectedItem.hours}</p>}
-            {selectedItem.description && <div dangerouslySetInnerHTML={{ __html: selectedItem.description }} />}
+            <div className="d-flex align-items-center mb-3">
+              <i className="fas fa-building text-danger me-3 fs-2"></i>
+              <div>
+                <h3 className="mb-1">{selectedItem.title}</h3>
+              </div>
+            </div>
+            <Row>
+              <Col md={6}>
+                <p><i className="fas fa-map-marker-alt me-2 text-muted"></i><strong>Address:</strong> {selectedItem.address || 'N/A'}</p>
+                <p><i className="fas fa-phone me-2 text-muted"></i><strong>Phone:</strong> {selectedItem.phone || 'N/A'}</p>
+              </Col>
+              <Col md={6}>
+                <p><i className="fas fa-envelope me-2 text-muted"></i><strong>Email:</strong> {selectedItem.email || 'N/A'}</p>
+                {selectedItem.hours && <p><i className="fas fa-clock me-2 text-muted"></i><strong>Hours:</strong> {selectedItem.hours}</p>}
+              </Col>
+            </Row>
+            {selectedItem.description && <div className="content-body" dangerouslySetInnerHTML={{ __html: selectedItem.description }} />}
             {selectedItem.website && (
-              <Button variant="primary" href={selectedItem.website} target="_blank" className="mt-3">
+              <Button
+                variant="primary"
+                href={selectedItem.website}
+                target="_blank"
+                className="mt-3"
+                style={{ background: 'linear-gradient(45deg, #667eea, #764ba2)', border: 'none' }}
+              >
+                <i className="fas fa-external-link-alt me-2"></i>
                 Visit Website
               </Button>
             )}
           </>
         );
         break;
-        
+
       default:
         details = <p>No details available</p>;
     }
-    
+
     return (
-      <Card className="mt-3">
-        <Card.Body>
+      <Card className="shadow-lg border-0 mt-4" style={{ background: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(10px)' }}>
+        <Card.Header className="bg-gradient-primary text-white border-0">
+          <div className="d-flex align-items-center justify-content-between">
+            <h4 className="mb-0">
+              <i className="fas fa-info-circle me-2"></i>
+              Content Details
+            </h4>
+            <Badge bg="light" text="dark" className="fs-6">
+              {contentTypes.find(type => type.value === contentType)?.label}
+            </Badge>
+          </div>
+        </Card.Header>
+        <Card.Body className="p-4">
           {details}
         </Card.Body>
-        <Card.Footer>
-          <Button variant="secondary" onClick={() => setSelectedItem(null)}>
+        <Card.Footer className="bg-light border-0">
+          <Button
+            variant="outline-secondary"
+            onClick={() => setSelectedItem(null)}
+            className="w-100"
+          >
+            <i className="fas fa-arrow-left me-2"></i>
             Back to Results
           </Button>
         </Card.Footer>
@@ -394,58 +486,84 @@ const SBAContentExplorer = ({ selectedResource, endpoints }) => {
   }, [selectedResource, endpoints]);
 
   return (
-    <div className="sba-content-explorer">
-      {/* Resource Status Section */}
-      <Card className="mb-3">
-        <Card.Header>
-          <h5>System Resources</h5>
-        </Card.Header>
-        <Card.Body>
-          <ListGroup>
-            <ListGroup.Item action onClick={() => alert(resourceStatus.flask.message)}>
-              <span className="fw-bold">Flask Server</span>
-              <Badge bg={resourceStatus.flask.status === 'online' ? 'success' : 'danger'} className="ms-2">
-                {resourceStatus.flask.status}
-              </Badge>
-            </ListGroup.Item>
-            <ListGroup.Item action onClick={() => alert(resourceStatus.chromadb.message)}>
-              <span className="fw-bold">ChromaDB</span>
-              <Badge bg={resourceStatus.chromadb.status === 'online' ? 'success' : 'danger'} className="ms-2">
-                {resourceStatus.chromadb.status}
-              </Badge>
-            </ListGroup.Item>
-          </ListGroup>
-        </Card.Body>
-      </Card>
-      {/* ...existing code... */}
-      {selectedItem ? (
-        <Card className="mb-4">
-          <Card.Header>
-            <h4>{selectedItem.title}</h4>
-          </Card.Header>
-          <Card.Body>
-            <div>{selectedItem.description || selectedItem.summary || "No description available."}</div>
-            {/* Add more details as needed */}
-          </Card.Body>
-        </Card>
-      ) : (
-        <Card>
-          <Card.Header>
-            <h4 className="mb-0">SBA Content Explorer</h4>
-          </Card.Header>
-          <Card.Body>
-            {selectedItem ? (
-              renderContentDetails()
-            ) : (
-              <>
+    <Container fluid className="sba-content-explorer py-4" style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', minHeight: '100vh' }}>
+      {/* Modern Header */}
+      <div className="text-center mb-5">
+        <h1 className="display-4 text-white fw-bold mb-3" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.3)' }}>
+          SBA Content Explorer
+        </h1>
+        <p className="lead text-white-50">Discover SBA resources, articles, courses, and more</p>
+      </div>
+
+      {/* Resource Status Section - Modern Design */}
+      <Row className="mb-4">
+        <Col lg={12}>
+          <Card className="shadow-lg border-0" style={{ background: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(10px)' }}>
+            <Card.Header className="bg-gradient-primary text-white border-0">
+              <div className="d-flex align-items-center">
+                <i className="fas fa-server me-2"></i>
+                <h5 className="mb-0">System Resources</h5>
+              </div>
+            </Card.Header>
+            <Card.Body>
+              <Row>
+                <Col md={6}>
+                  <div className="d-flex align-items-center p-3 rounded" style={{ background: 'rgba(0,123,255,0.1)' }}>
+                    <div className={`status-indicator me-3 ${resourceStatus.flask.status === 'online' ? 'bg-success' : 'bg-danger'}`}></div>
+                    <div>
+                      <span className="fw-bold">Flask Server</span>
+                      <Badge bg={resourceStatus.flask.status === 'online' ? 'success' : 'danger'} className="ms-2">
+                        {resourceStatus.flask.status}
+                      </Badge>
+                    </div>
+                  </div>
+                </Col>
+                <Col md={6}>
+                  <div className="d-flex align-items-center p-3 rounded" style={{ background: 'rgba(40,167,69,0.1)' }}>
+                    <div className={`status-indicator me-3 ${resourceStatus.chromadb.status === 'online' ? 'bg-success' : 'bg-danger'}`}></div>
+                    <div>
+                      <span className="fw-bold">ChromaDB</span>
+                      <Badge bg={resourceStatus.chromadb.status === 'online' ? 'success' : 'danger'} className="ms-2">
+                        {resourceStatus.chromadb.status}
+                      </Badge>
+                    </div>
+                  </div>
+                </Col>
+              </Row>
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
+
+      {/* Main Content */}
+      <Row>
+        <Col lg={12}>
+          {selectedItem ? (
+            renderContentDetails()
+          ) : (
+            <Card className="shadow-lg border-0" style={{ background: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(10px)' }}>
+              <Card.Header className="bg-gradient-secondary text-white border-0">
+                <div className="d-flex align-items-center justify-content-between">
+                  <div className="d-flex align-items-center">
+                    <i className="fas fa-search me-2"></i>
+                    <h4 className="mb-0">Explore SBA Content</h4>
+                  </div>
+                  <Badge bg="light" text="dark" className="fs-6">
+                    {contentTypes.find(type => type.value === contentType)?.label}
+                  </Badge>
+                </div>
+              </Card.Header>
+              <Card.Body className="p-4">
                 <Form onSubmit={handleSearch}>
-                  <Row className="mb-3">
+                  <Row className="mb-4">
                     <Col md={4}>
                       <Form.Group>
-                        <Form.Label>Content Type</Form.Label>
+                        <Form.Label className="fw-bold text-muted">Content Type</Form.Label>
                         <Form.Select
                           value={contentType}
                           onChange={(e) => setContentType(e.target.value)}
+                          className="form-control-lg border-0 shadow-sm"
+                          style={{ background: 'rgba(255,255,255,0.8)' }}
                         >
                           {contentTypes.map(type => (
                             <option key={type.value} value={type.value}>
@@ -457,44 +575,100 @@ const SBAContentExplorer = ({ selectedResource, endpoints }) => {
                     </Col>
                     <Col md={8}>
                       <Form.Group>
-                        <Form.Label>Search Query</Form.Label>
-                        <InputGroup>
+                        <Form.Label className="fw-bold text-muted">Search Query</Form.Label>
+                        <InputGroup className="input-group-lg">
                           <Form.Control
                             type="text"
                             placeholder={`Search SBA ${contentType}...`}
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
+                            className="border-0 shadow-sm"
+                            style={{ background: 'rgba(255,255,255,0.8)' }}
                           />
-                          <Button 
-                            variant="primary" 
+                          <Button
+                            variant="primary"
                             type="submit"
                             disabled={loading || (!searchQuery.trim() && contentType !== 'offices')}
+                            className="px-4"
+                            style={{ background: 'linear-gradient(45deg, #667eea, #764ba2)', border: 'none' }}
                           >
-                            {loading ? <Spinner animation="border" size="sm" /> : 'Search'}
+                            {loading ? (
+                              <Spinner animation="border" size="sm" className="me-2" />
+                            ) : (
+                              <i className="fas fa-search me-2"></i>
+                            )}
+                            {loading ? 'Searching...' : 'Search'}
                           </Button>
                         </InputGroup>
                       </Form.Group>
                     </Col>
                   </Row>
                 </Form>
-                
-                {error && <Alert variant="danger">{error}</Alert>}
-                
+
+                {error && (
+                  <Alert variant="danger" className="border-0 shadow-sm">
+                    <i className="fas fa-exclamation-triangle me-2"></i>
+                    {error}
+                  </Alert>
+                )}
+
                 {loading ? (
-                  <div className="text-center my-4">
-                    <Spinner animation="border" />
-                    <p className="mt-2">Loading results...</p>
+                  <div className="text-center py-5">
+                    <div className="spinner-border text-primary" style={{ width: '3rem', height: '3rem' }} role="status">
+                      <span className="visually-hidden">Loading...</span>
+                    </div>
+                    <p className="mt-3 text-muted">Discovering SBA content...</p>
                   </div>
                 ) : (
-                  renderNodeTree(results)
+                  <div className="results-container">
+                    {renderNodeTree(results)}
+                  </div>
                 )}
                 {renderPagination()}
-              </>
-            )}
-          </Card.Body>
-        </Card>
-      )}
-    </div>
+              </Card.Body>
+            </Card>
+          )}
+        </Col>
+      </Row>
+
+      <style jsx>{`
+        .bg-gradient-primary {
+          background: linear-gradient(45deg, #667eea, #764ba2);
+        }
+        .bg-gradient-secondary {
+          background: linear-gradient(45deg, #f093fb, #f5576c);
+        }
+        .status-indicator {
+          width: 12px;
+          height: 12px;
+          border-radius: 50%;
+          animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+          0% { opacity: 1; }
+          50% { opacity: 0.5; }
+          100% { opacity: 1; }
+        }
+        .card {
+          transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card:hover {
+          transform: translateY(-5px);
+          box-shadow: 0 15px 35px rgba(0,0,0,0.1) !important;
+        }
+        .btn {
+          transition: all 0.3s ease;
+        }
+        .btn:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        .form-control:focus, .form-select:focus {
+          border-color: #667eea;
+          box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+      `}</style>
+    </Container>
   );
 };
 

@@ -191,7 +191,7 @@ function MainLayout() {
         activeTab={activeTab}
         onTabChange={handleTabChange}
         serverConnected={serverConnected}
-        connectionInfo={connectionInfo}
+        apiUrl={connectionInfo?.source || 'http://localhost:5000'}
       />
       <Container className="flex-grow-1">
         {renderContent()}

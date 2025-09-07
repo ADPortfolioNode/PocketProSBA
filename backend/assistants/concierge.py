@@ -10,6 +10,16 @@ from .base import BaseAssistant
 # Configure logging
 logger = logging.getLogger(__name__)
 
+# Import Gemini RAG service
+try:
+    from backend.gemini_rag_service import gemini_rag_service
+    GEMINI_AVAILABLE = True
+    logger.info("✅ Gemini RAG service imported successfully")
+except ImportError as e:
+    logger.warning(f"❌ Failed to import Gemini RAG service: {str(e)}")
+    GEMINI_AVAILABLE = False
+    gemini_rag_service = None
+
 class Concierge(BaseAssistant):
     """
     Concierge Assistant
@@ -342,30 +352,60 @@ class Concierge(BaseAssistant):
         }
     
     def _handle_task_decomposition(self, message, conversation):
-        """Handle a complex task request with improved natural responses"""
+        """Handle a complex task request using Gemini LM instead of templates"""
         self._update_status("planning", 40, "Analyzing your request...")
-        
-        # More natural and varied responses based on the type of task
-        message_lower = message.lower()
-        
-        if any(term in message_lower for term in ["business plan", "business planning"]):
-            response_text = "I'd be happy to help you with business planning! The SBA offers excellent resources for creating a business plan. I can guide you through the key components like executive summary, market analysis, and financial projections. Would you like me to search for specific SBA business planning templates and resources?"
-        
-        elif any(term in message_lower for term in ["loan", "funding", "financing"]):
-            response_text = "Great question about SBA loans and funding options! The SBA offers several loan programs including 7(a) loans, microloans, and disaster assistance. I can help you understand eligibility requirements and application processes. Would you like me to find specific information about SBA loan programs that might fit your needs?"
-        
-        elif any(term in message_lower for term in ["grant", "free money"]):
-            response_text = "While the SBA itself doesn't typically offer grants for starting or expanding a business, they do provide information about federal grant opportunities. I can help you explore SBA resources on grants and other funding options. Would you like me to search for information on small business grants and alternative funding sources?"
-        
-        elif any(term in message_lower for term in ["start", "launch", "new business"]):
-            response_text = "Exciting! Starting a new business is a big step. The SBA has comprehensive resources for entrepreneurs including business planning guides, market research tools, and licensing information. I can help you navigate the process step by step. What specific aspect of starting your business would you like to focus on first?"
-        
-        else:
-            # Generic but more helpful response
-            response_text = f"I understand you're looking for help with '{message}'. While I'm still developing my task decomposition capabilities, I can provide you with comprehensive information about SBA resources related to this topic. I can search for relevant documents, guides, and program information to help you get started. Would that be helpful?"
-        
+
+        # Use Gemini RAG service for natural language responses
+        if GEMINI_AVAILABLE and gemini_rag_service:
+            try:
+                # Query the Gemini RAG service for task-related information
+                result = gemini_rag_service.query_sba_loans(message)
+
+                if "error" not in result:
+                    return {
+                        "text": result.get("answer", "I can help you with that task. Let me search for relevant SBA resources and information."),
+                        "sources": result.get("source_documents", [])
+                    }
+            except Exception as e:
+                logger.warning(f"Gemini RAG query failed for task decomposition: {str(e)}")
+
+        # Fallback to RAG manager if Gemini is not available
+        if self.rag_manager:
+            try:
+                results = self.rag_manager.query_documents(message, n_results=3)
+
+                if "error" not in results and results.get("documents", [[]])[0]:
+                    documents = results.get("documents", [[]])[0]
+                    metadatas = results.get("metadatas", [[]])[0]
+                    ids = results.get("ids", [[]])[0]
+
+                    # Build context from retrieved documents
+                    context = "\n".join(documents)
+
+                    # Format sources
+                    sources = []
+                    for i, (doc, meta, doc_id) in enumerate(zip(documents, metadatas, ids)):
+                        source_name = meta.get("source", f"Document {i+1}")
+                        sources.append({
+                            "id": doc_id,
+                            "name": source_name,
+                            "content": doc[:200] + "..." if len(doc) > 200 else doc,
+                            "metadata": meta
+                        })
+
+                    # Generate response using context
+                    response_text = f"Based on SBA resources, here's how I can help you with your task:\n\n{context}\n\nWould you like me to break this down into specific steps or provide more detailed information about any particular aspect?"
+
+                    return {
+                        "text": response_text,
+                        "sources": sources
+                    }
+            except Exception as e:
+                logger.warning(f"RAG manager query failed for task decomposition: {str(e)}")
+
+        # Final fallback - generic response without templates
         return {
-            "text": response_text,
+            "text": f"I understand you need help with '{message}'. Let me search through SBA resources to provide you with the most relevant information and guidance for your specific situation. What particular aspect would you like me to focus on?",
             "sources": []
         }
     
