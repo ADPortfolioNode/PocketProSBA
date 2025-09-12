@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify
 import os
 import logging
 from werkzeug.utils import secure_filename
-from services.rag import get_rag_manager
+from backend.services.rag import get_rag_manager
 
 logger = logging.getLogger(__name__)
 documents_bp = Blueprint('documents', __name__)

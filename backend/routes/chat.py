@@ -1,7 +1,7 @@
 # routes/chat.py
 from flask import Blueprint, request, jsonify
 import logging
-from services.chat_processing_service import process_chat_message, get_conversation_history, clear_conversation
+from backend.services.chat_processing_service import process_chat_message, get_conversation_history, clear_conversation
 
 logger = logging.getLogger(__name__)
 chat_bp = Blueprint('chat', __name__)
@@ -99,7 +99,7 @@ def clear_conversation_endpoint(session_id):
 def health_check():
     """Health check endpoint for chat service"""
     try:
-        from services.chat_processing_service import get_concierge
+    from backend.services.chat_processing_service import get_concierge
         concierge = get_concierge()
         return jsonify({
             'status': 'healthy',

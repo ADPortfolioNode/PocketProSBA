@@ -20,6 +20,20 @@ except ImportError as e:
     GEMINI_AVAILABLE = False
     gemini_rag_service = None
 
+# Import self-optimizing components
+try:
+    from services.task_orchestrator import TaskOrchestrator, StepAssistant
+    from services.memory_repository import MemoryRepository
+    from services.step_strategies import (
+        DocumentSearchStrategy, TaskDecompositionStrategy, AnalysisStrategy, ResponseGenerationStrategy,
+        FastDocumentSearchStrategy, DetailedDocumentSearchStrategy, LLMAnalysisStrategy, TemplateResponseStrategy
+    )
+    OPTIMIZING_AVAILABLE = True
+    logger.info("✅ Self-optimizing components imported successfully")
+except ImportError as e:
+    logger.warning(f"❌ Failed to import self-optimizing components: {str(e)}")
+    OPTIMIZING_AVAILABLE = False
+
 class Concierge(BaseAssistant):
     """
     Concierge Assistant

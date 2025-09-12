@@ -3,8 +3,8 @@ import logging
 import os
 import time
 from werkzeug.utils import secure_filename
-from services.api_service import get_system_info_service
-from services.rag import get_rag_manager
+from backend.services.api_service import get_system_info_service
+from backend.services.rag import get_rag_manager
 from config import Config
 
 logger = logging.getLogger(__name__)

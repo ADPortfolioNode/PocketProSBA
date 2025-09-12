@@ -1,0 +1,58 @@
+# Use Python 3.11 slim image for smaller size
+FROM python:3.11-slim
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONPATH=/app \
+    FLASK_ENV=production \
+    FLASK_APP=backend.app \
+    PORT=5000
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    libffi-dev \
+    libssl-dev \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create app directory
+WORKDIR /app
+
+# Copy requirements first for better caching
+COPY backend/requirements.txt .
+
+# Install Python dependencies
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
+
+# Copy the entire backend directory
+COPY backend/ .
+
+# Create necessary directories for the RAG service
+RUN mkdir -p /app/backend/knowledge_base/sba_docs \
+             /app/backend/knowledge_base/sba_faq \
+             /app/backend/knowledge_base/sba_guides \
+             /app/backend/knowledge_base/sba_programs \
+             /app/backend/knowledge_base/sba_requirements \
+             /app/backend/knowledge_base/sba_calculator \
+             /app/uploads \
+             /app/chromadb_data \
+             /app/logs
+
+# Create a non-root user for security
+RUN useradd --create-home --shell /bin/bash app && \
+    chown -R app:app /app
+USER app
+
+# Expose port
+EXPOSE 5000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
+    CMD curl -f http://localhost:5000/api/health || exit 1
+
+# Start the application with gunicorn
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "2", "--threads", "4", "--worker-class", "gthread", "--access-logfile", "-", "--error-logfile", "-", "backend.app:create_app()"]

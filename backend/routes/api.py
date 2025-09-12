@@ -3,14 +3,14 @@ import logging
 import time
 
 logger = logging.getLogger(__name__)
-from services.api_service import (
+from backend.services.api_service import (
     get_system_info_service,
     decompose_task_service,
     execute_step_service,
     validate_step_service,
     query_documents_service,
 )
-from services.rag import get_rag_manager
+from backend.services.rag import get_rag_manager
 
 api_bp = Blueprint('api', __name__)
 
@@ -87,7 +87,7 @@ def decompose_task():
 
     except Exception as e:
         logger.error(f"Error decomposing task: {str(e)}")
-        raise Exception(f'Failed to process message: {str(e)}')
+        return jsonify({'error': f'Failed to process message: {str(e)}'}), 500
 
 @api_bp.route('/execute', methods=['POST'])
 def execute_step():
@@ -104,7 +104,7 @@ def execute_step():
 
     except Exception as e:
         logger.error(f"Error executing step: {str(e)}")
-        raise Exception(f'Failed to execute step: {str(e)}')
+        return jsonify({'error': f'Failed to execute step: {str(e)}'}), 500
 
 @api_bp.route('/validate', methods=['POST'])
 def validate_step():
@@ -122,7 +122,7 @@ def validate_step():
 
     except Exception as e:
         logger.error(f"Error validating step: {str(e)}")
-        raise Exception(f'Failed to validate step: {str(e)}')
+        return jsonify({'error': f'Failed to validate step: {str(e)}'}), 500
 
 @api_bp.route('/query', methods=['POST'])
 def query_documents():

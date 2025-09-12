@@ -23,5 +23,7 @@ COPY . .
 # Expose the port the app runs on
 EXPOSE 5000
 
+# Ensure PYTHONPATH includes /app and /app/services
+ENV PYTHONPATH="/app:/app/services"
 # Command to run the application
 CMD ["python", "run.py"]

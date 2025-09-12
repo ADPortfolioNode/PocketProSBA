@@ -1,48 +1,68 @@
 import os
-import logging
-from pathlib import Path
-from typing import Optional
+from dotenv import load_dotenv
 
-logger = logging.getLogger(__name__)
+# Load environment variables from .env file
+load_dotenv()
 
 class Config:
-    # Base directory
-    BASE_DIR = Path(__file__).parent.parent
-    
-    # Server Configuration
-    PORT: int = int(os.environ.get('PORT', '5000'))
-    DEBUG: bool = os.environ.get('DEBUG', 'False').lower() == 'true'
-    TESTING: bool = os.environ.get('TESTING', 'False').lower() == 'true'
-    
+    """Base configuration class"""
+
+    # Flask configuration
+    SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-in-production'
+    FLASK_ENV = os.environ.get('FLASK_ENV') or 'development'
+    DEBUG = FLASK_ENV == 'development'
+
     # Database configuration
-    SQLALCHEMY_DATABASE_URI: str = os.environ.get('DATABASE_URL') or f'sqlite:///{BASE_DIR / "app.db"}'
-    SQLALCHEMY_TRACK_MODIFICATIONS: bool = False
-    
-    # Application configuration
-    SECRET_KEY: str = os.environ.get('SECRET_KEY', 'a_default_secret_key')
-    GEMINI_API_KEY: Optional[str] = os.environ.get('GEMINI_API_KEY')
-    CHROMADB_HOST: str = os.environ.get('CHROMADB_HOST', 'localhost')
-    CHROMADB_PORT: int = int(os.environ.get('CHROMADB_PORT', '8000'))
-    FRONTEND_URL: str = os.environ.get('FRONTEND_URL', 'http://localhost:3000')
-    
-    def validate(self) -> None:
-        """Validate configuration and log warnings for missing required settings"""
-        if self.SECRET_KEY == 'a_default_secret_key':
-            logger.warning("Using default secret key - not recommended for production")
-        
-        if not self.GEMINI_API_KEY:
-            logger.warning("GEMINI_API_KEY not set - Gemini features will be disabled")
-        
-        if self.DEBUG and not self.TESTING:
-            logger.warning("Running in DEBUG mode - not recommended for production")
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'sqlite:///pocketpro.db'
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
 
-        # Additional validation for CORS origin
-        if not self.FRONTEND_URL.startswith("http"):
-            logger.warning(f"FRONTEND_URL '{self.FRONTEND_URL}' does not appear to be a valid URL")
+    # CORS configuration
+    FRONTEND_URL = os.environ.get('FRONTEND_URL') or 'http://localhost:3000'
 
+    # Server configuration
+    PORT = int(os.environ.get('PORT', 5000))
+    HOST = os.environ.get('HOST', '0.0.0.0')
 
-class TestConfig(Config):
-    """Configuration for testing environment"""
-    TESTING: bool = True
-    SQLALCHEMY_DATABASE_URI: str = os.environ.get('TEST_DATABASE_URL') or f'sqlite:///{Config.BASE_DIR / "test.db"}'
-    WTF_CSRF_ENABLED: bool = False
+    # ChromaDB configuration
+    CHROMADB_HOST = os.environ.get('CHROMADB_HOST', 'localhost')
+    CHROMADB_PORT = int(os.environ.get('CHROMADB_PORT', 8000))
+
+    # Gemini API configuration (if used)
+    GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
+
+    # Logging configuration
+    LOG_LEVEL = os.environ.get('LOG_LEVEL', 'INFO')
+    LOG_FILE = os.environ.get('LOG_FILE', 'app.log')
+
+class DevelopmentConfig(Config):
+    """Development configuration"""
+    DEBUG = True
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'sqlite:///dev.db'
+
+class ProductionConfig(Config):
+    """Production configuration"""
+    DEBUG = False
+    # Ensure production uses secure settings
+    SECRET_KEY = os.environ.get('SECRET_KEY')
+    if not SECRET_KEY:
+        raise ValueError("SECRET_KEY environment variable is required in production")
+
+class TestingConfig(Config):
+    """Testing configuration"""
+    TESTING = True
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:'
+    WTF_CSRF_ENABLED = False
+
+# Configuration mapping
+config = {
+    'development': DevelopmentConfig,
+    'production': ProductionConfig,
+    'testing': TestingConfig,
+    'default': DevelopmentConfig
+}
+
+def get_config(config_name=None):
+    """Get configuration class based on environment"""
+    if config_name is None:
+        config_name = os.environ.get('FLASK_ENV', 'development')
+    return config.get(config_name, config['default'])

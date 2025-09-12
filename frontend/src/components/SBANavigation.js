@@ -1,4 +1,4 @@
-import React from 'react';
+ import React from 'react';
 import { Navbar, Nav, Container } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import ConnectionStatusIndicator from './ConnectionStatusIndicator';
@@ -55,8 +55,8 @@ const SBANavigation = ({ activeTab, onTabChange, serverConnected, apiUrl }) => {
             >
               Document Center
             </Nav.Link>
-            <Nav.Link 
-              href="#sba" 
+            <Nav.Link
+              href="#sba"
               active={activeTab === "sba"}
               onClick={(e) => {
                 e.preventDefault();
@@ -65,6 +65,17 @@ const SBANavigation = ({ activeTab, onTabChange, serverConnected, apiUrl }) => {
               data-testid="nav-sba"
             >
               SBA Content
+            </Nav.Link>
+            <Nav.Link
+              href="#orchestrator"
+              active={activeTab === "orchestrator"}
+              onClick={(e) => {
+                e.preventDefault();
+                onTabChange("orchestrator");
+              }}
+              data-testid="nav-orchestrator"
+            >
+              🤖 Task Orchestrator
             </Nav.Link>
           </Nav>
           <div className="d-flex align-items-center">

@@ -2,7 +2,7 @@ import os
 import logging
 from flask import Flask, jsonify, request
 from flask_cors import CORS
-from config import Config
+from config import get_config
 from models.chat import db
 
 
@@ -13,8 +13,9 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-def create_app(config_class=Config):
+def create_app(config_name=None):
     """Application factory pattern"""
+    config_class = get_config(config_name)
     app = Flask(__name__)
     app.config.from_object(config_class)
 
@@ -57,11 +58,13 @@ def create_app(config_class=Config):
     from routes.chat import chat_bp
     from routes.sba import sba_bp
     from routes.rag import rag_bp
+    from routes.orchestrator import orchestrator_bp
 
     app.register_blueprint(api_bp, url_prefix='/api')
     app.register_blueprint(chat_bp, url_prefix='/api/chat')
     app.register_blueprint(sba_bp, url_prefix='/api/sba')
     app.register_blueprint(rag_bp, url_prefix='/api/rag')
+    app.register_blueprint(orchestrator_bp, url_prefix='/api/orchestrator')
 
     # Initialize Gemini RAG service
     try:

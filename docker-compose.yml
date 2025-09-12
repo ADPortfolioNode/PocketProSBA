@@ -2,17 +2,22 @@ services:
   backend:
     build:
       context: .
-      dockerfile: Dockerfile.production
+      dockerfile: Dockerfile.backend
     container_name: pocketpro-backend
     ports:
-      - "${PORT:-5000}:5000"
+      - "8000:8000"
+    networks:
+      - app-network
     environment:
       - FLASK_ENV=production
       - PYTHONUNBUFFERED=1
-      - PORT=5000
+      - PYTHONDONTWRITEBYTECODE=1
+      - PYTHONPATH=/app
+      - PORT=8000
       - CHROMADB_HOST=chromadb
       - CHROMADB_PORT=8000
       - FRONTEND_URL=http://frontend:80
+      - GUNICORN_CMD_ARGS="--config=/app/gunicorn.conf.py"
     env_file:
       - backend/.env
     volumes:
@@ -23,16 +28,19 @@ services:
     depends_on:
       - chromadb
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5000/api/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
       interval: 30s
       timeout: 10s
       retries: 3
+      start_period: 30s
 
   chromadb:
     image: chromadb/chroma:latest
     container_name: chromadb-production
-    ports:
-      - "8000:8000"
+    expose:
+      - "8000"
+    networks:
+      - app-network
     volumes:
       - ./chromadb_data:/chroma/chroma
     environment:
@@ -56,7 +64,7 @@ services:
     ports:
       - "3000:80" # Map host port 3000 to container port 80 (nginx default)
     environment:
-      - REACT_APP_API_URL=http://backend:5000 # Point to the backend service in Docker network
+      - REACT_APP_API_URL=http://backend:8000 # Point to the backend service in Docker network
     depends_on:
       - backend # Frontend depends on backend
     restart: unless-stopped

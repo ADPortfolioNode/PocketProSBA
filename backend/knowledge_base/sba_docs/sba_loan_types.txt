@@ -1,0 +1,19 @@
+SBA LOAN TYPES GUIDE - GEMINI RAG
+
+SBA 7(A) LOANS:
+Description: SBA 7(a) loans for general business purposes
+Maximum Amount: $5 million
+Use Cases: working capital, equipment, real estate, debt refinancing
+Terms: up to 25 years for real estate, 10 years for equipment/working capital
+
+SBA 504 LOANS:
+Description: SBA 504 loans for major fixed assets
+Maximum Amount: $5.5 million
+Use Cases: real estate, major equipment, construction
+Terms: 10, 20, or 25 years
+
+SBA MICROLOANS:
+Description: SBA Microloans for small businesses
+Maximum Amount: $50,000
+Use Cases: working capital, inventory, supplies, equipment
+Terms: up to 6 years

@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 import logging
-from services.SBA_Content import SBAContentAPI
+from backend.services.SBA_Content import SBAContentAPI
 
 logger = logging.getLogger(__name__)
 

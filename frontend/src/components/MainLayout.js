@@ -8,6 +8,7 @@ import RAGWorkflowInterface from './RAGWorkflowInterface';
 import ModernConciergeChat from './ModernConciergeChat';
 import UploadsManagerComponent from './UploadsManager';
 import SBAContent from './SBAContent';
+import TaskOrchestrator from './TaskOrchestrator';
 import { useConnection } from '../hooks/useConnection'; // Import the new hook
 
 function MainLayout() {
@@ -155,8 +156,8 @@ function MainLayout() {
     switch (activeTab) {
       case 'chat':
         return (
-          <ModernConciergeChat 
-            onSend={handleChatSend} 
+          <ModernConciergeChat
+            onSend={handleChatSend}
             messages={messages}
             loading={!serverConnected}
             userName="User"
@@ -171,10 +172,12 @@ function MainLayout() {
         return <UploadsManagerComponent />;
       case 'sba':
         return <SBAContent />;
+      case 'orchestrator':
+        return <TaskOrchestrator />;
       default:
         return (
-          <ModernConciergeChat 
-            onSend={handleChatSend} 
+          <ModernConciergeChat
+            onSend={handleChatSend}
             messages={messages}
             loading={!serverConnected}
             userName="User"

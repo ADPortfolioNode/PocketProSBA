@@ -20,17 +20,23 @@ ENV PYTHONHASHSEED=random
 COPY backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
  
-# Copy the backend application
-COPY backend/ .
+# Copy the backend application files
+COPY backend /app/backend
+COPY backend/gunicorn.conf.py .
+COPY app.py .
 
+# Create required directories
+RUN mkdir -p /app/backend/utils
+
+ENV PYTHONPATH=/app:$PYTHONPATH
 ENV FLASK_APP=app.py
 ENV FLASK_ENV=production
-ENV PORT=5000
+ENV PORT=8000
 
-EXPOSE 5000
+EXPOSE 8000
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
-  CMD curl -f http://127.0.0.1:5000/api/health || exit 1
+  CMD curl -f http://127.0.0.1:8000/api/health || exit 1
 
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--timeout", "60", "--workers", "1", "--threads", "2", "--preload", "--max-requests", "1000", "--max-requests-jitter", "50", "backend.app:app"]
+CMD ["gunicorn", "--config", "gunicorn.conf.py", "app:app"]

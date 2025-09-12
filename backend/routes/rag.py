@@ -1,13 +1,13 @@
 from flask import Blueprint, request, jsonify
 import logging
-from services.api_service import (
+from backend.services.api_service import (
     decompose_task_service,
     execute_step_service,
     validate_step_service,
     query_documents_service,
 )
-from services.rag import get_rag_manager
-from enhanced_gemini_rag_service import enhanced_rag_service
+from backend.services.rag import get_rag_manager
+from backend.enhanced_gemini_rag_service import enhanced_rag_service
 
 logger = logging.getLogger(__name__)
 rag_bp = Blueprint('rag', __name__)

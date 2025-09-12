@@ -1,56 +1,71 @@
 import { useState, useCallback } from 'react';
 import apiClient from '../api/apiClient';
+import { useApp } from '../context/AppProvider';
 
 export const useApi = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [data, setData] = useState(null);
+  const { setGlobalLoading, handleError } = useApp();
 
-  const callApi = useCallback(async (method, url, payload = null) => {
+  const executeRequest = useCallback(async (method, url, data = null, config = {}) => {
     setLoading(true);
     setError(null);
-    
+    setGlobalLoading(true);
+
     try {
-      let response;
-      switch (method.toLowerCase()) {
-        case 'get':
-          response = await apiClient.get(url);
-          break;
-        case 'post':
-          response = await apiClient.post(url, payload);
-          break;
-        case 'put':
-          response = await apiClient.put(url, payload);
-          break;
-        case 'delete':
-          response = await apiClient.delete(url);
-          break;
-        default:
-          throw new Error(`Unsupported HTTP method: ${method}`);
-      }
-      
-      setData(response.data);
+      const response = await apiClient[method](url, data, config);
       return response.data;
     } catch (err) {
-      const errorMessage = err.response?.data?.error || err.message || 'An error occurred';
+      const errorMessage = err.response?.data?.error || err.message || 'Request failed';
       setError(errorMessage);
-      throw new Error(errorMessage);
+      handleError(err, `API ${method.toUpperCase()} ${url}`);
+      throw err;
     } finally {
       setLoading(false);
+      setGlobalLoading(false);
     }
-  }, []);
+  }, [setGlobalLoading, handleError]);
 
-  const reset = useCallback(() => {
-    setLoading(false);
-    setError(null);
-    setData(null);
-  }, []);
+  const get = useCallback((url, config = {}) => executeRequest('get', url, null, config), [executeRequest]);
+  const post = useCallback((url, data, config = {}) => executeRequest('post', url, data, config), [executeRequest]);
+  const put = useCallback((url, data, config = {}) => executeRequest('put', url, data, config), [executeRequest]);
+  const deleteRequest = useCallback((url, config = {}) => executeRequest('delete', url, null, config), [executeRequest]);
 
   return {
     loading,
     error,
-    data,
-    callApi,
-    reset,
+    get,
+    post,
+    put,
+    delete: deleteRequest,
+    clearError: () => setError(null)
+  };
+};
+
+export const useSBAContent = () => {
+  const api = useApi();
+
+  const searchContent = useCallback(async (contentType, query = '', page = 1) => {
+    const endpoint = `/api/sba/content/${contentType}`;
+    const params = query ? { query, page } : { page };
+    return api.get(endpoint, { params });
+  }, [api]);
+
+  const getContentDetails = useCallback(async (contentType, id) => {
+    const endpoint = `/api/sba/content/${contentType}/${id}`;
+    return api.get(endpoint);
+  }, [api]);
+
+  const getNodeDetails = useCallback(async (nodeId) => {
+    return api.get(`/api/sba/content/node/${nodeId}`);
+  }, [api]);
+
+  return {
+    searchContent,
+    getContentDetails,
+    getNodeDetails,
+    loading: api.loading,
+    error: api.error,
+    clearError: api.clearError
   };
 };

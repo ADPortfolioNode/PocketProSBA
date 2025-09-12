@@ -1,7 +1,7 @@
 import logging
-from services.rag import get_rag_manager
-from assistants.concierge import Concierge
-from assistants.search import SearchAgent
+from backend.services.rag import get_rag_manager
+from backend.assistants.concierge import Concierge
+from backend.assistants.search import SearchAgent
 
 logger = logging.getLogger(__name__)
 

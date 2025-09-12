@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import apiClient from '../api/apiClient';
-import { useAppContext } from '../context/AppProvider';
+import { useApp } from '../context/AppProvider';
 
 export const useAuth = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const { setUser } = useAppContext();
+  const { setUser } = useApp();
 
   const login = async (email, password) => {
     setLoading(true);
