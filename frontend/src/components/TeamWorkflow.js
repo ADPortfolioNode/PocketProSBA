@@ -33,6 +33,7 @@ const TeamWorkflow = () => {
     return () => {
       if (interval) clearInterval(interval);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [processing, taskId]);
 
   const submitIssue = async () => {

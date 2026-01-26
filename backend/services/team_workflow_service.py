@@ -373,9 +373,15 @@ All validation checks passed. The implementation meets quality standards and is 
                 build_info.append(f"- Found: {doc_file}")
                 try:
                     with open(file_path, 'r', encoding='utf-8') as f:
-                        # Read first few lines for context
-                        lines = [next(f) for _ in range(5) if f]
-                        build_info.append(f"  Summary: {lines[0].strip()}")
+                        # Read first few lines for context safely
+                        lines = []
+                        for i, line in enumerate(f):
+                            if i >= 5:
+                                break
+                            lines.append(line)
+                        
+                        if lines:
+                            build_info.append(f"  Summary: {lines[0].strip()}")
                 except Exception as e:
                     logger.warning(f"Could not read {doc_file}: {e}")
         
