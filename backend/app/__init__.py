@@ -59,12 +59,14 @@ def create_app(config_name=None):
     from routes.sba import sba_bp
     from routes.rag import rag_bp
     from routes.orchestrator import orchestrator_bp
+    from routes.team import team_bp
 
     app.register_blueprint(api_bp, url_prefix='/api')
     app.register_blueprint(chat_bp, url_prefix='/api/chat')
     app.register_blueprint(sba_bp, url_prefix='/api/sba')
     app.register_blueprint(rag_bp, url_prefix='/api/rag')
     app.register_blueprint(orchestrator_bp, url_prefix='/api/orchestrator')
+    app.register_blueprint(team_bp, url_prefix='/api/team')
 
     # Initialize Gemini RAG service
     try:
@@ -84,7 +86,8 @@ def create_app(config_name=None):
         return jsonify({
             'service': 'PocketPro SBA',
             'version': '1.0.0',
-            'status': 'running'
+            'status': 'running',
+            'greeting': 'Hello deo! 🎯'
         })
 
     # Test CORS route

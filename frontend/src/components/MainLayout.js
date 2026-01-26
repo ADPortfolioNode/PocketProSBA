@@ -9,6 +9,7 @@ import ModernConciergeChat from './ModernConciergeChat';
 import UploadsManagerComponent from './UploadsManager';
 import SBAContent from './SBAContent';
 import TaskOrchestrator from './TaskOrchestrator';
+import TeamWorkflow from './TeamWorkflow';
 import { useConnection } from '../hooks/useConnection'; // Import the new hook
 
 function MainLayout() {
@@ -174,6 +175,8 @@ function MainLayout() {
         return <SBAContent />;
       case 'orchestrator':
         return <TaskOrchestrator />;
+      case 'team':
+        return <TeamWorkflow />;
       default:
         return (
           <ModernConciergeChat

@@ -77,6 +77,17 @@ const SBANavigation = ({ activeTab, onTabChange, serverConnected, apiUrl }) => {
             >
               🤖 Task Orchestrator
             </Nav.Link>
+            <Nav.Link
+              href="#team"
+              active={activeTab === "team"}
+              onClick={(e) => {
+                e.preventDefault();
+                onTabChange("team");
+              }}
+              data-testid="nav-team"
+            >
+              🎯 Team Workflow
+            </Nav.Link>
           </Nav>
           <div className="d-flex align-items-center">
             <ConnectionStatusIndicator connected={serverConnected} apiUrl={apiUrl} />
