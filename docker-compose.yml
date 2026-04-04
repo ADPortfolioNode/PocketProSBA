@@ -6,8 +6,6 @@ services:
     container_name: pocketpro-backend
     ports:
       - "8000:8000"
-    networks:
-      - app-network
     environment:
       - FLASK_ENV=production
       - PYTHONUNBUFFERED=1
@@ -39,8 +37,6 @@ services:
     container_name: chromadb-production
     expose:
       - "8000"
-    networks:
-      - app-network
     volumes:
       - ./chromadb_data:/chroma/chroma
     environment:

@@ -11,12 +11,12 @@ import SBAContent from './SBAContent';
 import TaskOrchestrator from './TaskOrchestrator';
 import { useConnection } from '../hooks/useConnection'; // Import the new hook
 
-function MainLayout() {
+function MainLayout({ useConnectionHook = useConnection }) {
   const [activeTab, setActiveTab] = useState('chat');
   const [messages, setMessages] = useState([]);
   const [diagnostics, setDiagnostics] = useState(null);
 
-  // Use the custom connection hook
+  // Use the custom connection hook or injected test hook
   const {
     serverConnected,
     backendError,
@@ -26,7 +26,13 @@ function MainLayout() {
     apiCall,
     getDiagnostics,
     resetConnection,
-  } = useConnection();
+  } = useConnectionHook();
+
+  const apiUrl = (path) => {
+    const baseUrl = connectionInfo?.source || 'http://localhost:5000';
+    const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+    return `${baseUrl.replace(/\/$/, '')}${normalizedPath}`;
+  };
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
@@ -194,7 +200,7 @@ function MainLayout() {
         activeTab={activeTab}
         onTabChange={handleTabChange}
         serverConnected={serverConnected}
-        apiUrl={connectionInfo?.source || 'http://localhost:5000'}
+        apiUrl={apiUrl}
       />
       <Container className="flex-grow-1">
         {renderContent()}

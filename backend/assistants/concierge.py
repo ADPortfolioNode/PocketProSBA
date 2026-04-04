@@ -14,9 +14,9 @@ logger = logging.getLogger(__name__)
 try:
     from backend.gemini_rag_service import gemini_rag_service
     GEMINI_AVAILABLE = True
-    logger.info("✅ Gemini RAG service imported successfully")
+    logger.info("Gemini RAG service imported successfully")
 except ImportError as e:
-    logger.warning(f"❌ Failed to import Gemini RAG service: {str(e)}")
+    logger.warning(f"Failed to import Gemini RAG service: {str(e)}")
     GEMINI_AVAILABLE = False
     gemini_rag_service = None
 
@@ -29,9 +29,9 @@ try:
         FastDocumentSearchStrategy, DetailedDocumentSearchStrategy, LLMAnalysisStrategy, TemplateResponseStrategy
     )
     OPTIMIZING_AVAILABLE = True
-    logger.info("✅ Self-optimizing components imported successfully")
+    logger.info("Self-optimizing components imported successfully")
 except ImportError as e:
-    logger.warning(f"❌ Failed to import self-optimizing components: {str(e)}")
+    logger.warning(f"Failed to import self-optimizing components: {str(e)}")
     OPTIMIZING_AVAILABLE = False
 
 class Concierge(BaseAssistant):

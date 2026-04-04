@@ -116,6 +116,15 @@ flask run --debug
 FLASK_ENV=development flask run --port=5000
 ```
 
+### Start with launcher script
+```bash
+# Start production-like app launch with logging
+./start.sh --mode prod
+
+# Start development mode with local reload
+./start.sh --mode dev
+```
+
 ### Frontend Development
 ```bash
 cd frontend

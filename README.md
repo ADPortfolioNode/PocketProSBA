@@ -30,6 +30,18 @@ This project is a Retrieval-Augmented Generation (RAG) application designed for 
 2. **Frontend can't reach backend**: Verify nginx proxy configuration
 3. **ChromaDB connection errors**: Ensure proper networking in docker-compose
 
+### Local Startup Script
+
+Use the bundled launcher to start the app with logging:
+
+```bash
+./start.sh --mode prod
+# or
+./start.sh --mode dev
+```
+
+By default, output is logged to `logs/app-<timestamp>.log`.
+
 ### Common Fixes
 
 ```bash
@@ -53,7 +65,7 @@ The application uses a custom Docker network to ensure proper communication:
 
 - Frontend uses nginx proxy to route `/api/*` to backend
 - Backend connects to ChromaDB using service name `chromadb:8000`
-- All services are on the `app-network` bridge network
+- All services are on the `pocketpro-network` bridge network
 
 ## Development
 

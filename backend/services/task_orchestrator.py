@@ -31,6 +31,50 @@ class StepStatus(Enum):
     FAILED = "failed"
     RETRIED = "retried"
 
+class StepExecutionError(Exception):
+    """Raised when step execution fails after retries or strategy fallback."""
+    pass
+
+class StepAssistant:
+    """Helper for executing task steps using multiple strategies."""
+
+    def __init__(self, step_type: str, strategies: List[Any], max_attempts: int = 3):
+        self.step_type = step_type
+        self.strategies = strategies
+        self.max_attempts = max_attempts
+
+    def execute_step(self, step_data: Dict[str, Any]):
+        last_error = None
+
+        for attempt in range(1, self.max_attempts + 1):
+            for strategy in self.strategies:
+                try:
+                    result = strategy.execute(step_data)
+                    is_valid = True
+                    if hasattr(strategy, 'validate'):
+                        is_valid = strategy.validate(result)
+
+                    if is_valid:
+                        return result, [{
+                            'attempt': attempt,
+                            'strategy': strategy.__class__.__name__,
+                            'success': True,
+                            'result': result
+                        }]
+
+                    last_error = StepExecutionError(
+                        f"Step '{self.step_type}' failed validation on attempt {attempt}"
+                    )
+                except Exception as e:
+                    last_error = e
+
+            if attempt < self.max_attempts:
+                continue
+
+        raise StepExecutionError(
+            f"Step '{self.step_type}' failed after {self.max_attempts} attempts"
+        ) from last_error
+
 @dataclass
 class TaskStep:
     """Represents a single step in a task"""
@@ -82,7 +126,14 @@ class TaskOrchestrator:
     Main orchestrator for task lifecycle management with self-optimization
     """
 
-    def __init__(self, memory_repository=None, feedback_manager=None, metrics_collector=None):
+    def __init__(
+        self,
+        step_assistants: Optional[Dict[str, StepAssistant]] = None,
+        memory_repository=None,
+        feedback_manager=None,
+        metrics_collector=None
+    ):
+        self.step_assistants = step_assistants or {}
         self.memory_repository = memory_repository
         self.feedback_manager = feedback_manager
         self.metrics_collector = metrics_collector
@@ -396,6 +447,35 @@ class TaskOrchestrator:
             'task': asdict(task),
             'steps': [asdict(step) for step in task.steps]
         }
+
+    def execute_task(self, task_id: str, task_data: Dict[str, Any]):
+        """Execute a prepared task using configured step assistants."""
+        if 'steps' not in task_data or not isinstance(task_data['steps'], list):
+            raise StepExecutionError("Invalid task data: missing steps")
+
+        results = []
+        for step_info in task_data['steps']:
+            step_type = step_info.get('type')
+            step_payload = step_info.get('data', {})
+            assistant = self.step_assistants.get(step_type)
+
+            if not assistant:
+                raise StepExecutionError(f"No assistant for step type '{step_type}'")
+
+            result, _ = assistant.execute_step(step_payload)
+            results.append(result)
+
+        if self.memory_repository:
+            self.memory_repository.store_task_result(task_id, results)
+
+        return results
+
+    def decompose_task(self, task_data: Dict[str, Any]):
+        """Return decomposed task steps from a task payload."""
+        if not isinstance(task_data, dict):
+            return []
+
+        return task_data.get('steps', [])
 
 # Global orchestrator instance
 _orchestrator_instance = None

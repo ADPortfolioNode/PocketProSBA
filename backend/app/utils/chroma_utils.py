@@ -1,6 +1,14 @@
 import os
-import chromadb
-from chromadb import Settings
+
+try:
+    import chromadb
+    from chromadb import Settings
+    _CHROMADB_AVAILABLE = True
+except Exception as exc:
+    chromadb = None
+    Settings = None
+    _CHROMADB_AVAILABLE = False
+    _CHROMADB_IMPORT_ERROR = exc
 
 def init_chromadb():
     """Initialize ChromaDB client with proper configuration"""

@@ -91,7 +91,7 @@ SBANavigation.propTypes = {
   activeTab: PropTypes.string.isRequired,
   onTabChange: PropTypes.func.isRequired,
   serverConnected: PropTypes.bool.isRequired,
-  apiUrl: PropTypes.func.isRequired
+  apiUrl: PropTypes.oneOfType([PropTypes.func, PropTypes.string]).isRequired
 };
 
 export default SBANavigation;

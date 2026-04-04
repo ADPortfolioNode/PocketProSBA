@@ -88,7 +88,6 @@ const RAGWorkflowInterface = ({
     try {
       const res = await apiClient.post('/api/query', { query, top_k: 5 });
       setQueryResults(res.results || []);
-      setCurrentStep('generate');
     } catch (err) {
       console.error('Query documents error:', err);
     }
@@ -116,6 +115,9 @@ const RAGWorkflowInterface = ({
             </Form.Group>
             <Button variant="primary" onClick={handleUpload} disabled={!selectedFile}>
               Upload
+            </Button>
+            <Button variant="secondary" className="ms-2" onClick={() => setCurrentStep('decompose')}>
+              Start Task Without Upload
             </Button>
             {uploadProgress !== null && <ProgressBar now={uploadProgress} label={`${uploadProgress}%`} className="mt-3" />}
           </Card.Body>

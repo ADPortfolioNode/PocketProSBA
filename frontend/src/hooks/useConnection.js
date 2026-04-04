@@ -14,7 +14,7 @@ export const useConnection = () => {
     setBackendError(null);
     try {
       const response = await apiClient.get('/api/info');
-      const connected = response.status === 200;
+      const connected = !!response?.data && response.data.status === 'operational';
       setServerConnected(connected);
       setConnectionInfo(response.data);
       if (!connected) {
@@ -33,12 +33,20 @@ export const useConnection = () => {
 
   const apiCall = useCallback(async (url, options = {}) => {
     try {
-      const response = await apiClient({
-        url,
-        method: options.method || 'GET',
-        data: options.body ? (typeof options.body === 'string' ? JSON.parse(options.body) : options.body) : undefined,
-        headers: options.headers,
-      });
+      const method = (options.method || 'GET').toUpperCase();
+      const data = options.body ? (typeof options.body === 'string' ? JSON.parse(options.body) : options.body) : undefined;
+      let response;
+
+      if (method === 'POST') {
+        response = await apiClient.post(url, data, { headers: options.headers });
+      } else if (method === 'PUT') {
+        response = await apiClient.put(url, data, { headers: options.headers });
+      } else if (method === 'DELETE') {
+        response = await apiClient.delete(url, { headers: options.headers });
+      } else {
+        response = await apiClient.get(url, { headers: options.headers });
+      }
+
       return response.data;
     } catch (error) {
       throw error;

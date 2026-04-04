@@ -45,20 +45,22 @@ const SBAContentExplorer = ({ selectedResource, endpoints }) => {
   const fetchResourceStatus = async () => {
     try {
       // Flask health
-      const flaskResp = await apiClient.get('/api/health');
+      const flaskResp = await apiClient.get('/api/health', {}, { quiet: true });
+      const flaskStatus = flaskResp.data?.status;
       setResourceStatus(prev => ({
         ...prev,
-        flask: { status: flaskResp.data.status === 'ok' ? 'online' : 'error', message: flaskResp.data.message || '' }
+        flask: { status: ['ok', 'healthy'].includes(flaskStatus) ? 'online' : 'error', message: flaskResp.data?.message || '' }
       }));
     } catch (err) {
       setResourceStatus(prev => ({ ...prev, flask: { status: 'error', message: err.message } }));
     }
     try {
       // ChromaDB health
-      const chromaResp = await apiClient.get('/api/chromadb_health');
+      const chromaResp = await apiClient.get('/api/chromadb_health', {}, { quiet: true });
+      const chromaStatus = chromaResp.data?.status;
       setResourceStatus(prev => ({
         ...prev,
-        chromadb: { status: chromaResp.data.status === 'ok' ? 'online' : 'error', message: chromaResp.data.message || '' }
+        chromadb: { status: chromaStatus === 'ok' ? 'online' : 'error', message: chromaResp.data?.message || '' }
       }));
     } catch (err) {
       setResourceStatus(prev => ({ ...prev, chromadb: { status: 'error', message: err.message } }));
@@ -89,7 +91,7 @@ const SBAContentExplorer = ({ selectedResource, endpoints }) => {
       });
 
       // Expect response.items to be an array of nodes, each with possible children
-      if (response.data && response.data.items) {
+      if (response?.data && response.data.items) {
         setResults(response.data.items);
         setTotalPages(response.data.totalPages || 1);
         setPage(pageNum);
@@ -117,7 +119,7 @@ const SBAContentExplorer = ({ selectedResource, endpoints }) => {
       const response = await apiClient.get(endpoints[endpointKey], {
         params: { id: nodeId }
       });
-      setNodeMap(prev => ({ ...prev, [nodeId]: response.data.items || [] }));
+      setNodeMap(prev => ({ ...prev, [nodeId]: response.data?.items || [] }));
     } catch (err) {
       setError(`Error fetching node children: ${err.message}`);
     } finally {
@@ -578,7 +580,7 @@ const SBAContentExplorer = ({ selectedResource, endpoints }) => {
                         <Form.Label className="fw-bold text-muted">Search Query</Form.Label>
                         <InputGroup className="input-group-lg">
                           <Form.Control
-                            type="text"
+                            type="search"
                             placeholder={`Search SBA ${contentType}...`}
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
@@ -631,7 +633,7 @@ const SBAContentExplorer = ({ selectedResource, endpoints }) => {
         </Col>
       </Row>
 
-      <style jsx>{`
+      <style>{`
         .bg-gradient-primary {
           background: linear-gradient(45deg, #667eea, #764ba2);
         }

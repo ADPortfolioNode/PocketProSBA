@@ -33,8 +33,9 @@ def chromadb_health_check():
         else:
             return jsonify({
                 'status': 'error',
-                'message': 'ChromaDB is not available'
-            }), 503
+                'message': 'ChromaDB is not available',
+                'document_count': 0
+            }), 200
     except Exception as e:
         logger.error(f"Error checking ChromaDB health: {str(e)}")
         return jsonify({

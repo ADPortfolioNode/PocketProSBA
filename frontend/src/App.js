@@ -6,6 +6,7 @@ import Login from './Login';
 import Register from './Register';
 import ForgotPassword from './ForgotPassword';
 import MainLayout from './components/MainLayout';
+import Home from './components/Home';
 import { AppProvider } from './context/AppProvider';
 
 function App() {
@@ -16,8 +17,8 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/" element={<Home />} />
           <Route path="/*" element={<MainLayout />} />
-          <Route path="/" element={<Navigate to="/chat" replace />} />
         </Routes>
       </Router>
     </AppProvider>

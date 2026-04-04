@@ -1,0 +1,60 @@
+returncode=1
+STDOUT:
+
+> pocketpro-sba-frontend@1.0.0 test
+> react-scripts test --env=jsdom --coverage --watchAll=false --runInBand
+
+-------------------------------|---------|----------|---------|---------|---------------------------------------------------------------------------------------
+File                           | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s                                                                     
+-------------------------------|---------|----------|---------|---------|---------------------------------------------------------------------------------------
+All files                      |   26.87 |    12.01 |    23.5 |   27.83 |                                                                                       
+ src                           |   28.98 |        0 |   23.07 |   28.98 |                                                                                       
+  App.js                       |       0 |      100 |       0 |       0 | 12                                                                                    
+  ForgotPassword.js            |   23.52 |        0 |   33.33 |   23.52 | 12-44                                                                                 
+  Login.js                     |   26.31 |        0 |      25 |   26.31 | 13-57                                                                                 
+  Register.js                  |      25 |        0 |      20 |      25 | 14-73                                                                                 
+  index.js                     |       0 |      100 |     100 |       0 | 9-12                                                                                  
+  sbaResources.js              |     100 |      100 |     100 |     100 |                                                                                       
+ src/api                       |   67.64 |     42.3 |   28.57 |   78.57 |                                                                                       
+  apiClient.js                 |   67.64 |     42.3 |   28.57 |   78.57 | 28,32,38-42                                                                           
+ src/components                |   19.89 |    10.15 |   17.64 |   20.83 |                                                                                       
+  APIErrorHandler.js           |       0 |        0 |       0 |       0 | 17-89                                                                                 
+  AccordionSubnav.js           |   47.05 |     12.5 |   33.33 |   47.05 | 11-83,108,115-134                                                                     
+  ChatInterface.js             |       0 |        0 |       0 |       0 | 5-41                                                                                  
+  ConciergeChat.js             |   81.25 |    57.14 |     100 |   82.75 | 40-41,46-48                                                                           
+  ConciergeGreeting.js         |       0 |        0 |       0 |       0 | 13-72                                                                                 
+  ConnectionErrorHandler.js    |       0 |        0 |       0 |       0 | 14-54                                                                                 
+  ConnectionStatusDashboard.js |       0 |        0 |       0 |       0 | 5-142                                                                                 
+  ConnectionStatusIndicator.js |   40.32 |    22.58 |   45.45 |   44.44 | 30-50,56-62,80-82,105-116,121,158                                                     
+  EnhancedMainLayout.js        |       0 |        0 |       0 |       0 | 5-8                                                                                   
+  ErrorBoundary.js             |       0 |        0 |       0 |       0 | 6-95                                                                                  
+  Footer.js                    |     100 |      100 |     100 |     100 |                                                                                       
+  Header.js                    |     100 |      100 |     100 |     100 |                                                                                       
+  Home.js                      |     100 |      100 |     100 |     100 |                                                                                       
+  LoadingIndicator.js          |       0 |        0 |       0 |       0 | 16-119                                                                                
+  MainLayout.backup.js         |       0 |        0 |       0 |       0 | 13-185                                                                                
+  MainLayout.js                |    30.9 |       30 |   36.36 |   32.69 | 32-34,43-85,90-92,132-152,162-184                                                     
+  ModernConciergeChat.js       |      38 |    32.25 |      20 |    41.3 | 38-41,46,50-69,74-76,81-87,118-179                                                    
+  NewMainLayout.js             |       0 |        0 |       0 |       0 | 6-315                                                                                 
+  RAGWorkflowInterface.js      |    27.9 |       10 |    3.57 |   29.62 | 26,30-32,37-45,54-62,68-72,78-82,88-93,99-100,126-275,285                             
+  RAGWorkflowVisualization.js  |      10 |        0 |       0 |    12.5 | 6-58                                                                                  
+  SBAContent.js                |    5.26 |        0 |       0 |    5.26 | 7-110                                                                                 
+  SBAContentExplorer.js        |   31.81 |    14.64 |   27.02 |    33.8 | 55,76-108,114-126,132-133,139,145-159,173-191,200-202,211-393,417-447,466-483,566,586 
+  SBANavigation.js             |   86.66 |      100 |   85.71 |   86.66 | 73-74                                                                                 
+  ServerStatusMonitor.js       |       0 |        0 |       0 |       0 | 5-80                                                                                  
+  StatusBar.js                 |       0 |        0 |       0 |       0 | 4-5                                                                                   
+  TaskOrchestrator.js          |    2.12 |        0 |       0 |    2.12 | 7-131                                                                                 
+  TaskProgress.js              |    1.61 |        0 |       0 |    1.61 | 6-113                                                                                 
+  UploadsManager.js            |    2.85 |        0 |       0 |    3.22 | 6-65                                                                                  
+ src/context                   |   96.77 |    84.61 |      90 |     100 |                                                                                       
+  AppProvider.js               |   96.77 |    84.61 |      90 |     100 | 46-48                                                                                 
+ src/hooks                     |   58.65 |     14.7 |   66.66 |   58.58 |                                                                                       
+  useApi.js                    |   94.87 |    38.46 |   81.81 |     100 | 10-19,31-50                                                                           
+  useAuth.js                   |   16.66 |        0 |   33.33 |   16.66 | 10-41                                                                                 
+  useConnection.js             |   48.78 |        0 |   57.14 |    47.5 | 17-30,35-44,49-54,59                                                                  
+ src/services                  |   16.66 |        0 |    7.69 |   17.64 |                                                                                       
+  connectionService.js         |   16.66 |        0 |    7.69 |   17.64 | 10-36,43-88                                                                           
+-------------------------------|---------|----------|---------|---------|---------------------------------------------------------------------------------------
+
+STDERR:
+None

@@ -26,7 +26,7 @@ describe('ConciergeChat Component', () => {
     expect(screen.getByText('Hi there!')).toBeInTheDocument();
   });
 
-  test('input and send button work correctly', () => {
+  test('input and send button work correctly', async () => {
     render(<ConciergeChat onSend={onSendMock} messages={[]} loading={false} />);
     const input = screen.getByPlaceholderText(/Type your message.../i);
     const button = screen.getByRole('button', { name: /send/i });
@@ -36,7 +36,9 @@ describe('ConciergeChat Component', () => {
 
     fireEvent.click(button);
     expect(onSendMock).toHaveBeenCalledWith('Test message');
-    expect(input.value).toBe('');
+    await waitFor(() => {
+      expect(input.value).toBe('');
+    });
   });
 
   test('SBA tips rotate every 5 seconds', async () => {

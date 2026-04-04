@@ -16,7 +16,14 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.document_loaders import DirectoryLoader, TextLoader
 from langchain.prompts import PromptTemplate
 from langchain.schema import Document
-import chromadb
+
+try:
+    import chromadb
+    _CHROMADB_AVAILABLE = True
+except Exception as exc:
+    chromadb = None
+    _CHROMADB_AVAILABLE = False
+    _CHROMADB_IMPORT_ERROR = exc
 
 class EnhancedGeminiRAGService:
     """Enhanced service class for full Gemini-based SBA loan RAG functionality"""
@@ -38,7 +45,7 @@ class EnhancedGeminiRAGService:
     def initialize_full_service(self) -> bool:
         """Initialize the complete RAG service with all components"""
         try:
-            self.logger.info("🚀 Initializing Enhanced Gemini RAG Service...")
+            self.logger.info("Initializing Enhanced Gemini RAG Service...")
             
             # Check API key
             if not self.gemini_api_key:
@@ -56,11 +63,19 @@ class EnhancedGeminiRAGService:
                 return False
             
             self.is_initialized = True
-            self.logger.info("✅ Enhanced Gemini RAG Service initialized successfully")
+            self.logger.info("Enhanced Gemini RAG Service initialized successfully")
             return True
             
         except Exception as e:
-            self.logger.error(f"Failed to initialize RAG service: {str(e)}")
+            safe_message = str(e).encode('ascii', errors='replace').decode('ascii')
+            log_msg = f"Failed to initialize RAG service: {safe_message}"
+            try:
+                self.logger.error(log_msg)
+            except Exception:
+                try:
+                    self.logger.error("Failed to initialize RAG service: error message contained invalid characters")
+                except Exception:
+                    pass
             return False
     
     def _create_comprehensive_knowledge_base(self):
@@ -119,7 +134,7 @@ Providers: Nonprofit intermediary lenders
 Target: Startups and small businesses
 """
         
-        with open("./backend/knowledge_base/sba_docs/sba_loan_types_comprehensive.txt", "w") as f:
+        with open("./backend/knowledge_base/sba_docs/sba_loan_types_comprehensive.txt", "w", encoding="utf-8") as f:
             f.write(content)
     
     def _create_sba_eligibility_doc(self):
@@ -175,7 +190,7 @@ DOCUMENTATION REQUIREMENTS:
 - Resumes for key management
 """
         
-        with open("./backend/knowledge_base/sba_requirements/sba_eligibility_detailed.txt", "w") as f:
+        with open("./backend/knowledge_base/sba_requirements/sba_eligibility_detailed.txt", "w", encoding="utf-8") as f:
             f.write(content)
     
     def _create_sba_application_doc(self):
@@ -230,7 +245,7 @@ ACCELERATION TIPS:
 - Use SBA Preferred Lenders Program (PLP)
 """
         
-        with open("./backend/knowledge_base/sba_guides/sba_application_process_detailed.txt", "w") as f:
+        with open("./backend/knowledge_base/sba_guides/sba_application_process_detailed.txt", "w", encoding="utf-8") as f:
             f.write(content)
     
     def _create_sba_rates_terms_doc(self):
@@ -273,7 +288,7 @@ PREPAYMENT PENALTIES:
 - Microloans: Varies by intermediary
 """
         
-        with open("./backend/knowledge_base/sba_docs/sba_rates_terms_current.txt", "w") as f:
+        with open("./backend/knowledge_base/sba_docs/sba_rates_terms_current.txt", "w", encoding="utf-8") as f:
             f.write(content)
     
     def _create_sba_faq_doc(self):
@@ -317,7 +332,7 @@ Q: Can I use an SBA loan to buy a business?
 A: Yes, SBA loans can be used for franchise purchases if the franchise is SBA-approved.
 """
         
-        with open("./backend/knowledge_base/sba_faq/sba_comprehensive_faq.txt", "w") as f:
+        with open("./backend/knowledge_base/sba_faq/sba_comprehensive_faq.txt", "w", encoding="utf-8") as f:
             f.write(content)
     
     def _create_sba_programs_doc(self):
@@ -374,7 +389,7 @@ SBA GRANTS AND COMPETITIONS:
 - SCORE: Free mentoring and education
 """
         
-        with open("./backend/knowledge_base/sba_programs/sba_programs_complete.txt", "w") as f:
+        with open("./backend/knowledge_base/sba_programs/sba_programs_complete.txt", "w", encoding="utf-8") as f:
             f.write(content)
     
     def _create_sba_calculator_doc(self):
@@ -436,7 +451,7 @@ REAL ESTATE FINANCING:
 - Appraisal required for loans over $250,000
 """
         
-        with open("./backend/knowledge_base/sba_calculator/sba_loan_calculator_guide.txt", "w") as f:
+        with open("./backend/knowledge_base/sba_calculator/sba_loan_calculator_guide.txt", "w", encoding="utf-8") as f:
             f.write(content)
     
     def _initialize_vector_store(self) -> bool:
@@ -448,6 +463,10 @@ REAL ESTATE FINANCING:
                 google_api_key=self.gemini_api_key
             )
             
+            if not _CHROMADB_AVAILABLE:
+                self.logger.warning(f"ChromaDB unavailable: {_CHROMADB_IMPORT_ERROR}")
+                return False
+
             # Initialize Chroma client
             self.client = chromadb.PersistentClient(path=self.persist_directory)
             

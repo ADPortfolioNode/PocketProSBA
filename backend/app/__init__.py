@@ -72,11 +72,11 @@ def create_app(config_name=None):
         with app.app_context():
             success = enhanced_rag_service.initialize_full_service()
             if success:
-                logger.info("✅ Enhanced Gemini RAG service initialized successfully")
+                logger.info("Enhanced Gemini RAG service initialized successfully")
             else:
-                logger.warning("❌ Failed to initialize Enhanced Gemini RAG service")
+                logger.warning("Failed to initialize Enhanced Gemini RAG service")
     except Exception as e:
-        logger.error(f"❌ Error initializing Gemini RAG service: {str(e)}")
+        logger.error(f"Error initializing Gemini RAG service: {str(e)}")
 
     # Root route
     @app.route('/')

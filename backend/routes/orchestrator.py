@@ -141,7 +141,7 @@ def get_available_strategies():
     Get list of available execution strategies
     """
     try:
-    from backend.services.step_strategies import StepStrategyFactory
+        from backend.services.step_strategies import StepStrategyFactory
 
         strategies = StepStrategyFactory.get_available_strategies()
         strategy_info = []
