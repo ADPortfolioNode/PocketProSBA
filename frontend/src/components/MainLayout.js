@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Container, Alert, Button, Badge, Spinner } from 'react-bootstrap';
 import SBANavigation from './SBANavigation';
 import Header from './Header';
@@ -11,8 +12,28 @@ import SBAContent from './SBAContent';
 import TaskOrchestrator from './TaskOrchestrator';
 import { useConnection } from '../hooks/useConnection'; // Import the new hook
 
+const ROUTE_TAB_MAP = {
+  chat: 'chat',
+  browse: 'browse',
+  rag: 'rag',
+  documents: 'documents',
+  sba: 'sba',
+  orchestrator: 'orchestrator'
+};
+
 function MainLayout({ useConnectionHook = useConnection }) {
   const [activeTab, setActiveTab] = useState('chat');
+  const location = useLocation();
+
+  const resolveTabFromPath = (pathname) => {
+    const segment = pathname.split('/')[1].toLowerCase();
+    return ROUTE_TAB_MAP[segment] || 'chat';
+  };
+
+  useEffect(() => {
+    const tab = resolveTabFromPath(location.pathname);
+    setActiveTab(tab);
+  }, [location.pathname]);
   const [messages, setMessages] = useState([]);
   const [diagnostics, setDiagnostics] = useState(null);
 
@@ -40,11 +61,6 @@ function MainLayout({ useConnectionHook = useConnection }) {
     const baseUrl = getConnectionBaseUrl();
     const normalizedPath = path.startsWith('/') ? path : `/${path}`;
     return `${baseUrl.replace(/\/$/, '')}${normalizedPath}`;
-  };
-
-  const handleTabChange = (tab) => {
-    setActiveTab(tab);
-    // No need to setBackendError(null) here, as useConnection manages it
   };
 
   const handleChatSend = async (message) => {
@@ -205,8 +221,6 @@ function MainLayout({ useConnectionHook = useConnection }) {
     <div className="d-flex flex-column min-vh-100">
       <Header />
       <SBANavigation
-        activeTab={activeTab}
-        onTabChange={handleTabChange}
         serverConnected={serverConnected}
         apiUrl={apiUrl}
       />

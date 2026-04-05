@@ -1,78 +1,64 @@
  import React from 'react';
 import { Navbar, Nav, Container } from 'react-bootstrap';
+import { Link, useLocation } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import ConnectionStatusIndicator from './ConnectionStatusIndicator';
 
-const SBANavigation = ({ activeTab, onTabChange, serverConnected, apiUrl }) => {
+const SBANavigation = ({ serverConnected, apiUrl }) => {
+  const location = useLocation();
+  const currentPath = location.pathname.toLowerCase();
+
   return (
     <Navbar bg="light" expand="lg" className="mb-4 main-navbar">
       <Container>
-        <Navbar.Brand href="#home">Home</Navbar.Brand>
+        <Navbar.Brand as={Link} to="/">Home</Navbar.Brand>
         <Navbar.Toggle aria-controls="basic-navbar-nav" />
         <Navbar.Collapse id="basic-navbar-nav">
           <Nav className="me-auto">
-            <Nav.Link 
-              href="#chat" 
-              active={activeTab === "chat"}
-              onClick={(e) => {
-                e.preventDefault();
-                onTabChange("chat");
-              }}
+            <Nav.Link
+              as={Link}
+              to="/chat"
+              active={currentPath === '/chat'}
               data-testid="nav-chat"
             >
               Chat
             </Nav.Link>
-            <Nav.Link 
-              href="#browse" 
-              active={activeTab === "browse"}
-              onClick={(e) => {
-                e.preventDefault();
-                onTabChange("browse");
-              }}
+            <Nav.Link
+              as={Link}
+              to="/browse"
+              active={currentPath === '/browse'}
               data-testid="nav-browse"
             >
               Browse Resources
             </Nav.Link>
-            <Nav.Link 
-              href="#rag" 
-              active={activeTab === "rag"}
-              onClick={(e) => {
-                e.preventDefault();
-                onTabChange("rag");
-              }}
+            <Nav.Link
+              as={Link}
+              to="/rag"
+              active={currentPath === '/rag'}
               data-testid="nav-rag"
             >
               RAG
             </Nav.Link>
-            <Nav.Link 
-              href="#documents" 
-              active={activeTab === "documents"}
-              onClick={(e) => {
-                e.preventDefault();
-                onTabChange("documents");
-              }}
+            <Nav.Link
+              as={Link}
+              to="/documents"
+              active={currentPath === '/documents'}
               data-testid="nav-documents"
             >
               Document Center
             </Nav.Link>
             <Nav.Link
-              href="#sba"
-              active={activeTab === "sba"}
-              onClick={(e) => {
-                e.preventDefault();
-                onTabChange("sba");
-              }}
+              as={Link}
+              to="/sba"
+              active={currentPath === '/sba'}
               data-testid="nav-sba"
             >
               SBA Content
             </Nav.Link>
             <Nav.Link
-              href="#orchestrator"
-              active={activeTab === "orchestrator"}
-              onClick={(e) => {
-                e.preventDefault();
-                onTabChange("orchestrator");
-              }}
+              as={Link}
+              to="/orchestrator"
+              active={currentPath === '/orchestrator'}
               data-testid="nav-orchestrator"
             >
               🤖 Task Orchestrator
@@ -88,8 +74,6 @@ const SBANavigation = ({ activeTab, onTabChange, serverConnected, apiUrl }) => {
 };
 
 SBANavigation.propTypes = {
-  activeTab: PropTypes.string.isRequired,
-  onTabChange: PropTypes.func.isRequired,
   serverConnected: PropTypes.bool.isRequired,
   apiUrl: PropTypes.oneOfType([PropTypes.func, PropTypes.string]).isRequired
 };

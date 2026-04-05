@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 const useCases = [
   {
@@ -33,8 +34,8 @@ function Home() {
               Track current SBA program status, explore real-world use cases, and get intelligent funding recommendations in one streamlined workspace.
             </p>
             <div className="home-hero-actions d-flex flex-wrap gap-3 mt-4">
-              <a href="/chat" className="btn btn-primary btn-lg">Start SBA Chat</a>
-              <a href="/" className="btn btn-outline-primary btn-lg">Browse Use Cases</a>
+              <Link to="/chat" className="btn btn-primary btn-lg">Start SBA Chat</Link>
+              <Link to="/" className="btn btn-outline-primary btn-lg">Browse Use Cases</Link>
             </div>
           </div>
           <div className="col-lg-6">
