@@ -5,20 +5,20 @@ const useCases = [
   {
     title: 'Smart Loan Planning',
     description: 'Personalize SBA loan guidance, compare terms, and identify optimal funding paths for small business growth.',
-    image: '/images/use-case-1.svg',
-    alt: 'Business planning illustration',
+    image: '/images/use-case-1.jpg',
+    alt: 'Business planning meeting',
   },
   {
     title: 'Grant & Funding Insights',
     description: 'Discover SBA grants and disaster relief options tailored to your industry and operational needs.',
-    image: '/images/use-case-2.svg',
-    alt: 'Grant and funding illustration',
+    image: '/images/use-case-2.jpg',
+    alt: 'Business finance dashboard',
   },
   {
     title: 'Fast Approval Roadmap',
     description: 'Prepare documentation, track readiness, and reduce approval time with guided SBA workflows.',
-    image: '/images/use-case-3.svg',
-    alt: 'Approval roadmap illustration',
+    image: '/images/use-case-3.jpg',
+    alt: 'Business owner review',
   },
 ];
 
@@ -41,7 +41,7 @@ function Home() {
           <div className="col-lg-6">
             <div className="home-hero-visual shadow-lg rounded-4 overflow-hidden">
               <img
-                src="/images/hero-dashboard.svg"
+                src="/images/hero-dashboard.jpg"
                 alt="SBA assistant dashboard"
                 className="img-fluid home-hero-image"
                 loading="eager"
