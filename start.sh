@@ -6,7 +6,7 @@ cd "$ROOT"
 
 usage() {
   cat <<'EOF'
-Usage: ./start.sh [--mode prod|dev] [--host HOST] [--port PORT] [--local] [--docker] [--log-file FILE] [--no-logfile] [--help]
+Usage: ./start.sh [--mode prod|dev] [--host HOST] [--port PORT] [--local] [--docker] [--docker-arg ARG] [--] [docker compose args...] [--log-file FILE] [--no-logfile] [--help]
 
 Starts PocketProSBA with Docker compose startup by default.
 
@@ -16,13 +16,15 @@ Options:
   --port PORT        Port to bind. Default: 8000 for prod, 5000 for dev
   --local            Run the app locally on the host instead of in Docker
   --docker           Force Docker compose startup (default behavior)
+  --docker-arg ARG   Append an additional docker compose argument. Can be repeated.
+  --                 Forward all remaining arguments directly to docker compose.
   --log-file FILE    Log output file. Default: logs/app-<timestamp>.log
   --no-logfile       Send output only to stdout/stderr
   --help             Show this help message
 EOF
 }
 
-DOCKER_PORTS=(8000 3000)
+DOCKER_PORTS=(5000 8000 3000)
 LOCAL_PORTS=(5000 8000 3000)
 
 clear_docker_ports() {
@@ -87,6 +89,7 @@ LOG_FILE=""
 NO_LOGFILE=false
 DOCKER=true
 LOCAL=false
+DOCKER_ARGS=()
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -116,24 +119,35 @@ while [[ $# -gt 0 ]]; do
       LOCAL=true
       DOCKER=false
       ;;
+    --docker-arg)
+      shift
+      if [[ -z "${1:-}" ]]; then
+        echo "Missing value for --docker-arg" >&2
+        usage
+        exit 1
+      fi
+      DOCKER_ARGS+=("$1")
+      ;;
+    --)
+      shift
+      while [[ $# -gt 0 ]]; do
+        DOCKER_ARGS+=("$1")
+        shift
+      done
+      break
+      ;;
     --help|-h)
       usage
       exit 0
       ;;
     *)
-      echo "Unknown option: $1"
+      echo "Unknown option: $1" >&2
       usage
       exit 1
       ;;
   esac
   shift
-done
-
-if [[ "$MODE" != "prod" && "$MODE" != "dev" ]]; then
-  echo "Invalid mode: $MODE"
-  usage
-  exit 1
-fi
+ done
 
 if [[ -z "$PORT" ]]; then
   if [[ "$MODE" == "prod" ]]; then
@@ -202,7 +216,7 @@ else
   fi
 
   echo "Initializing Docker Compose using $COMPOSE_FILE..."
-  $DOCKER_COMPOSE_CMD -f "$COMPOSE_FILE" up --build -d
+  $DOCKER_COMPOSE_CMD -f "$COMPOSE_FILE" up --build -d "${DOCKER_ARGS[@]}"
   echo "Docker Compose started. Use $DOCKER_COMPOSE_CMD -f $COMPOSE_FILE ps to inspect services."
   exit 0
 fi
