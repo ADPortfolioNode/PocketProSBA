@@ -28,8 +28,16 @@ function MainLayout({ useConnectionHook = useConnection }) {
     resetConnection,
   } = useConnectionHook();
 
+  const getConnectionBaseUrl = () => {
+    return connectionInfo?.server?.self || connectionInfo?.self || connectionInfo?.source || 'http://localhost:5000';
+  };
+
+  const getConnectionLabel = () => {
+    return connectionInfo?.server?.self || connectionInfo?.self || connectionInfo?.source || 'Unknown';
+  };
+
   const apiUrl = (path) => {
-    const baseUrl = connectionInfo?.source || 'http://localhost:5000';
+    const baseUrl = getConnectionBaseUrl();
     const normalizedPath = path.startsWith('/') ? path : `/${path}`;
     return `${baseUrl.replace(/\/$/, '')}${normalizedPath}`;
   };
@@ -105,8 +113,8 @@ function MainLayout({ useConnectionHook = useConnection }) {
           <div className="mb-3">
             <strong>Connection Details:</strong>
             <ul>
-              <li><Badge bg="secondary">Backend URL</Badge> {connectionInfo?.source || 'Unknown'}</li>
-              <li><Badge bg="secondary">Environment</Badge> {connectionInfo?.source || 'Unknown'}</li>
+                  <li><Badge bg="secondary">Backend URL</Badge> {getConnectionLabel()}</li>
+              <li><Badge bg="secondary">Environment</Badge> {connectionInfo?.environment || connectionInfo?.server?.environment || connectionInfo?.source || 'Unknown'}</li>
               <li><Badge bg="secondary">Last checked</Badge> {new Date().toLocaleTimeString()}</li>
             </ul>
           </div>

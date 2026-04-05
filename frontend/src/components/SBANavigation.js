@@ -7,7 +7,7 @@ const SBANavigation = ({ activeTab, onTabChange, serverConnected, apiUrl }) => {
   return (
     <Navbar bg="light" expand="lg" className="mb-4 main-navbar">
       <Container>
-        <Navbar.Brand href="#home">PocketPro SBA Assistant</Navbar.Brand>
+        <Navbar.Brand href="#home">Home</Navbar.Brand>
         <Navbar.Toggle aria-controls="basic-navbar-nav" />
         <Navbar.Collapse id="basic-navbar-nav">
           <Nav className="me-auto">
