@@ -34,7 +34,7 @@ function Home() {
             </p>
             <div className="home-hero-actions d-flex flex-wrap gap-3 mt-4">
               <a href="/chat" className="btn btn-primary btn-lg">Start SBA Chat</a>
-              <a href="/" className="btn btn-outline-light btn-lg">Browse Use Cases</a>
+              <a href="/" className="btn btn-outline-primary btn-lg">Browse Use Cases</a>
             </div>
           </div>
           <div className="col-lg-6">

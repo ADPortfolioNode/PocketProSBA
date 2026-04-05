@@ -219,11 +219,14 @@ footer.app-footer .text-muted {
 
 .home-hero-banner {
   position: relative;
+  background: #ffffff;
+  border-radius: 32px;
+  box-shadow: 0 20px 45px rgba(15, 23, 42, 0.08);
 }
 
 .home-hero-visual {
   min-height: 320px;
-  background: linear-gradient(180deg, rgba(15,23,42,0.95), rgba(7,16,35,0.85));
+  background: #f8fafc;
   display: flex;
   align-items: center;
   justify-content: center;
