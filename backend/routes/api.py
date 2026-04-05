@@ -48,6 +48,11 @@ def get_system_info():
     """Get system information"""
     try:
         info = get_system_info_service()
+        info['server'] = {
+            'self': request.host_url.rstrip('/'),
+            'host': request.host,
+            'scheme': request.scheme
+        }
         return jsonify(info)
     except Exception as e:
         logger.error(f"Error getting system info: {str(e)}")
