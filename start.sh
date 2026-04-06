@@ -1,105 +1,4 @@
-<<<<<<< HEAD
-#!/bin/bash
-# start.sh - Optimized startup script for PocketProSBA
-# Usage:
-#   ./start.sh [--dev] [--troubleshoot] [--no-build] [--force-fresh]
-#
-# Default: Fresh docker build and start
-# Flags:
-#   --dev           Start in development mode
-#   --troubleshoot  Start in troubleshoot mode
-#   --no-build      Skip docker build
-#   --force-fresh   Force fresh build and start
-
-set -e
-
-# Parse flags
-device_mode=""
-troubleshoot_mode=""
-skip_build=""
-force_fresh=""
-for arg in "$@"; do
-  case $arg in
-    --dev)
-      device_mode=1
-      ;;
-    --troubleshoot)
-      troubleshoot_mode=1
-      ;;
-    --no-build)
-      skip_build=1
-      ;;
-    --force-fresh)
-      force_fresh=1
-      ;;
-  esac
-done
-
-# Helper: Check for port conflicts
-check_port_conflict() {
-  # Check if port 80 or 3000 is in use
-  if lsof -i :80 >/dev/null 2>&1 || lsof -i :3000 >/dev/null 2>&1; then
-    return 0
-  else
-    return 1
-  fi
-}
-
-# Helper: Run docker build
-run_docker_build() {
-  echo "[INFO] Running docker compose build..."
-  docker-compose build --no-cache
-}
-
-# Helper: Start docker compose
-run_docker_up() {
-  echo "[INFO] Starting docker compose..."
-  docker-compose up -d
-}
-
-# Helper: Start dev mode
-run_dev_mode() {
-  echo "[INFO] Starting in development mode..."
-  ./start-dev.sh
-}
-
-# Helper: Start troubleshoot mode
-run_troubleshoot_mode() {
-  echo "[INFO] Starting in troubleshoot mode..."
-  ./docker_troubleshoot.sh
-}
-
-# Main logic
-if check_port_conflict; then
-  echo "[WARN] Port conflict detected. Forcing fresh build and start."
-  run_docker_build
-  run_docker_up
-  exit 0
-else
-  case 1 in
-    $force_fresh)
-      echo "[INFO] Force fresh build requested."
-      run_docker_build
-      run_docker_up
-      ;;
-    $device_mode)
-      run_dev_mode
-      ;;
-    $troubleshoot_mode)
-      run_troubleshoot_mode
-      ;;
-    *)
-      if [ -z "$skip_build" ]; then
-        run_docker_build
-      fi
-      run_docker_up
-      ;;
-  esac
-fi
-
-echo "[SUCCESS] Startup complete."
-=======
-#!/usr/bin/env bash
+﻿#!/bin/sh
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -107,26 +6,30 @@ cd "$ROOT"
 
 usage() {
   cat <<'EOF'
-Usage: ./start.sh [--mode prod|dev] [--host HOST] [--port PORT] [--local] [--docker] [--docker-arg ARG] [--] [docker compose args...] [--log-file FILE] [--no-logfile] [--help]
+Usage: ./start.sh [--mode prod|dev] [--host HOST] [--port PORT] [--local] [--docker] [--docker-arg ARG] [--prune] [--build] [--diag] [--build-diag-log] [--log] [--log-file FILE] [--no-logfile] [--help]
 
-Starts PocketProSBA with Docker compose startup by default.
+Starts PocketProSBA with Docker Compose by default.
 
 Options:
-  --mode prod|dev    Use production compose or development compose. Default: dev
-  --host HOST        Host interface to bind. Default: 0.0.0.0
-  --port PORT        Port to bind. Default: 8000 for prod, 5000 for dev
-  --local            Run the app locally on the host instead of in Docker
-  --docker           Force Docker compose startup (default behavior)
-  --docker-arg ARG   Append an additional docker compose argument. Can be repeated.
-  --                 Forward all remaining arguments directly to docker compose.
-  --log-file FILE    Log output file. Default: logs/app-<timestamp>.log
-  --no-logfile       Send output only to stdout/stderr
-  --help             Show this help message
+  --mode prod|dev      Use production compose or development compose. Default: dev
+  --host HOST          Host interface to bind. Default: 0.0.0.0
+  --port PORT          Port to bind. Default: 8000 for prod, 5000 for dev
+  --local              Run the app directly on the host instead of Docker
+  --docker             Force Docker Compose startup (default behavior)
+  --docker-arg ARG     Append an additional Docker Compose argument. Can be repeated.
+  --prune              Run Docker system prune before startup (auto-yes)
+  --build              Explicitly request rebuild and bring up Docker Compose
+  --diag               Alias for --build-diag-log; capture build/startup output to a diagnostic log
+  --build-diag-log     Capture Docker Compose build/startup output to a diagnostic log file
+  --log                Enable build/startup logging to a default diagnostic log file
+  --log-file FILE      Log output file for local startup or diagnostic logging
+  --no-logfile         Send output only to stdout/stderr
+  --help               Show this help message
 EOF
 }
 
-DOCKER_PORTS=(5000 8000 3000)
-LOCAL_PORTS=(5000 8000 3000)
+DOCKER_PORTS=(80 3000 5000 8000)
+LOCAL_PORTS=(80 3000 5000 8000)
 
 clear_docker_ports() {
   if ! command -v docker >/dev/null 2>&1; then
@@ -138,7 +41,7 @@ clear_docker_ports() {
     local containers
     containers=$(docker ps --format '{{.ID}} {{.Names}} {{.Ports}}' | grep -E "(:|\s)${port}->" || true)
     if [[ -n "$containers" ]]; then
-      echo "Found Docker containers using port ${port}. Stopping and removing them..."
+      echo "[INFO] Found Docker containers using port ${port}. Stopping and removing them..."
       while IFS= read -r line; do
         local container_id
         container_id=$(awk '{print $1}' <<< "$line")
@@ -152,28 +55,35 @@ clear_docker_ports() {
 }
 
 clear_local_ports() {
-  if ! command -v netstat >/dev/null 2>&1; then
-    return
-  fi
-
   local port
   for port in "$@"; do
-    local lines pids
-    lines=$(netstat -ano | grep -E "(:|\.)${port} .*LISTENING" || true)
-    if [[ -n "$lines" ]]; then
-      echo "Found local processes using port ${port}. Stopping them..."
-      pids=$(printf '%s\n' "$lines" | awk '{print $5}' | tr -d '\r' | sort -u)
-      while IFS= read -r pid; do
-        if [[ -z "$pid" || ! "$pid" =~ ^[0-9]+$ ]]; then
-          continue
-        fi
-        echo "  - stopping PID ${pid}"
-        if command -v taskkill >/dev/null 2>&1; then
-          taskkill /PID "$pid" /F >/dev/null 2>&1 || true
-        else
+    if command -v lsof >/dev/null 2>&1; then
+      local pids
+      pids=$(lsof -ti tcp:"$port" 2>/dev/null || true)
+      if [[ -n "$pids" ]]; then
+        echo "[INFO] Found local processes using port ${port}. Stopping them..."
+        while IFS= read -r pid; do
+          [[ -z "$pid" ]] && continue
+          echo "  - stopping PID ${pid}"
           kill -9 "$pid" >/dev/null 2>&1 || true
-        fi
-      done <<< "$pids"
+        done <<< "$pids"
+      fi
+    elif command -v netstat >/dev/null 2>&1; then
+      local lines pids
+      lines=$(netstat -ano | grep -E "(:|\.)${port} .*LISTENING" || true)
+      if [[ -n "$lines" ]]; then
+        echo "[INFO] Found local processes using port ${port}. Stopping them..."
+        pids=$(printf '%s\n' "$lines" | awk '{print $5}' | tr -d '\r' | sort -u)
+        while IFS= read -r pid; do
+          [[ -z "$pid" || ! "$pid" =~ ^[0-9]+$ ]] && continue
+          echo "  - stopping PID ${pid}"
+          if command -v taskkill >/dev/null 2>&1; then
+            taskkill /PID "$pid" /F >/dev/null 2>&1 || true
+          else
+            kill -9 "$pid" >/dev/null 2>&1 || true
+          fi
+        done <<< "$pids"
+      fi
     fi
   done
 }
@@ -183,6 +93,17 @@ clear_service_ports() {
   clear_local_ports "${LOCAL_PORTS[@]}"
 }
 
+docker_prune() {
+  if ! command -v docker >/dev/null 2>&1; then
+    echo "[WARN] Docker is not installed or not available; skipping prune."
+    return
+  fi
+
+  echo "[INFO] Pruning unused Docker resources..."
+  docker system prune -af --volumes || true
+  docker builder prune -af || true
+}
+
 MODE=dev
 HOST=0.0.0.0
 PORT=""
@@ -190,6 +111,8 @@ LOG_FILE=""
 NO_LOGFILE=false
 DOCKER=true
 LOCAL=false
+PRUNE=false
+BUILD_DIAG_LOG=false
 DOCKER_ARGS=()
 
 while [[ $# -gt 0 ]]; do
@@ -229,6 +152,21 @@ while [[ $# -gt 0 ]]; do
       fi
       DOCKER_ARGS+=("$1")
       ;;
+    --prune)
+      PRUNE=true
+      ;;
+    --build)
+      # Explicit build request; Docker Compose always builds by default.
+      ;;
+    --diag)
+      BUILD_DIAG_LOG=true
+      ;;
+    --build-diag-log)
+      BUILD_DIAG_LOG=true
+      ;;
+    --log)
+      BUILD_DIAG_LOG=true
+      ;;
     --)
       shift
       while [[ $# -gt 0 ]]; do
@@ -248,7 +186,7 @@ while [[ $# -gt 0 ]]; do
       ;;
   esac
   shift
- done
+done
 
 if [[ -z "$PORT" ]]; then
   if [[ "$MODE" == "prod" ]]; then
@@ -281,7 +219,6 @@ if [[ ! -f backend/.env ]]; then
   fi
 fi
 
-# Load environment variables from .env
 set -a
 source .env
 set +a
@@ -295,6 +232,10 @@ export HOST PORT
 export FLASK_ENV="${FLASK_ENV:-production}"
 export FLASK_APP="${FLASK_APP:-app.py}"
 export PYTHONPATH="$ROOT:$ROOT/backend:$ROOT/src${PYTHONPATH:+:$PYTHONPATH}"
+
+if [[ "$PRUNE" == true ]]; then
+  docker_prune
+fi
 
 clear_service_ports
 
@@ -317,7 +258,16 @@ else
   fi
 
   echo "Initializing Docker Compose using $COMPOSE_FILE..."
-  $DOCKER_COMPOSE_CMD -f "$COMPOSE_FILE" up --build -d "${DOCKER_ARGS[@]}"
+  if [[ "$BUILD_DIAG_LOG" == true ]]; then
+    if [[ -z "$LOG_FILE" ]]; then
+      LOG_FILE="logs/build-diag-$(date +%Y%m%d-%H%M%S).log"
+    fi
+    mkdir -p "$(dirname "$LOG_FILE")"
+    echo "Logging Docker Compose output to: $LOG_FILE"
+    $DOCKER_COMPOSE_CMD -f "$COMPOSE_FILE" up --build "${DOCKER_ARGS[@]}" 2>&1 | tee -a "$LOG_FILE"
+  else
+    $DOCKER_COMPOSE_CMD -f "$COMPOSE_FILE" up --build -d "${DOCKER_ARGS[@]}"
+  fi
   echo "Docker Compose started. Use $DOCKER_COMPOSE_CMD -f $COMPOSE_FILE ps to inspect services."
   exit 0
 fi
@@ -341,4 +291,3 @@ else
   echo "Logging output to: $LOG_FILE"
   exec "${CMD[@]}" 2>&1 | tee -a "$LOG_FILE"
 fi
->>>>>>> 5f379abe34fa77644c7e6bc209e7f10fca3f62f5
