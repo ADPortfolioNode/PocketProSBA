@@ -23,18 +23,18 @@ export const AppProvider = ({ children }) => {
   const fetchSystemStatus = async () => {
     try {
       const [flaskResp, chromaResp] = await Promise.all([
-        apiClient.get('/api/health').catch(() => ({ status: 'error', message: 'Flask server unreachable' })),
-        apiClient.get('/api/chromadb_health').catch(() => ({ status: 'error', message: 'ChromaDB unreachable' }))
+        apiClient.get('/api/health', {}, { quiet: true }).catch(() => ({ data: { status: 'error', message: 'Flask server unreachable' } })),
+        apiClient.get('/api/chromadb_health', {}, { quiet: true }).catch(() => ({ data: { status: 'error', message: 'ChromaDB unreachable' } }))
       ]);
 
       setSystemStatus({
         flask: {
-          status: flaskResp.data?.status === 'ok' ? 'online' : 'error',
-          message: flaskResp.data?.message || flaskResp.message || ''
+          status: ['ok', 'healthy'].includes(flaskResp.data?.status) ? 'online' : 'error',
+          message: flaskResp.data?.message || ''
         },
         chromadb: {
           status: chromaResp.data?.status === 'ok' ? 'online' : 'error',
-          message: chromaResp.data?.message || chromaResp.message || ''
+          message: chromaResp.data?.message || ''
         }
       });
     } catch (err) {
@@ -56,6 +56,8 @@ export const AppProvider = ({ children }) => {
 
   useEffect(() => {
     fetchSystemStatus();
+    const intervalId = setInterval(fetchSystemStatus, 30000);
+    return () => clearInterval(intervalId);
   }, []);
 
   const value = {

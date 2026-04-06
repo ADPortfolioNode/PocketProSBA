@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { render, waitFor } from '@testing-library/react';
 import { AppProvider, useApp } from '../context/AppProvider';
 import apiClient from '../api/apiClient';
@@ -52,11 +52,31 @@ describe('AppProvider', () => {
   });
 
   it('handles error and clears error state', async () => {
-    apiClient.get.mockRejectedValue(new Error('Network error'));
+    apiClient.get.mockResolvedValue({ data: { status: 'ok', message: 'All good' } });
+
+    const ErrorComponent = () => {
+      const { error, handleError, clearError } = useApp();
+
+      useEffect(() => {
+        handleError(new Error('Network error'));
+      }, [handleError]);
+
+      return (
+        <div>
+          <div data-testid="flask-status">{error ? 'error' : 'unknown'}</div>
+          {error && (
+            <div>
+              <span data-testid="error-message">{error}</span>
+              <button onClick={clearError}>Clear</button>
+            </div>
+          )}
+        </div>
+      );
+    };
 
     const { getByTestId, queryByTestId } = render(
       <AppProvider>
-        <TestComponent />
+        <ErrorComponent />
       </AppProvider>
     );
 

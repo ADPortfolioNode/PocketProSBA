@@ -33,8 +33,9 @@ def chromadb_health_check():
         else:
             return jsonify({
                 'status': 'error',
-                'message': 'ChromaDB is not available'
-            }), 503
+                'message': 'ChromaDB is not available',
+                'document_count': 0
+            }), 200
     except Exception as e:
         logger.error(f"Error checking ChromaDB health: {str(e)}")
         return jsonify({
@@ -47,6 +48,11 @@ def get_system_info():
     """Get system information"""
     try:
         info = get_system_info_service()
+        info['server'] = {
+            'self': request.host_url.rstrip('/'),
+            'host': request.host,
+            'scheme': request.scheme
+        }
         return jsonify(info)
     except Exception as e:
         logger.error(f"Error getting system info: {str(e)}")

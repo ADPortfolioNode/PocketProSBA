@@ -82,13 +82,61 @@ class AggressiveStrategy(StepStrategy):
         except Exception as e:
             return {'success': False, 'error': str(e)}
 
+class DocumentSearchStrategy(DefaultStrategy):
+    @property
+    def name(self) -> str:
+        return "document_search"
+
+class TaskDecompositionStrategy(DefaultStrategy):
+    @property
+    def name(self) -> str:
+        return "task_decomposition"
+
+class AnalysisStrategy(DefaultStrategy):
+    @property
+    def name(self) -> str:
+        return "analysis"
+
+class ResponseGenerationStrategy(DefaultStrategy):
+    @property
+    def name(self) -> str:
+        return "response_generation"
+
+class FastDocumentSearchStrategy(DefaultStrategy):
+    @property
+    def name(self) -> str:
+        return "fast_document_search"
+
+class DetailedDocumentSearchStrategy(DefaultStrategy):
+    @property
+    def name(self) -> str:
+        return "detailed_document_search"
+
+class LLMAnalysisStrategy(DefaultStrategy):
+    @property
+    def name(self) -> str:
+        return "llm_analysis"
+
+class TemplateResponseStrategy(DefaultStrategy):
+    @property
+    def name(self) -> str:
+        return "template_response"
+
 class StepStrategyFactory:
     """Factory for creating step strategy instances"""
 
     _strategies = {
         'default': DefaultStrategy,
         'conservative': ConservativeStrategy,
-        'aggressive': AggressiveStrategy
+        'aggressive': AggressiveStrategy,
+        'document_search': DocumentSearchStrategy,
+        'task_decomposition': TaskDecompositionStrategy,
+        'analysis': AnalysisStrategy,
+        'response_generation': ResponseGenerationStrategy,
+        'fast_document_search': FastDocumentSearchStrategy,
+        'detailed_document_search': DetailedDocumentSearchStrategy,
+        'llm_analysis': LLMAnalysisStrategy,
+        'template_response': TemplateResponseStrategy
     }
 
     @classmethod

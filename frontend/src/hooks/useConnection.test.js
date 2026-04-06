@@ -27,11 +27,11 @@ describe('useConnection', () => {
   });
 
   it('should set serverConnected to true on successful connection', async () => {
-    mock.onGet('/api/info').reply(200, { status: 'ok' });
+    mock.onGet('/api/info').reply(200, { status: 'operational' });
     const { result } = renderHook(() => useConnection());
 
     await waitFor(() => expect(result.current.serverConnected).toBe(true));
-    expect(result.current.connectionInfo).toEqual({ status: 'ok' });
+    expect(result.current.connectionInfo).toEqual({ status: 'operational' });
     expect(result.current.backendError).toBe(null);
   });
 
@@ -96,7 +96,7 @@ describe('useConnection', () => {
   });
 
   it('should reset connection by re-checking health', async () => {
-    mock.onGet('/api/info').replyOnce(500).onGet('/api/info').reply(200);
+    mock.onGet('/api/info').replyOnce(500).onGet('/api/info').reply(200, { status: 'operational' });
 
     const { result } = renderHook(() => useConnection());
 

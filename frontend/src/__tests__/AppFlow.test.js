@@ -2,8 +2,23 @@ import React from 'react';
 import '@testing-library/jest-dom';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import MainLayout from '../components/MainLayout';
+import { AppProvider } from '../context/AppProvider';
 import Login from '../Login';
+
+jest.mock('../components/ModernConciergeChat', () => () => <div>Mocked ModernConciergeChat Component</div>);
+
+const mockUseConnection = () => ({
+  serverConnected: true,
+  backendError: null,
+  isCheckingHealth: false,
+  connectionInfo: {},
+  checkConnection: jest.fn(),
+  apiCall: jest.fn().mockResolvedValue({ response: 'Mock response' }),
+  getDiagnostics: jest.fn(),
+  resetConnection: jest.fn(),
+});
+
+const MainLayout = require('../components/MainLayout').default;
 
 beforeAll(() => {
   // Mock window.alert to avoid not implemented error in tests
@@ -14,7 +29,7 @@ describe('Frontend Application Flow Tests', () => {
   test('Navigation tabs switch content correctly', async () => {
     render(
       <MemoryRouter>
-        <MainLayout />
+        <MainLayout useConnectionHook={mockUseConnection} />
       </MemoryRouter>
     );
 
@@ -24,21 +39,21 @@ describe('Frontend Application Flow Tests', () => {
     expect(chatTabs[0]).toBeInTheDocument();
 
     // Click Browse Resources tab
-    fireEvent.click(screen.getByText(/Browse Resources/i));
+    fireEvent.click(screen.getByTestId('nav-browse'));
     await waitFor(() => {
-      expect(screen.getByText(/Browse Resources/i)).toHaveClass('active');
+      expect(screen.getByTestId('nav-browse')).toHaveClass('active');
     });
 
     // Click RAG tab
-    fireEvent.click(screen.getByText(/RAG/i));
+    fireEvent.click(screen.getByTestId('nav-rag'));
     await waitFor(() => {
-      expect(screen.getByText(/RAG/i)).toHaveClass('active');
+      expect(screen.getByTestId('nav-rag')).toHaveClass('active');
     });
 
     // Click Document Center tab
-    fireEvent.click(screen.getByText(/Document Center/i));
+    fireEvent.click(screen.getByTestId('nav-documents'));
     await waitFor(() => {
-      expect(screen.getByText(/Document Center/i)).toHaveClass('active');
+      expect(screen.getByTestId('nav-documents')).toHaveClass('active');
     });
 
     // Click SBA Content tab
@@ -50,9 +65,11 @@ describe('Frontend Application Flow Tests', () => {
 
   test('Login page renders and handles form submission', async () => {
     render(
-      <MemoryRouter>
-        <Login />
-      </MemoryRouter>
+      <AppProvider>
+        <MemoryRouter>
+          <Login />
+        </MemoryRouter>
+      </AppProvider>
     );
 
     // Check login form elements

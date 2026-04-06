@@ -34,21 +34,28 @@ def create_app(config_name=None):
             logger.error(f"Failed to create database tables: {e}")
             raise
 
-    # Configure CORS - allow multiple origins for local dev and Docker
+    # Configure CORS - allow multiple origins for local dev, Docker, and production frontend
     allowed_origins = [
         'http://localhost:3000',
-        'http://frontend:80'
+        'http://frontend:80',
+        'https://pocket-pro-sba.vercel.app'
     ]
     cors_origins = app.config.get('FRONTEND_URL')
     if cors_origins and cors_origins not in allowed_origins:
         allowed_origins.append(cors_origins)
 
+    def cors_origin(origin):
+        if not origin:
+            return True
+        request_origin = request.host_url.rstrip('/')
+        return origin in allowed_origins or origin == request_origin
+
     CORS(app, resources={
         r"/api/*": {
-            "origins": allowed_origins,
+            "origins": cors_origin,
             "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
             "allow_headers": ["Content-Type", "Authorization"],
-            "supports_credentials": True,
+            "supports_credentials": False,
             "expose_headers": ["Access-Control-Allow-Origin"]
         }
     })
@@ -72,11 +79,11 @@ def create_app(config_name=None):
         with app.app_context():
             success = enhanced_rag_service.initialize_full_service()
             if success:
-                logger.info("✅ Enhanced Gemini RAG service initialized successfully")
+                logger.info("Enhanced Gemini RAG service initialized successfully")
             else:
-                logger.warning("❌ Failed to initialize Enhanced Gemini RAG service")
+                logger.warning("Failed to initialize Enhanced Gemini RAG service")
     except Exception as e:
-        logger.error(f"❌ Error initializing Gemini RAG service: {str(e)}")
+        logger.error(f"Error initializing Gemini RAG service: {str(e)}")
 
     # Root route
     @app.route('/')

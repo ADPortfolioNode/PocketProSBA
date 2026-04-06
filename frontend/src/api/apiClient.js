@@ -1,6 +1,26 @@
 import axios from 'axios';
 
-const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const getBackendHost = () => {
+  if (typeof window === 'undefined') {
+    return process.env.REACT_APP_API_URL || 'http://localhost:5000';
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  const backendHost = params.get('backend_host') || params.get('backendUrl') || params.get('api_host');
+
+  if (backendHost) {
+    return backendHost;
+  }
+
+  if (process.env.REACT_APP_API_URL) {
+    return process.env.REACT_APP_API_URL;
+  }
+
+  const { protocol, hostname, port } = window.location;
+  return `${protocol}//${hostname}${port ? `:${port}` : ''}`;
+};
+
+const BASE_URL = getBackendHost();
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 1000;
 
@@ -13,22 +33,33 @@ const axiosInstance = axios.create({
 });
 
 // Create the request handler
-const makeRequest = async (method, endpoint, data = null, retries = MAX_RETRIES) => {
+const makeRequest = async (method, endpoint, data = null, config = {}, retries = MAX_RETRIES, options = {}) => {
+  const { quiet = false } = options;
+
   try {
     console.log('Making request to:', endpoint);
-    const config = {
+    const requestConfig = {
       method,
       url: endpoint,
-      data: data || undefined
+      ...config
     };
-    const response = await axiosInstance(config);
-    return response.data;
+
+    if (data !== null) {
+      requestConfig.data = data;
+    }
+
+    const response = await axiosInstance(requestConfig);
+    return response;
   } catch (error) {
-    console.error('API Error:', error);
+    if (!quiet) {
+      console.error('API Error:', error);
+    }
     if (retries > 0 && (error.code === 'ECONNREFUSED' || error.code === 'ECONNRESET')) {
-      console.log(`Retrying... (${retries} attempts left)`);
+      if (!quiet) {
+        console.log(`Retrying... (${retries} attempts left)`);
+      }
       await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
-      return makeRequest(method, endpoint, data, retries - 1);
+      return makeRequest(method, endpoint, data, config, retries - 1, options);
     }
     throw error;
   }
@@ -47,10 +78,10 @@ const endpointRegistry = {
 };
 
 // Create the API methods
-const get = (endpoint) => makeRequest('GET', endpoint);
-const post = (endpoint, data) => makeRequest('POST', endpoint, data);
-const put = (endpoint, data) => makeRequest('PUT', endpoint, data);
-const delete_ = (endpoint) => makeRequest('DELETE', endpoint);
+const get = (endpoint, config = {}, options = {}) => makeRequest('GET', endpoint, null, config, MAX_RETRIES, options);
+const post = (endpoint, data, config = {}, options = {}) => makeRequest('POST', endpoint, data, config, MAX_RETRIES, options);
+const put = (endpoint, data, config = {}, options = {}) => makeRequest('PUT', endpoint, data, config, MAX_RETRIES, options);
+const delete_ = (endpoint, config = {}, options = {}) => makeRequest('DELETE', endpoint, null, config, MAX_RETRIES, options);
 
 // Helper function to load endpoints (used in tests)
 const loadEndpoints = async () => ({

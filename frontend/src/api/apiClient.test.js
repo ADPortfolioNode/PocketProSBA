@@ -41,6 +41,14 @@ describe('apiClient', () => {
     expect(response.data).toEqual(data);
   });
 
+  it('should pass axios config parameters for GET requests', async () => {
+    const data = { message: 'Filtered' };
+    mock.onGet('/test', { params: { q: 'search' } }).reply(200, data);
+
+    const response = await apiClient.get('/test', { params: { q: 'search' } });
+    expect(response.data).toEqual(data);
+  });
+
   it('should handle GET request error', async () => {
     const errorMessage = 'Network Error';
     mock.onGet('/error').networkError();

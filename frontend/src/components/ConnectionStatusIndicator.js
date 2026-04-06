@@ -78,11 +78,14 @@ const ConnectionStatusIndicator = ({
     }
 
     const info = connectionDetails?.data || systemInfo || {};
+    const connectionSource = info.server?.self || info.self || info.source;
     
     return (
       <>
-        <div><strong>Backend:</strong> {info.source || 'Unknown'}</div>
+        <div><strong>Backend:</strong> {connectionSource || 'Unknown'}</div>
         <div><strong>Status:</strong> {connected ? 'Connected' : 'Disconnected'}</div>
+        {info.server?.self && <div><strong>Server Self:</strong> {info.server.self}</div>}
+        {info.source && connectionSource !== info.source && <div><strong>Source:</strong> {info.source}</div>}
         {info.server_type && <div><strong>Type:</strong> {info.server_type}</div>}
         {info.version && <div><strong>Version:</strong> {info.version}</div>}
         {info.uptime && <div><strong>Uptime:</strong> {formatUptime(info.uptime)}</div>}

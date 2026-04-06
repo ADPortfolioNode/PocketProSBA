@@ -2,9 +2,18 @@ import os
 import logging
 import time
 import uuid
-import chromadb
-from chromadb.config import Settings
-from chromadb.utils import embedding_functions
+
+try:
+    import chromadb
+    from chromadb.config import Settings
+    from chromadb.utils import embedding_functions
+    _CHROMADB_AVAILABLE = True
+except Exception as exc:
+    chromadb = None
+    Settings = None
+    embedding_functions = None
+    _CHROMADB_AVAILABLE = False
+    _CHROMADB_IMPORT_ERROR = exc
 
 logger = logging.getLogger(__name__)
 
@@ -25,13 +34,16 @@ class ChromaService:
     
     def initialize(self):
         """Initialize ChromaDB client and embedding function"""
+        if not _CHROMADB_AVAILABLE:
+            logger.warning(f"ChromaDB unavailable: {_CHROMADB_IMPORT_ERROR}")
+            self.initialized = False
+            return False
+
         try:
             self.client = chromadb.HttpClient(
                 host=self.host,
                 port=self.port,
                 settings=Settings(
-                    chroma_client_auth_provider="chromadb.auth.token.TokenAuthClientProvider",
-                    chroma_client_auth_credentials="admin",
                     anonymized_telemetry=False
                 )
             )
@@ -43,11 +55,11 @@ class ChromaService:
             self._initialize_collections()
             
             self.initialized = True
-            logger.info(f"✅ ChromaDB initialized successfully at {self.host}:{self.port}")
+            logger.info(f"ChromaDB initialized successfully at {self.host}:{self.port}")
             return True
             
         except Exception as e:
-            logger.error(f"❌ ChromaDB initialization failed: {str(e)}")
+            logger.error(f"ChromaDB initialization failed: {str(e)}")
             self.initialized = False
             return False
     
@@ -56,10 +68,10 @@ class ChromaService:
         try:
             self.collections["documents"] = self._get_or_create_collection("documents")
             self.collections["steps"] = self._get_or_create_collection("steps")
-            logger.info(f"✅ ChromaDB collections initialized")
+            logger.info("ChromaDB collections initialized")
             return True
         except Exception as e:
-            logger.error(f"❌ ChromaDB collections initialization failed: {str(e)}")
+            logger.error(f"ChromaDB collections initialization failed: {str(e)}")
             return False
     
     def _get_or_create_collection(self, name):
@@ -71,7 +83,7 @@ class ChromaService:
                 metadata={"description": f"Collection for {name}"}
             )
         except Exception as e:
-            logger.error(f"❌ Failed to get or create collection {name}: {str(e)}")
+            logger.error(f"Failed to get or create collection {name}: {str(e)}")
             raise
     
     def is_available(self):
@@ -83,7 +95,7 @@ class ChromaService:
             self.client.list_collections()
             return True
         except Exception as e:
-            logger.error(f"❌ ChromaDB availability check failed: {str(e)}")
+            logger.error(f"ChromaDB availability check failed: {str(e)}")
             return False
     
     def add_documents(self, texts, metadatas=None, ids=None):
@@ -108,7 +120,7 @@ class ChromaService:
             }
             
         except Exception as e:
-            logger.error(f"❌ Failed to add documents: {str(e)}")
+            logger.error(f"Failed to add documents: {str(e)}")
             return {"error": str(e)}
     
     def query_documents(self, query_text, n_results=5):
@@ -125,7 +137,7 @@ class ChromaService:
             return results
             
         except Exception as e:
-            logger.error(f"❌ Failed to query documents: {str(e)}")
+            logger.error(f"Failed to query documents: {str(e)}")
             return {"error": str(e)}
     
     def add_step(self, step_id, text, metadata=None):
@@ -146,7 +158,7 @@ class ChromaService:
             }
             
         except Exception as e:
-            logger.error(f"❌ Failed to add step: {str(e)}")
+            logger.error(f"Failed to add step: {str(e)}")
             return {"error": str(e)}
     
     def get_collection_stats(self, collection_name="documents"):
@@ -163,7 +175,7 @@ class ChromaService:
                 "available": True
             }
         except Exception as e:
-            logger.error(f"❌ Failed to get collection stats: {str(e)}")
+            logger.error(f"Failed to get collection stats: {str(e)}")
             return {
                 "name": collection_name,
                 "count": 0,
@@ -183,5 +195,5 @@ class ChromaService:
                 "id": doc_id
             }
         except Exception as e:
-            logger.error(f"❌ Failed to delete document: {str(e)}")
+            logger.error(f"Failed to delete document: {str(e)}")
             return {"error": str(e)}

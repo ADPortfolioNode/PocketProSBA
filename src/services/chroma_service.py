@@ -1,11 +1,19 @@
 """
 ChromaDB service for vector storage and retrieval.
 """
-import chromadb
-from chromadb.utils import embedding_functions
 import os
 from typing import List, Dict, Any, Optional
 from src.utils.config import config
+
+try:
+    import chromadb
+    from chromadb.utils import embedding_functions
+    _CHROMADB_AVAILABLE = True
+except Exception as exc:
+    chromadb = None
+    embedding_functions = None
+    _CHROMADB_AVAILABLE = False
+    _CHROMADB_IMPORT_ERROR = exc
 
 
 class ChromaService:
@@ -34,6 +42,13 @@ class ChromaService:
         chroma_port = config.CHROMA_PORT
         
         print(f"INFO: Attempting to connect to ChromaDB at http://{chroma_host}:{chroma_port}")
+
+        if not _CHROMADB_AVAILABLE:
+            print(f"WARN: ChromaDB import failed: {_CHROMADB_IMPORT_ERROR}")
+            print("WARN: ChromaDB will not be available. Continuing without vector storage.")
+            self.client = None
+            self._chroma_available = False
+            return
 
         try:
             # Try HttpClient first for remote connections (docker/production)

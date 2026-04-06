@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Container, Alert, Button, Badge, Spinner } from 'react-bootstrap';
 import SBANavigation from './SBANavigation';
 import Header from './Header';
@@ -11,12 +12,32 @@ import SBAContent from './SBAContent';
 import TaskOrchestrator from './TaskOrchestrator';
 import { useConnection } from '../hooks/useConnection'; // Import the new hook
 
-function MainLayout() {
+const ROUTE_TAB_MAP = {
+  chat: 'chat',
+  browse: 'browse',
+  rag: 'rag',
+  documents: 'documents',
+  sba: 'sba',
+  orchestrator: 'orchestrator'
+};
+
+function MainLayout({ useConnectionHook = useConnection }) {
   const [activeTab, setActiveTab] = useState('chat');
+  const location = useLocation();
+
+  const resolveTabFromPath = (pathname) => {
+    const segment = pathname.split('/')[1].toLowerCase();
+    return ROUTE_TAB_MAP[segment] || 'chat';
+  };
+
+  useEffect(() => {
+    const tab = resolveTabFromPath(location.pathname);
+    setActiveTab(tab);
+  }, [location.pathname]);
   const [messages, setMessages] = useState([]);
   const [diagnostics, setDiagnostics] = useState(null);
 
-  // Use the custom connection hook
+  // Use the custom connection hook or injected test hook
   const {
     serverConnected,
     backendError,
@@ -26,11 +47,20 @@ function MainLayout() {
     apiCall,
     getDiagnostics,
     resetConnection,
-  } = useConnection();
+  } = useConnectionHook();
 
-  const handleTabChange = (tab) => {
-    setActiveTab(tab);
-    // No need to setBackendError(null) here, as useConnection manages it
+  const getConnectionBaseUrl = () => {
+    return connectionInfo?.server?.self || connectionInfo?.self || connectionInfo?.source || 'http://localhost:5000';
+  };
+
+  const getConnectionLabel = () => {
+    return connectionInfo?.server?.self || connectionInfo?.self || connectionInfo?.source || 'Unknown';
+  };
+
+  const apiUrl = (path) => {
+    const baseUrl = getConnectionBaseUrl();
+    const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+    return `${baseUrl.replace(/\/$/, '')}${normalizedPath}`;
   };
 
   const handleChatSend = async (message) => {
@@ -99,8 +129,8 @@ function MainLayout() {
           <div className="mb-3">
             <strong>Connection Details:</strong>
             <ul>
-              <li><Badge bg="secondary">Backend URL</Badge> {connectionInfo?.source || 'Unknown'}</li>
-              <li><Badge bg="secondary">Environment</Badge> {connectionInfo?.source || 'Unknown'}</li>
+                  <li><Badge bg="secondary">Backend URL</Badge> {getConnectionLabel()}</li>
+              <li><Badge bg="secondary">Environment</Badge> {connectionInfo?.environment || connectionInfo?.server?.environment || connectionInfo?.source || 'Unknown'}</li>
               <li><Badge bg="secondary">Last checked</Badge> {new Date().toLocaleTimeString()}</li>
             </ul>
           </div>
@@ -191,10 +221,8 @@ function MainLayout() {
     <div className="d-flex flex-column min-vh-100">
       <Header />
       <SBANavigation
-        activeTab={activeTab}
-        onTabChange={handleTabChange}
         serverConnected={serverConnected}
-        apiUrl={connectionInfo?.source || 'http://localhost:5000'}
+        apiUrl={apiUrl}
       />
       <Container className="flex-grow-1">
         {renderContent()}
