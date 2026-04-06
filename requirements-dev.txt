@@ -1,0 +1,4 @@
+# Optional / development dependencies
+prometheus_client
+chromadb
+pytest

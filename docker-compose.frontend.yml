@@ -1,0 +1,23 @@
+﻿version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - REACT_APP_BACKEND_URL=http://localhost:10000
+      - CI=false
+      - ESLINT_NO_DEV_ERRORS=true
+      - NODE_OPTIONS=--max-old-space-size=4096
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge

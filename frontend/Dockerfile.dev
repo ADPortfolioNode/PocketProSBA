@@ -1,0 +1,19 @@
+FROM node:16-alpine
+
+WORKDIR /app
+
+# Copy package.json and install dependencies
+COPY package.json .
+RUN npm install
+RUN npm install react-bootstrap --save
+
+# Copy the rest of the app
+COPY . .
+
+# Set environment variables for development
+ENV NODE_ENV=development
+ENV PORT=3000
+ENV REACT_APP_BACKEND_URL=http://backend:5000
+
+# Start the app
+CMD ["npm", "start"]
