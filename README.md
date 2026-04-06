@@ -89,6 +89,61 @@ PocketProSBA/
 2. **Document Formats**: Add processors in `DocumentProcessor`
 3. **API Endpoints**: Add routes in `app.py`
 
+## Team Workflow Feature
+
+### Hello deo! 🎯
+
+PocketProSBA now includes a world-class team-based development workflow that simulates a professional three-person development team:
+
+#### Team Roles
+
+1. **Administrator** 🔍
+   - Researches issues and analyzes problems
+   - Parses codebase for build notes and documentation
+   - Provides context and recommendations to the Developer
+
+2. **Developer** 💻
+   - Implements solutions based on Administrator's research
+   - Follows established code patterns and best practices
+   - Delivers working implementations ready for validation
+
+3. **QA Engineer** ✅
+   - Validates Developer's implementations
+   - Runs comprehensive checks and tests
+   - Provides feedback for iteration if needed
+
+#### Workflow Process
+
+The team works together in an automated loop:
+
+1. **Submit Issue** - User describes the problem to solve
+2. **Research** - Administrator analyzes the issue and gathers context
+3. **Implement** - Developer creates a solution
+4. **Validate** - QA tests and validates the implementation
+5. **Iterate** - If validation fails, the cycle repeats with error feedback
+6. **Complete** - Once validated, the solution is delivered
+
+The workflow automatically retries up to 5 iterations until the issue is resolved or requires manual intervention.
+
+#### Using the Team Workflow
+
+**Via Web Interface:**
+Navigate to the "🎯 Team Workflow" tab and submit your issue description. Watch the team collaborate in real-time through the three-panel interface.
+
+**Via API:**
+```bash
+# Submit an issue
+curl -X POST http://localhost:5000/api/team/submit \
+  -H "Content-Type: application/json" \
+  -d '{"issue_description": "Implement a new feature"}'
+
+# Process the task
+curl -X POST http://localhost:5000/api/team/process/{task_id}
+
+# Get conversation history
+curl http://localhost:5000/api/team/task/{task_id}/history
+```
+
 ## Enhanced Frontend
 
 The frontend interface now provides a comprehensive RAG workflow visualization and SBA resource navigation:

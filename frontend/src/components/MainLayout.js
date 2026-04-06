@@ -10,6 +10,7 @@ import ModernConciergeChat from './ModernConciergeChat';
 import UploadsManagerComponent from './UploadsManager';
 import SBAContent from './SBAContent';
 import TaskOrchestrator from './TaskOrchestrator';
+import TeamWorkflow from './TeamWorkflow';
 import { useConnection } from '../hooks/useConnection'; // Import the new hook
 
 const ROUTE_TAB_MAP = {
@@ -204,6 +205,8 @@ function MainLayout({ useConnectionHook = useConnection }) {
         return <SBAContent />;
       case 'orchestrator':
         return <TaskOrchestrator />;
+      case 'team':
+        return <TeamWorkflow />;
       default:
         return (
           <ModernConciergeChat
