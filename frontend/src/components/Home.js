@@ -1,6 +1,25 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
+const promptCards = [
+  {
+    prompt: 'What SBA loan options are best for a small retail startup?',
+    label: 'Loan guidance',
+  },
+  {
+    prompt: 'How do I prepare for the SBA 7(a) application?',
+    label: 'Application readiness',
+  },
+  {
+    prompt: 'What resources support minority-owned businesses?',
+    label: 'Resource discovery',
+  },
+  {
+    prompt: 'Can you compare SBA disaster relief programs?',
+    label: 'Disaster assistance',
+  },
+];
+
 const useCases = [
   {
     title: 'Smart Loan Planning',
@@ -36,6 +55,17 @@ function Home() {
             <div className="home-hero-actions d-flex flex-wrap gap-3 mt-4">
               <Link to="/chat" className="btn btn-primary btn-lg">Start SBA Chat</Link>
               <Link to="/" className="btn btn-outline-primary btn-lg">Browse Use Cases</Link>
+            </div>
+
+            <div className="hero-prompt-cards row g-3 mt-5">
+              {promptCards.map((card, index) => (
+                <div key={index} className="col-12 col-sm-6">
+                  <div className="prompt-card p-3 rounded-4 shadow-sm h-100">
+                    <span className="prompt-label badge bg-secondary mb-2">{card.label}</span>
+                    <p className="mb-0 prompt-text">{card.prompt}</p>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
           <div className="col-lg-6">
