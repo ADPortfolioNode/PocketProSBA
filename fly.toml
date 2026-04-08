@@ -1,46 +1,23 @@
-app = "pocketprosba"
+# fly.toml app configuration file generated for pocketprosba on 2026-04-08T16:37:35Z
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = 'pocketprosba'
+primary_region = 'iad'
 
 [build]
-  dockerfile = "Dockerfile.production"
-  context = "."
 
-[env]
-  PORT = "5000"
-  FLASK_ENV = "production"
-  HOST = "0.0.0.0"
-  FRONTEND_URL = "https://your-frontend-url.fly.dev"
-
-  # Set these values in Fly secrets or in your deployment pipeline.
-  # Do NOT commit real API keys here if you are sharing this repository.
-  # GEMINI_API_KEY = "your_gemini_api_key"
-  # SECRET_KEY = "your_secret_key"
-
-  # ChromaDB connection settings.
-  # On Fly, CHROMADB_HOST must point to a reachable ChromaDB service.
-  CHROMADB_HOST = "chromadb"
-  CHROMADB_PORT = "8000"
-
-  # LLM defaults
-  LLM_MODEL = "gemini-pro"
-  LLM_TEMPERATURE = "0.2"
-  LLM_MAX_TOKENS = "1024"
-
-  # Optional file/upload settings
-  CHROMA_DB_PATH = "./chromadb_data"
-  UPLOAD_FOLDER = "./uploads"
-  MAX_CONTENT_LENGTH = "16777216"
-
-[experimental]
-auto_rollback = true
-
-[[services]]
+[http_service]
   internal_port = 5000
-  protocol = "tcp"
+  force_https = true
+  auto_stop_machines = 'stop'
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ['app']
 
-  [[services.ports]]
-    handlers = ["http"]
-    port = 80
-
-  [[services.ports]]
-    handlers = ["tls", "http"]
-    port = 443
+[[vm]]
+  memory = '1gb'
+  cpu_kind = 'shared'
+  cpus = 1
+  memory_mb = 1024
