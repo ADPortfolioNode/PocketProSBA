@@ -4,11 +4,16 @@ FROM python:3.11-slim
 # Set the working directory in the container
 WORKDIR /app
 
+# Minimal pip startup settings for faster dependency installation
+ENV PYTHONUNBUFFERED=1
+ENV PIP_DISABLE_PIP_VERSION_CHECK=1
+ENV PIP_DEFAULT_TIMEOUT=100
+
 # Copy requirements first for better caching
 COPY backend/requirements.txt .
 
-# Install dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+# Upgrade packaging tools and install dependencies
+RUN python -m pip install --upgrade pip setuptools wheel && pip install --no-cache-dir -r requirements.txt
 
 # Copy the entire project
 COPY . .

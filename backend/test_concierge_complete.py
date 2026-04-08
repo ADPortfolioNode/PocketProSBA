@@ -14,7 +14,7 @@ rag_module = types.ModuleType('rag')
 rag_module.get_rag_manager = lambda: None
 sys.modules['rag'] = rag_module
 
-from assistants.concierge import Concierge
+from backend.assistants.concierge import Concierge
 from services.api_service import decompose_task_service
 
 def test_concierge_complete():

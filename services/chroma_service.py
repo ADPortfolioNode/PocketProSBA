@@ -6,12 +6,35 @@ import os
 import time
 import logging
 from typing import Dict, List, Optional, Union, Any
-from chromadb.api.types import QueryResult, GetResult
-from chromadb.config import Settings
-from chromadb import HttpClient
-from chromadb.utils import embedding_functions
-import google.generativeai as genai
-import chromadb
+
+# Lazy import chromadb components to avoid import-time failures when onnxruntime is unavailable.
+QueryResult = Any
+GetResult = Any
+Settings = None
+HttpClient = None
+embedding_functions = None
+chromadb = None
+_GENAI_AVAILABLE = False
+
+try:
+    import google.generativeai as genai
+    _GENAI_AVAILABLE = True
+except Exception:
+    genai = None
+
+try:
+    import chromadb
+    from chromadb.api.types import QueryResult, GetResult
+    from chromadb.config import Settings
+    from chromadb import HttpClient
+    from chromadb.utils import embedding_functions
+except Exception as exc:
+    chromadb = None
+    Settings = None
+    HttpClient = None
+    embedding_functions = None
+    _CHROMADB_IMPORT_ERROR = exc
+
 try:
     from chromadb.utils.embedding_functions import GoogleGenerativeAIEmbeddingFunction
 except Exception:
@@ -22,6 +45,7 @@ except Exception:
         from simple_vector_store import SimpleEmbeddingFunction
     except Exception:
         SimpleEmbeddingFunction = None
+
 # from chromadb.api.models.Collection import Collection
 try:
     from chromadb.errors import ChromaDBConnectionError, ChromaDBError, ChromaDBOperationError
@@ -64,19 +88,21 @@ class ChromaService:
         self.persist_directory = os.environ.get('CHROMA_PERSIST_DIR', '/chroma/chroma')
         
         # Configure ChromaDB client with optimized settings
+        self.client = None
         max_retries = 10
         retry_delay = 5  # seconds
-        
-        try:
-            # Use Chroma HttpClient with host and port
-            self.client = chromadb.HttpClient(host=self.host, port=self.port)
-            # Test connection
-            self.client.heartbeat()
-            logger.info("Successfully connected to ChromaDB")
-        except Exception as e:
-            logger.warning(f"Failed to connect to ChromaDB: {str(e)}")
-            self.client = None
-        
+
+        if chromadb is not None and HttpClient is not None:
+            try:
+                self.client = HttpClient(host=self.host, port=self.port)
+                self.client.heartbeat()
+                logger.info("Successfully connected to ChromaDB")
+            except Exception as e:
+                logger.warning(f"Failed to connect to ChromaDB: {str(e)}")
+                self.client = None
+        else:
+            logger.warning(f"Chromadb not available: {_CHROMADB_IMPORT_ERROR}")
+
         # Use Google's Generative AI embedding function when available, otherwise use a simple fallback
         if GoogleGenerativeAIEmbeddingFunction is not None:
             try:
@@ -85,7 +111,7 @@ class ChromaService:
                 self.embedding_function = SimpleEmbeddingFunction() if SimpleEmbeddingFunction is not None else None
         else:
             self.embedding_function = SimpleEmbeddingFunction() if SimpleEmbeddingFunction is not None else None
-        
+
         # Initialize collections if client is available
         if self.client:
             try:

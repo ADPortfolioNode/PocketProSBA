@@ -1,23 +1,30 @@
 ﻿import os
 from flask import jsonify
-from wsgi import create_app
-from backend.utils.chroma_utils import init_chroma_client
+from backend.app import create_app
 
-create_app = create_app
 app = create_app()
-
-try:
-    chroma_client = init_chroma_client()
-except Exception as e:
-    chroma_client = None
-    print(f"Error initializing ChromaDB client: {e}")
+chroma_client = None
+chroma_client_error = None
 
 @app.route('/api/health')
 def health_check():
+    global chroma_client, chroma_client_error
+
     services = {'api': 'running'}
+
+    if chroma_client is None and chroma_client_error is None:
+        try:
+            from backend.utils.chroma_utils import init_chroma_client
+            chroma_client = init_chroma_client()
+        except Exception as e:
+            chroma_client_error = str(e)
+            chroma_client = None
+            print(f"Error initializing ChromaDB client: {e}")
 
     if chroma_client is None:
         services['chromadb'] = 'unavailable'
+        if chroma_client_error:
+            services['chromadb_error'] = chroma_client_error
     else:
         try:
             chroma_client.get_or_create_collection(name='default_collection')

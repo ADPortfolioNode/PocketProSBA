@@ -24,7 +24,9 @@ for dir_name in required_dirs:
 
 # Import and configure the Flask app
 try:
-    from app import app
+    from backend.app import create_app
+
+    app = create_app()
     
     # Configure for production
     app.config['DEBUG'] = False

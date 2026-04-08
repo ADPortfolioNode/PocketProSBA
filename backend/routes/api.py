@@ -17,22 +17,26 @@ api_bp = Blueprint('api', __name__)
 @api_bp.route('/health', methods=['GET'])
 def health_check():
     """Health check endpoint"""
-    return jsonify({'status': 'healthy'}), 200
+    server_info = {'self': request.host_url.rstrip('/')}
+    return jsonify({'status': 'healthy', 'server': server_info}), 200
 
 @api_bp.route('/chromadb_health', methods=['GET'])
 def chromadb_health_check():
     """ChromaDB health check endpoint"""
+    server_info = {'self': request.host_url.rstrip('/')}
     try:
         rag_manager = get_rag_manager()
         if rag_manager.is_available():
             return jsonify({
                 'status': 'ok',
+                'server': server_info,
                 'message': 'ChromaDB is available and connected',
                 'document_count': rag_manager.get_document_count()
             }), 200
         else:
             return jsonify({
                 'status': 'error',
+                'server': server_info,
                 'message': 'ChromaDB is not available',
                 'document_count': 0
             }), 200

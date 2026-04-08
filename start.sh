@@ -1,5 +1,14 @@
-﻿#!/bin/sh
+﻿#!/usr/bin/env bash
 set -euo pipefail
+
+if [ -z "${BASH_VERSION:-}" ]; then
+  if command -v bash >/dev/null 2>&1; then
+    exec bash "$0" "$@"
+  fi
+  echo "[ERROR] Bash is required to run this script."
+  echo "Please use Git Bash, WSL, or install a Bash shell, then rerun ./start.sh."
+  exit 1
+fi
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$ROOT"
@@ -243,7 +252,11 @@ if [[ "$LOCAL" == true ]]; then
   echo "Starting PocketProSBA locally in host mode..."
 else
   if [[ "$MODE" == "prod" ]]; then
-    COMPOSE_FILE="docker-compose.yml"
+    if [[ -f "docker-compose.prod.yml" ]]; then
+      COMPOSE_FILE="docker-compose.prod.yml"
+    else
+      COMPOSE_FILE="docker-compose.yml"
+    fi
   else
     COMPOSE_FILE="docker-compose.dev.yml"
   fi

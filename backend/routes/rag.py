@@ -7,9 +7,16 @@ from backend.services.api_service import (
     query_documents_service,
 )
 from backend.services.rag import get_rag_manager
-from backend.enhanced_gemini_rag_service import enhanced_rag_service
 
 logger = logging.getLogger(__name__)
+
+try:
+    from backend.enhanced_gemini_rag_service import enhanced_rag_service
+except Exception as e:
+    logger.warning(f"Enhanced Gemini RAG service is unavailable: {e}")
+    class _FallbackEnhancedRAGService:
+        is_initialized = False
+    enhanced_rag_service = _FallbackEnhancedRAGService()
 rag_bp = Blueprint('rag', __name__)
 
 @rag_bp.route('/health', methods=['GET'])

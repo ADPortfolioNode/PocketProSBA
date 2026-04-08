@@ -2,8 +2,8 @@ import os
 import logging
 from flask import Flask, jsonify, request
 from flask_cors import CORS
-from config import get_config
-from models.chat import db
+from backend.config import get_config
+from backend.models.chat import db
 
 
 # Configure logging
@@ -36,7 +36,9 @@ def create_app(config_name=None):
 
     # Configure CORS - allow multiple origins for local dev, Docker, and production frontend
     allowed_origins = [
+        'http://localhost',
         'http://localhost:3000',
+        'http://127.0.0.1',
         'http://frontend:80',
         'https://pocket-pro-sba.vercel.app'
     ]
@@ -44,15 +46,9 @@ def create_app(config_name=None):
     if cors_origins and cors_origins not in allowed_origins:
         allowed_origins.append(cors_origins)
 
-    def cors_origin(origin):
-        if not origin:
-            return True
-        request_origin = request.host_url.rstrip('/')
-        return origin in allowed_origins or origin == request_origin
-
     CORS(app, resources={
         r"/api/*": {
-            "origins": cors_origin,
+            "origins": allowed_origins,
             "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
             "allow_headers": ["Content-Type", "Authorization"],
             "supports_credentials": False,
@@ -61,11 +57,11 @@ def create_app(config_name=None):
     })
 
     # Register blueprints
-    from routes.api import api_bp
-    from routes.chat import chat_bp
-    from routes.sba import sba_bp
-    from routes.rag import rag_bp
-    from routes.orchestrator import orchestrator_bp
+    from backend.routes.api import api_bp
+    from backend.routes.chat import chat_bp
+    from backend.routes.sba import sba_bp
+    from backend.routes.rag import rag_bp
+    from backend.routes.orchestrator import orchestrator_bp
 
     app.register_blueprint(api_bp, url_prefix='/api')
     app.register_blueprint(chat_bp, url_prefix='/api/chat')
@@ -75,7 +71,7 @@ def create_app(config_name=None):
 
     # Initialize Gemini RAG service
     try:
-        from enhanced_gemini_rag_service import enhanced_rag_service
+        from backend.enhanced_gemini_rag_service import enhanced_rag_service
         with app.app_context():
             success = enhanced_rag_service.initialize_full_service()
             if success:
@@ -93,6 +89,14 @@ def create_app(config_name=None):
             'version': '1.0.0',
             'status': 'running'
         })
+
+    @app.route('/health', methods=['GET'])
+    def health():
+        return jsonify({
+            'status': 'healthy',
+            'service': 'PocketPro SBA',
+            'version': '1.0.0'
+        }), 200
 
     # Test CORS route
     @app.route('/test-cors')

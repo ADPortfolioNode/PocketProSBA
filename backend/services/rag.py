@@ -10,15 +10,25 @@ logger = logging.getLogger(__name__)
 # Global RAG manager instance
 _rag_manager_instance = None
 
-# Import Gemini RAG service
-try:
-    from backend.gemini_rag_service import gemini_rag_service
-    GEMINI_AVAILABLE = True
-    logger.info("Gemini RAG service imported successfully")
-except ImportError as e:
-    logger.warning(f"Failed to import Gemini RAG service: {str(e)}")
-    GEMINI_AVAILABLE = False
-    gemini_rag_service = None
+# Lazy import of Gemini RAG service only when needed
+_gemini_service_loaded = False
+_gemini_service = None
+
+
+def _load_gemini_service():
+    global _gemini_service_loaded, _gemini_service
+    if _gemini_service_loaded:
+        return _gemini_service
+    _gemini_service_loaded = True
+    try:
+        from backend.gemini_rag_service import gemini_rag_service
+        _gemini_service = gemini_rag_service
+        logger.info("Gemini RAG service imported successfully")
+    except Exception as e:
+        logger.warning(f"Failed to import Gemini RAG service: {e}")
+        _gemini_service = None
+    return _gemini_service
+
 
 class RAGManager:
     """

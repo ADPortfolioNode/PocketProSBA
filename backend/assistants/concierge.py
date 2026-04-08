@@ -10,15 +10,15 @@ from .base import BaseAssistant
 # Configure logging
 logger = logging.getLogger(__name__)
 
-# Import Gemini RAG service
-try:
-    from backend.gemini_rag_service import gemini_rag_service
-    GEMINI_AVAILABLE = True
-    logger.info("Gemini RAG service imported successfully")
-except ImportError as e:
-    logger.warning(f"Failed to import Gemini RAG service: {str(e)}")
-    GEMINI_AVAILABLE = False
-    gemini_rag_service = None
+# Lazy-load Gemini RAG service only when required
+def _load_gemini_rag_service():
+    try:
+        from backend.gemini_rag_service import gemini_rag_service
+        logger.info("Gemini RAG service imported successfully")
+        return gemini_rag_service
+    except Exception as e:
+        logger.warning(f"Failed to import Gemini RAG service: {e}")
+        return None
 
 # Import self-optimizing components
 try:
@@ -370,7 +370,8 @@ class Concierge(BaseAssistant):
         self._update_status("planning", 40, "Analyzing your request...")
 
         # Use Gemini RAG service for natural language responses
-        if GEMINI_AVAILABLE and gemini_rag_service:
+        gemini_rag_service = _load_gemini_rag_service()
+        if gemini_rag_service:
             try:
                 # Query the Gemini RAG service for task-related information
                 result = gemini_rag_service.query_sba_loans(message)

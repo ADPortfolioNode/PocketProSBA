@@ -141,16 +141,19 @@ npm run build
 ### Development with Docker Compose
 ```bash
 # Start all services with hot-reload
-docker-compose -f docker-compose.dev.yml up --build
+# Recommended startup sequence for development:
+# 1. Build and launch services in detached mode
+# 2. Verify service status
+# 3. Attach logs if needed
 
-# Run in background
-docker-compose -f docker-compose.dev.yml up --build -d
+docker compose -f docker-compose.dev.yml up --build -d
 
-# View logs
-docker-compose -f docker-compose.dev.yml logs -f
+docker compose -f docker-compose.dev.yml ps
+
+docker compose -f docker-compose.dev.yml logs -f
 
 # Stop services
-docker-compose -f docker-compose.dev.yml down
+docker compose -f docker-compose.dev.yml down
 ```
 
 ### Production Docker Build

@@ -1,10 +1,16 @@
 import os
-import chromadb
-from chromadb.config import Settings
+
 
 def init_chroma_client():
     CHROMADB_HOST = os.getenv('CHROMADB_HOST', 'chromadb')
     CHROMADB_PORT = int(os.getenv('CHROMADB_PORT', 8000))
+
+    try:
+        import chromadb
+        from chromadb.config import Settings
+    except Exception as exc:
+        print(f"ChromaDB import failed: {exc}")
+        raise
 
     # Initialize with v2 API settings
     settings = Settings(
@@ -13,7 +19,11 @@ def init_chroma_client():
         chroma_server_http_port=CHROMADB_PORT
     )
 
-    client = chromadb.HttpClient(host=CHROMADB_HOST, port=CHROMADB_PORT, settings=settings)
+    try:
+        client = chromadb.HttpClient(host=CHROMADB_HOST, port=CHROMADB_PORT, settings=settings)
+    except Exception as exc:
+        print(f"Failed to create ChromaDB HTTP client: {exc}")
+        raise
     
     # Ensure default collection exists
     try:

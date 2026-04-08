@@ -1,19 +1,25 @@
 import axios from 'axios';
 
 const getBackendHost = () => {
+  const envHost = process.env.REACT_APP_API_URL || process.env.REACT_APP_BACKEND_URL;
+
+  const normalizeHost = (host) => {
+    if (!host) return host;
+    return host.replace(/\/api\/?$/, '').replace(/\/+$/, '');
+  };
+
   if (typeof window === 'undefined') {
-    return process.env.REACT_APP_API_URL || 'http://localhost:5000';
+    return normalizeHost(envHost) || 'http://localhost:5000';
   }
 
   const params = new URLSearchParams(window.location.search);
   const backendHost = params.get('backend_host') || params.get('backendUrl') || params.get('api_host');
-
   if (backendHost) {
-    return backendHost;
+    return normalizeHost(backendHost);
   }
 
-  if (process.env.REACT_APP_API_URL) {
-    return process.env.REACT_APP_API_URL;
+  if (envHost) {
+    return normalizeHost(envHost);
   }
 
   const { protocol, hostname, port } = window.location;

@@ -5,6 +5,7 @@ python-multipart==0.0.9
 # Flask and core web server
 flask==2.3.3
 flask-cors==4.0.0
+Flask-SQLAlchemy==3.0.4
 flask-socketio==5.3.6
 gunicorn==21.2.0
 eventlet==0.33.3
@@ -29,11 +30,12 @@ markupsafe>=2.0.0
 numpy==1.24.3  # Aligned with production version for consistency
 scikit-learn==1.2.2
 pandas==2.2.2
-chromadb>=0.4.22,<0.5.0  # Pinned to production range
-google-generativeai==0.3.2
+chromadb==0.3.29  # Use lightweight Chroma client to avoid heavy torch/sentence-transformers installs
+google-generativeai==0.4.1
 openai==1.30.1
 tiktoken==0.7.0
-langchain-google-genai
+langchain==0.1.14
+langchain-google-genai==0.0.11
 
 # Redis (optional, for caching/sessions)
 redis==5.0.4

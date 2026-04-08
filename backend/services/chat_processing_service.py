@@ -5,7 +5,7 @@ Handles integration between chat routes and Concierge assistant
 import logging
 import uuid
 from datetime import datetime
-from assistants.concierge import Concierge
+from backend.assistants.concierge import Concierge
 
 logger = logging.getLogger(__name__)
 

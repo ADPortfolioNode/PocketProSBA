@@ -9,7 +9,15 @@ import json
 import hashlib
 from typing import Dict, List, Optional, Any
 from datetime import datetime
-from langchain_google_genai import GoogleGenerativeAIEmbeddings, ChatGoogleGenerativeAI
+try:
+    from langchain_google_genai import GoogleGenerativeAIEmbeddings, ChatGoogleGenerativeAI
+    _LANGCHAIN_GENAI_AVAILABLE = True
+    _LANGCHAIN_GENAI_IMPORT_ERROR = None
+except ImportError as e:
+    GoogleGenerativeAIEmbeddings = None
+    ChatGoogleGenerativeAI = None
+    _LANGCHAIN_GENAI_AVAILABLE = False
+    _LANGCHAIN_GENAI_IMPORT_ERROR = e
 from langchain.vectorstores import Chroma
 from langchain.chains import RetrievalQA
 from langchain.text_splitter import RecursiveCharacterTextSplitter
@@ -17,13 +25,9 @@ from langchain.document_loaders import DirectoryLoader, TextLoader
 from langchain.prompts import PromptTemplate
 from langchain.schema import Document
 
-try:
-    import chromadb
-    _CHROMADB_AVAILABLE = True
-except Exception as exc:
-    chromadb = None
-    _CHROMADB_AVAILABLE = False
-    _CHROMADB_IMPORT_ERROR = exc
+chromadb = None
+_CHROMADB_AVAILABLE = None
+_CHROMADB_IMPORT_ERROR = None
 
 class EnhancedGeminiRAGService:
     """Enhanced service class for full Gemini-based SBA loan RAG functionality"""
@@ -46,6 +50,11 @@ class EnhancedGeminiRAGService:
         """Initialize the complete RAG service with all components"""
         try:
             self.logger.info("Initializing Enhanced Gemini RAG Service...")
+
+            if not _LANGCHAIN_GENAI_AVAILABLE:
+                raise ImportError(
+                    f"langchain_google_genai module is installed but is missing required classes: {_LANGCHAIN_GENAI_IMPORT_ERROR}"
+                )
             
             # Check API key
             if not self.gemini_api_key:
@@ -456,13 +465,24 @@ REAL ESTATE FINANCING:
     
     def _initialize_vector_store(self) -> bool:
         """Initialize the Chroma vector store with comprehensive documents"""
+        global chromadb, _CHROMADB_AVAILABLE, _CHROMADB_IMPORT_ERROR
         try:
             # Initialize embeddings
             embeddings = GoogleGenerativeAIEmbeddings(
                 model="models/embedding-001",
                 google_api_key=self.gemini_api_key
             )
-            
+
+            if _CHROMADB_AVAILABLE is None:
+                try:
+                    import chromadb
+                    _CHROMADB_AVAILABLE = True
+                    _CHROMADB_IMPORT_ERROR = None
+                except Exception as exc:
+                    chromadb = None
+                    _CHROMADB_AVAILABLE = False
+                    _CHROMADB_IMPORT_ERROR = exc
+
             if not _CHROMADB_AVAILABLE:
                 self.logger.warning(f"ChromaDB unavailable: {_CHROMADB_IMPORT_ERROR}")
                 return False
@@ -474,11 +494,17 @@ REAL ESTATE FINANCING:
             try:
                 collection = self.client.get_collection(name=self.collection_name)
             except Exception:
-                collection = self.client.create_collection(
-                    name=self.collection_name,
-                    metadata={"hnsw:space": "cosine"}
-                )
-            
+                try:
+                    collection = self.client.create_collection(
+                        name=self.collection_name,
+                        metadata={"hnsw:space": "cosine"}
+                    )
+                except Exception as create_exc:
+                    if "already exists" in str(create_exc).lower():
+                        collection = self.client.get_collection(name=self.collection_name)
+                    else:
+                        raise
+
             # Initialize vector store
             self.vector_store = Chroma(
                 client=self.client,
