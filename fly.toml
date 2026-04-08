@@ -6,6 +6,29 @@ app = "pocketprosba"
 
 [env]
   PORT = "5000"
+  FLASK_ENV = "production"
+  HOST = "0.0.0.0"
+  FRONTEND_URL = "https://your-frontend-url.fly.dev"
+
+  # Set these values in Fly secrets or in your deployment pipeline.
+  # Do NOT commit real API keys here if you are sharing this repository.
+  # GEMINI_API_KEY = "your_gemini_api_key"
+  # SECRET_KEY = "your_secret_key"
+
+  # ChromaDB connection settings.
+  # On Fly, CHROMADB_HOST must point to a reachable ChromaDB service.
+  CHROMADB_HOST = "chromadb"
+  CHROMADB_PORT = "8000"
+
+  # LLM defaults
+  LLM_MODEL = "gemini-pro"
+  LLM_TEMPERATURE = "0.2"
+  LLM_MAX_TOKENS = "1024"
+
+  # Optional file/upload settings
+  CHROMA_DB_PATH = "./chromadb_data"
+  UPLOAD_FOLDER = "./uploads"
+  MAX_CONTENT_LENGTH = "16777216"
 
 [experimental]
 auto_rollback = true
