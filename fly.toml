@@ -1,13 +1,17 @@
-app = "PocketProSBA"
+app = "pocketprosba"
+
+[build]
+  dockerfile = "Dockerfile.production"
+  context = "."
 
 [env]
-PORT = "8080"
+  PORT = "5000"
 
 [experimental]
 auto_rollback = true
 
 [[services]]
-  internal_port = 8080
+  internal_port = 5000
   protocol = "tcp"
 
   [[services.ports]]
