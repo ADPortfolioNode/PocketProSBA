@@ -1,140 +1,94 @@
-# PocketPro:SBA - Production Deployment Guide
+# PocketPro:SBA
 
-This project is a Retrieval-Augmented Generation (RAG) application designed for a streamlined, production-ready deployment on Render.com using the "Blueprint" (infrastructure-as-code) model.
+A Retrieval-Augmented Generation (RAG) application for Small Business Administration guidance, distributed via Docker.
 
 ## Technology Stack
 
 | Component | Technology | Role |
 |---|---|---|
-| **Web Service** | Python (Flask) + React.js | A single Docker container serves both the backend API and the compiled frontend. |
-| **Vector DB** | ChromaDB | Runs as a separate Private Service on Render for persistent vector storage. |
-| **LLM** | Google Gemini | Provides the generative AI capabilities for the RAG system. |
-| **Deployment** | Docker on Render.com | Infrastructure is defined in `render.yaml` for automated, repeatable deployments. |
+| **Backend** | Python (Flask) | REST API, RAG orchestration, assistant routing |
+| **Frontend** | React.js + nginx | Web UI served in a container with API proxy |
+| **Vector DB** | ChromaDB | Persistent vector storage for document retrieval |
+| **LLM** | Google Gemini | Generative AI for RAG responses |
+| **Distribution** | Docker Compose | Single-command local and production deployment |
 
----
+## Quick Start
 
 ### Prerequisites
 
-- Python 3.9+
-- Node.js 16+
-- Docker and Docker Compose (for containerized deployment)
-   ```
-   or
-   ```
-   start-dev-full.bat
-   ```
+- Docker and Docker Compose
+- A Gemini API key
 
-### Connection Issues
-
-1. **Backend not responding**: Check if ChromaDB is running
-2. **Frontend can't reach backend**: Verify nginx proxy configuration
-3. **ChromaDB connection errors**: Ensure proper networking in docker-compose
-
-### Local Startup Script
-
-Use the bundled launcher to start the app with logging:
+### Run with Docker
 
 ```bash
+# Copy and configure environment variables
+cp .env.example .env
+# Edit .env and set GEMINI_API_KEY
+
+# Start all services (backend, frontend, chromadb)
+docker compose up --build
+
+# Or use the launcher script
 ./start.sh --mode prod
-# or
-./start.sh --mode dev
 ```
 
-By default, output is logged to `logs/app-<timestamp>.log`.
+### Service URLs
 
-### Common Fixes
-
-```bash
-# Restart containers
-docker-compose down
-docker-compose up --build
-
-# Check container logs
-docker-compose logs backend
-docker-compose logs frontend
-docker-compose logs chromadb
-
-# Check container networking
-docker network ls
-docker-compose ps
-```
-
-### Container Networking
-
-The application uses a custom Docker network to ensure proper communication:
-
-- Frontend uses nginx proxy to route `/api/*` to backend
-- Backend connects to ChromaDB using service name `chromadb:8000`
-- All services are on the `pocketpro-network` bridge network
+| Service | URL |
+|---|---|
+| Frontend | http://localhost:3000 |
+| Backend API | http://localhost:5000 |
+| ChromaDB | http://localhost:8000 |
 
 ## Development
+
+```bash
+# Development mode with hot-reload backend
+./start.sh --mode dev
+
+# Or directly with compose
+docker compose -f docker-compose.dev.yml up --build
+```
 
 ### Project Structure
 
 ```
 PocketProSBA/
-├── src/
-│   ├── assistants/     # AI assistant implementations
-│   ├── services/       # Core services (RAG, ChromaDB, LLM)
-│   └── utils/          # Configuration and utilities
-├── frontend/           # React frontend
-├── uploads/           # Document storage
-├── chromadb_data/     # Vector database storage
-└── docker-compose.yml # Container orchestration
+├── backend/            # Flask API, assistants, RAG services
+├── frontend/           # React UI
+├── uploads/            # Document storage
+├── chromadb_data/      # Vector database storage
+├── docker-compose.yml  # Production stack
+└── docker-compose.dev.yml
 ```
 
-### Adding New Features
+### Container Networking
 
-1. **New Assistant Types**: Extend `BaseAssistant` class
-2. **Document Formats**: Add processors in `DocumentProcessor`
-3. **API Endpoints**: Add routes in `app.py`
+- Frontend nginx proxies `/api/*` to the backend service
+- Backend connects to ChromaDB at `chromadb:8000`
+- All services share the `pocketpro-network` bridge network
 
-## Enhanced Frontend
+## Features
 
-The frontend interface now provides a comprehensive RAG workflow visualization and SBA resource navigation:
+- **SBA Concierge Chat** — AI-guided business assistance
+- **RAG Workflow** — upload, index, query, retrieve, and generate
+- **SBA Navigation** — programs, lifecycle resources, local assistance
+- **Task Orchestrator** — multi-step task decomposition and execution
 
-### RAG Workflow Interface
+## Troubleshooting
 
-The frontend includes a dedicated RAG Workflow interface that visually guides users through the entire RAG process:
+```bash
+# Restart containers
+docker compose down
+docker compose up --build
 
-1. **Document Upload** - Upload and process documents
-2. **Indexing** - Create vector embeddings of document chunks
-3. **Query** - Ask questions about your documents
-4. **Retrieval** - Find relevant context from indexed documents
-5. **Generation** - Generate AI response using the context
-
-This workflow-based approach helps users understand how RAG works and makes the process more intuitive.
-
-### SBA Navigation
-
-The enhanced SBA navigation organizes resources into three main categories:
-
-- **SBA Programs** - Explore loan programs, government contracting, disaster assistance, etc.
-- **Business Lifecycle** - Resources for planning, launching, managing, and growing a business
-- **Local Resources** - Find local assistance through SBDCs, SCORE, Women's Business Centers, etc.
-
-### Running the Frontend Separately
-
-To start just the frontend during development:
-
-#### Using PowerShell:
-
-```powershell
-# Start the frontend
-.\start-frontend.ps1
-```
-
-#### Using Command Prompt:
-
-```cmd
-# Start the frontend
-start-frontend.bat
+# View logs
+docker compose logs backend
+docker compose logs frontend
+docker compose logs chromadb
 ```
 
 ## License
 
 Copyright © 2025 StainlessDeoism.biz - PocketPro:SBA Edition
-
-## Support
-
-For issues and questions, please check the troubleshooting section or create an issue in the repository

@@ -1,7 +1,7 @@
 import pytest
 import json
 from unittest.mock import patch, MagicMock
-from services.api_service import (
+from backend.services.api_service import (
     decompose_task_service,
     execute_step_service,
     validate_step_service,
@@ -14,7 +14,7 @@ class TestAgenticWorkflows:
 
     def test_decompose_task_service_success(self):
         """Test successful task decomposition workflow"""
-        with patch('services.api_service.Concierge') as mock_concierge_class:
+        with patch('backend.services.api_service.Concierge') as mock_concierge_class:
             mock_concierge = MagicMock()
             mock_concierge.handle_message.return_value = {
                 'text': 'Task decomposed into steps',
@@ -32,7 +32,7 @@ class TestAgenticWorkflows:
 
     def test_decompose_task_service_error_handling(self):
         """Test error handling in task decomposition"""
-        with patch('services.api_service.Concierge') as mock_concierge_class:
+        with patch('backend.services.api_service.Concierge') as mock_concierge_class:
             mock_concierge = MagicMock()
             mock_concierge.handle_message.side_effect = Exception("Agent error")
             mock_concierge_class.return_value = mock_concierge
@@ -42,7 +42,7 @@ class TestAgenticWorkflows:
 
     def test_execute_step_service_search_agent_success(self):
         """Test step execution with SearchAgent"""
-        with patch('services.api_service.SearchAgent') as mock_search_class:
+        with patch('backend.services.api_service.SearchAgent') as mock_search_class:
             mock_search_agent = MagicMock()
             mock_search_agent.handle_message.return_value = {
                 'text': 'Search results found',
@@ -66,8 +66,8 @@ class TestAgenticWorkflows:
 
     def test_execute_step_service_fallback_to_concierge(self):
         """Test fallback to Concierge when SearchAgent fails"""
-        with patch('services.api_service.SearchAgent') as mock_search_class, \
-             patch('services.api_service.Concierge') as mock_concierge_class:
+        with patch('backend.services.api_service.SearchAgent') as mock_search_class, \
+             patch('backend.services.api_service.Concierge') as mock_concierge_class:
 
             mock_search_class.side_effect = ValueError("SearchAgent unavailable")
             mock_concierge = MagicMock()
@@ -91,7 +91,7 @@ class TestAgenticWorkflows:
 
     def test_execute_step_service_concierge_direct(self):
         """Test step execution with Concierge directly"""
-        with patch('services.api_service.Concierge') as mock_concierge_class:
+        with patch('backend.services.api_service.Concierge') as mock_concierge_class:
             mock_concierge = MagicMock()
             mock_concierge.handle_message.return_value = {
                 'text': 'Concierge response',
@@ -151,7 +151,7 @@ class TestAgenticWorkflows:
             "distances": [[0.1, 0.2]]
         }
 
-        with patch('services.api_service.get_rag_manager') as mock_get_rag:
+        with patch('backend.services.api_service.get_rag_manager') as mock_get_rag:
             mock_rag_manager = MagicMock()
             mock_rag_manager.query_documents.return_value = mock_results
             mock_get_rag.return_value = mock_rag_manager
@@ -168,7 +168,7 @@ class TestAgenticWorkflows:
 
     def test_query_documents_service_error_handling(self):
         """Test error handling in document query"""
-        with patch('services.api_service.get_rag_manager') as mock_get_rag:
+        with patch('backend.services.api_service.get_rag_manager') as mock_get_rag:
             mock_rag_manager = MagicMock()
             mock_rag_manager.query_documents.side_effect = Exception("Query failed")
             mock_get_rag.return_value = mock_rag_manager
@@ -180,7 +180,7 @@ class TestAgenticWorkflows:
         """Test system info with RAG available"""
         mock_stats = {"count": 150}
 
-        with patch('services.api_service.get_rag_manager') as mock_get_rag:
+        with patch('backend.services.api_service.get_rag_manager') as mock_get_rag:
             mock_rag_manager = MagicMock()
             mock_rag_manager.is_available.return_value = True
             mock_rag_manager.get_collection_stats.return_value = mock_stats
@@ -196,7 +196,7 @@ class TestAgenticWorkflows:
 
     def test_get_system_info_service_rag_unavailable(self):
         """Test system info with RAG unavailable"""
-        with patch('services.api_service.get_rag_manager') as mock_get_rag:
+        with patch('backend.services.api_service.get_rag_manager') as mock_get_rag:
             mock_rag_manager = MagicMock()
             mock_rag_manager.is_available.return_value = False
             mock_get_rag.return_value = mock_rag_manager
@@ -208,7 +208,7 @@ class TestAgenticWorkflows:
 
     def test_get_system_info_service_error_handling(self):
         """Test error handling in system info"""
-        with patch('services.api_service.get_rag_manager') as mock_get_rag:
+        with patch('backend.services.api_service.get_rag_manager') as mock_get_rag:
             mock_rag_manager = MagicMock()
             mock_rag_manager.is_available.side_effect = Exception("Connection failed")
             mock_get_rag.return_value = mock_rag_manager
@@ -216,14 +216,14 @@ class TestAgenticWorkflows:
             result = get_system_info_service()
 
             assert result['rag_status'] == 'unavailable'
-            assert 'error' in result
+            assert result['document_count'] == 0
 
     def test_end_to_end_workflow_integration(self):
         """Test end-to-end workflow integration"""
         # Mock all components
-        with patch('services.api_service.Concierge') as mock_concierge_class, \
-             patch('services.api_service.SearchAgent') as mock_search_class, \
-             patch('services.api_service.get_rag_manager') as mock_get_rag:
+        with patch('backend.services.api_service.Concierge') as mock_concierge_class, \
+             patch('backend.services.api_service.SearchAgent') as mock_search_class, \
+             patch('backend.services.api_service.get_rag_manager') as mock_get_rag:
 
             # Setup mocks
             mock_concierge = MagicMock()

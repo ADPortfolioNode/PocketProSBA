@@ -3,7 +3,7 @@ Tests for chat processing service
 """
 import pytest
 from unittest.mock import Mock, patch
-from services.chat_processing_service import process_chat_message, get_concierge, clear_conversation, get_conversation_history
+from backend.services.chat_processing_service import process_chat_message, get_concierge, clear_conversation, get_conversation_history
 
 
 class TestChatProcessingFunctions:
@@ -17,7 +17,7 @@ class TestChatProcessingFunctions:
 
     def test_process_chat_message_success(self):
         """Test successful message processing"""
-        with patch('services.chat_processing_service.get_concierge') as mock_get_concierge:
+        with patch('backend.services.chat_processing_service.get_concierge') as mock_get_concierge:
             mock_concierge = Mock()
             mock_concierge.handle_message.return_value = {
                 'success': True,
@@ -52,7 +52,7 @@ class TestChatProcessingFunctions:
 
     def test_process_chat_message_missing_message(self):
         """Test message processing with missing message"""
-        with patch('services.chat_processing_service.get_concierge') as mock_get_concierge:
+        with patch('backend.services.chat_processing_service.get_concierge') as mock_get_concierge:
             mock_concierge = Mock()
             mock_concierge.handle_message.return_value = {
                 'success': True,
@@ -73,7 +73,7 @@ class TestChatProcessingFunctions:
 
     def test_get_conversation_history_success(self):
         """Test successful conversation history retrieval"""
-        with patch('services.chat_processing_service.get_concierge') as mock_get_concierge:
+        with patch('backend.services.chat_processing_service.get_concierge') as mock_get_concierge:
             mock_concierge = Mock()
             mock_concierge.conversation_store = {
                 self.test_session_id: {
@@ -99,7 +99,7 @@ class TestChatProcessingFunctions:
 
     def test_clear_conversation_success(self):
         """Test successful conversation clearing"""
-        with patch('services.chat_processing_service.get_concierge') as mock_get_concierge:
+        with patch('backend.services.chat_processing_service.get_concierge') as mock_get_concierge:
             mock_concierge = Mock()
             mock_concierge.conversation_store = {self.test_session_id: {}}
             mock_get_concierge.return_value = mock_concierge
@@ -116,7 +116,7 @@ class TestChatProcessingFunctions:
 
     def test_process_chat_message_exception_handling(self):
         """Test exception handling in message processing"""
-        with patch('services.chat_processing_service.get_concierge') as mock_get_concierge:
+        with patch('backend.services.chat_processing_service.get_concierge') as mock_get_concierge:
             mock_get_concierge.side_effect = Exception("Test error")
 
             result = process_chat_message(

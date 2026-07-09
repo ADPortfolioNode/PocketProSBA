@@ -1,74 +1,49 @@
 #!/bin/bash
 
-echo "🔍 PocketPro SBA Setup Verification"
-echo "=================================="
+echo "PocketPro SBA Docker Setup Verification"
+echo "====================================="
 
-# Check for required files
-echo "📋 Checking required files..."
+echo "Checking required files..."
 files=(
+    ".env.example"
     "backend/.env.example"
     "frontend/.env.example"
-    "render.yaml"
     "docker-compose.yml"
+    "docker-compose.dev.yml"
     "Dockerfile.production"
     "Dockerfile.frontend"
     "Dockerfile.chromadb"
+    "Dockerfile.dev"
 )
 
 for file in "${files[@]}"; do
     if [ -f "$file" ]; then
-        echo "✅ $file exists"
+        echo "[ok] $file exists"
     else
-        echo "❌ $file missing"
+        echo "[missing] $file"
     fi
 done
 
-# Check Docker configuration
 echo ""
-echo "🐳 Checking Docker configuration..."
-docker-compose config > /dev/null 2>&1
+echo "Checking Docker Compose configuration..."
+docker compose config > /dev/null 2>&1
 if [ $? -eq 0 ]; then
-    echo "✅ Docker compose configuration is valid"
+    echo "[ok] docker-compose.yml is valid"
 else
-    echo "❌ Docker compose configuration has errors"
+    echo "[error] docker-compose.yml has errors"
 fi
 
-# Check environment variables
-echo ""
-echo "🔧 Checking environment variables..."
-if [ -f "backend/.env.example" ]; then
-    echo "✅ Backend .env.example exists"
+docker compose -f docker-compose.dev.yml config > /dev/null 2>&1
+if [ $? -eq 0 ]; then
+    echo "[ok] docker-compose.dev.yml is valid"
 else
-    echo "❌ Backend .env.example missing"
-fi
-
-if [ -f "frontend/.env.example" ]; then
-    echo "✅ Frontend .env.example exists"
-else
-    echo "❌ Frontend .env.example missing"
-fi
-
-# Check render.yaml syntax
-echo ""
-echo "🚀 Checking Render configuration..."
-if [ -f "render.yaml" ]; then
-    echo "✅ render.yaml exists"
-    # Basic YAML syntax check
-    python3 -c "import yaml; yaml.safe_load(open('render.yaml'))" 2>/dev/null
-    if [ $? -eq 0 ]; then
-        echo "✅ render.yaml has valid YAML syntax"
-    else
-        echo "❌ render.yaml has YAML syntax errors"
-    fi
-else
-    echo "❌ render.yaml missing"
+    echo "[error] docker-compose.dev.yml has errors"
 fi
 
 echo ""
-echo "🎯 Setup verification complete!"
+echo "Setup verification complete."
 echo ""
-echo "📖 Next steps:"
-echo "1. Copy backend/.env.example to backend/.env and configure your API keys"
-echo "2. Copy frontend/.env.example to frontend/.env and configure your URLs"
-echo "3. Run 'docker-compose up --build' for local development"
-echo "4. Deploy to Render using the render.yaml blueprint"
+echo "Next steps:"
+echo "1. Copy .env.example to .env and set GEMINI_API_KEY"
+echo "2. Run: docker compose up --build"
+echo "3. Open: http://localhost:3000"

@@ -8,6 +8,8 @@ services:
     container_name: pocketpro-backend-dev
     ports:
       - "5000:5000"
+    env_file:
+      - .env
     environment:
       - FLASK_ENV=development
       - PYTHONUNBUFFERED=1

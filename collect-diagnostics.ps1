@@ -89,11 +89,11 @@ if (Test-CommandExists "docker") {
 # Check configuration files
 Write-Host "Collecting configuration files..." -ForegroundColor Yellow
 $CONFIG_FILES = @(
-    "render.yaml",
-    "Dockerfile.render",
-    "wsgi.py",
-    "gunicorn.conf.py",
-    "requirements-render-minimal.txt",
+    "docker-compose.yml",
+    "docker-compose.dev.yml",
+    "Dockerfile.production",
+    "Dockerfile.frontend",
+    "Dockerfile.chromadb",
     ".env"
 )
 
@@ -105,24 +105,23 @@ foreach ($file in $CONFIG_FILES) {
 
 # Create deployment checklist
 $CHECKLIST = @"
-# Render.com Deployment Checklist
+# Docker Deployment Checklist
 
 ## Pre-Deployment
 - [ ] Requirements file contains all necessary dependencies
 - [ ] Docker build completes successfully
-- [ ] Application runs locally with Docker
-- [ ] Environment variables are properly set
-- [ ] Dockerfile.render is properly configured
+- [ ] Application runs locally with docker compose
+- [ ] Environment variables are properly set in .env
+- [ ] Dockerfile.production and Dockerfile.frontend are configured
 
 ## Deployment
-- [ ] GitHub repository is up to date
-- [ ] Render.com account is set up
-- [ ] GEMINI_API_KEY is ready to use
-- [ ] Blueprint deployment or manual service configuration ready
+- [ ] GEMINI_API_KEY is set in .env
+- [ ] docker compose up --build starts all services
+- [ ] ChromaDB volume is mounted for persistence
 
 ## Post-Deployment
 - [ ] Backend service starts successfully
-- [ ] Frontend connects to backend
+- [ ] Frontend connects to backend via nginx proxy
 - [ ] Health check endpoint returns 200
 - [ ] Application functionality works
 "@

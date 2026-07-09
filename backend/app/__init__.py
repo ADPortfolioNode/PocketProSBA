@@ -34,13 +34,12 @@ def create_app(config_name=None):
             logger.error(f"Failed to create database tables: {e}")
             raise
 
-    # Configure CORS - allow multiple origins for local dev, Docker, and production frontend
+    # Configure CORS - allow local dev and Docker service origins
     allowed_origins = [
         'http://localhost',
         'http://localhost:3000',
         'http://127.0.0.1',
         'http://frontend:80',
-        'https://pocket-pro-sba.vercel.app'
     ]
     cors_origins = app.config.get('FRONTEND_URL')
     if cors_origins and cors_origins not in allowed_origins:

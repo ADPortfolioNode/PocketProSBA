@@ -125,7 +125,7 @@ def main():
     if all([env_ok, assistants_ok, rag_ok, api_ok]):
         print("🎉 ALL SYSTEMS OPERATIONAL - READY FOR PRODUCTION")
         print("\nNext steps:")
-        print("1. Deploy using render.yaml configuration")
+        print("1. Deploy using docker compose up --build")
         print("2. Set up ChromaDB instance for RAG functionality")
         print("3. Configure Google CSE ID for search functionality")
     else:

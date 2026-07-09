@@ -16,7 +16,6 @@ sys.path.insert(0, str(current_dir))
 
 # Import after adding to path
 from backend.app import create_app
-from backend.config import TestConfig
 from backend.models.chat import db
 
 def init_test_database():
@@ -24,7 +23,7 @@ def init_test_database():
     print("Initializing test database...")
     
     # Create application with test configuration
-    app = create_app(config_class=TestConfig)
+    app = create_app('testing')
     
     with app.app_context():
         # Create all tables
@@ -46,7 +45,7 @@ def cleanup_test_database():
     """Clean up test database files"""
     print("Cleaning up test database...")
     
-    app = create_app(config_class=TestConfig)
+    app = create_app('testing')
     
     with app.app_context():
         # Drop all tables

@@ -4,7 +4,7 @@ import os
 import json
 import time
 import unittest.mock as mock
-from services.memory_repository import MemoryRepository
+from backend.services.memory_repository import MemoryRepository
 
 class TestMemoryRepository:
     @pytest.fixture

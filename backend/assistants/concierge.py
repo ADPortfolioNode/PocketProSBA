@@ -22,9 +22,9 @@ def _load_gemini_rag_service():
 
 # Import self-optimizing components
 try:
-    from services.task_orchestrator import TaskOrchestrator, StepAssistant
-    from services.memory_repository import MemoryRepository
-    from services.step_strategies import (
+    from backend.services.task_orchestrator import TaskOrchestrator, StepAssistant
+    from backend.services.memory_repository import MemoryRepository
+    from backend.services.step_strategies import (
         DocumentSearchStrategy, TaskDecompositionStrategy, AnalysisStrategy, ResponseGenerationStrategy,
         FastDocumentSearchStrategy, DetailedDocumentSearchStrategy, LLMAnalysisStrategy, TemplateResponseStrategy
     )

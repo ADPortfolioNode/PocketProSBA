@@ -14,6 +14,8 @@ WORKDIR /app
 # Install system dependencies required for building native extensions
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
+    gcc \
+    g++ \
     python3-dev \
     curl \
     procps \
@@ -21,14 +23,21 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
-COPY backend/requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+COPY backend/requirements.txt ./backend/requirements.txt
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel \
+    && pip install --no-cache-dir -r backend/requirements.txt
 
 # Production stage
 FROM base as production
 
-# Copy application code
-COPY backend/ .
+# Copy application entrypoints and backend package
+COPY wsgi.py run.py ./
+COPY backend/ ./backend/
+
+# Runtime directories
+RUN mkdir -p uploads logs chromadb_data
+
+ENV PYTHONPATH=/app
 
 # Create non-root user
 RUN useradd --create-home --shell /bin/bash app \
@@ -42,5 +51,5 @@ EXPOSE 5000
 HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
   CMD curl -f http://127.0.0.1:5000/api/health || exit 1
 
-# Start application
-CMD ["gunicorn", "app:create_app()", "--bind", "0.0.0.0:5000", "--workers", "2", "--threads", "4", "--timeout", "60"]
+# Start application via WSGI entrypoint (preserves backend.* imports)
+CMD ["gunicorn", "wsgi:application", "--bind", "0.0.0.0:5000", "--workers", "2", "--threads", "4", "--timeout", "60"]

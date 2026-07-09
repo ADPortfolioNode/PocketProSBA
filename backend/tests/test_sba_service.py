@@ -1,13 +1,13 @@
 import pytest
 from unittest.mock import patch, MagicMock
-from services.SBA_Content import SBAContentAPI
+from backend.services.SBA_Content import SBAContentAPI
 
 class TestSBAContentAPI:
     @pytest.fixture
     def sba_api(self):
         return SBAContentAPI()
 
-    @patch('services.SBA_Content.requests.get')
+    @patch('backend.services.SBA_Content.requests.get')
     def test_search_articles_success(self, mock_get, sba_api):
         mock_response = MagicMock()
         mock_response.json.return_value = {
@@ -27,7 +27,7 @@ class TestSBAContentAPI:
             timeout=10
         )
 
-    @patch('services.SBA_Content.requests.get')
+    @patch('backend.services.SBA_Content.requests.get')
     def test_search_articles_request_error(self, mock_get, sba_api):
         mock_get.side_effect = Exception('Connection error')
 
@@ -36,7 +36,7 @@ class TestSBAContentAPI:
         assert 'error' in result
         assert 'Connection error' in result['error']
 
-    @patch('services.SBA_Content.requests.get')
+    @patch('backend.services.SBA_Content.requests.get')
     def test_get_article_success(self, mock_get, sba_api):
         mock_response = MagicMock()
         mock_response.json.return_value = {
@@ -55,7 +55,7 @@ class TestSBAContentAPI:
             timeout=10
         )
 
-    @patch('services.SBA_Content.requests.get')
+    @patch('backend.services.SBA_Content.requests.get')
     def test_search_courses_success(self, mock_get, sba_api):
         mock_response = MagicMock()
         mock_response.json.return_value = {
@@ -69,7 +69,7 @@ class TestSBAContentAPI:
         assert len(result['results']) == 1
         assert result['results'][0]['title'] == 'Test Course'
 
-    @patch('services.SBA_Content.requests.get')
+    @patch('backend.services.SBA_Content.requests.get')
     def test_search_offices_success(self, mock_get, sba_api):
         mock_response = MagicMock()
         mock_response.json.return_value = {
@@ -83,7 +83,7 @@ class TestSBAContentAPI:
         assert len(result['results']) == 1
         assert result['results'][0]['title'] == 'Test Office'
 
-    @patch('services.SBA_Content.requests.get')
+    @patch('backend.services.SBA_Content.requests.get')
     def test_get_node_success(self, mock_get, sba_api):
         mock_response = MagicMock()
         mock_response.json.return_value = {
@@ -98,7 +98,7 @@ class TestSBAContentAPI:
         assert result['id'] == 1
         assert result['title'] == 'Test Node'
 
-    @patch('services.SBA_Content.requests.get')
+    @patch('backend.services.SBA_Content.requests.get')
     def test_request_timeout(self, mock_get, sba_api):
         import requests
         mock_get.side_effect = requests.Timeout('Request timed out')
@@ -108,7 +108,7 @@ class TestSBAContentAPI:
         assert 'error' in result
         assert 'Request timed out' in result['error']
 
-    @patch('services.SBA_Content.requests.get')
+    @patch('backend.services.SBA_Content.requests.get')
     def test_http_error(self, mock_get, sba_api):
         import requests
         mock_response = MagicMock()

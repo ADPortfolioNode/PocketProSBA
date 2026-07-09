@@ -1,8 +1,8 @@
 import pytest
 import unittest.mock as mock
-from services.task_orchestrator import TaskOrchestrator, StepAssistant, StepExecutionError
-from services.memory_repository import MemoryRepository
-from services.step_strategies import DocumentSearchStrategy, TaskDecompositionStrategy
+from backend.services.task_orchestrator import TaskOrchestrator, StepAssistant, StepExecutionError
+from backend.services.memory_repository import MemoryRepository
+from backend.services.step_strategies import DocumentSearchStrategy, TaskDecompositionStrategy
 
 class TestTaskOrchestrator:
     @pytest.fixture

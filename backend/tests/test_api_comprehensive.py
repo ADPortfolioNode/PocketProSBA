@@ -7,8 +7,7 @@ from unittest.mock import patch, MagicMock
 # Add the backend directory to the Python path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
-from app import create_app
-from config import TestConfig
+from backend.app import create_app
 
 class TestAPIComprehensive:
     """Comprehensive test suite for API endpoints"""
@@ -16,7 +15,7 @@ class TestAPIComprehensive:
     @pytest.fixture
     def app(self):
         """Create test app with test configuration"""
-        app = create_app(TestConfig)
+        app = create_app('testing')
         app.config['TESTING'] = True
         return app
 
@@ -41,7 +40,7 @@ class TestAPIComprehensive:
 
     def test_decompose_task_success(self, client):
         """Test successful task decomposition"""
-        with patch('services.api_service.decompose_task_service') as mock_service:
+        with patch('backend.services.api_service.decompose_task_service') as mock_service:
             mock_service.return_value = {'response': 'test response'}
             
             response = client.post('/api/decompose', json={
@@ -66,7 +65,7 @@ class TestAPIComprehensive:
 
     def test_execute_step_success(self, client):
         """Test successful step execution"""
-        with patch('services.api_service.execute_step_service') as mock_service:
+        with patch('backend.services.api_service.execute_step_service') as mock_service:
             mock_service.return_value = {'result': 'test result'}
             
             response = client.post('/api/execute', json={'task': {'step': 'test'}})
@@ -82,7 +81,7 @@ class TestAPIComprehensive:
 
     def test_validate_step_success(self, client):
         """Test successful step validation"""
-        with patch('services.api_service.validate_step_service') as mock_service:
+        with patch('backend.services.api_service.validate_step_service') as mock_service:
             mock_service.return_value = {'validation': 'test validation'}
             
             response = client.post('/api/validate', json={
@@ -101,7 +100,7 @@ class TestAPIComprehensive:
 
     def test_query_documents_success(self, client):
         """Test successful document query"""
-        with patch('services.api_service.query_documents_service') as mock_service:
+        with patch('backend.services.api_service.query_documents_service') as mock_service:
             mock_service.return_value = {'results': ['doc1', 'doc2']}
             
             response = client.post('/api/query', json={'query': 'test query'})
@@ -117,7 +116,7 @@ class TestAPIComprehensive:
 
     def test_query_documents_with_top_k(self, client):
         """Test document query with top_k parameter"""
-        with patch('services.api_service.query_documents_service') as mock_service:
+        with patch('backend.services.api_service.query_documents_service') as mock_service:
             mock_service.return_value = {'results': ['doc1', 'doc2']}
             
             response = client.post('/api/query', json={
@@ -148,7 +147,7 @@ class TestAPIComprehensive:
 
     def test_error_handling_500(self, client):
         """Test 500 error handling"""
-        with patch('services.api_service.get_system_info_service') as mock_service:
+        with patch('backend.services.api_service.get_system_info_service') as mock_service:
             mock_service.side_effect = Exception('Test error')
             
             response = client.get('/api/info')

@@ -505,12 +505,11 @@ REAL ESTATE FINANCING:
                     else:
                         raise
 
-            # Initialize vector store
+            # Initialize vector store (client-only; persist_directory is set on PersistentClient)
             self.vector_store = Chroma(
                 client=self.client,
                 collection_name=self.collection_name,
                 embedding_function=embeddings,
-                persist_directory=self.persist_directory
             )
             
             return True

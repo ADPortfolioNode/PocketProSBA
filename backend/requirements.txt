@@ -1,4 +1,4 @@
-# Core Flask dependencies - Render.com optimized for Python 3.11+ (NO GEVENT)
+# Core Flask dependencies for Python 3.11+ Docker deployment
 flask==3.0.0
 flask-cors==4.0.0
 flask-socketio==5.3.6
@@ -6,11 +6,12 @@ flask-sqlalchemy==3.1.1
 gunicorn==21.2.0
 
 # AI and Vector Database
-chromadb==0.3.29  # Use lightweight Chroma client to avoid heavy torch/sentence-transformers installs
+chromadb==0.4.24
 google-generativeai>=0.4.1
+google-ai-generativelanguage==0.4.0
 langchain==0.1.14
 langchain-google-genai==0.0.11
-onnxruntime==1.15.1
+onnxruntime>=1.18.0,<2.0
 
 # Utilities
 python-dotenv==1.0.0
@@ -22,7 +23,7 @@ pypdf2==3.0.1
 python-docx==1.1.0
 markdown==3.5.1
 
-# Additional dependencies for Render
+# Additional runtime dependencies
 pydantic==1.10.9
 urllib3>=1.26.0,<3.0.0
 setuptools>=68.0.0
