@@ -18,7 +18,7 @@ except ImportError as e:
     ChatGoogleGenerativeAI = None
     _LANGCHAIN_GENAI_AVAILABLE = False
     _LANGCHAIN_GENAI_IMPORT_ERROR = e
-from langchain.vectorstores import Chroma
+from langchain_community.vectorstores import Chroma
 from langchain.chains import RetrievalQA
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.document_loaders import DirectoryLoader, TextLoader
@@ -487,8 +487,12 @@ REAL ESTATE FINANCING:
                 self.logger.warning(f"ChromaDB unavailable: {_CHROMADB_IMPORT_ERROR}")
                 return False
 
-            # Initialize Chroma client
-            self.client = chromadb.PersistentClient(path=self.persist_directory)
+            from backend.utils.chroma_utils import clear_legacy_chroma_env, restore_chroma_env
+            cleared_env = clear_legacy_chroma_env()
+            try:
+                self.client = chromadb.PersistentClient(path=self.persist_directory)
+            finally:
+                restore_chroma_env(cleared_env)
             
             # Get or create collection
             try:
@@ -521,7 +525,7 @@ REAL ESTATE FINANCING:
     def _create_enhanced_qa_chain(self) -> bool:
         """Create enhanced QA chain with better prompts and configuration"""
         try:
-            if not self.vector_store:
+            if self.vector_store is None:
                 return False
             
             # Create retriever
@@ -562,7 +566,7 @@ Answer:"""
             return True
             
         except Exception as e:
-            self.logger.error(f"Failed to create QA chain: {str(e)}")
+            self.logger.exception(f"Failed to create QA chain: {str(e)}")
             return False
     
     def query_sba_loans(self, question: str) -> Dict[str, Any]:

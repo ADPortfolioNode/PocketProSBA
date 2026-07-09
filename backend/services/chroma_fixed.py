@@ -40,13 +40,12 @@ class ChromaService:
             return False
 
         try:
-            self.client = chromadb.HttpClient(
-                host=self.host,
-                port=self.port,
-                settings=Settings(
-                    anonymized_telemetry=False
-                )
-            )
+            from backend.utils.chroma_utils import clear_legacy_chroma_env, restore_chroma_env
+            cleared_env = clear_legacy_chroma_env()
+            try:
+                self.client = chromadb.HttpClient(host=self.host, port=self.port)
+            finally:
+                restore_chroma_env(cleared_env)
             
             self.embedding_function = embedding_functions.SentenceTransformerEmbeddingFunction(
                 model_name="all-MiniLM-L6-v2"
