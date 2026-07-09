@@ -101,15 +101,63 @@ clear_service_ports() {
   clear_local_ports "${LOCAL_PORTS[@]}"
 }
 
-docker_prune() {
+docker_daemon_ready() {
+  command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1
+}
+
+# Wait until the Docker engine answers, or return 1.
+# Useful on Windows when Docker Desktop is still starting (or recovering).
+wait_for_docker() {
+  local attempts="${1:-30}"
+  local delay="${2:-2}"
+  local i
+
   if ! command -v docker >/dev/null 2>&1; then
-    echo "[WARN] Docker is not installed or not available; skipping prune."
-    return
+    echo "[ERROR] Docker CLI is not installed or not on PATH."
+    return 1
+  fi
+
+  if docker_daemon_ready; then
+    return 0
+  fi
+
+  echo "[INFO] Waiting for Docker engine to become ready..."
+  for ((i = 1; i <= attempts; i++)); do
+    if docker_daemon_ready; then
+      echo "[INFO] Docker engine is ready."
+      return 0
+    fi
+    sleep "$delay"
+  done
+
+  echo "[ERROR] Cannot connect to the Docker daemon."
+  echo "        On Windows, start Docker Desktop and wait until it shows 'Engine running'."
+  echo "        Then re-run: ./start.sh ..."
+  echo "        Quick check: docker info"
+  return 1
+}
+
+docker_prune() {
+  if ! wait_for_docker 15 2; then
+    echo "[ERROR] Skipping prune because Docker is not available."
+    return 1
   fi
 
   echo "[INFO] Pruning unused Docker resources..."
-  docker system prune -af --volumes || true
+  # Avoid --volumes by default risk of wiping named volumes; keep -af for unused images/containers/networks.
+  # builder prune can momentarily stress Docker Desktop on Windows; tolerate failure and re-check daemon.
+  docker system prune -af || true
   docker builder prune -af || true
+
+  if ! docker_daemon_ready; then
+    echo "[WARN] Docker engine became unreachable during prune (common on Docker Desktop after large cleanups)."
+    echo "[INFO] Waiting for Docker to recover..."
+    if ! wait_for_docker 60 3; then
+      echo "[ERROR] Docker did not recover after prune. Start Docker Desktop, then re-run without --prune:"
+      echo "        ./start.sh --build --diag"
+      return 1
+    fi
+  fi
 }
 
 MODE=dev
@@ -242,7 +290,7 @@ export FLASK_APP="${FLASK_APP:-app.py}"
 export PYTHONPATH="$ROOT:$ROOT/backend:$ROOT/src${PYTHONPATH:+:$PYTHONPATH}"
 
 if [[ "$PRUNE" == true ]]; then
-  docker_prune
+  docker_prune || exit 1
 fi
 
 clear_service_ports
@@ -250,6 +298,10 @@ clear_service_ports
 if [[ "$LOCAL" == true ]]; then
   echo "Starting PocketProSBA locally in host mode..."
 else
+  if ! wait_for_docker 30 2; then
+    exit 1
+  fi
+
   if [[ "$MODE" == "prod" ]]; then
     if [[ -f "docker-compose.prod.yml" ]]; then
       COMPOSE_FILE="docker-compose.prod.yml"

@@ -6,8 +6,12 @@ flask-sqlalchemy==3.1.1
 gunicorn==21.2.0
 
 # AI and Vector Database
+# Client 0.4.24 + server 0.5.3: list_collections can fail (dimension field); use heartbeat for health.
+# Do not bump to 0.5.x without also upgrading pydantic (breaks google/langchain stack on pydantic v1).
 chromadb==0.4.24
-google-generativeai>=0.4.1
+# Pin Google stack together: 0.8.x generativeai + 0.4.0 generativelanguage
+# breaks FileServiceClient and kills Enhanced Gemini RAG init.
+google-generativeai==0.4.1
 google-ai-generativelanguage==0.4.0
 langchain==0.1.14
 langchain-community==0.0.38

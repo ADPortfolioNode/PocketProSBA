@@ -112,6 +112,13 @@ class RAGManager:
             logger.error(f"Failed to get collection stats: {str(e)}")
             return {"error": str(e)}
 
+    def get_document_count(self):
+        """Return document count for health/info endpoints."""
+        stats = self.get_collection_stats()
+        if isinstance(stats, dict) and "error" not in stats:
+            return int(stats.get("count", 0) or 0)
+        return 0
+
 def get_rag_manager():
     """Get the global RAG manager instance."""
     global _rag_manager_instance

@@ -50,7 +50,10 @@ class Concierge(BaseAssistant):
         
         # Initialize RAG manager
         try:
-            from services.rag import get_rag_manager
+            try:
+                from backend.services.rag import get_rag_manager
+            except ImportError:
+                from services.rag import get_rag_manager
             self.rag_manager = get_rag_manager()
         except Exception as e:
             logger.error(f"Failed to initialize RAG manager: {str(e)}")

@@ -46,10 +46,18 @@ class ChromaService:
                 self.client = chromadb.HttpClient(host=self.host, port=self.port)
             finally:
                 restore_chroma_env(cleared_env)
-            
-            self.embedding_function = embedding_functions.SentenceTransformerEmbeddingFunction(
-                model_name="all-MiniLM-L6-v2"
-            )
+
+            # Prefer lightweight ONNX default embeddings (onnxruntime already in image).
+            # SentenceTransformerEmbeddingFunction pulls torch/sentence-transformers and
+            # OOMs Docker Desktop on ~8GB hosts.
+            try:
+                self.embedding_function = embedding_functions.DefaultEmbeddingFunction()
+            except Exception as emb_err:
+                logger.warning(
+                    "DefaultEmbeddingFunction unavailable (%s); using no custom embedding_function",
+                    emb_err,
+                )
+                self.embedding_function = None
             
             self._initialize_collections()
             
@@ -76,11 +84,13 @@ class ChromaService:
     def _get_or_create_collection(self, name):
         """Get or create a collection"""
         try:
-            return self.client.get_or_create_collection(
-                name=name,
-                embedding_function=self.embedding_function,
-                metadata={"description": f"Collection for {name}"}
-            )
+            kwargs = {
+                "name": name,
+                "metadata": {"description": f"Collection for {name}"},
+            }
+            if self.embedding_function is not None:
+                kwargs["embedding_function"] = self.embedding_function
+            return self.client.get_or_create_collection(**kwargs)
         except Exception as e:
             logger.error(f"Failed to get or create collection {name}: {str(e)}")
             raise
@@ -91,7 +101,8 @@ class ChromaService:
             return False
         
         try:
-            self.client.list_collections()
+            # Prefer heartbeat: list_collections can break across client/server minor versions.
+            self.client.heartbeat()
             return True
         except Exception as e:
             logger.error(f"ChromaDB availability check failed: {str(e)}")
