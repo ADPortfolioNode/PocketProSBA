@@ -36,7 +36,7 @@ class TestChatProcessingFunctions:
             )
 
             assert result['success'] is True
-            assert result['text'] == 'I can help you with SBA loans.'
+            assert result['response'] == 'I can help you with SBA loans.'
             assert result['session_id'] == self.test_session_id
 
     def test_process_chat_message_missing_user_id(self):
@@ -47,8 +47,8 @@ class TestChatProcessingFunctions:
             self.test_session_id
         )
 
-        assert result['success'] is True  # The function doesn't validate user_id
-        assert 'text' in result
+        assert result['success'] is True
+        assert 'response' in result
 
     def test_process_chat_message_missing_message(self):
         """Test message processing with missing message"""
@@ -70,7 +70,7 @@ class TestChatProcessingFunctions:
 
             # Adjusted expectation - empty message should return success with response
             assert result['success'] is True
-            assert 'text' in result
+            assert 'response' in result
 
     def test_get_conversation_history_success(self):
         """Test successful conversation history retrieval"""

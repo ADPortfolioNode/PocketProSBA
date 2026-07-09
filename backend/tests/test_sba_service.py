@@ -29,10 +29,12 @@ class TestSBAContentAPI:
 
     @patch('backend.services.SBA_Content.requests.get')
     def test_search_articles_request_error(self, mock_get, sba_api):
-        mock_get.side_effect = Exception('Connection error')
+        import requests
+        mock_get.side_effect = requests.RequestException('Connection error')
 
         result = sba_api.search_articles(query='test')
 
+        assert result.get('success') is False
         assert 'error' in result
         assert 'Connection error' in result['error']
 
@@ -44,6 +46,7 @@ class TestSBAContentAPI:
             'title': 'Test Article',
             'body': 'Article content'
         }
+        mock_response.raise_for_status = MagicMock()
         mock_get.return_value = mock_response
 
         result = sba_api.get_article(1)
@@ -52,6 +55,7 @@ class TestSBAContentAPI:
         assert result['title'] == 'Test Article'
         mock_get.assert_called_once_with(
             'https://www.sba.gov/api/content/search/articles/1.json',
+            params=None,
             timeout=10
         )
 
