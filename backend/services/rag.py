@@ -120,8 +120,15 @@ class RAGManager:
         return 0
 
 def get_rag_manager():
-    """Get the global RAG manager instance."""
+    """Get the global RAG manager instance.
+
+    Cache a working instance. Reconnecting to Chroma on every health/chat
+    request was thrashing low-RAM Docker Desktop hosts.
+    """
     global _rag_manager_instance
+
+    if _rag_manager_instance is not None and _rag_manager_instance.is_available():
+        return _rag_manager_instance
 
     try:
         try:
@@ -129,7 +136,6 @@ def get_rag_manager():
         except ImportError:
             from services.chroma_fixed import ChromaService
 
-        # Initialize ChromaDB service
         chroma_host = os.environ.get('CHROMADB_HOST', 'localhost')
         chroma_port = int(os.environ.get('CHROMADB_PORT', 8000))
 
@@ -139,16 +145,14 @@ def get_rag_manager():
 
         if candidate.is_available():
             _rag_manager_instance = candidate
-        else:
-            logger.warning("ChromaDB RAG manager is not available yet; retrying on next request.")
-            _rag_manager_instance = None
+            return _rag_manager_instance
+
+        logger.warning("ChromaDB RAG manager is not available yet; retrying on next request.")
+        _rag_manager_instance = None
 
     except Exception as e:
         logger.error(f"Failed to initialize RAG manager: {str(e)}")
         _rag_manager_instance = None
-
-    if _rag_manager_instance is not None:
-        return _rag_manager_instance
 
     # Return a non-operational manager when ChromaDB is unavailable.
     return RAGManager()
