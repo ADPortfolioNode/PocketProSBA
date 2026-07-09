@@ -14,6 +14,16 @@ from backend.services.rag import get_rag_manager
 
 api_bp = Blueprint('api', __name__)
 
+
+def _get_json_payload():
+    """Parse JSON body; return 400 for malformed JSON."""
+    data = request.get_json(silent=True)
+    if data is not None:
+        return data, None
+    if request.data:
+        return None, (jsonify({'error': 'Bad Request'}), 400)
+    return None, (jsonify({'error': 'No JSON data provided'}), 400)
+
 @api_bp.route('/health', methods=['GET'])
 def health_check():
     """Health check endpoint"""
@@ -80,10 +90,9 @@ def get_diagnostics():
 def decompose_task():
     """Decompose a user task into steps"""
     try:
-        data = request.get_json()
-        if not data:
-            logger.warning("No JSON data provided for decompose task")
-            return jsonify({'error': 'No JSON data provided'}), 400
+        data, error = _get_json_payload()
+        if error:
+            return error
 
         message = data.get('message', '')
         session_id = data.get('session_id')
@@ -103,10 +112,9 @@ def decompose_task():
 def execute_step():
     """Execute a decomposed task step"""
     try:
-        data = request.get_json()
-        if not data:
-            logger.warning("No JSON data provided for execute step")
-            return jsonify({'error': 'No JSON data provided'}), 400
+        data, error = _get_json_payload()
+        if error:
+            return error
 
         task = data.get('task', {})
         result = execute_step_service(task)
@@ -120,10 +128,9 @@ def execute_step():
 def validate_step():
     """Validate a step result"""
     try:
-        data = request.get_json()
-        if not data:
-            logger.warning("No JSON data provided for validate step")
-            return jsonify({'error': 'No JSON data provided'}), 400
+        data, error = _get_json_payload()
+        if error:
+            return error
 
         result = data.get('result', '')
         task = data.get('task', {})
@@ -138,10 +145,9 @@ def validate_step():
 def query_documents():
     """Query documents"""
     try:
-        data = request.get_json()
-        if not data:
-            logger.warning("No JSON data provided for query documents")
-            return jsonify({'error': 'No JSON data provided'}), 400
+        data, error = _get_json_payload()
+        if error:
+            return error
 
         query = data.get('query', '')
         top_k = min(int(data.get('top_k', 5)), 20)
