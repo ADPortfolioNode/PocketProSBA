@@ -1,14 +1,20 @@
-/* Global base — layout tokens live in App.css */
+/* Global base — service-app white/blue */
 body {
   margin: 0;
   padding: 0;
   font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #f7f7f5;
-  color: #141414;
+  background: linear-gradient(165deg, #ffffff 0%, #eef5ff 42%, #e3efff 100%);
+  background-attachment: fixed;
+  color: #0f172a;
 }
 
 code {
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
 }

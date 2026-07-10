@@ -560,13 +560,13 @@ const SBAContentExplorer = ({ selectedResource, endpoints }) => {
   }, [selectedResource, endpoints]);
 
   return (
-    <Container fluid className="sba-content-explorer py-4" style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', minHeight: '100vh' }}>
+    <Container fluid className="sba-content-explorer svc-browse py-4">
       {/* Modern Header */}
-      <div className="text-center mb-5">
-        <h1 className="display-4 text-white fw-bold mb-3" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.3)' }}>
+      <div className="text-center mb-5 svc-browse-hero">
+        <h1 className="display-5 fw-bold mb-3 svc-browse-title">
           SBA Content Explorer
         </h1>
-        <p className="lead text-white-50">
+        <p className="lead text-muted">
           Live sba.gov content when available — RAG/offline answers are labeled not current
         </p>
         {resultMeta?.freshness && (

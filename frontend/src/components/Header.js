@@ -6,7 +6,7 @@ import { Link } from 'react-router-dom';
  */
 function Header() {
   return (
-    <header className="pp-brand-bar" role="banner">
+    <header className="pp-brand-bar svc-brand" role="banner">
       <div className="pp-shell pp-brand-inner">
         <Link to="/" className="pp-logo" aria-label="PocketPro SBA home">
           <span className="pp-logo-mark" aria-hidden="true" />
@@ -14,6 +14,7 @@ function Header() {
             PocketPro <span className="pp-logo-muted">SBA</span>
           </span>
         </Link>
+        <span className="svc-brand-tag d-none d-md-inline">Small business funding service</span>
       </div>
     </header>
   );
