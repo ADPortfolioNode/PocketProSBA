@@ -6,7 +6,7 @@ import ConnectionStatusIndicator from './ConnectionStatusIndicator';
 const NAV_ITEMS = [
   { to: '/', label: 'Home', testId: 'nav-home', exact: true },
   { to: '/chat', label: 'Chat', testId: 'nav-chat' },
-  { to: '/browse', label: 'Browse', testId: 'nav-browse' },
+  { to: '/browse', label: 'Resources', testId: 'nav-browse' },
   { to: '/rag', label: 'RAG', testId: 'nav-rag' },
   { to: '/documents', label: 'Docs', testId: 'nav-documents' },
   { to: '/sba', label: 'SBA', testId: 'nav-sba' },

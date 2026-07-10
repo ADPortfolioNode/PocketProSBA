@@ -663,6 +663,50 @@ footer.app-footer {
   word-break: break-word;
 }
 
+/* Resources page — API-driven nav */
+.svc-res-nav {
+  border-radius: var(--pp-radius);
+}
+
+.svc-res-nav-link {
+  display: flex !important;
+  align-items: flex-start;
+  gap: 0.35rem;
+  border-radius: 12px !important;
+  padding: 0.55rem 0.65rem !important;
+  color: var(--pp-ink) !important;
+  border: 1px solid transparent;
+}
+
+.svc-res-nav-link:hover {
+  background: var(--pp-blue-soft) !important;
+  color: var(--pp-blue-deep) !important;
+}
+
+.svc-res-nav-link.is-active,
+.svc-res-nav-link.active {
+  background: linear-gradient(135deg, #eff6ff, #ffffff) !important;
+  border-color: #bfdbfe !important;
+  color: var(--pp-ink) !important;
+  box-shadow: var(--pp-shadow);
+}
+
+.svc-clickable-card {
+  cursor: pointer;
+  transition: transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease;
+}
+
+.svc-clickable-card:hover {
+  transform: translateY(-2px);
+  border-color: #93c5fd !important;
+  box-shadow: var(--pp-shadow-lg);
+}
+
+.svc-clickable-card:focus {
+  outline: 2px solid #93c5fd;
+  outline-offset: 2px;
+}
+
 @media (max-width: 991px) {
   .svc-hero,
   .svc-band-inner {

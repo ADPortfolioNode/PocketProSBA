@@ -166,70 +166,123 @@ def _envelope(result, page=1):
 
 @sba_bp.route('/resources', methods=['GET'])
 def list_resources():
-    """Resource index for navigation and discovery."""
+    """
+    Resource catalog used to build the Browse/Resources page navigation.
+
+    Each entry is a nav item: {id, name, description, path, icon, group, queryable}.
+    Frontend should load this once, render nav from it, and query `path` when clicked.
+    """
     resources = [
         {
             'id': 'loans',
             'name': 'Loan Programs',
-            'description': '7(a), 504, Microloan and related financing (sba.gov + curated)',
+            'description': '7(a), 504, Microloan and related financing from sba.gov',
             'path': '/api/sba/content/loans',
+            'icon': 'loans',
+            'group': 'Funding',
+            'queryable': True,
+        },
+        {
+            'id': 'loan_types',
+            'name': 'Loan Types Overview',
+            'description': 'Live loan overview (prefers current sba.gov content)',
+            'path': '/api/rag/sba-overview',
+            'icon': 'loan_types',
+            'group': 'Funding',
+            'queryable': True,
+        },
+        {
+            'id': 'lenders',
+            'name': 'Lenders',
+            'description': 'Lender Match and financing partners',
+            'path': '/api/sba/content/lenders',
+            'icon': 'lenders',
+            'group': 'Funding',
+            'queryable': True,
         },
         {
             'id': 'articles',
             'name': 'Articles & Guides',
             'description': 'SBA business guides and learning content',
             'path': '/api/sba/content/articles',
+            'icon': 'articles',
+            'group': 'Learn',
+            'queryable': True,
         },
         {
             'id': 'blogs',
             'name': 'Blogs & News',
             'description': 'SBA blog and newsroom content',
             'path': '/api/sba/content/blogs',
+            'icon': 'blogs',
+            'group': 'Learn',
+            'queryable': True,
         },
         {
             'id': 'courses',
             'name': 'Courses',
             'description': 'SBA learning resources',
             'path': '/api/sba/content/courses',
+            'icon': 'courses',
+            'group': 'Learn',
+            'queryable': True,
         },
         {
             'id': 'documents',
             'name': 'Documents',
             'description': 'SBA forms and documents',
             'path': '/api/sba/content/documents',
+            'icon': 'documents',
+            'group': 'Learn',
+            'queryable': True,
         },
         {
             'id': 'events',
             'name': 'Events',
             'description': 'SBA events and webinars',
             'path': '/api/sba/content/events',
+            'icon': 'events',
+            'group': 'Connect',
+            'queryable': True,
         },
         {
             'id': 'offices',
             'name': 'Offices & Local Help',
             'description': 'District offices and local assistance finders',
             'path': '/api/sba/content/offices',
+            'icon': 'offices',
+            'group': 'Connect',
+            'queryable': True,
         },
         {
             'id': 'sbir',
             'name': 'SBIR/STTR Awards',
             'description': 'Public SBIR.gov awards API (when available)',
             'path': '/api/sba/content/sbir',
-        },
-        {
-            'id': 'loan_types',
-            'name': 'Loan Types Overview',
-            'description': 'RAG/static overview of SBA loan products',
-            'path': '/api/rag/sba-overview',
+            'icon': 'sbir',
+            'group': 'Innovation',
+            'queryable': True,
         },
         {
             'id': 'sources',
             'name': 'API Source Status',
             'description': 'Health of public SBA data sources',
             'path': '/api/sba/sources',
+            'icon': 'sources',
+            'group': 'System',
+            'queryable': True,
         },
     ]
-    return jsonify({'resources': resources, 'count': len(resources), 'status': 'ok'}), 200
+    return jsonify({
+        'resources': resources,
+        'count': len(resources),
+        'status': 'ok',
+        'navigation': {
+            'source': '/api/sba/resources',
+            'behavior': 'click_to_query',
+            'item_open': 'detail_card',
+        },
+    }), 200
 
 
 @sba_bp.route('/sources', methods=['GET'])
