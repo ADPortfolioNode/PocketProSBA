@@ -38,7 +38,8 @@ class EnhancedGeminiRAGService:
         self.chunk_size = 1500
         self.chunk_overlap = 300
         self.gemini_api_key = os.getenv("GEMINI_API_KEY")
-        self.model_name = "gemini-pro"
+        # Prefer a current Gemini model; gemini-pro is often unavailable on new API keys.
+        self.model_name = os.getenv("GEMINI_CHAT_MODEL", "gemini-1.5-flash")
         self.temperature = 0.3
         self.vector_store = None
         self.qa_chain = None
@@ -468,10 +469,33 @@ REAL ESTATE FINANCING:
         global chromadb, _CHROMADB_AVAILABLE, _CHROMADB_IMPORT_ERROR
         try:
             # Initialize embeddings
-            embeddings = GoogleGenerativeAIEmbeddings(
-                model="models/embedding-001",
-                google_api_key=self.gemini_api_key
-            )
+            # Prefer Google embeddings when available; fall back to local if model missing.
+            # Newer Gemini keys reject embedding-001; some keys also 404 text-embedding-004
+            # depending on API version / package combo.
+            embeddings = None
+            last_emb_err = None
+            for emb_model in (
+                os.getenv("GEMINI_EMBEDDING_MODEL", "models/text-embedding-004"),
+                "models/embedding-001",
+                "text-embedding-004",
+            ):
+                try:
+                    candidate = GoogleGenerativeAIEmbeddings(
+                        model=emb_model,
+                        google_api_key=self.gemini_api_key,
+                    )
+                    # Probe once so init fails fast on bad model names.
+                    candidate.embed_query("sba loan")
+                    embeddings = candidate
+                    self.logger.info("Using Gemini embedding model: %s", emb_model)
+                    break
+                except Exception as emb_err:
+                    last_emb_err = emb_err
+                    self.logger.warning("Embedding model %s failed: %s", emb_model, emb_err)
+            if embeddings is None:
+                raise RuntimeError(
+                    f"No working Gemini embedding model found (last error: {last_emb_err})"
+                )
 
             if _CHROMADB_AVAILABLE is None:
                 try:

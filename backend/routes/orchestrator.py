@@ -147,9 +147,13 @@ def get_available_strategies():
         strategy_info = []
 
         for strategy_name in strategies:
-            info = StepStrategyFactory.get_strategy_info(strategy_name)
-            if info:
-                strategy_info.append(info)
+            info = None
+            if hasattr(StepStrategyFactory, 'get_strategy_info'):
+                try:
+                    info = StepStrategyFactory.get_strategy_info(strategy_name)
+                except Exception:
+                    info = None
+            strategy_info.append(info or {'name': strategy_name, 'available': True})
 
         return jsonify({
             'strategies': strategy_info,

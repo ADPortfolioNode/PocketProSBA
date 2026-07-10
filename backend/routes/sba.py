@@ -18,17 +18,31 @@ def search_articles():
         result = sba_api.search_articles(**params)
 
         if 'error' in result:
-            return jsonify({'error': result['error']}), 500
+            # External SBA.gov API may 404/change; degrade instead of hard-failing the product UI.
+            logger.warning("SBA articles unavailable: %s", result.get('error'))
+            return jsonify({
+                'items': [],
+                'totalPages': 0,
+                'currentPage': page,
+                'degraded': True,
+                'message': result.get('error'),
+            }), 200
 
         return jsonify({
-            'items': result.get('results', []),
-            'totalPages': result.get('total_pages', 1),
+            'items': result.get('results', result.get('items', [])),
+            'totalPages': result.get('total_pages', result.get('totalPages', 1)),
             'currentPage': page
         })
 
     except Exception as e:
         logger.error(f"Error searching articles: {str(e)}")
-        return jsonify({'error': 'Failed to search articles'}), 500
+        return jsonify({
+            'items': [],
+            'totalPages': 0,
+            'currentPage': 1,
+            'degraded': True,
+            'error': 'Failed to search articles',
+        }), 200
 
 @sba_bp.route('/content/articles/<int:article_id>', methods=['GET'])
 def get_article_details(article_id):
@@ -56,17 +70,18 @@ def search_blogs():
         result = sba_api.search_blogs(**params)
 
         if 'error' in result:
-            return jsonify({'error': result['error']}), 500
+            logger.warning("SBA blogs unavailable: %s", result.get('error'))
+            return jsonify({'items': [], 'totalPages': 0, 'currentPage': page, 'degraded': True, 'message': result.get('error')}), 200
 
         return jsonify({
-            'items': result.get('results', []),
+            'items': result.get('results', result.get('items', [])),
             'totalPages': result.get('total_pages', 1),
             'currentPage': page
         })
 
     except Exception as e:
         logger.error(f"Error searching blogs: {str(e)}")
-        return jsonify({'error': 'Failed to search blogs'}), 500
+        return jsonify({'items': [], 'totalPages': 0, 'currentPage': 1, 'degraded': True, 'error': 'Failed to search blogs'}), 200
 
 @sba_bp.route('/content/courses', methods=['GET'])
 def search_courses():
@@ -79,17 +94,18 @@ def search_courses():
         result = sba_api.search_courses(**params)
 
         if 'error' in result:
-            return jsonify({'error': result['error']}), 500
+            logger.warning("SBA courses unavailable: %s", result.get('error'))
+            return jsonify({'items': [], 'totalPages': 0, 'currentPage': page, 'degraded': True, 'message': result.get('error')}), 200
 
         return jsonify({
-            'items': result.get('results', []),
+            'items': result.get('results', result.get('items', [])),
             'totalPages': result.get('total_pages', 1),
             'currentPage': page
         })
 
     except Exception as e:
         logger.error(f"Error searching courses: {str(e)}")
-        return jsonify({'error': 'Failed to search courses'}), 500
+        return jsonify({'items': [], 'totalPages': 0, 'currentPage': 1, 'degraded': True, 'error': 'Failed to search courses'}), 200
 
 @sba_bp.route('/content/documents', methods=['GET'])
 def search_documents():
@@ -102,17 +118,18 @@ def search_documents():
         result = sba_api.search_documents(**params)
 
         if 'error' in result:
-            return jsonify({'error': result['error']}), 500
+            logger.warning("SBA documents unavailable: %s", result.get('error'))
+            return jsonify({'items': [], 'totalPages': 0, 'currentPage': page, 'degraded': True, 'message': result.get('error')}), 200
 
         return jsonify({
-            'items': result.get('results', []),
+            'items': result.get('results', result.get('items', [])),
             'totalPages': result.get('total_pages', 1),
             'currentPage': page
         })
 
     except Exception as e:
         logger.error(f"Error searching documents: {str(e)}")
-        return jsonify({'error': 'Failed to search documents'}), 500
+        return jsonify({'items': [], 'totalPages': 0, 'currentPage': 1, 'degraded': True, 'error': 'Failed to search documents'}), 200
 
 @sba_bp.route('/content/events', methods=['GET'])
 def search_events():
@@ -125,17 +142,18 @@ def search_events():
         result = sba_api.search_events(**params)
 
         if 'error' in result:
-            return jsonify({'error': result['error']}), 500
+            logger.warning("SBA events unavailable: %s", result.get('error'))
+            return jsonify({'items': [], 'totalPages': 0, 'currentPage': page, 'degraded': True, 'message': result.get('error')}), 200
 
         return jsonify({
-            'items': result.get('results', []),
+            'items': result.get('results', result.get('items', [])),
             'totalPages': result.get('total_pages', 1),
             'currentPage': page
         })
 
     except Exception as e:
         logger.error(f"Error searching events: {str(e)}")
-        return jsonify({'error': 'Failed to search events'}), 500
+        return jsonify({'items': [], 'totalPages': 0, 'currentPage': 1, 'degraded': True, 'error': 'Failed to search events'}), 200
 
 @sba_bp.route('/content/offices', methods=['GET'])
 def search_offices():
@@ -148,17 +166,18 @@ def search_offices():
         result = sba_api.search_offices(**params)
 
         if 'error' in result:
-            return jsonify({'error': result['error']}), 500
+            logger.warning("SBA offices unavailable: %s", result.get('error'))
+            return jsonify({'items': [], 'totalPages': 0, 'currentPage': page, 'degraded': True, 'message': result.get('error')}), 200
 
         return jsonify({
-            'items': result.get('results', []),
+            'items': result.get('results', result.get('items', [])),
             'totalPages': result.get('total_pages', 1),
             'currentPage': page
         })
 
     except Exception as e:
         logger.error(f"Error searching offices: {str(e)}")
-        return jsonify({'error': 'Failed to search offices'}), 500
+        return jsonify({'items': [], 'totalPages': 0, 'currentPage': 1, 'degraded': True, 'error': 'Failed to search offices'}), 200
 
 @sba_bp.route('/content/node/<int:node_id>', methods=['GET'])
 def get_node_details(node_id):
