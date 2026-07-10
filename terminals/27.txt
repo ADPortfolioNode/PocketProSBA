@@ -1,0 +1,19 @@
+---
+pid: 12284
+cwd: "E:\2024 RESET\PocketProSBA"
+command: "python -c \"
+import requests, time
+time.sleep(8)
+base='http://127.0.0.1:5000'
+for m,p in [('GET','/api/health'),('GET','/api/info'),('GET','/api/rag/health')]:
+ r=requests.get(base+p,timeout=20); print(f'{p} -> {r.status_code}', r.json())
+r=requests.post(base+'/api/chat',json={'user_id':1,'message':'What SBA loans exist?','session_id':'retest'},timeout=30)
+print('chat ->', r.status_code, r.json().get('success'), r.json().get('response','')[:80])
+\""
+started_at: 2026-07-09T01:19:05.370Z
+running_for_ms: 16015004 
+---
+/api/health -> 200 {'server': {'self': 'http://127.0.0.1:5000'}, 'status': 'healthy'}
+/api/info -> 200 {'document_count': 0, 'rag_status': 'unavailable', 'server': {'host': '127.0.0.1:5000', 'scheme': 'http', 'self': 'http://127.0.0.1:5000'}, 'service': 'PocketPro:SBA Edition', 'status': 'operational', 'vector_store': 'ChromaDB', 'version': '1.0.0'}
+/api/rag/health -> 503 {'message': 'RAG system is not available', 'status': 'error'}
+chat -> 200 True That's a great question about What SBA loans exist?! The Small Business Administ

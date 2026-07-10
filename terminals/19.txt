@@ -1,0 +1,20 @@
+---
+pid: 11592
+cwd: "E:\2024 RESET\PocketProSBA"
+command: "curl.exe -s http://localhost:5000/api/info"
+started_at: 2026-07-09T01:06:57.985Z
+running_for_ms: 16740007 
+---
+{
+  "document_count": 0,
+  "rag_status": "unavailable",
+  "server": {
+    "host": "localhost:5000",
+    "scheme": "http",
+    "self": "http://localhost:5000"
+  },
+  "service": "PocketPro:SBA Edition",
+  "status": "operational",
+  "vector_store": "ChromaDB",
+  "version": "1.0.0"
+}

@@ -1,0 +1,47 @@
+---
+pid: 8996
+cwd: "E:\2024 RESET\PocketProSBA"
+command: "python -m pytest \"E:\\2024 RESET\\PocketProSBA\\backend\\tests\" -q --tb=line 2>&1 | Select-Object -Last 40"
+started_at: 2026-07-09T00:52:25.047Z
+running_for_ms: 17615004 
+---
+backend\tests\test_integration.py:2: in <module>
+    from backend.app import app
+E   ImportError: cannot import name 'app' from 'backend.app' (E:\2024 RESET\PocketProSBA\backend\app\__init__.py)
+__________ ERROR collecting backend/tests/test_memory_repository.py ___________
+ImportError while importing test module 'E:\2024 RESET\PocketProSBA\backend\tests\test_memory_repository.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+C:\Program Files\Python311\Lib\importlib\__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+backend\tests\test_memory_repository.py:7: in <module>
+    from services.memory_repository import MemoryRepository
+E   ModuleNotFoundError: No module named 'services.memory_repository'
+_____________ ERROR collecting backend/tests/test_sba_service.py ______________
+ImportError while importing test module 'E:\2024 RESET\PocketProSBA\backend\tests\test_sba_service.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+C:\Program Files\Python311\Lib\importlib\__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+backend\tests\test_sba_service.py:3: in <module>
+    from services.SBA_Content import SBAContentAPI
+E   ModuleNotFoundError: No module named 'services.SBA_Content'
+__________ ERROR collecting backend/tests/test_task_orchestrator.py ___________
+ImportError while importing test module 'E:\2024 RESET\PocketProSBA\backend\tests\test_task_orchestrator.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+C:\Program Files\Python311\Lib\importlib\__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+backend\tests\test_task_orchestrator.py:3: in <module>
+    from services.task_orchestrator import TaskOrchestrator, StepAssistant, StepExecutionError
+E   ModuleNotFoundError: No module named 'services.task_orchestrator'
+=========================== short test summary info ===========================
+ERROR backend/tests/test_agentic_workflows.py
+ERROR backend/tests/test_chat_service.py
+ERROR backend/tests/test_chat_service_fixed.py
+ERROR backend/tests/test_integration.py
+ERROR backend/tests/test_memory_repository.py
+ERROR backend/tests/test_sba_service.py
+ERROR backend/tests/test_task_orchestrator.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 7 errors during collection !!!!!!!!!!!!!!!!!!!
+7 errors in 17.03s

@@ -1,0 +1,13 @@
+---
+pid: 10036
+cwd: "E:\2024 RESET\PocketProSBA"
+command: "curl.exe -s http://localhost:5000/api/health"
+started_at: 2026-07-09T01:06:57.985Z
+running_for_ms: 16739988 
+---
+{
+  "server": {
+    "self": "http://localhost:5000"
+  },
+  "status": "healthy"
+}

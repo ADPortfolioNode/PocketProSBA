@@ -250,6 +250,13 @@ const SBAContentExplorer = () => {
     loadCatalog();
   }, [loadCatalog]);
 
+  // After catalog headers exist, load the preferred tab so the panel is never blank
+  useEffect(() => {
+    if (loadingCatalog || !resources.length || activeResource) return;
+    const preferred = resources.find((r) => r.id === 'loans') || resources[0];
+    if (preferred) queryResource(preferred, 1, '');
+  }, [loadingCatalog, resources, activeResource, queryResource]);
+
   const queryResource = useCallback(
     async (resource, pageNum = 1, query = '') => {
       if (!resource?.path) return;
@@ -262,13 +269,16 @@ const SBAContentExplorer = () => {
       try {
         const isOverview = resource.path.includes('/sba-overview');
         const isSources = resource.path.includes('/sources');
+        // Prefer cached API payload (no fresh=1). Re-scrape only when user searches or explicitly needs it.
+        // fresh=1 forces live sba.gov HTML pulls and often empties the UI on 10s axios timeout.
         const response = await apiClient.get(
           resource.path,
           {
             params:
               isOverview || isSources
-                ? { fresh: 1 }
-                : { query: query || undefined, page: pageNum, fresh: 1 },
+                ? {}
+                : { query: query || undefined, page: pageNum },
+            timeout: 60000,
           },
           { quiet: true }
         );
@@ -281,6 +291,27 @@ const SBAContentExplorer = () => {
           items = overviewToItems(data);
         } else if (Array.isArray(data.items)) {
           items = data.items.map((item, i) => normalizeItem(item, i)).filter(Boolean);
+        } else if (Array.isArray(data.results)) {
+          items = data.results.map((item, i) => normalizeItem(item, i)).filter(Boolean);
+        }
+
+        // Never leave a selected tab visually empty if the envelope is valid
+        if (!items.length) {
+          items = [
+            normalizeItem(
+              {
+                id: `${resource.id}-empty`,
+                title: `${resource.name} — no rows yet`,
+                description:
+                  data.message ||
+                  `The API at ${resource.path} returned no items. Try again shortly.`,
+                type: 'notice',
+                is_current: false,
+                source: data.source || 'api',
+              },
+              0
+            ),
+          ].filter(Boolean);
         }
 
         setResults(items);

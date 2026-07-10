@@ -1,0 +1,9 @@
+---
+pid: 11728
+cwd: "E:\2024 RESET\PocketProSBA"
+command: "pip install google-ai-generativelanguage -q"
+started_at: 2026-07-09T00:52:07.061Z
+running_for_ms: 17635011 
+---
+ERROR: pip's dependency resolver does not currently take into account all the packages that are installed. This behaviour is the source of the following dependency conflicts.
+google-generativeai 0.4.1 requires google-ai-generativelanguage==0.4.0, but you have google-ai-generativelanguage 0.12.0 which is incompatible.

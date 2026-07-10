@@ -1,0 +1,9 @@
+---
+pid: 13272
+cwd: "E:\2024 RESET\PocketProSBA"
+command: "python -m pytest \"E:\\2024 RESET\\PocketProSBA\\backend\\tests\\test_api_endpoints.py\" \"E:\\2024 RESET\\PocketProSBA\\backend\\tests\\test_api.py\" \"E:\\2024 RESET\\PocketProSBA\\backend\\tests\\test_api_fixed.py\" -q --tb=no 2>&1 | Select-Object -Last 2"
+started_at: 2026-07-09T01:49:21.464Z
+running_for_ms: 14200008 
+---
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+24 passed, 2 warnings in 38.88s

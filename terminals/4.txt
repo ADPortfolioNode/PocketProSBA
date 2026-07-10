@@ -1,0 +1,7 @@
+---
+pid: 16300
+cwd: "E:\2024 RESET\PocketProSBA"
+command: "docker ps -a 2>&1"
+started_at: 2026-07-02T14:51:25.324Z
+running_for_ms: 2309994  
+---

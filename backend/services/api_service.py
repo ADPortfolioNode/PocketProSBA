@@ -40,95 +40,174 @@ def get_system_info_service():
             'error': 'System information unavailable'
         }
 
+def _build_decomposition_steps(message: str, session_id=None):
+    """Rule-based multi-step task plan (functional, no LLM required)."""
+    low = (message or "").lower()
+    steps = []
+
+    def add(step_type, instruction, agent):
+        steps.append({
+            "type": step_type,
+            "data": {
+                "instruction": instruction,
+                "suggested_agent_type": agent,
+                "session_id": session_id,
+            },
+        })
+
+    if any(k in low for k in ("loan", "7(a)", "7a", "504", "microloan", "financ")):
+        add("document_search", f"Research SBA loan information for: {message}", "SearchAgent")
+        add("analysis", f"Analyze eligibility and requirements for: {message}", "FunctionAgent")
+        add("response_generation", f"Provide a clear action plan for: {message}", "Concierge")
+    elif any(k in low for k in ("file", "document", "upload", "pdf", "read ")):
+        add("document_search", f"Locate relevant files for: {message}", "FileAgent")
+        add("response_generation", f"Summarize findings for: {message}", "Concierge")
+    elif any(k in low for k in ("calculate", "payment", "interest", "percent", "compute")):
+        add("analysis", message, "FunctionAgent")
+        add("response_generation", f"Explain the calculation result for: {message}", "Concierge")
+    elif any(k in low for k in ("business plan", "grant", "sbir", "startup", "marketing")):
+        add("document_search", f"Find SBA resources about: {message}", "SearchAgent")
+        add("document_search", f"Search local documents about: {message}", "FileAgent")
+        add("analysis", f"Organize a step-by-step plan for: {message}", "FunctionAgent")
+        add("response_generation", f"Write a concise recommendation for: {message}", "Concierge")
+    else:
+        add("document_search", f"Gather information about: {message}", "SearchAgent")
+        add("response_generation", message, "Concierge")
+
+    return steps
+
+
 def decompose_task_service(message, session_id):
-    """Decompose a user task into steps"""
+    """Decompose a user task into executable multi-step plan."""
     try:
-        concierge = Concierge()
-        response = concierge.handle_message(message, session_id)
-        text = response.get('text', '') or ''
-        # Soft single-step shape for Task Orchestrator / RAG UI that expect steps[]
-        steps = [
-            {
-                'type': 'message',
-                'data': {
-                    'instruction': message,
-                    'suggested_agent_type': 'Concierge',
-                    'session_id': session_id,
-                    'preview': text[:280],
-                },
-            }
-        ]
+        import uuid
+        task_id = session_id or str(uuid.uuid4())
+        steps = _build_decomposition_steps(message, session_id)
+
+        # Optional concierge preview for the overall ask (non-blocking soft path)
+        preview = ""
+        sources = []
+        try:
+            concierge = Concierge()
+            response = concierge.handle_message(
+                f"Briefly outline how you would help with: {message}",
+                session_id=session_id,
+            )
+            preview = response.get("text", "") or ""
+            sources = response.get("sources", [])
+        except Exception as preview_err:
+            logger.warning("Decompose preview soft-fail: %s", preview_err)
+            preview = f"Planned {len(steps)} steps for: {message}"
+
         return {
-            'task_id': session_id or 'ad-hoc',
-            'steps': steps,
-            'response': {
-                'text': text,
-                'sources': response.get('sources', []),
-                'timestamp': response.get('timestamp'),
-                'steps': steps,
+            "task_id": task_id,
+            "steps": steps,
+            "response": {
+                "text": preview,
+                "sources": sources,
+                "steps": steps,
             },
         }
     except Exception as e:
         logger.error(f"Error decomposing task: {str(e)}")
-        raise Exception(f'Failed to process message: {str(e)}')
+        raise Exception(f"Failed to process message: {str(e)}")
+
 
 def execute_step_service(task):
-    """Execute a decomposed task step"""
+    """Execute a decomposed task step using the suggested agent."""
     try:
-        step_number = task.get('step_number')
-        instruction = task.get('instruction', '')
-        agent_type = task.get('suggested_agent_type', 'SearchAgent')
-        
+        step_number = task.get("step_number")
+        instruction = (
+            task.get("instruction")
+            or task.get("message")
+            or task.get("query")
+            or ""
+        )
+        agent_type = task.get("suggested_agent_type") or task.get("agent_type") or "Concierge"
+
         if not instruction:
-            raise ValueError('Instruction is required')
-        
-        # Try to create the requested agent, fall back to Concierge if SearchAgent fails
-        if agent_type == 'SearchAgent':
+            raise ValueError("Instruction is required")
+
+        result = None
+        agent_used = agent_type
+
+        if agent_type in ("SearchAgent", "search"):
             try:
                 agent = SearchAgent()
                 result = agent.handle_message(instruction)
-            except ValueError as e:
-                # Fall back to Concierge if SearchAgent cannot be initialized
-                logger.warning(f"SearchAgent initialization failed: {str(e)}. Falling back to Concierge.")
-                agent = Concierge()
-                result = agent.handle_message(instruction)
             except Exception as e:
-                # Handle other exceptions from SearchAgent
-                logger.error(f"SearchAgent failed: {str(e)}. Falling back to Concierge.")
-                agent = Concierge()
-                result = agent.handle_message(instruction)
+                logger.warning("SearchAgent failed (%s); falling back to Concierge", e)
+                agent_used = "Concierge"
+                result = Concierge().handle_message(instruction)
+        elif agent_type in ("FileAgent", "file"):
+            from backend.assistants.file import FileAgent
+            result = FileAgent().handle_message(instruction)
+            agent_used = "FileAgent"
+        elif agent_type in ("FunctionAgent", "function"):
+            from backend.assistants.function import FunctionAgent
+            result = FunctionAgent().handle_message(instruction)
+            agent_used = "FunctionAgent"
         else:
-            agent = Concierge()
-            result = agent.handle_message(instruction)
-        
+            result = Concierge().handle_message(instruction)
+            agent_used = "Concierge"
+
+        ok = not (result or {}).get("error")
         return {
-            'step_number': step_number,
-            'status': 'completed' if not result.get('error') else 'failed',
-            'result': result.get('text', ''),
-            'sources': result.get('sources', [])
+            "step_number": step_number,
+            "status": "completed" if ok else "failed",
+            "result": (result or {}).get("text", ""),
+            "sources": (result or {}).get("sources", []),
+            "agent": agent_used,
+            "success": ok,
+            "data": {
+                "result": (result or {}).get("text", ""),
+                "sources": (result or {}).get("sources", []),
+                "agent": agent_used,
+            },
         }
     except Exception as e:
         logger.error(f"Error executing step: {str(e)}")
-        raise Exception(f'Failed to execute step: {str(e)}')
+        raise Exception(f"Failed to execute step: {str(e)}")
+
 
 def validate_step_service(result, task):
-    """Validate a step result"""
+    """Validate a step result with concrete checks."""
     try:
-        if result:
-            return {
-                'status': 'PASS',
-                'confidence': 0.9,
-                'feedback': 'Step result validated successfully'
-            }
+        text = ""
+        if isinstance(result, dict):
+            text = str(result.get("result") or result.get("text") or "")
+            if result.get("error") or result.get("success") is False:
+                return {
+                    "status": "FAIL",
+                    "confidence": 0.15,
+                    "feedback": f"Result marked as error: {result.get('error') or 'success=false'}",
+                }
         else:
+            text = str(result or "")
+
+        if not text or not str(text).strip():
             return {
-                'status': 'FAIL',
-                'confidence': 0.2,
-                'feedback': 'Step result is empty or invalid'
+                "status": "FAIL",
+                "confidence": 0.2,
+                "feedback": "Step result is empty or invalid",
             }
+
+        stripped = str(text).strip()
+        confidence = 0.95 if len(stripped) > 80 else 0.75 if len(stripped) > 20 else 0.45
+        status = "PASS" if len(stripped) >= 10 else "FAIL"
+        return {
+            "status": status,
+            "confidence": confidence,
+            "feedback": (
+                "Step result validated successfully"
+                if status == "PASS"
+                else "Step result too short to accept"
+            ),
+            "length": len(stripped),
+        }
     except Exception as e:
         logger.error(f"Error validating step: {str(e)}")
-        raise Exception(f'Failed to validate step: {str(e)}')
+        raise Exception(f"Failed to validate step: {str(e)}")
 
 def query_documents_service(query, top_k):
     """Query documents"""

@@ -37,8 +37,8 @@ function MainLayout({ useConnectionHook = useConnection }) {
   useEffect(() => {
     const tab = resolveTabFromPath(location.pathname);
     setActiveTab(tab);
-    // Prefer the live standalone Resources UI (nginx → resources.html)
-    // so click-to-load + detail cards work without a CRA rebuild.
+    // Prefer live standalone Resources browser for /browse only.
+    // /sba stays on SPA so SBA Programs | Lifecycle | Local tabs (API cards) render.
     const path = (location.pathname || '').toLowerCase();
     if (path === '/browse' || path === '/resources') {
       if (typeof window !== 'undefined' && !window.__PP_RESOURCES_REDIRECT__) {

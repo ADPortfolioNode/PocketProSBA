@@ -1,0 +1,10 @@
+---
+pid: 12688
+cwd: "E:\2024 RESET\PocketProSBA"
+command: "python -m pytest \"E:\\2024 RESET\\PocketProSBA\\backend\\tests\" -q --tb=no 2>&1 | Select-Object -Last 3"
+started_at: 2026-07-09T01:40:10.271Z
+running_for_ms: 14750005 
+---
+=========================== short test summary info ===========================
+FAILED backend/tests/test_api_comprehensive.py::TestAPIComprehensive::test_execute_step_no_data
+1 failed, 102 passed, 10 skipped, 7 warnings in 75.03s (0:01:15)

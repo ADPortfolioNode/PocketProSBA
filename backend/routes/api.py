@@ -34,47 +34,57 @@ def health_check():
 @api_bp.route('/programs', methods=['GET'])
 def list_sba_programs():
     """
-    Static SBA program catalog for the SBA Content tab.
-    Avoids empty UI when external program APIs are unavailable.
+    SBA program cards for the Programs tab.
+    Delegates to sba routes helper so fields stay in sync with /api/sba/resources.
     """
-    programs = [
-        {
-            'id': 'loans',
-            'name': 'SBA Loans',
-            'description': '7(a), 504, Microloan, and Express financing options',
-            'icon': '💰',
-        },
-        {
-            'id': 'contracting',
-            'name': 'Government Contracting',
-            'description': 'Certifications and support to win federal contracts',
-            'icon': '📝',
-        },
-        {
-            'id': 'disaster',
-            'name': 'Disaster Assistance',
-            'description': 'Recovery loans after declared disasters',
-            'icon': '🚨',
-        },
-        {
-            'id': 'counseling',
-            'name': 'Counseling & Training',
-            'description': 'SBDC, SCORE, WBC, and VBOC mentoring',
-            'icon': '👥',
-        },
-        {
-            'id': 'international',
-            'name': 'International Trade',
-            'description': 'Export financing and market expansion support',
-            'icon': '🌎',
-        },
-        {
-            'id': 'innovation',
-            'name': 'SBIR/STTR',
-            'description': 'R&D grants for innovative small businesses',
-            'icon': '💡',
-        },
-    ]
+    try:
+        from backend.routes.sba import _sba_program_cards
+        programs = _sba_program_cards()
+    except Exception:
+        programs = [
+            {
+                'id': 'loans',
+                'name': 'SBA Loans',
+                'description': '7(a), 504, Microloan, and Express financing options',
+                'icon': '💰',
+                'url': 'https://www.sba.gov/funding-programs/loans',
+            },
+            {
+                'id': 'contracting',
+                'name': 'Government Contracting',
+                'description': 'Certifications and support to win federal contracts',
+                'icon': '📝',
+                'url': 'https://www.sba.gov/federal-contracting',
+            },
+            {
+                'id': 'disaster',
+                'name': 'Disaster Assistance',
+                'description': 'Recovery loans after declared disasters',
+                'icon': '🚨',
+                'url': 'https://www.sba.gov/funding-programs/disaster-assistance',
+            },
+            {
+                'id': 'counseling',
+                'name': 'Counseling & Training',
+                'description': 'SBDC, SCORE, WBC, and VBOC mentoring',
+                'icon': '👥',
+                'url': 'https://www.sba.gov/local-assistance',
+            },
+            {
+                'id': 'international',
+                'name': 'International Trade',
+                'description': 'Export financing and market expansion support',
+                'icon': '🌎',
+                'url': 'https://www.sba.gov/business-guide/grow-your-business/export-products',
+            },
+            {
+                'id': 'innovation',
+                'name': 'SBIR/STTR',
+                'description': 'R&D grants for innovative small businesses',
+                'icon': '💡',
+                'url': 'https://www.sbir.gov/',
+            },
+        ]
     return jsonify(programs), 200
 
 @api_bp.route('/chromadb_health', methods=['GET'])
@@ -209,3 +219,28 @@ def query_documents():
     except Exception as e:
         logger.error(f"Error querying documents: {str(e)}")
         return jsonify({'error': 'Failed to query documents'}), 500
+
+
+# ---- Auth aliases (frontend uses /api/login, /api/register, …) ----
+@api_bp.route('/login', methods=['POST'])
+def api_login_alias():
+    from backend.routes.auth import login as auth_login
+    return auth_login()
+
+
+@api_bp.route('/register', methods=['POST'])
+def api_register_alias():
+    from backend.routes.auth import register as auth_register
+    return auth_register()
+
+
+@api_bp.route('/forgot-password', methods=['POST'])
+def api_forgot_password_alias():
+    from backend.routes.auth import forgot_password as auth_forgot
+    return auth_forgot()
+
+
+@api_bp.route('/reset-password', methods=['POST'])
+def api_reset_password_alias():
+    from backend.routes.auth import reset_password as auth_reset
+    return auth_reset()

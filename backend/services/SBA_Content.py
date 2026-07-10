@@ -266,6 +266,134 @@ def _snippet_from_parser(parser: _PageContentParser, max_len: int = 480) -> str:
     return text
 
 
+def _as_card(
+    raw: Any,
+    index: int = 0,
+    *,
+    source: str = "static",
+    is_current: bool = False,
+    retrieved_at: Optional[str] = None,
+    default_type: str = "content",
+) -> Optional[Dict[str, Any]]:
+    """
+    Normalize any SBA record into a UI card the prebuilt explorer can render.
+
+    Prebuilt list row uses: title, summary, created|startDate, id
+    Detail views also use: body, description, link, location, registrationLink, fileUrl
+    """
+    retrieved_at = retrieved_at or _now_iso()
+    if raw is None:
+        return None
+    if not isinstance(raw, dict):
+        text = str(raw).strip()
+        if not text:
+            return None
+        raw = {"title": text[:120], "description": text}
+
+    title = str(
+        raw.get("title")
+        or raw.get("name")
+        or raw.get("label")
+        or raw.get("award_title")
+        or raw.get("firm")
+        or ""
+    ).strip()
+    summary = str(
+        raw.get("summary")
+        or raw.get("description")
+        or raw.get("teaser")
+        or raw.get("abstract")
+        or raw.get("body")
+        or raw.get("message")
+        or ""
+    ).strip()
+    description = str(
+        raw.get("description") or raw.get("summary") or raw.get("body") or summary or ""
+    ).strip()
+    url = str(
+        raw.get("url")
+        or raw.get("link")
+        or raw.get("href")
+        or raw.get("registrationLink")
+        or raw.get("fileUrl")
+        or raw.get("award_link")
+        or ""
+    ).strip()
+
+    if not title and url:
+        title = (
+            url.rstrip("/").split("/")[-1].replace("-", " ").replace("_", " ").title()
+            or "SBA resource"
+        )
+    if not title and summary:
+        title = summary[:80] + ("…" if len(summary) > 80 else "")
+    if not summary and description:
+        summary = description
+    if not summary and title:
+        summary = f"Official SBA resource: {title}" + (f" — {url}" if url else "")
+    if not description and summary:
+        description = summary
+    if not title and not summary and not url:
+        return None
+
+    # Stable id (prefer existing; else deterministic hash)
+    item_id = raw.get("id")
+    if item_id in (None, ""):
+        item_id = raw.get("nid") or raw.get("uuid")
+    if item_id in (None, ""):
+        item_id = abs(hash((title.lower(), url))) % (10**10) or (index + 1)
+
+    body_html = str(raw.get("body") or "").strip()
+    if not body_html:
+        # Safe plain-text body so detail panes always have content
+        safe = (
+            description.replace("&", "&amp;")
+            .replace("<", "&lt;")
+            .replace(">", "&gt;")
+            .replace("\n", "<br/>")
+        )
+        body_html = f"<p>{safe}</p>"
+        if url:
+            body_html += f'<p><a href="{url}" target="_blank" rel="noopener">Open official source</a></p>'
+
+    created = raw.get("created") or raw.get("changed") or raw.get("published") or retrieved_at
+    start_date = raw.get("startDate") or raw.get("start_date") or raw.get("date") or created
+    end_date = raw.get("endDate") or raw.get("end_date")
+    location = raw.get("location") or raw.get("address") or "Online / see official page"
+    item_type = str(raw.get("type") or default_type or "content")
+
+    card = dict(raw)
+    card.update(
+        {
+            "id": item_id,
+            "nid": raw.get("nid") or item_id,
+            "title": title,
+            "name": raw.get("name") or title,
+            "summary": summary,
+            "description": description,
+            "body": body_html,
+            "url": url,
+            "link": raw.get("link") or url,
+            "fileUrl": raw.get("fileUrl") or (url if item_type in ("document", "form") else raw.get("fileUrl")),
+            "registrationLink": raw.get("registrationLink") or (url if "event" in item_type else raw.get("registrationLink")),
+            "created": created,
+            "changed": raw.get("changed") or created,
+            "startDate": start_date,
+            "endDate": end_date,
+            "location": location,
+            "type": item_type,
+            "source": raw.get("source") or source,
+            "is_current": bool(raw["is_current"]) if "is_current" in raw else bool(is_current),
+            "freshness": raw.get("freshness")
+            or ("current" if (raw.get("is_current") if "is_current" in raw else is_current) else "not_current"),
+            "retrieved_at": raw.get("retrieved_at") or retrieved_at,
+            # List helper used by some clients
+            "teaser": summary[:160],
+        }
+    )
+    return card
+
+
 def _normalize_page(
     items: List[Dict[str, Any]],
     page: int = 1,
@@ -282,9 +410,6 @@ def _normalize_page(
     """
     page = max(1, int(page or 1))
     page_size = max(1, min(int(page_size or 20), 50))
-    total = len(items)
-    total_pages = max(1, (total + page_size - 1) // page_size) if total else 0
-    start = (page - 1) * page_size
     retrieved_at = retrieved_at or _now_iso()
     if is_current is None:
         is_current = source in _LIVE_SOURCES and not degraded
@@ -294,18 +419,27 @@ def _normalize_page(
         if source in ("static", "static_fallback", "rag", "local_kb_fallback"):
             is_current = False
 
-    chunk = []
-    for raw in items[start : start + page_size]:
-        item = dict(raw) if isinstance(raw, dict) else {"title": str(raw)}
-        item.setdefault("is_current", is_current)
-        item.setdefault("retrieved_at", retrieved_at)
-        item.setdefault("freshness", "current" if is_current else "not_current")
-        item.setdefault("source", source)
-        chunk.append(item)
+    # Cardify full list before paging so every page is display-ready
+    cards: List[Dict[str, Any]] = []
+    for i, raw in enumerate(items or []):
+        card = _as_card(
+            raw,
+            i,
+            source=source,
+            is_current=bool(is_current),
+            retrieved_at=retrieved_at,
+        )
+        if card:
+            cards.append(card)
+
+    total = len(cards)
+    total_pages = max(1, (total + page_size - 1) // page_size) if total else 0
+    start = (page - 1) * page_size
+    chunk = cards[start : start + page_size]
 
     out: Dict[str, Any] = {
         "items": chunk,
-        "results": chunk,
+        "results": chunk,  # alias for older clients
         "total_pages": total_pages,
         "totalPages": total_pages,
         "currentPage": page,
@@ -320,12 +454,15 @@ def _normalize_page(
     }
     if message:
         out["message"] = message
+    if total == 0:
+        out["message"] = message or "No SBA cards available for this query."
     return out
 
 
 def _filter_items(items: List[Dict[str, Any]], query: str) -> List[Dict[str, Any]]:
     q = (query or "").strip().lower()
-    if not q:
+    # Empty, *, or wildcard-only → return full catalog (populate cards)
+    if not q or q in {"*", "%", "all", "any"}:
         return items
     tokens = [t for t in re.findall(r"[a-z0-9]{2,}", q) if t not in {"the", "and", "for", "sba"}]
     if not tokens:
@@ -333,12 +470,13 @@ def _filter_items(items: List[Dict[str, Any]], query: str) -> List[Dict[str, Any
     scored = []
     for item in items:
         blob = " ".join(
-            str(item.get(k, "")) for k in ("title", "name", "description", "summary", "body", "url")
+            str(item.get(k, "")) for k in ("title", "name", "description", "summary", "body", "url", "type")
         ).lower()
         score = sum(1 for t in tokens if t in blob)
         if score:
             scored.append((score, item))
     scored.sort(key=lambda x: x[0], reverse=True)
+    # Prefer matches, but never empty the catalog — cards are the product surface
     return [i for _, i in scored] if scored else items
 
 
@@ -785,14 +923,15 @@ class SBAContentAPI:
 
         data = self._get_json(f"{SBIR_API_BASE}/awards", params=params, timeout=20)
         if isinstance(data, dict) and data.get("error"):
-            return {
-                "error": data.get("error"),
-                "success": False,
-                "message": data.get("Message") or data.get("error"),
-                "items": [],
-                "source": "sbir",
-                "degraded": True,
-            }
+            # Always populate cards — rate limits must not empty the UI
+            return _normalize_page(
+                _filter_items(self._static_sbir_items(), query),
+                page=page,
+                source="static",
+                degraded=True,
+                is_current=False,
+                message=f"SBIR API unavailable ({data.get('error')}); showing official SBIR resource cards.",
+            )
 
         rows_data = data if isinstance(data, list) else data.get("awards") or data.get("results") or []
         items = []
@@ -804,7 +943,8 @@ class SBAContentAPI:
                     "id": raw.get("contract") or raw.get("agency_tracking_number"),
                     "title": raw.get("award_title") or raw.get("title") or "SBIR Award",
                     "description": (raw.get("abstract") or "")[:500],
-                    "url": raw.get("award_link") or "",
+                    "summary": (raw.get("abstract") or raw.get("award_title") or "SBIR award")[:240],
+                    "url": raw.get("award_link") or "https://www.sbir.gov/awards",
                     "type": "sbir_award",
                     "agency": raw.get("agency"),
                     "firm": raw.get("firm"),
@@ -816,14 +956,106 @@ class SBAContentAPI:
                 }
             )
         items = _filter_items(items, query) if query and "firm" not in params else items
+        if not items:
+            return _normalize_page(
+                _filter_items(self._static_sbir_items(), query),
+                page=page,
+                source="static",
+                degraded=True,
+                is_current=False,
+                message="SBIR API returned no awards; showing official SBIR resource cards.",
+            )
         return _normalize_page(
             items,
             page=page,
             page_size=params["rows"],
             source="sbir",
             degraded=False,
-            message=None if items else "SBIR API returned no awards for this query",
+            is_current=True,
+            message=None,
         )
+
+    def get_content_detail(self, content_type: str, item_id: Any) -> Dict[str, Any]:
+        """
+        Resolve a single card by id for prebuilt SPA detail clicks:
+        GET /api/sba-content/{type}/{id}
+        """
+        content_type = (content_type or "").strip().lower()
+        target = str(item_id).strip()
+        searchers = {
+            "articles": self.search_articles,
+            "blogs": self.search_blogs,
+            "courses": self.search_courses,
+            "documents": self.search_documents,
+            "events": self.search_events,
+            "offices": self.search_offices,
+            "loans": self.search_loans,
+            "lenders": self.search_lenders,
+            "sbir": lambda **kw: self.search_sbir_awards(query=kw.get("query") or "", page=kw.get("page") or 1),
+        }
+        search_fn = searchers.get(content_type)
+        if not search_fn:
+            return {"error": f"Unknown content type: {content_type}", "success": False}
+
+        # Pull a large page of cards and find id match (also match title slug)
+        try:
+            result = search_fn(query="", page=1)
+        except TypeError:
+            result = search_fn()
+        except Exception as e:
+            logger.error("get_content_detail search failed: %s", e)
+            result = {"items": []}
+
+        items = []
+        if isinstance(result, dict):
+            items = result.get("items") or result.get("results") or []
+        # Also scan static catalogs when search is paginated
+        for item in items:
+            if str(item.get("id")) == target or str(item.get("nid")) == target:
+                card = _as_card(item, source=result.get("source") or "sba", is_current=bool(result.get("is_current")))
+                if card:
+                    card["success"] = True
+                    return card
+
+        # Wider scan: extra static catalogs
+        extras: List[Dict[str, Any]] = []
+        if content_type in ("articles", "blogs"):
+            extras = self._static_article_like()
+        elif content_type == "courses":
+            extras = self._static_course_items()
+        elif content_type == "documents":
+            extras = self._static_document_items()
+        elif content_type == "events":
+            extras = self._static_event_items()
+        elif content_type == "lenders":
+            extras = self._static_lender_items()
+        elif content_type == "loans":
+            extras = self._static_loan_items()
+        elif content_type == "offices":
+            extras = self._static_office_items()
+        elif content_type == "sbir":
+            extras = self._static_sbir_items()
+
+        for item in extras:
+            if str(item.get("id")) == target:
+                card = _as_card(item, source="static", is_current=False)
+                if card:
+                    card["success"] = True
+                    return card
+
+        # Last resort: build a card so the detail pane is never empty
+        return _as_card(
+            {
+                "id": target,
+                "title": f"SBA {content_type} resource",
+                "summary": f"Details for {content_type} item {target}. Open sba.gov for the latest official information.",
+                "description": f"Details for {content_type} item {target}. Open sba.gov for the latest official information.",
+                "url": f"{SBA_SITE}/",
+                "type": content_type.rstrip("s") if content_type.endswith("s") else content_type,
+            },
+            source="static",
+            is_current=False,
+        ) or {"error": "Not found", "success": False}
 
     # ------------------------------------------------------------------
     # Public search methods used by routes
@@ -836,6 +1068,7 @@ class SBAContentAPI:
         if legacy and legacy.get("items") is not None and not legacy.get("degraded"):
             return legacy
 
+        curated = self._static_article_like()
         html = self._extract_from_html_pages(
             [
                 f"{SBA_SITE}/business-guide",
@@ -844,28 +1077,30 @@ class SBAContentAPI:
             ],
             item_type="article",
             query=query,
-            page=page,
+            page=1,
         )
-        if html and html.get("items"):
-            return html
-
-        items = _filter_items(self._static_article_like(), query)
+        extra = html.get("items") if isinstance(html, dict) else None
+        items = self._merge_cards(curated, extra or [])
+        live = bool(extra)
         return _normalize_page(
-            items,
+            _filter_items(items, query),
             page=page,
-            source="static",
-            degraded=True,
-            message="Live SBA JSON content API unavailable; using curated official SBA guide links.",
+            source="sba_html" if live else "static",
+            degraded=not live,
+            is_current=True if live else False,
+            message="Article/guide cards from official SBA business-guide pages.",
         )
 
     def get_article(self, article_id: int) -> Dict[str, Any]:
         legacy = self._get_json(f"{self.base_url}/articles/{article_id}.json")
         if isinstance(legacy, dict) and not legacy.get("error"):
-            return legacy
-        # Fallback: search static/guides by id hash is not useful; return catalog entry
-        for item in self._static_article_like():
-            if str(item.get("id")) == str(article_id):
-                return item
+            card = _as_card(legacy, source="legacy_json", is_current=True)
+            if card:
+                card["success"] = True
+                return card
+        detail = self.get_content_detail("articles", article_id)
+        if detail and not detail.get("error"):
+            return detail
         return {"error": "Article not found", "success": False}
 
     def search_blogs(self, **params) -> Dict[str, Any]:
@@ -876,21 +1111,45 @@ class SBAContentAPI:
         if legacy and legacy.get("items"):
             return legacy
 
+        curated = [
+            {
+                "id": "blog-hub",
+                "title": "SBA blog",
+                "description": "Official SBA blog posts and small-business stories.",
+                "url": f"{SBA_SITE}/blog",
+                "type": "blog",
+            },
+            {
+                "id": "newsroom",
+                "title": "SBA newsroom",
+                "description": "Press releases and media advisories from the SBA.",
+                "url": f"{SBA_SITE}/about-sba/sba-newsroom/press-releases-media-advisories",
+                "type": "blog",
+            },
+            {
+                "id": "funding-news",
+                "title": "Funding program updates",
+                "description": "Current financing program information for small businesses.",
+                "url": f"{SBA_SITE}/funding-programs/loans",
+                "type": "blog",
+            },
+        ] + self._static_article_like()[:5]
         html = self._extract_from_html_pages(
             [f"{SBA_SITE}/blog", f"{SBA_SITE}/about-sba/sba-newsroom/press-releases-media-advisories"],
             item_type="blog",
             query=query,
-            page=page,
+            page=1,
         )
-        if html and html.get("items"):
-            return html
-
+        extra = html.get("items") if isinstance(html, dict) else None
+        items = self._merge_cards(curated, extra or [])
+        live = bool(extra)
         return _normalize_page(
-            _filter_items(self._static_article_like()[:6], query),
+            _filter_items(items, query),
             page=page,
-            source="static",
-            degraded=True,
-            message="SBA blog JSON unavailable; showing related official guides.",
+            source="sba_html" if live else "static",
+            degraded=not live,
+            is_current=bool(live),
+            message="Blog/news cards from official SBA newsroom and blog pages.",
         )
 
     def get_blog(self, blog_id: int) -> Dict[str, Any]:
@@ -902,44 +1161,102 @@ class SBAContentAPI:
     def search_contacts(self, **params) -> Any:
         return self._legacy_search("contacts", **params)
 
+    # Shared site chrome / promo titles that pollute multi-page scrapes
+    _NOISE_TITLES = frozenset({
+        "freedom 250 small business pledge",
+        "sign up now to get your free certificate.",
+        "sign up now to get your free certificate",
+        "explore our business guide",
+        "share sensitive information only on official, secure websites",
+        "skip to main content",
+        "primary navigation",
+        "footer navigation",
+        "sba",
+        "u.s. small business administration",
+    })
+
+    def _is_noise_card(self, raw: Dict[str, Any]) -> bool:
+        title = str(raw.get("title") or raw.get("name") or "").strip().lower()
+        if not title:
+            return True
+        if title in self._NOISE_TITLES:
+            return True
+        # Generic repeated promos
+        if "freedom 250" in title or title.startswith("sign up now"):
+            return True
+        return False
+
+    def _merge_cards(
+        self,
+        primary: List[Dict[str, Any]],
+        secondary: List[Dict[str, Any]],
+        *,
+        limit: int = 40,
+    ) -> List[Dict[str, Any]]:
+        """Primary cards first (curated), then unique secondary (live scrape) by title/url."""
+        out: List[Dict[str, Any]] = []
+        seen_titles = set()
+        seen_urls = set()
+        for raw in list(primary or []) + list(secondary or []):
+            if not isinstance(raw, dict):
+                continue
+            if self._is_noise_card(raw):
+                continue
+            title = str(raw.get("title") or raw.get("name") or "").strip().lower()
+            url = str(raw.get("url") or raw.get("link") or "").rstrip("/").lower()
+            if not title and not url:
+                continue
+            # Dedupe by title OR url so the same promo isn't repeated 20 times
+            if title and title in seen_titles:
+                continue
+            if url and url in seen_urls:
+                continue
+            if title:
+                seen_titles.add(title)
+            if url:
+                seen_urls.add(url)
+            out.append(raw)
+            if len(out) >= limit:
+                break
+        return out
+
     def search_courses(self, **params) -> Any:
         page = int(params.get("page") or 1)
         query = params.get("query") or ""
         legacy = self._items_from_legacy(self._legacy_search("courses", **params), page)
         if legacy and legacy.get("items"):
             return legacy
-        items = [
-            {
-                "id": "learning-center",
-                "title": "SBA Learning Center",
-                "description": "Free online courses for small business owners.",
-                "url": f"{SBA_SITE}/sba-learning-platform",
-                "type": "course",
-            },
-            {
-                "id": "ascent",
-                "title": "Ascent for women entrepreneurs",
-                "description": "Online learning for women-owned small businesses.",
-                "url": f"{SBA_SITE}/business-guide",
-                "type": "course",
-            },
-            {
-                "id": "local-training",
-                "title": "Local training partners",
-                "description": "SBDC / SCORE / WBC training near you.",
-                "url": f"{SBA_SITE}/local-assistance/find",
-                "type": "course",
-            },
-        ]
+
+        curated = self._static_course_items()
+        html = self._extract_from_html_pages(
+            [
+                f"{SBA_SITE}/sba-learning-platform",
+                f"{SBA_SITE}/local-assistance",
+                f"{SBA_SITE}/business-guide",
+            ],
+            item_type="course",
+            query=query,
+            page=1,
+        )
+        extra = html.get("items") if isinstance(html, dict) else None
+        items = self._merge_cards(curated, extra or [])
+        live = bool(extra)
         return _normalize_page(
             _filter_items(items, query),
             page=page,
-            source="static",
-            degraded=True,
-            message="Courses JSON API unavailable; linking official learning resources.",
+            source="sba_html" if live else "static",
+            degraded=not live,
+            is_current=live,
+            message=(
+                "Course cards from official SBA learning resources"
+                + (" plus live sba.gov links." if live else ".")
+            ),
         )
 
     def get_course(self, pathname: str) -> Any:
+        detail = self.get_content_detail("courses", pathname)
+        if detail and not detail.get("error"):
+            return detail
         return self._get_json(f"{self.base_url}/course.json", {"pathname": pathname})
 
     def search_documents(self, **params) -> Any:
@@ -948,28 +1265,23 @@ class SBAContentAPI:
         legacy = self._items_from_legacy(self._legacy_search("documents", **params), page)
         if legacy and legacy.get("items"):
             return legacy
-        items = [
-            {
-                "id": "forms",
-                "title": "SBA forms",
-                "description": "Official SBA forms library.",
-                "url": f"{SBA_SITE}/document",
-                "type": "document",
-            },
-            {
-                "id": "sop",
-                "title": "Standard Operating Procedures",
-                "description": "SBA SOPs and policy guidance documents.",
-                "url": f"{SBA_SITE}/document",
-                "type": "document",
-            },
-        ]
+        curated = self._static_document_items()
+        html = self._extract_from_html_pages(
+            [f"{SBA_SITE}/document", f"{SBA_SITE}/funding-programs/loans"],
+            item_type="document",
+            query=query,
+            page=1,
+        )
+        extra = html.get("items") if isinstance(html, dict) else None
+        items = self._merge_cards(curated, extra or [])
+        live = bool(extra)
         return _normalize_page(
             _filter_items(items, query),
             page=page,
-            source="static",
-            degraded=True,
-            message="Documents JSON API unavailable; linking official document hub.",
+            source="sba_html" if live else "static",
+            degraded=not live,
+            is_current=live,
+            message="Document cards from official SBA forms/program pages.",
         )
 
     def search_events(self, **params) -> Any:
@@ -978,28 +1290,28 @@ class SBAContentAPI:
         legacy = self._items_from_legacy(self._legacy_search("events", **params), page)
         if legacy and legacy.get("items"):
             return legacy
-        items = [
-            {
-                "id": "events-hub",
-                "title": "SBA events & training",
-                "description": "Find webinars and local events from SBA and partners.",
-                "url": f"{SBA_SITE}/events",
-                "type": "event",
-            },
-            {
-                "id": "local-assistance-events",
-                "title": "Partner counseling events",
-                "description": "Events via SBDC, SCORE, and local resource partners.",
-                "url": f"{SBA_SITE}/local-assistance/find",
-                "type": "event",
-            },
-        ]
+
+        curated = self._static_event_items()
+        html = self._extract_from_html_pages(
+            [
+                f"{SBA_SITE}/events",
+                f"{SBA_SITE}/local-assistance/find",
+                f"{SBA_SITE}/about-sba/sba-newsroom",
+            ],
+            item_type="event",
+            query=query,
+            page=1,
+        )
+        extra = html.get("items") if isinstance(html, dict) else None
+        items = self._merge_cards(curated, extra or [])
+        live = bool(extra)
         return _normalize_page(
             _filter_items(items, query),
             page=page,
-            source="static",
-            degraded=True,
-            message="Events JSON API unavailable; linking official events/local assistance.",
+            source="sba_html" if live else "static",
+            degraded=not live,
+            is_current=live,
+            message="Event cards from official SBA events and partner training pages.",
         )
 
     def search_lenders(self, **params) -> Any:
@@ -1008,22 +1320,316 @@ class SBAContentAPI:
         legacy = self._items_from_legacy(self._legacy_search("lenders", **params), page)
         if legacy and legacy.get("items"):
             return legacy
-        items = [
-            {
-                "id": "lender-match",
-                "title": "Lender Match",
-                "description": "Official SBA tool to match with participating lenders.",
-                "url": f"{SBA_SITE}/funding-programs/loans/lender-match",
-                "type": "lender_tool",
-            }
-        ]
+        items = self._static_lender_items()
         return _normalize_page(
             _filter_items(items, query),
             page=page,
             source="static",
             degraded=True,
-            message="Lenders CloudSearch API unavailable; use Lender Match.",
+            message="Lenders API unavailable; showing Lender Match and financing partner cards.",
         )
+
+    def _static_course_items(self) -> List[Dict[str, Any]]:
+        return [
+            {
+                "id": "learning-center",
+                "title": "SBA Learning Platform",
+                "summary": "Free self-paced courses for starting, managing, and growing a small business.",
+                "description": "Access free online courses covering business planning, funding, marketing, and more.",
+                "url": f"{SBA_SITE}/sba-learning-platform",
+                "link": f"{SBA_SITE}/sba-learning-platform",
+                "type": "course",
+            },
+            {
+                "id": "plan-course",
+                "title": "Plan your business courses",
+                "summary": "Market research, business plans, and startup fundamentals.",
+                "description": "Official SBA business-guide learning path for planning a venture.",
+                "url": f"{SBA_SITE}/business-guide/plan-your-business",
+                "type": "course",
+            },
+            {
+                "id": "fund-course",
+                "title": "Fund your business courses",
+                "summary": "How SBA loans, investors, and grants fit different stages.",
+                "description": "Learning content tied to SBA funding programs and Lender Match.",
+                "url": f"{SBA_SITE}/business-guide/grow-your-business/fund-your-business",
+                "type": "course",
+            },
+            {
+                "id": "launch-course",
+                "title": "Launch your business courses",
+                "summary": "Registration, licenses, and first-customer readiness.",
+                "url": f"{SBA_SITE}/business-guide/launch-your-business",
+                "type": "course",
+            },
+            {
+                "id": "manage-course",
+                "title": "Manage your business courses",
+                "summary": "Employees, taxes, insurance, and day-to-day operations.",
+                "url": f"{SBA_SITE}/business-guide/manage-your-business",
+                "type": "course",
+            },
+            {
+                "id": "contracting-course",
+                "title": "Federal contracting basics",
+                "summary": "Learn how small businesses sell to the government.",
+                "url": f"{SBA_SITE}/federal-contracting",
+                "type": "course",
+            },
+            {
+                "id": "score-mentoring",
+                "title": "SCORE mentoring & workshops",
+                "summary": "Free mentoring and workshops through SCORE partners.",
+                "url": f"{SBA_SITE}/local-assistance/find",
+                "type": "course",
+            },
+            {
+                "id": "sbdc-training",
+                "title": "SBDC local training",
+                "summary": "Small Business Development Centers offer free/low-cost classes nearby.",
+                "url": f"{SBA_SITE}/local-assistance/find",
+                "type": "course",
+            },
+        ]
+
+    def _static_document_items(self) -> List[Dict[str, Any]]:
+        return [
+            {
+                "id": "forms",
+                "title": "SBA forms library",
+                "summary": "Download official SBA forms used for lending and programs.",
+                "description": "Browse current SBA forms and instructions.",
+                "url": f"{SBA_SITE}/document",
+                "fileUrl": f"{SBA_SITE}/document",
+                "type": "document",
+            },
+            {
+                "id": "sop",
+                "title": "Standard Operating Procedures (SOPs)",
+                "summary": "Policy manuals that govern SBA loan and program delivery.",
+                "url": f"{SBA_SITE}/document",
+                "fileUrl": f"{SBA_SITE}/document",
+                "type": "document",
+            },
+            {
+                "id": "7a-docs",
+                "title": "7(a) loan program documentation",
+                "summary": "Eligibility, uses of proceeds, and lender guidance for 7(a).",
+                "url": f"{SBA_SITE}/funding-programs/loans/7a-loans",
+                "type": "document",
+            },
+            {
+                "id": "504-docs",
+                "title": "504 loan program documentation",
+                "summary": "CDC/504 fixed-asset financing requirements and structure.",
+                "url": f"{SBA_SITE}/funding-programs/loans/504-loans",
+                "type": "document",
+            },
+            {
+                "id": "microloan-docs",
+                "title": "Microloan program documentation",
+                "summary": "Intermediary microloan rules and borrower guidance.",
+                "url": f"{SBA_SITE}/funding-programs/loans/microloans",
+                "type": "document",
+            },
+            {
+                "id": "size-standards",
+                "title": "Size standards documentation",
+                "summary": "How SBA defines a small business by industry.",
+                "url": f"{SBA_SITE}/size-standards",
+                "type": "document",
+            },
+            {
+                "id": "disaster-docs",
+                "title": "Disaster assistance forms & guides",
+                "summary": "Documents for disaster loan applicants and survivors.",
+                "url": f"{SBA_SITE}/funding-programs/disaster-assistance",
+                "type": "document",
+            },
+            {
+                "id": "contracting-docs",
+                "title": "Contracting certification guides",
+                "summary": "8(a), HUBZone, WOSB, and SDVOSB program documentation.",
+                "url": f"{SBA_SITE}/federal-contracting",
+                "type": "document",
+            },
+        ]
+
+    def _static_event_items(self) -> List[Dict[str, Any]]:
+        now = _now_iso()
+        return [
+            {
+                "id": "events-hub",
+                "title": "SBA events calendar",
+                "summary": "National webinars, workshops, and training listed on sba.gov/events.",
+                "description": "Browse upcoming SBA-hosted and partner events, filter by topic, and register online.",
+                "url": f"{SBA_SITE}/events",
+                "registrationLink": f"{SBA_SITE}/events",
+                "location": "Online & local",
+                "startDate": now,
+                "type": "event",
+            },
+            {
+                "id": "local-assistance-events",
+                "title": "Local counseling & training events",
+                "summary": "SBDC, SCORE, WBC, and VBOC workshops near you.",
+                "description": "Use the local assistance finder to discover partner-hosted classes and events.",
+                "url": f"{SBA_SITE}/local-assistance/find",
+                "registrationLink": f"{SBA_SITE}/local-assistance/find",
+                "location": "Local partners",
+                "startDate": now,
+                "type": "event",
+            },
+            {
+                "id": "lender-match-webinars",
+                "title": "Financing readiness webinars",
+                "summary": "Sessions that help owners prepare for Lender Match and SBA loans.",
+                "url": f"{SBA_SITE}/funding-programs/loans/lender-match",
+                "registrationLink": f"{SBA_SITE}/funding-programs/loans/lender-match",
+                "location": "Online",
+                "startDate": now,
+                "type": "event",
+            },
+            {
+                "id": "contracting-events",
+                "title": "Government contracting events",
+                "summary": "Matchmaking and training for federal contractors.",
+                "url": f"{SBA_SITE}/federal-contracting",
+                "location": "Online & regional",
+                "startDate": now,
+                "type": "event",
+            },
+            {
+                "id": "export-events",
+                "title": "Export & trade workshops",
+                "summary": "International trade counseling events and webinars.",
+                "url": f"{SBA_SITE}/business-guide/grow-your-business/export-products",
+                "location": "Online",
+                "startDate": now,
+                "type": "event",
+            },
+            {
+                "id": "disaster-briefings",
+                "title": "Disaster recovery briefings",
+                "summary": "Community briefings after declared disasters.",
+                "url": f"{SBA_SITE}/funding-programs/disaster-assistance",
+                "location": "Affected regions",
+                "startDate": now,
+                "type": "event",
+            },
+            {
+                "id": "newsroom-events",
+                "title": "SBA newsroom announcements",
+                "summary": "Press events and program rollout announcements.",
+                "url": f"{SBA_SITE}/about-sba/sba-newsroom",
+                "location": "Online",
+                "startDate": now,
+                "type": "event",
+            },
+            {
+                "id": "women-entrepreneurs",
+                "title": "Women entrepreneur events",
+                "summary": "WBC network events and national campaigns for women-owned firms.",
+                "url": f"{SBA_SITE}/local-assistance/find",
+                "location": "Local WBCs",
+                "startDate": now,
+                "type": "event",
+            },
+        ]
+
+    def _static_lender_items(self) -> List[Dict[str, Any]]:
+        return [
+            {
+                "id": "lender-match",
+                "title": "Lender Match",
+                "summary": "Official SBA tool that matches your financing needs to participating lenders.",
+                "description": "Answer a short questionnaire and get connected with SBA lenders interested in your request.",
+                "url": f"{SBA_SITE}/funding-programs/loans/lender-match",
+                "type": "lender_tool",
+            },
+            {
+                "id": "7a-lenders",
+                "title": "7(a) participating lenders",
+                "summary": "Community banks and CDFIs that deliver SBA 7(a) loans.",
+                "url": f"{SBA_SITE}/funding-programs/loans/7a-loans",
+                "type": "lender",
+            },
+            {
+                "id": "504-cdc",
+                "title": "504 Certified Development Companies",
+                "summary": "CDCs partner with banks on fixed-asset 504 projects.",
+                "url": f"{SBA_SITE}/funding-programs/loans/504-loans",
+                "type": "lender",
+            },
+            {
+                "id": "microloan-intermediaries",
+                "title": "Microloan intermediaries",
+                "summary": "Nonprofit lenders offering microloans up to $50,000 plus technical assistance.",
+                "url": f"{SBA_SITE}/funding-programs/loans/microloans",
+                "type": "lender",
+            },
+            {
+                "id": "community-advantage",
+                "title": "Mission-oriented lenders",
+                "summary": "Lenders focused on underserved markets and smaller loan sizes.",
+                "url": f"{SBA_SITE}/funding-programs/loans",
+                "type": "lender",
+            },
+            {
+                "id": "export-lenders",
+                "title": "Export financing lenders",
+                "summary": "SBA export working capital and international trade loan specialists.",
+                "url": f"{SBA_SITE}/funding-programs/loans",
+                "type": "lender",
+            },
+        ]
+
+    def _static_sbir_items(self) -> List[Dict[str, Any]]:
+        return [
+            {
+                "id": "sbir-overview",
+                "title": "SBIR / STTR overview",
+                "summary": "America’s Seed Fund for small business R&D — Phase I/II awards across federal agencies.",
+                "url": "https://www.sbir.gov",
+                "type": "sbir",
+            },
+            {
+                "id": "sbir-solicitations",
+                "title": "Current solicitations",
+                "summary": "Browse open SBIR/STTR topics and agency solicitations.",
+                "url": "https://www.sbir.gov/solicitations",
+                "type": "sbir",
+            },
+            {
+                "id": "sbir-awards",
+                "title": "Award search",
+                "summary": "Search historical SBIR/STTR awards by firm, agency, or keyword.",
+                "url": "https://www.sbir.gov/awards",
+                "type": "sbir",
+            },
+            {
+                "id": "sbir-tutorials",
+                "title": "How to apply tutorials",
+                "summary": "Learn proposal basics, registration (SAM, SBIR.gov), and agency differences.",
+                "url": "https://www.sbir.gov/tutorials",
+                "type": "sbir",
+            },
+            {
+                "id": "sba-innovation",
+                "title": "SBA innovation programs",
+                "summary": "SBA resources related to R&D and commercialization.",
+                "url": f"{SBA_SITE}/funding-programs",
+                "type": "sbir",
+            },
+            {
+                "id": "sbir-events",
+                "title": "SBIR events & road tours",
+                "summary": "Agency outreach events for innovators and researchers.",
+                "url": "https://www.sbir.gov/events",
+                "type": "sbir",
+            },
+        ]
 
     def search_offices(self, **params) -> Any:
         page = int(params.get("page") or 1)
@@ -1032,21 +1638,23 @@ class SBAContentAPI:
         if legacy and legacy.get("items"):
             return legacy
 
+        curated = self._static_office_items()
         html = self._extract_from_html_pages(
             [f"{SBA_SITE}/about-sba/sba-locations", f"{SBA_SITE}/local-assistance/find"],
             item_type="office",
             query=query,
-            page=page,
+            page=1,
         )
-        if html and html.get("items"):
-            return html
-
+        extra = html.get("items") if isinstance(html, dict) else None
+        items = self._merge_cards(curated, extra or [])
+        live = bool(extra)
         return _normalize_page(
-            _filter_items(self._static_office_items(), query),
+            _filter_items(items, query),
             page=page,
-            source="static",
-            degraded=True,
-            message="Offices JSON API unavailable; linking official location finders.",
+            source="sba_html" if live else "static",
+            degraded=not live,
+            is_current=bool(live),
+            message="Office/local-help cards from official SBA location pages.",
         )
 
     def get_node(self, node_id: int) -> Any:

@@ -152,7 +152,7 @@
   <div class="shell">
     <div class="topbar">
       <a class="brand" href="/">
-        <span class="brand-dot"></span>
+        <img src="/logo.gif" alt="PocketPro SBA" width="28" height="28" style="border-radius:50%;object-fit:cover;box-shadow:0 0 0 2px #dbeafe;background:#fff" onerror="this.src='/images/yinyang.gif'" /><span class="brand-dot" style="display:none"></span>
         PocketPro <span style="color:var(--blue);font-weight:600">SBA</span>
       </a>
       <nav class="top-links">
@@ -160,12 +160,16 @@
         <a class="chip" href="/chat">Chat</a>
         <a class="chip active" href="/browse">Resources</a>
         <a class="chip" href="/rag">RAG</a>
-        <a class="chip" href="/sba">SBA</a>
+        <a class="chip active" href="/sba">SBA</a>
       </nav>
     </div>
 
     <h1>SBA Resources</h1>
-    <p class="lead">Navigation is loaded from <code>/api/sba/resources</code>. Click a category to load items, then click a card for details.</p>
+    <p class="lead">
+      <strong>API-driven:</strong> left tabs come from <code>/api/sba/resources</code>.
+      Click a tab to fetch that tab’s <code>path</code> and render cards from the response
+      (<code>items</code> / loan types / sources). Click a card for full detail.
+    </p>
 
     <div id="alert" class="alert" style="display:none"></div>
 
@@ -244,19 +248,29 @@
 
     function normalizeItem(raw, index) {
       if (!raw || typeof raw !== 'object') {
-        const text = String(raw || '').trim();
+        const text = stripHtml(raw);
         if (!text) return null;
         return { id: 'item-' + index, title: text.slice(0, 120), description: text, url: '', type: 'content', meta: {} };
       }
-      let title = String(raw.title || raw.name || raw.label || raw.award_title || raw.firm || raw.type || '').trim();
-      let description = String(raw.description || raw.summary || raw.teaser || raw.body || raw.abstract || raw.message || '').trim();
-      const url = String(raw.url || raw.link || raw.href || raw.award_link || raw.source_page || '').trim();
+      let title = stripHtml(raw.title || raw.name || raw.label || raw.award_title || raw.firm || raw.type || '');
+      // Prefer plain-text fields; strip HTML from body so cards always render text
+      let description = stripHtml(
+        raw.description || raw.summary || raw.teaser || raw.abstract || raw.message || raw.body || ''
+      );
+      const url = String(raw.url || raw.link || raw.href || raw.award_link || raw.source_page || raw.registrationLink || '').trim();
       if (!title && url) {
-        title = decodeURIComponent((url.split('/').filter(Boolean).pop() || 'SBA resource')).replace(/[-_]/g, ' ');
+        try {
+          title = decodeURIComponent((url.split('/').filter(Boolean).pop() || 'SBA resource')).replace(/[-_]/g, ' ');
+        } catch (_) {
+          title = 'SBA resource';
+        }
       }
       if (!title && description) title = description.slice(0, 80) + (description.length > 80 ? '…' : '');
       if (!description && title) description = url ? (title + ' — ' + url) : ('SBA resource: ' + title);
       if (!title && !description && !url) return null;
+      // Never drop a card that has a title
+      if (!title) title = 'SBA resource ' + (index + 1);
+      if (!description) description = title;
       const meta = Object.assign({}, raw.meta || {});
       ['agency','firm','phase','program','award_amount','award_year','phone','email','address','location','source_page','retrieved_at','is_current','freshness','source','max_amount','terms','rates','use_cases','base','status_code','error','ok']
         .forEach((k) => { if (raw[k] !== undefined && raw[k] !== null && raw[k] !== '') meta[k] = raw[k]; });
@@ -268,6 +282,27 @@
         source: raw.source,
         meta,
       };
+    }
+
+    function extractItems(data, resource) {
+      if (!data || typeof data !== 'object') return [];
+      const isOverview = resource && resource.path && resource.path.indexOf('sba-overview') !== -1;
+      const isSources = resource && resource.path && resource.path.indexOf('/sources') !== -1;
+      if (isSources) return sourcesToItems(data);
+      if (isOverview || Array.isArray(data.available_loan_types)) return overviewToItems(data);
+      if (Array.isArray(data.items)) return data.items.map(normalizeItem).filter(Boolean);
+      if (Array.isArray(data.results)) return data.results.map(normalizeItem).filter(Boolean);
+      if (Array.isArray(data.resources)) {
+        return data.resources.map((r, i) => normalizeItem({
+          id: r.id, title: r.name || r.id, description: r.description, url: r.path, type: 'resource',
+        }, i)).filter(Boolean);
+      }
+      // Single object card
+      if (data.title || data.name || data.summary) {
+        const one = normalizeItem(data, 0);
+        return one ? [one] : [];
+      }
+      return [];
     }
 
     function sourcesToItems(data) {
@@ -300,14 +335,61 @@
       }, i)).filter(Boolean);
     }
 
-    async function apiGet(path, params) {
-      const url = new URL(path, window.location.origin);
-      if (params) Object.entries(params).forEach(([k, v]) => {
-        if (v !== undefined && v !== null && v !== '') url.searchParams.set(k, v);
-      });
-      const res = await fetch(url.toString(), { headers: { Accept: 'application/json' } });
-      if (!res.ok) throw new Error('HTTP ' + res.status + ' for ' + path);
-      return res.json();
+    function stripHtml(s) {
+      return String(s == null ? '' : s)
+        .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+        .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+        .replace(/<[^>]+>/g, ' ')
+        .replace(/&nbsp;/g, ' ')
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/\s+/g, ' ')
+        .trim();
+    }
+
+    async function apiGet(path, params, timeoutMs) {
+      // Prefer same-origin proxy (/api → backend). Fall back to direct :5000 if proxy fails.
+      // Do NOT force fresh=1 on every click — that re-scrapes sba.gov and blanks the UI on timeout.
+      const bases = [window.location.origin, 'http://localhost:5000', 'http://127.0.0.1:5000'];
+      const ms = timeoutMs || 60000;
+      let lastErr = null;
+      for (const base of bases) {
+        const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+        const timer = controller ? setTimeout(function () { controller.abort(); }, ms) : null;
+        try {
+          const url = new URL(path, base);
+          if (params) {
+            Object.entries(params).forEach(function (entry) {
+              var k = entry[0], v = entry[1];
+              if (v !== undefined && v !== null && v !== '') url.searchParams.set(k, v);
+            });
+          }
+          var fetchOpts = {
+            headers: { Accept: 'application/json' },
+          };
+          if (controller) fetchOpts.signal = controller.signal;
+          const res = await fetch(url.toString(), fetchOpts);
+          if (!res.ok) {
+            lastErr = new Error('HTTP ' + res.status + ' for ' + path);
+            if (res.status === 404 || res.status >= 500) continue;
+            throw lastErr;
+          }
+          const data = await res.json();
+          if (!data || typeof data !== 'object') {
+            throw new Error('Empty JSON for ' + path);
+          }
+          return data;
+        } catch (e) {
+          lastErr = e && e.name === 'AbortError'
+            ? new Error('Timed out loading ' + path + ' after ' + ms + 'ms')
+            : e;
+        } finally {
+          if (timer) clearTimeout(timer);
+        }
+      }
+      throw lastErr || new Error('Failed to fetch ' + path);
     }
 
     function renderNav() {
@@ -347,6 +429,7 @@
 
     async function loadCatalog() {
       navList.innerHTML = '<div class="loading"><div class="spinner"></div>Loading resources…</div>';
+      results.innerHTML = '<div class="loading"><div class="spinner"></div>Loading SBA resources…</div>';
       showAlert('');
       try {
         const data = await apiGet('/api/sba/resources');
@@ -359,21 +442,33 @@
           icon: ICONS[r.icon || r.id] || '📁',
         }));
         renderNav();
-        if (!state.resources.length) showAlert('No resources returned from /api/sba/resources');
+        if (!state.resources.length) {
+          showAlert('No resources returned from /api/sba/resources', true);
+          results.innerHTML = '<div class="empty">No resource categories available.</div>';
+          return;
+        }
+        // Auto-load first category so cards render immediately (prefer loans)
+        const preferred = state.resources.find((r) => r.id === 'loans') || state.resources[0];
+        await loadResource(preferred, 1, '');
       } catch (e) {
         navList.innerHTML = '<div class="empty">Failed to load navigation.</div>';
+        results.innerHTML = '<div class="empty">Could not load SBA resources.</div>';
         showAlert('Could not load /api/sba/resources: ' + e.message, true);
       }
     }
 
     async function loadResource(resource, page, query) {
+      if (!resource || !resource.path) {
+        results.innerHTML = '<div class="empty">Invalid resource.</div>';
+        return;
+      }
       state.active = resource;
       state.page = page || 1;
       state.query = query || '';
       $('searchInput').disabled = false;
       $('searchBtn').disabled = false;
       $('searchInput').value = state.query;
-      $('activeTitle').textContent = resource.icon + ' ' + resource.name;
+      $('activeTitle').textContent = (resource.icon || '') + ' ' + resource.name;
       $('activeMeta').innerHTML = '';
       results.innerHTML = '<div class="loading"><div class="spinner"></div>Loading ' + escapeHtml(resource.name) + '…</div>';
       showAlert('');
@@ -382,18 +477,31 @@
       try {
         const isOverview = resource.path.indexOf('sba-overview') !== -1;
         const isSources = resource.path.indexOf('/sources') !== -1;
+        // Cached API response first (fast). Use ?fresh=1 only via Refresh button path.
         const params = (isOverview || isSources)
-          ? { fresh: 1 }
-          : { page: state.page, fresh: 1, query: state.query || undefined };
-        const data = await apiGet(resource.path, params);
+          ? {}
+          : { page: state.page, query: state.query || undefined };
+        const data = await apiGet(resource.path, params, 60000);
+        let items = extractItems(data, resource);
 
-        let items = [];
-        if (isSources) items = sourcesToItems(data);
-        else if (isOverview || Array.isArray(data.available_loan_types)) items = overviewToItems(data);
-        else if (Array.isArray(data.items)) items = data.items.map(normalizeItem).filter(Boolean);
+        // If API returned a 200 envelope with zero items, show a clear soft-degrade card
+        // so the panel is never blank when the tab/header exists.
+        if (!items.length) {
+          items = [normalizeItem({
+            id: resource.id + '-empty',
+            title: resource.name + ' — no rows yet',
+            description: (data && data.message)
+              ? String(data.message)
+              : ('The API at ' + resource.path + ' returned no items. Try Refresh or another tab.'),
+            url: '',
+            type: 'notice',
+            is_current: false,
+            source: (data && data.source) || 'api',
+          }, 0)].filter(Boolean);
+        }
 
         state.items = items;
-        state.totalPages = Number(data.totalPages) || 1;
+        state.totalPages = Number(data.totalPages || data.total_pages) || 1;
         state.meta = {
           is_current: data.is_current,
           source: data.source || data.mode,
@@ -405,15 +513,19 @@
         const badges = [];
         if (state.meta.is_current === true) badges.push('<span class="badge ok">Current</span>');
         if (state.meta.is_current === false) badges.push('<span class="badge no">Not current</span>');
-        if (state.meta.source) badges.push('<span class="badge soft">' + escapeHtml(state.meta.source) + '</span>');
-        badges.push('<span class="badge soft">' + items.length + ' items</span>');
+        if (state.meta.source) badges.push('<span class="badge soft">' + escapeHtml(String(state.meta.source)) + '</span>');
+        badges.push('<span class="badge soft">' + items.length + ' cards</span>');
+        // Prove cards come from this tab's API path
+        badges.push('<span class="badge soft" title="API path for this tab">' + escapeHtml(resource.path) + '</span>');
         if (state.meta.retrieved_at) {
-          badges.push('<span class="badge soft">' + escapeHtml(new Date(state.meta.retrieved_at).toLocaleString()) + '</span>');
+          try {
+            badges.push('<span class="badge soft">' + escapeHtml(new Date(state.meta.retrieved_at).toLocaleString()) + '</span>');
+          } catch (_) { /* ignore date parse */ }
         }
         $('activeMeta').innerHTML = badges.join('');
 
         if (!items.length) {
-          results.innerHTML = '<div class="empty">No items for this resource.</div>';
+          results.innerHTML = '<div class="empty">No items for this resource. Try another category or search.</div>';
           if (state.meta.message) showAlert(state.meta.message, true);
           return;
         }
@@ -421,14 +533,15 @@
         results.innerHTML = '<div class="grid">' + items.map((item, idx) => (
           '<button type="button" class="card" data-idx="' + idx + '">' +
             '<div style="display:flex;justify-content:space-between;gap:0.5rem;align-items:flex-start">' +
-              '<h3>' + escapeHtml(item.title) + '</h3>' +
+              '<h3>' + escapeHtml(item.title || 'SBA resource') + '</h3>' +
               '<div>' +
                 (item.is_current === true ? '<span class="badge ok">Current</span> ' : '') +
                 (item.is_current === false ? '<span class="badge no">Not current</span> ' : '') +
-                (item.type ? '<span class="badge soft">' + escapeHtml(item.type) + '</span>' : '') +
+                (item.type ? '<span class="badge soft">' + escapeHtml(String(item.type)) + '</span>' : '') +
               '</div>' +
             '</div>' +
-            '<p>' + escapeHtml((item.description || '').slice(0, 220)) + ((item.description || '').length > 220 ? '…' : '') + '</p>' +
+            '<p>' + escapeHtml((item.description || item.title || '').slice(0, 220)) +
+              ((item.description || '').length > 220 ? '…' : '') + '</p>' +
             metaPreview(item) +
             '<div class="more">Open details →</div>' +
           '</button>'
@@ -442,8 +555,9 @@
         if (prev) prev.addEventListener('click', () => loadResource(resource, state.page - 1, state.query));
         if (next) next.addEventListener('click', () => loadResource(resource, state.page + 1, state.query));
       } catch (e) {
-        results.innerHTML = '<div class="empty">Failed to load items.</div>';
-        showAlert('Load failed: ' + e.message, true);
+        console.error('loadResource failed', resource, e);
+        results.innerHTML = '<div class="empty">Failed to load items for ' + escapeHtml(resource.name) + '.</div>';
+        showAlert('Load failed: ' + (e && e.message ? e.message : e), true);
       }
     }
 
@@ -502,14 +616,58 @@
     $('closeModal2').addEventListener('click', closeDetail);
     $('overlay').addEventListener('click', (e) => { if (e.target === $('overlay')) closeDetail(); });
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeDetail(); });
-    $('refreshNav').addEventListener('click', loadCatalog);
+    $('refreshNav').addEventListener('click', async function () {
+      // Hard refresh: re-pull catalog and force live SBA scrape for active tab
+      showAlert('Refreshing from API…');
+      try {
+        await loadCatalog();
+        if (state.active) {
+          const isOverview = state.active.path.indexOf('sba-overview') !== -1;
+          const isSources = state.active.path.indexOf('/sources') !== -1;
+          const params = (isOverview || isSources)
+            ? { fresh: 1 }
+            : { page: 1, fresh: 1, query: state.query || undefined };
+          results.innerHTML = '<div class="loading"><div class="spinner"></div>Refreshing ' + escapeHtml(state.active.name) + '…</div>';
+          const data = await apiGet(state.active.path, params, 90000);
+          let items = extractItems(data, state.active);
+          if (!items.length) {
+            items = [normalizeItem({
+              id: 'refresh-empty',
+              title: state.active.name,
+              description: (data && data.message) || 'API returned no items after refresh.',
+              type: 'notice',
+            }, 0)].filter(Boolean);
+          }
+          state.items = items;
+          state.meta = { is_current: data.is_current, source: data.source, message: data.message, count: items.length };
+          $('activeMeta').innerHTML = '<span class="badge soft">' + items.length + ' cards</span> <span class="badge soft">' + escapeHtml(state.active.path) + '</span>';
+          results.innerHTML = '<div class="grid">' + items.map(function (item, idx) {
+            return '<button type="button" class="card" data-idx="' + idx + '">' +
+              '<h3>' + escapeHtml(item.title || 'SBA resource') + '</h3>' +
+              '<p>' + escapeHtml((item.description || '').slice(0, 220)) + '</p>' +
+              '<div class="more">Open details →</div></button>';
+          }).join('') + '</div>';
+          results.querySelectorAll('.card').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+              openDetail(state.items[Number(btn.getAttribute('data-idx'))]);
+            });
+          });
+          showAlert('Refreshed ' + state.active.name + ' (' + items.length + ' cards)');
+        }
+      } catch (e) {
+        showAlert('Refresh failed: ' + (e && e.message ? e.message : e), true);
+      }
+    });
     $('searchForm').addEventListener('submit', (e) => {
       e.preventDefault();
       if (!state.active) { showAlert('Select a resource first', true); return; }
       loadResource(state.active, 1, $('searchInput').value.trim());
     });
 
-    loadCatalog();
+    // Boot: catalog → auto-select Loans → cards from API
+    loadCatalog().catch(function (e) {
+      showAlert('Startup load failed: ' + (e && e.message ? e.message : e), true);
+    });
   </script>
 </body>
 </html>

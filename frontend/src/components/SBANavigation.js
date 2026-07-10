@@ -16,12 +16,17 @@ const NAV_ITEMS = [
     to: '/browse',
     label: 'Resources',
     testId: 'nav-browse',
-    // Full document navigation → resources.html via nginx
+    // Full document navigation → resources.html via nginx (API cards)
     hardNav: true,
   },
   { to: '/rag', label: 'RAG', testId: 'nav-rag' },
   { to: '/documents', label: 'Docs', testId: 'nav-documents' },
-  { to: '/sba', label: 'Programs', testId: 'nav-sba' },
+  {
+    to: '/sba',
+    label: 'Programs',
+    testId: 'nav-sba',
+    // SPA SBAContent: Programs | Lifecycle | Local from /api/sba/resources
+  },
   { to: '/orchestrator', label: 'Tasks', testId: 'nav-orchestrator' },
 ];
 

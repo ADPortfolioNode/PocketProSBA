@@ -1,0 +1,57 @@
+---
+pid: 3140
+cwd: "E:\2024 RESET\PocketProSBA"
+command: "python -m pytest \"E:\\2024 RESET\\PocketProSBA\\backend\\tests\" -q --tb=no -k \"health or test_root or test_app\""
+started_at: 2026-07-09T01:07:29.545Z
+running_for_ms: 16709969 
+---
+.......F...                                                              [100%]
+============================== warnings summary ===============================
+backend\tests\test_integration.py:5
+  E:\2024 RESET\PocketProSBA\backend\tests\test_integration.py:5: PytestUnknownMarkWarning: Unknown pytest.mark.integration - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.integration
+
+backend\tests\test_integration.py:27
+  E:\2024 RESET\PocketProSBA\backend\tests\test_integration.py:27: PytestUnknownMarkWarning: Unknown pytest.mark.integration - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.integration
+
+backend\tests\test_integration.py:34
+  E:\2024 RESET\PocketProSBA\backend\tests\test_integration.py:34: PytestUnknownMarkWarning: Unknown pytest.mark.integration - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.integration
+
+backend\tests\test_integration.py:41
+  E:\2024 RESET\PocketProSBA\backend\tests\test_integration.py:41: PytestUnknownMarkWarning: Unknown pytest.mark.integration - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.integration
+
+backend\tests\test_integration.py:48
+  E:\2024 RESET\PocketProSBA\backend\tests\test_integration.py:48: PytestUnknownMarkWarning: Unknown pytest.mark.integration - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.integration
+
+backend/tests/test_api.py::test_health_check
+  C:\Users\deois\AppData\Roaming\Python\Python311\site-packages\langchain\vectorstores\__init__.py:35: LangChainDeprecationWarning: Importing vector stores from langchain is deprecated. Importing from langchain will no longer be supported as of langchain==0.2.0. Please import from langchain-community instead:
+  
+  `from langchain_community.vectorstores import Chroma`.
+  
+  To install langchain-community run `pip install -U langchain-community`.
+    warnings.warn(
+
+backend/tests/test_api.py::test_health_check
+  C:\Users\deois\AppData\Roaming\Python\Python311\site-packages\langchain\document_loaders\__init__.py:36: LangChainDeprecationWarning: Importing document loaders from langchain is deprecated. Importing from langchain will no longer be supported as of langchain==0.2.0. Please import from langchain-community instead:
+  
+  `from langchain_community.document_loaders import DirectoryLoader`.
+  
+  To install langchain-community run `pip install -U langchain-community`.
+    warnings.warn(
+
+backend/tests/test_api.py::test_health_check
+  C:\Users\deois\AppData\Roaming\Python\Python311\site-packages\langchain\document_loaders\__init__.py:36: LangChainDeprecationWarning: Importing document loaders from langchain is deprecated. Importing from langchain will no longer be supported as of langchain==0.2.0. Please import from langchain-community instead:
+  
+  `from langchain_community.document_loaders import TextLoader`.
+  
+  To install langchain-community run `pip install -U langchain-community`.
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED backend/tests/test_app.py::test_400_error_handler - assert 500 == 400
+1 failed, 10 passed, 102 deselected, 8 warnings in 10.04s

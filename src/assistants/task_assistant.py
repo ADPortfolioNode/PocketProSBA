@@ -69,27 +69,74 @@ class TaskAssistant(Concierge):
         if task.status == "completed":
             task.result = [s.result for s in task.steps]
 
-            # Persist completed task to vector store for future retrieval
+            # Persist completed task for future retrieval (real embedding + local store)
             try:
+                import hashlib
+                import json
+                import os
+                import re
                 import requests
-                # Example: create embedding from task result (pseudo-code, replace with real embedding logic)
-                embedding = self.llm.embed(str(task.result)) if hasattr(self.llm, 'embed') else [0.0] * 768
+
+                def _hash_embed(text: str, dim: int = 384):
+                    vec = [0.0] * dim
+                    tokens = re.findall(r"[a-z0-9]+", (text or "").lower()) or ["empty"]
+                    for t in tokens:
+                        h = int(hashlib.md5(t.encode()).hexdigest(), 16)
+                        idx = h % dim
+                        sign = 1.0 if (h >> 8) & 1 else -1.0
+                        vec[idx] += sign
+                    norm = sum(v * v for v in vec) ** 0.5 or 1.0
+                    return [v / norm for v in vec]
+
+                text_blob = str(task.result)
+                embedding = None
+                if hasattr(self, "llm") and self.llm is not None and hasattr(self.llm, "embed"):
+                    try:
+                        embedding = self.llm.embed(text_blob)
+                    except Exception:
+                        embedding = None
+                if not embedding:
+                    embedding = _hash_embed(text_blob)
+
                 metadata = {
                     "task_name": task.name,
                     "instruction": task.instruction,
                     "admin_assistant": task.admin_assistant,
                     "steps": [s.instruction for s in task.steps],
-                    "result": task.result
+                    "result": task.result,
                 }
-                requests.post(
-                    "http://localhost:5000/api/chroma/store_step_embedding",
-                    json={
-                        "step_id": task.name,
-                        "embedding": embedding,
-                        "metadata": metadata
-                    },
-                    timeout=5
-                )
+
+                # Prefer live API if backend is up
+                base = os.environ.get("API_BASE_URL", "http://localhost:5000")
+                try:
+                    requests.post(
+                        f"{base.rstrip('/')}/api/orchestrator/memory",
+                        json={
+                            "step_id": task.name,
+                            "embedding": embedding,
+                            "metadata": metadata,
+                        },
+                        timeout=5,
+                    )
+                except Exception:
+                    # Durable local fallback
+                    path = os.path.join(
+                        os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+                        "backend",
+                        "instance",
+                        "task_memory.json",
+                    )
+                    os.makedirs(os.path.dirname(path), exist_ok=True)
+                    rows = []
+                    if os.path.isfile(path):
+                        try:
+                            with open(path, "r", encoding="utf-8") as f:
+                                rows = json.load(f) or []
+                        except Exception:
+                            rows = []
+                    rows.append({"task_id": task.name, "metadata": metadata, "embedding_dim": len(embedding)})
+                    with open(path, "w", encoding="utf-8") as f:
+                        json.dump(rows[-500:], f, indent=2)
             except Exception as e:
                 print(f"Warning: Failed to persist task embedding: {e}")
 

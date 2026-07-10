@@ -31,32 +31,58 @@ class SearchAgent(BaseAssistant):
             if context and context.get("internet_search", False):
                 self._update_status("running", 20, "Performing internet search...")
                 query = message
-                # Use Google Custom Search API or similar (pseudo-code, replace with real implementation)
+                # Google Custom Search (live HTTP API)
+                import os
                 import requests
-                api_key = context.get("google_api_key")
-                cx = context.get("google_cx")
+                from urllib.parse import quote_plus
+
+                api_key = (
+                    context.get("google_api_key")
+                    or os.environ.get("GOOGLE_API_KEY")
+                )
+                cx = (
+                    context.get("google_cx")
+                    or os.environ.get("GOOGLE_CSE_ID")
+                )
                 if not api_key or not cx:
-                    return self.report_failure("Google API key and CX (search engine ID) required for internet search.")
-                url = f"https://www.googleapis.com/customsearch/v1?q={query}&key={api_key}&cx={cx}"
-                resp = requests.get(url)
+                    return self.report_failure(
+                        "Google API key and CX (search engine ID) required for internet search. "
+                        "Set GOOGLE_API_KEY and GOOGLE_CSE_ID, or pass google_api_key/google_cx in context."
+                    )
+                url = "https://www.googleapis.com/customsearch/v1"
+                resp = requests.get(
+                    url,
+                    params={"q": query, "key": api_key, "cx": cx, "num": 5},
+                    timeout=20,
+                )
                 if resp.status_code != 200:
-                    return self.report_failure(f"Google Search API error: {resp.text}")
+                    return self.report_failure(
+                        f"Google Search API error ({resp.status_code}): {resp.text[:300]}"
+                    )
                 data = resp.json()
-                items = data.get("items", [])
-                results = []
-                for item in items:
-                    results.append({
+                items = data.get("items", []) or []
+                results = [
+                    {
                         "title": item.get("title"),
                         "snippet": item.get("snippet"),
-                        "link": item.get("link")
-                    })
-                formatted = "\n\n".join([f"{r['title']}\n{r['snippet']}\n{r['link']}" for r in results])
+                        "link": item.get("link"),
+                    }
+                    for item in items
+                ]
+                if not results:
+                    return self.report_success(
+                        text=f"No internet search results for '{query}'.",
+                        additional_data={"results": [], "source": "google_search"},
+                    )
+                formatted = "\n\n".join(
+                    [f"{r['title']}\n{r['snippet']}\n{r['link']}" for r in results]
+                )
                 return self.report_success(
                     text=f"Internet search results for '{query}':\n\n{formatted}",
                     additional_data={
                         "results": results,
-                        "source": "google_search"
-                    }
+                        "source": "google_search",
+                    },
                 )
 
             # ...existing document search logic...

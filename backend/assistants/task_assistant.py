@@ -460,55 +460,83 @@ class TaskAssistant(BaseAssistant):
 
     def _call_assistant_api(self, endpoint: str, message: str, timeout: int = 30) -> Dict[str, Any]:
         """
-        Make a REST API call to an assistant endpoint
-
-        Args:
-            endpoint: API endpoint URL
-            message: Message to send
-            timeout: Request timeout in seconds
-
-        Returns:
-            API response data
+        Call an assistant endpoint over HTTP, with in-process agent fallback.
+        Returns a dict that includes a ``text`` field for validation.
         """
+        # Prefer in-process agents (works inside Docker without hairpin HTTP)
+        try:
+            inproc = self._invoke_agent_inprocess(endpoint, message)
+            if inproc and inproc.get("text") and not inproc.get("error"):
+                return inproc
+        except Exception as inproc_err:
+            logger.warning("In-process agent path failed: %s", inproc_err)
+
         try:
             payload = {
                 "message": message,
                 "context": {
                     "source": "TaskAssistant",
-                    "timestamp": datetime.now().isoformat()
-                }
+                    "timestamp": datetime.now().isoformat(),
+                },
             }
-
             response = requests.post(
                 endpoint,
                 json=payload,
                 timeout=timeout,
-                headers={"Content-Type": "application/json"}
+                headers={"Content-Type": "application/json"},
             )
+            response.raise_for_status()
+            result = response.json() if response.content else {}
 
-            response.raise_for_status()  # Raise exception for bad status codes
+            # Normalize shapes: {text,...} or {success, response:{text}} or {result}
+            if isinstance(result, dict):
+                if result.get("text"):
+                    return result
+                if isinstance(result.get("response"), dict) and result["response"].get("text"):
+                    return result["response"]
+                if result.get("result"):
+                    return {"text": result["result"], "sources": result.get("sources", [])}
+                if result.get("error") or result.get("success") is False:
+                    return {"error": result.get("error") or result.get("text") or "Unknown API error"}
+                return result
 
-            result = response.json()
-
-            if result.get("success"):
-                return result.get("response", {})
-            else:
-                error_msg = result.get("error", "Unknown API error")
-                logger.error(f"Assistant API returned error: {error_msg}")
-                return {"error": error_msg}
+            return {"text": str(result)}
 
         except requests.exceptions.Timeout:
-            logger.error(f"Timeout calling assistant API: {endpoint}")
+            logger.error("Timeout calling assistant API: %s", endpoint)
             return {"error": f"Request timeout after {timeout} seconds"}
         except requests.exceptions.RequestException as e:
-            logger.error(f"Request error calling assistant API: {str(e)}")
-            return {"error": f"Request failed: {str(e)}"}
+            logger.error("Request error calling assistant API: %s", e)
+            # Last resort in-process
+            try:
+                return self._invoke_agent_inprocess(endpoint, message) or {"error": str(e)}
+            except Exception:
+                return {"error": f"Request failed: {e}"}
         except json.JSONDecodeError as e:
-            logger.error(f"JSON decode error from assistant API: {str(e)}")
-            return {"error": f"Invalid JSON response: {str(e)}"}
+            logger.error("JSON decode error from assistant API: %s", e)
+            return {"error": f"Invalid JSON response: {e}"}
         except Exception as e:
-            logger.error(f"Unexpected error calling assistant API: {str(e)}")
-            return {"error": f"Unexpected error: {str(e)}"}
+            logger.error("Unexpected error calling assistant API: %s", e)
+            return {"error": f"Unexpected error: {e}"}
+
+    def _invoke_agent_inprocess(self, endpoint: str, message: str) -> Dict[str, Any]:
+        """Map endpoint URL to a local agent and run handle_message."""
+        ep = (endpoint or "").lower()
+        if "function" in ep:
+            from backend.assistants.function import FunctionAgent
+            return FunctionAgent().handle_message(message)
+        if "file" in ep:
+            from backend.assistants.file import FileAgent
+            return FileAgent().handle_message(message)
+        if "search" in ep:
+            try:
+                from backend.assistants.search import SearchAgent
+                return SearchAgent().handle_message(message)
+            except Exception:
+                from backend.assistants.concierge import Concierge
+                return Concierge().handle_message(message)
+        from backend.assistants.concierge import Concierge
+        return Concierge().handle_message(message)
 
     def cancel_task(self, task_id: str) -> bool:
         """

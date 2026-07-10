@@ -58,6 +58,9 @@ services:
       - ./frontend/build:/usr/share/nginx/html:ro
       # Live resources UI (API nav + click detail cards); not in gitignored build/
       - ./frontend/public/resources.html:/usr/share/nginx/html/resources.html:ro
+      - ./frontend/public/favicon.ico:/usr/share/nginx/html/favicon.ico:ro
+      - ./frontend/public/favicon.svg:/usr/share/nginx/html/favicon.svg:ro
+      - ./frontend/public/logo.svg:/usr/share/nginx/html/logo.svg:ro
       - ./frontend/nginx.dev.conf:/etc/nginx/conf.d/default.conf:ro
     extra_hosts:
       - "host.docker.internal:host-gateway"
@@ -68,3 +71,4 @@ services:
 networks:
   default:
     name: pocketpro-dev-network
+

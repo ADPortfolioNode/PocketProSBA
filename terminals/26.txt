@@ -1,0 +1,386 @@
+---
+pid: 7660
+cwd: "E:\2024 RESET\PocketProSBA"
+command: "cmd /c \"set FLASK_ENV=development&& set PYTHONPATH=E:\\2024 RESET\\PocketProSBA;E:\\2024 RESET\\PocketProSBA\\backend&& cd /d E:\\2024 RESET\\PocketProSBA&& python run.py\""
+started_at: 2026-07-09T01:18:45.133Z
+running_for_ms: 16050001 
+---
+🔄 Importing PocketPro:SBA application...
+2026-07-08 21:18:47,807 - backend.app - INFO - Database URI: sqlite:///app.db
+2026-07-08 21:18:47,906 - backend.app - INFO - Database tables created successfully
+2026-07-08 21:18:50,001 - backend.assistants.concierge - INFO - Self-optimizing components imported successfully
+C:\Users\deois\AppData\Roaming\Python\Python311\site-packages\langchain\document_loaders\__init__.py:36: LangChainDeprecationWarning: Importing document loaders from langchain is deprecated. Importing from langchain will no longer be supported as of langchain==0.2.0. Please import from langchain-community instead:
+
+`from langchain_community.document_loaders import DirectoryLoader`.
+
+To install langchain-community run `pip install -U langchain-community`.
+  warnings.warn(
+C:\Users\deois\AppData\Roaming\Python\Python311\site-packages\langchain\document_loaders\__init__.py:36: LangChainDeprecationWarning: Importing document loaders from langchain is deprecated. Importing from langchain will no longer be supported as of langchain==0.2.0. Please import from langchain-community instead:
+
+`from langchain_community.document_loaders import TextLoader`.
+
+To install langchain-community run `pip install -U langchain-community`.
+  warnings.warn(
+2026-07-08 21:18:54,897 - backend.enhanced_gemini_rag_service - INFO - Initializing Enhanced Gemini RAG Service...
+2026-07-08 21:18:56,020 - chromadb.telemetry.product.posthog - INFO - Anonymized telemetry enabled. See                     https://docs.trychroma.com/telemetry for more information.
+2026-07-08 21:18:56,519 - chromadb.telemetry.product.posthog - ERROR - Failed to send telemetry event ClientStartEvent: capture() takes 1 positional argument but 3 were given
+✅ Application imported successfully
+ * Serving Flask app 'backend.app'
+ * Debug mode: on
+2026-07-08 21:18:56,519 - chromadb.telemetry.product.posthog - ERROR - Failed to send telemetry event ClientCreateCollectionEvent: capture() takes 1 positional argument but 3 were given
+2026-07-08 21:18:56,538 - backend.enhanced_gemini_rag_service - INFO - Enhanced Gemini RAG Service initialized successfully
+2026-07-08 21:18:56,538 - backend.app - INFO - Enhanced Gemini RAG service initialized successfully
+2026-07-08 21:18:56,568 - __main__ - INFO - 🚀 Starting PocketPro SBA via run.py on port 5000
+2026-07-08 21:18:56,594 - werkzeug - INFO - WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.1.152:5000
+2026-07-08 21:18:56,594 - werkzeug - INFO - Press CTRL+C to quit
+2026-07-08 21:18:56,596 - werkzeug - INFO -  * Restarting with stat
+🔄 Importing PocketPro:SBA application...
+2026-07-08 21:18:59,702 - backend.app - INFO - Database URI: sqlite:///app.db
+2026-07-08 21:18:59,801 - backend.app - INFO - Database tables created successfully
+2026-07-08 21:19:01,413 - backend.assistants.concierge - INFO - Self-optimizing components imported successfully
+C:\Users\deois\AppData\Roaming\Python\Python311\site-packages\langchain\document_loaders\__init__.py:36: LangChainDeprecationWarning: Importing document loaders from langchain is deprecated. Importing from langchain will no longer be supported as of langchain==0.2.0. Please import from langchain-community instead:
+
+`from langchain_community.document_loaders import DirectoryLoader`.
+
+To install langchain-community run `pip install -U langchain-community`.
+  warnings.warn(
+C:\Users\deois\AppData\Roaming\Python\Python311\site-packages\langchain\document_loaders\__init__.py:36: LangChainDeprecationWarning: Importing document loaders from langchain is deprecated. Importing from langchain will no longer be supported as of langchain==0.2.0. Please import from langchain-community instead:
+
+`from langchain_community.document_loaders import TextLoader`.
+
+To install langchain-community run `pip install -U langchain-community`.
+  warnings.warn(
+2026-07-08 21:19:06,929 - backend.enhanced_gemini_rag_service - INFO - Initializing Enhanced Gemini RAG Service...
+2026-07-08 21:19:07,974 - chromadb.telemetry.product.posthog - INFO - Anonymized telemetry enabled. See                     https://docs.trychroma.com/telemetry for more information.
+2026-07-08 21:19:08,720 - chromadb.telemetry.product.posthog - ERROR - Failed to send telemetry event ClientStartEvent: capture() takes 1 positional argument but 3 were given
+✅ Application imported successfully2026-07-08 21:19:08,725 - chromadb.telemetry.product.posthog - ERROR - Failed to send telemetry event ClientCreateCollectionEvent: capture() takes 1 positional argument but 3 were given
+2026-07-08 21:19:08,728 - backend.enhanced_gemini_rag_service - INFO - Enhanced Gemini RAG Service initialized successfully
+2026-07-08 21:19:08,728 - backend.app - INFO - Enhanced Gemini RAG service initialized successfully
+2026-07-08 21:19:08,754 - __main__ - INFO - 🚀 Starting PocketPro SBA via run.py on port 5000
+2026-07-08 21:19:08,765 - werkzeug - WARNING -  * Debugger is active!
+2026-07-08 21:19:08,776 - werkzeug - INFO -  * Debugger PIN: 853-510-256
+
+2026-07-08 21:19:15,316 - backend.app - INFO - Request: GET /api/health
+2026-07-08 21:19:15,316 - backend.app - INFO - Response: 200 OK
+2026-07-08 21:19:15,317 - werkzeug - INFO - 127.0.0.1 - - [08/Jul/2026 21:19:15] "GET /api/health HTTP/1.1" 200 -
+2026-07-08 21:19:15,341 - backend.app - INFO - Request: GET /api/info
+2026-07-08 21:19:15,352 - backend.services.rag - INFO - Connecting to ChromaDB at localhost:8000
+2026-07-08 21:19:15,361 - chromadb.telemetry.product.posthog - INFO - Anonymized telemetry enabled. See                     https://docs.trychroma.com/telemetry for more information.
+2026-07-08 21:19:15,512 - chromadb.telemetry.product.posthog - INFO - Anonymized telemetry enabled. See                     https://docs.trychroma.com/telemetry for more information.
+2026-07-08 21:19:20,435 - backend.services.chroma_fixed - ERROR - ChromaDB initialization failed: Could not connect to a Chroma server. Are you sure it is running?
+2026-07-08 21:19:20,435 - backend.services.rag - ERROR - ChromaDB service is not available
+2026-07-08 21:19:20,436 - backend.services.rag - WARNING - ChromaDB RAG manager is not available yet; retrying on next request.
+2026-07-08 21:19:20,437 - backend.app - INFO - Response: 200 OK
+2026-07-08 21:19:20,438 - werkzeug - INFO - 127.0.0.1 - - [08/Jul/2026 21:19:20] "GET /api/info HTTP/1.1" 200 -
+2026-07-08 21:19:20,446 - backend.app - INFO - Request: GET /api/rag/health
+2026-07-08 21:19:20,446 - backend.services.rag - INFO - Connecting to ChromaDB at localhost:8000
+2026-07-08 21:19:20,459 - chromadb.telemetry.product.posthog - INFO - Anonymized telemetry enabled. See                     https://docs.trychroma.com/telemetry for more information.
+2026-07-08 21:19:20,460 - chromadb.telemetry.product.posthog - INFO - Anonymized telemetry enabled. See                     https://docs.trychroma.com/telemetry for more information.
+Importing chroma_service2026-07-08 21:19:24,685 - backend.services.chroma_fixed - ERROR - ChromaDB initialization failed: Could not connect to a Chroma server. Are you sure it is running?
+2026-07-08 21:19:24,685 - backend.services.rag - ERROR - ChromaDB service is not available
+2026-07-08 21:19:24,685 - backend.services.rag - WARNING - ChromaDB RAG manager is not available yet; retrying on next request.
+2026-07-08 21:19:24,686 - backend.app - INFO - Response: 503 SERVICE UNAVAILABLE
+2026-07-08 21:19:24,686 - werkzeug - INFO - 127.0.0.1 - - [08/Jul/2026 21:19:24] "GET /api/rag/health HTTP/1.1" 503 -
+2026-07-08 21:19:24,694 - backend.app - INFO - Request: POST /api/chat
+2026-07-08 21:19:24,695 - backend.assistants.search_module - WARNING - Search module disabled: GOOGLE_API_KEY and GOOGLE_CSE_ID must be set in environment variables.
+2026-07-08 21:19:24,695 - backend.assistants.base - WARNING - Search module is not available (missing API keys)
+2026-07-08 21:19:24,704 - backend.assistants.concierge - ERROR - Failed to initialize RAG manager: No module named 'services.rag'
+2026-07-08 21:19:24,704 - backend.services.chat_processing_service - INFO - Concierge assistant initialized successfully
+2026-07-08 21:19:24,709 - backend.app - INFO - Database URI: sqlite:///app.db
+2026-07-08 21:19:24,710 - backend.app - INFO - Database tables created successfully
+
+ChromaDB imports completed
+2026-07-08 21:19:24,745 - backend.enhanced_gemini_rag_service - INFO - Initializing Enhanced Gemini RAG Service...
+2026-07-08 21:19:24,791 - chromadb.telemetry.product.posthog - ERROR - Failed to send telemetry event ClientStartEvent: capture() takes 1 positional argument but 3 were given
+2026-07-08 21:19:24,795 - chromadb.telemetry.product.posthog - ERROR - Failed to send telemetry event ClientCreateCollectionEvent: capture() takes 1 positional argument but 3 were given
+2026-07-08 21:19:24,796 - backend.enhanced_gemini_rag_service - INFO - Enhanced Gemini RAG Service initialized successfully
+2026-07-08 21:19:24,796 - backend.app - INFO - Enhanced Gemini RAG service initialized successfully
+2026-07-08 21:19:24,799 - backend.assistants.concierge - INFO - Message classified as: simple_query
+2026-07-08 21:19:24,800 - backend.assistants.concierge - INFO - Dialogue quality metrics: {'session_id': 'retest', 'timestamp': '2026-07-08T21:19:24.800659', 'user_message_length': 21, 'assistant_response_length': 193, 'intent': 'simple_query', 'response_quality': 'possibly_missing_answer', 'has_sources': True}
+2026-07-08 21:19:24,800 - backend.services.chat_processing_service - INFO - Processed message for session retest: 21 chars -> 193 chars response
+2026-07-08 21:19:24,800 - backend.app - INFO - Response: 200 OK
+2026-07-08 21:19:24,801 - werkzeug - INFO - 127.0.0.1 - - [08/Jul/2026 21:19:24] "POST /api/chat HTTP/1.1" 200 -
+2026-07-08 21:20:32,201 - backend.app - INFO - Request: GET /api/health
+2026-07-08 21:20:32,202 - backend.app - INFO - Response: 200 OK
+2026-07-08 21:20:32,202 - werkzeug - INFO - 127.0.0.1 - - [08/Jul/2026 21:20:32] "GET /api/health HTTP/1.1" 200 -
+2026-07-08 21:23:29,208 - backend.app - INFO - Request: GET /api/health
+2026-07-08 21:23:29,208 - backend.app - INFO - Response: 200 OK
+2026-07-08 21:23:29,209 - werkzeug - INFO - 127.0.0.1 - - [08/Jul/2026 21:23:29] "GET /api/health HTTP/1.1" 200 -
+2026-07-08 21:26:00,931 - backend.app - INFO - Request: GET /api/health
+2026-07-08 21:26:00,931 - backend.app - INFO - Response: 200 OK
+2026-07-08 21:26:00,932 - werkzeug - INFO - 127.0.0.1 - - [08/Jul/2026 21:26:00] "GET /api/health HTTP/1.1" 200 -
+2026-07-08 21:26:10,411 - backend.app - INFO - Request: GET /api/health
+2026-07-08 21:26:10,412 - backend.app - INFO - Response: 200 OK
+2026-07-08 21:26:10,412 - werkzeug - INFO - 127.0.0.1 - - [08/Jul/2026 21:26:10] "GET /api/health HTTP/1.1" 200 -
+2026-07-08 21:26:10,420 - backend.app - INFO - Request: GET /api/chromadb_health
+2026-07-08 21:26:10,420 - backend.services.rag - INFO - Connecting to ChromaDB at localhost:8000
+2026-07-08 21:26:10,429 - chromadb.telemetry.product.posthog - INFO - Anonymized telemetry enabled. See                     https://docs.trychroma.com/telemetry for more information.
+2026-07-08 21:26:10,429 - chromadb.telemetry.product.posthog - INFO - Anonymized telemetry enabled. See                     https://docs.trychroma.com/telemetry for more information.
+2026-07-08 21:26:15,173 - backend.services.chroma_fixed - ERROR - ChromaDB initialization failed: Could not connect to a Chroma server. Are you sure it is running?
+2026-07-08 21:26:15,173 - backend.services.rag - ERROR - ChromaDB service is not available
+2026-07-08 21:26:15,173 - backend.services.rag - WARNING - ChromaDB RAG manager is not available yet; retrying on next request.
+2026-07-08 21:26:15,173 - backend.app - INFO - Response: 200 OK
+2026-07-08 21:26:15,173 - werkzeug - INFO - 127.0.0.1 - - [08/Jul/2026 21:26:15] "GET /api/chromadb_health HTTP/1.1" 200 -
+2026-07-08 21:26:15,181 - backend.app - INFO - Request: GET /api/info
+2026-07-08 21:26:15,181 - backend.services.rag - INFO - Connecting to ChromaDB at localhost:8000
+2026-07-08 21:26:15,190 - chromadb.telemetry.product.posthog - INFO - Anonymized telemetry enabled. See                     https://docs.trychroma.com/telemetry for more information.
+2026-07-08 21:26:15,192 - chromadb.telemetry.product.posthog - INFO - Anonymized telemetry enabled. See                     https://docs.trychroma.com/telemetry for more information.
+2026-07-08 21:26:19,271 - backend.services.chroma_fixed - ERROR - ChromaDB initialization failed: Could not connect to a Chroma server. Are you sure it is running?
+2026-07-08 21:26:19,271 - backend.services.rag - ERROR - ChromaDB service is not available
+2026-07-08 21:26:19,271 - backend.services.rag - WARNING - ChromaDB RAG manager is not available yet; retrying on next request.
+2026-07-08 21:26:19,271 - backend.app - INFO - Response: 200 OK
+2026-07-08 21:26:19,271 - werkzeug - INFO - 127.0.0.1 - - [08/Jul/2026 21:26:19] "GET /api/info HTTP/1.1" 200 -
+2026-07-08 21:26:19,293 - backend.app - INFO - Request: GET /api/rag/health
+2026-07-08 21:26:19,293 - backend.services.rag - INFO - Connecting to ChromaDB at localhost:8000
+2026-07-08 21:26:19,305 - chromadb.telemetry.product.posthog - INFO - Anonymized telemetry enabled. See                     https://docs.trychroma.com/telemetry for more information.
+2026-07-08 21:26:19,305 - chromadb.telemetry.product.posthog - INFO - Anonymized telemetry enabled. See                     https://docs.trychroma.com/telemetry for more information.
+2026-07-08 21:26:23,400 - backend.services.chroma_fixed - ERROR - ChromaDB initialization failed: Could not connect to a Chroma server. Are you sure it is running?
+2026-07-08 21:26:23,400 - backend.services.rag - ERROR - ChromaDB service is not available
+2026-07-08 21:26:23,401 - backend.services.rag - WARNING - ChromaDB RAG manager is not available yet; retrying on next request.
+2026-07-08 21:26:23,401 - backend.app - INFO - Response: 503 SERVICE UNAVAILABLE
+2026-07-08 21:26:23,401 - werkzeug - INFO - 127.0.0.1 - - [08/Jul/2026 21:26:23] "GET /api/rag/health HTTP/1.1" 503 -
+2026-07-08 21:27:30,782 - backend.app - INFO - Request: GET /api/info
+2026-07-08 21:27:30,782 - backend.services.rag - INFO - Connecting to ChromaDB at localhost:8000
+2026-07-08 21:27:30,798 - chromadb.telemetry.product.posthog - INFO - Anonymized telemetry enabled. See                     https://docs.trychroma.com/telemetry for more information.
+2026-07-08 21:27:30,798 - chromadb.telemetry.product.posthog - INFO - Anonymized telemetry enabled. See                     https://docs.trychroma.com/telemetry for more information.
+2026-07-08 21:27:35,552 - backend.services.chroma_fixed - ERROR - ChromaDB initialization failed: Could not connect to a Chroma server. Are you sure it is running?
+2026-07-08 21:27:35,552 - backend.services.rag - ERROR - ChromaDB service is not available
+2026-07-08 21:27:35,552 - backend.services.rag - WARNING - ChromaDB RAG manager is not available yet; retrying on next request.
+2026-07-08 21:27:35,552 - backend.app - INFO - Response: 200 OK
+2026-07-08 21:27:35,553 - werkzeug - INFO - 127.0.0.1 - - [08/Jul/2026 21:27:35] "GET /api/info HTTP/1.1" 200 -
+2026-07-08 21:27:45,579 - backend.app - INFO - Request: GET /api/health
+2026-07-08 21:27:45,579 - backend.app - INFO - Response: 200 OK
+2026-07-08 21:27:45,579 - werkzeug - INFO - 127.0.0.1 - - [08/Jul/2026 21:27:45] "GET /api/health HTTP/1.1" 200 -
+2026-07-08 21:27:58,868 - backend.app - INFO - Request: POST /api/decompose
+2026-07-08 21:27:58,869 - backend.assistants.search_module - WARNING - Search module disabled: GOOGLE_API_KEY and GOOGLE_CSE_ID must be set in environment variables.
+2026-07-08 21:27:58,869 - backend.assistants.base - WARNING - Search module is not available (missing API keys)
+2026-07-08 21:27:58,869 - backend.assistants.concierge - ERROR - Failed to initialize RAG manager: No module named 'services.rag'
+2026-07-08 21:27:58,869 - backend.assistants.concierge - INFO - Message classified as: task_request
+C:\Users\deois\AppData\Roaming\Python\Python311\site-packages\langchain\vectorstores\__init__.py:35: LangChainDeprecationWarning: Importing vector stores from langchain is deprecated. Importing from langchain will no longer be supported as of langchain==0.2.0. Please import from langchain-community instead:
+
+`from langchain_community.vectorstores import Chroma`.
+
+To install langchain-community run `pip install -U langchain-community`.
+  warnings.warn(
+C:\Users\deois\AppData\Roaming\Python\Python311\site-packages\langchain\document_loaders\__init__.py:36: LangChainDeprecationWarning: Importing document loaders from langchain is deprecated. Importing from langchain will no longer be supported as of langchain==0.2.0. Please import from langchain-community instead:
+
+`from langchain_community.document_loaders import DirectoryLoader`.
+
+To install langchain-community run `pip install -U langchain-community`.
+  warnings.warn(
+C:\Users\deois\AppData\Roaming\Python\Python311\site-packages\langchain\document_loaders\__init__.py:36: LangChainDeprecationWarning: Importing document loaders from langchain is deprecated. Importing from langchain will no longer be supported as of langchain==0.2.0. Please import from langchain-community instead:
+
+`from langchain_community.document_loaders import TextLoader`.
+
+To install langchain-community run `pip install -U langchain-community`.
+  warnings.warn(
+2026-07-08 21:27:58,869 - backend.assistants.concierge - INFO - Gemini RAG service imported successfully
+2026-07-08 21:27:58,888 - chromadb.telemetry.product.posthog - ERROR - Failed to send telemetry event ClientStartEvent: capture() takes 1 positional argument but 3 were given
+2026-07-08 21:27:58,945 - chromadb.telemetry.product.posthog - ERROR - Failed to send telemetry event ClientCreateCollectionEvent: capture() takes 1 positional argument but 3 were given
+2026-07-08 21:27:59,897 - backend.gemini_rag_service - ERROR - Failed to initialize vector store: Error embedding content: 404 models/embedding-001 is not found for API version v1beta, or is not supported for embedContent. Call ModelService.ListModels to see the list of available models and their supported methods.
+2026-07-08 21:27:59,897 - backend.assistants.concierge - INFO - Dialogue quality metrics: {'session_id': 'test-1', 'timestamp': '2026-07-08T21:27:59.897077', 'user_message_length': 36, 'assistant_response_length': 253, 'intent': 'task_request', 'response_quality': 'good', 'has_sources': True}
+2026-07-08 21:27:59,897 - backend.app - INFO - Response: 200 OK
+2026-07-08 21:27:59,898 - werkzeug - INFO - 127.0.0.1 - - [08/Jul/2026 21:27:59] "POST /api/decompose HTTP/1.1" 200 -
+2026-07-08 21:29:22,262 - werkzeug - INFO -  * Detected change in 'E:\\2024 RESET\\PocketProSBA\\backend\\routes\\api.py', reloading
+2026-07-08 21:29:24,925 - werkzeug - INFO -  * Restarting with stat
+🔄 Importing PocketPro:SBA application...
+2026-07-08 21:29:27,627 - backend.app - INFO - Database URI: sqlite:///app.db
+2026-07-08 21:29:27,804 - backend.app - INFO - Database tables created successfully
+2026-07-08 21:29:29,743 - backend.assistants.concierge - INFO - Self-optimizing components imported successfully
+C:\Users\deois\AppData\Roaming\Python\Python311\site-packages\langchain\document_loaders\__init__.py:36: LangChainDeprecationWarning: Importing document loaders from langchain is deprecated. Importing from langchain will no longer be supported as of langchain==0.2.0. Please import from langchain-community instead:
+
+`from langchain_community.document_loaders import DirectoryLoader`.
+
+To install langchain-community run `pip install -U langchain-community`.
+  warnings.warn(
+C:\Users\deois\AppData\Roaming\Python\Python311\site-packages\langchain\document_loaders\__init__.py:36: LangChainDeprecationWarning: Importing document loaders from langchain is deprecated. Importing from langchain will no longer be supported as of langchain==0.2.0. Please import from langchain-community instead:
+
+`from langchain_community.document_loaders import TextLoader`.
+
+To install langchain-community run `pip install -U langchain-community`.
+  warnings.warn(
+2026-07-08 21:29:35,658 - backend.enhanced_gemini_rag_service - INFO - Initializing Enhanced Gemini RAG Service...
+2026-07-08 21:29:36,804 - chromadb.telemetry.product.posthog - INFO - Anonymized telemetry enabled. See                     https://docs.trychroma.com/telemetry for more information.
+✅ Application imported successfully
+2026-07-08 21:29:37,304 - chromadb.telemetry.product.posthog - ERROR - Failed to send telemetry event ClientStartEvent: capture() takes 1 positional argument but 3 were given
+2026-07-08 21:29:37,311 - chromadb.telemetry.product.posthog - ERROR - Failed to send telemetry event ClientCreateCollectionEvent: capture() takes 1 positional argument but 3 were given
+2026-07-08 21:29:37,316 - backend.enhanced_gemini_rag_service - INFO - Enhanced Gemini RAG Service initialized successfully
+2026-07-08 21:29:37,317 - backend.app - INFO - Enhanced Gemini RAG service initialized successfully
+2026-07-08 21:29:37,348 - __main__ - INFO - 🚀 Starting PocketPro SBA via run.py on port 5000
+2026-07-08 21:29:37,362 - werkzeug - WARNING -  * Debugger is active!
+2026-07-08 21:29:37,378 - werkzeug - INFO -  * Debugger PIN: 853-510-256
+2026-07-08 21:31:52,404 - backend.app - INFO - Request: GET /api/health
+2026-07-08 21:31:52,405 - backend.app - INFO - Response: 200 OK
+2026-07-08 21:31:52,406 - werkzeug - INFO - 127.0.0.1 - - [08/Jul/2026 21:31:52] "GET /api/health HTTP/1.1" 200 -
+2026-07-08 21:32:27,828 - backend.app - INFO - Request: GET /api/health
+2026-07-08 21:32:27,828 - backend.app - INFO - Response: 200 OK
+2026-07-08 21:32:27,828 - werkzeug - INFO - 127.0.0.1 - - [08/Jul/2026 21:32:27] "GET /api/health HTTP/1.1" 200 -
+2026-07-08 21:32:39,877 - backend.app - INFO - Request: GET /api/health
+2026-07-08 21:32:39,878 - backend.app - INFO - Response: 200 OK
+2026-07-08 21:32:39,881 - werkzeug - INFO - 127.0.0.1 - - [08/Jul/2026 21:32:39] "GET /api/health HTTP/1.1" 200 -
+2026-07-08 21:32:51,457 - backend.app - INFO - Request: GET /api/health
+2026-07-08 21:32:51,458 - backend.app - INFO - Response: 200 OK
+2026-07-08 21:32:51,459 - werkzeug - INFO - 127.0.0.1 - - [08/Jul/2026 21:32:51] "GET /api/health HTTP/1.1" 200 -
+2026-07-08 21:32:51,466 - backend.app - INFO - Request: GET /api/info
+2026-07-08 21:32:51,469 - backend.services.rag - INFO - Connecting to ChromaDB at localhost:8000
+2026-07-08 21:32:51,484 - chromadb.telemetry.product.posthog - INFO - Anonymized telemetry enabled. See                     https://docs.trychroma.com/telemetry for more information.
+2026-07-08 21:32:51,671 - chromadb.telemetry.product.posthog - INFO - Anonymized telemetry enabled. See                     https://docs.trychroma.com/telemetry for more information.
+2026-07-08 21:32:55,984 - backend.services.chroma_fixed - ERROR - ChromaDB initialization failed: Could not connect to a Chroma server. Are you sure it is running?
+2026-07-08 21:32:55,984 - backend.services.rag - ERROR - ChromaDB service is not available
+2026-07-08 21:32:55,985 - backend.services.rag - WARNING - ChromaDB RAG manager is not available yet; retrying on next request.
+2026-07-08 21:32:55,985 - backend.app - INFO - Response: 200 OK
+2026-07-08 21:32:55,986 - werkzeug - INFO - 127.0.0.1 - - [08/Jul/2026 21:32:55] "GET /api/info HTTP/1.1" 200 -
+2026-07-08 21:32:55,992 - backend.app - INFO - Request: GET /api/rag/health
+2026-07-08 21:32:55,993 - backend.services.rag - INFO - Connecting to ChromaDB at localhost:8000
+2026-07-08 21:32:56,002 - chromadb.telemetry.product.posthog - INFO - Anonymized telemetry enabled. See                     https://docs.trychroma.com/telemetry for more information.
+2026-07-08 21:32:56,004 - chromadb.telemetry.product.posthog - INFO - Anonymized telemetry enabled. See                     https://docs.trychroma.com/telemetry for more information.
+2026-07-08 21:33:00,068 - backend.services.chroma_fixed - ERROR - ChromaDB initialization failed: Could not connect to a Chroma server. Are you sure it is running?
+2026-07-08 21:33:00,068 - backend.services.rag - ERROR - ChromaDB service is not available
+2026-07-08 21:33:00,068 - backend.services.rag - WARNING - ChromaDB RAG manager is not available yet; retrying on next request.
+2026-07-08 21:33:00,068 - backend.app - INFO - Response: 503 SERVICE UNAVAILABLE
+2026-07-08 21:33:00,068 - werkzeug - INFO - 127.0.0.1 - - [08/Jul/2026 21:33:00] "GET /api/rag/health HTTP/1.1" 503 -
+2026-07-08 21:33:00,096 - backend.app - INFO - Request: GET /api/chromadb_health
+2026-07-08 21:33:00,096 - backend.services.rag - INFO - Connecting to ChromaDB at localhost:8000
+2026-07-08 21:33:00,109 - chromadb.telemetry.product.posthog - INFO - Anonymized telemetry enabled. See                     https://docs.trychroma.com/telemetry for more information.
+2026-07-08 21:33:00,111 - chromadb.telemetry.product.posthog - INFO - Anonymized telemetry enabled. See                     https://docs.trychroma.com/telemetry for more information.
+2026-07-08 21:33:04,212 - backend.services.chroma_fixed - ERROR - ChromaDB initialization failed: Could not connect to a Chroma server. Are you sure it is running?
+2026-07-08 21:33:04,212 - backend.services.rag - ERROR - ChromaDB service is not available
+2026-07-08 21:33:04,212 - backend.services.rag - WARNING - ChromaDB RAG manager is not available yet; retrying on next request.
+2026-07-08 21:33:04,213 - backend.app - INFO - Response: 200 OK
+2026-07-08 21:33:04,213 - werkzeug - INFO - 127.0.0.1 - - [08/Jul/2026 21:33:04] "GET /api/chromadb_health HTTP/1.1" 200 -
+2026-07-08 21:33:04,222 - backend.app - INFO - Request: POST /api/chat
+2026-07-08 21:33:04,222 - backend.assistants.search_module - WARNING - Search module disabled: GOOGLE_API_KEY and GOOGLE_CSE_ID must be set in environment variables.
+2026-07-08 21:33:04,223 - backend.assistants.base - WARNING - Search module is not available (missing API keys)
+Importing chroma_service
+ChromaDB imports completed
+2026-07-08 21:33:04,232 - backend.assistants.concierge - ERROR - Failed to initialize RAG manager: No module named 'services.rag'
+2026-07-08 21:33:04,232 - backend.services.chat_processing_service - INFO - Concierge assistant initialized successfully
+2026-07-08 21:33:04,232 - backend.app - INFO - Database URI: sqlite:///app.db
+2026-07-08 21:33:04,241 - backend.app - INFO - Database tables created successfully
+2026-07-08 21:33:04,291 - backend.enhanced_gemini_rag_service - INFO - Initializing Enhanced Gemini RAG Service...
+2026-07-08 21:33:04,329 - chromadb.telemetry.product.posthog - ERROR - Failed to send telemetry event ClientStartEvent: capture() takes 1 positional argument but 3 were given
+2026-07-08 21:33:04,351 - chromadb.telemetry.product.posthog - ERROR - Failed to send telemetry event ClientCreateCollectionEvent: capture() takes 1 positional argument but 3 were given
+2026-07-08 21:33:04,352 - backend.enhanced_gemini_rag_service - INFO - Enhanced Gemini RAG Service initialized successfully
+2026-07-08 21:33:04,352 - backend.app - INFO - Enhanced Gemini RAG service initialized successfully
+2026-07-08 21:33:04,356 - backend.assistants.concierge - INFO - Message classified as: simple_query
+2026-07-08 21:33:04,356 - backend.assistants.concierge - INFO - Dialogue quality metrics: {'session_id': 'live', 'timestamp': '2026-07-08T21:33:04.356639', 'user_message_length': 21, 'assistant_response_length': 190, 'intent': 'simple_query', 'response_quality': 'generic', 'has_sources': True}
+2026-07-08 21:33:04,357 - backend.services.chat_processing_service - INFO - Processed message for session live: 21 chars -> 190 chars response
+2026-07-08 21:33:04,357 - backend.app - INFO - Response: 200 OK
+2026-07-08 21:33:04,372 - werkzeug - INFO - 127.0.0.1 - - [08/Jul/2026 21:33:04] "POST /api/chat HTTP/1.1" 200 -
+2026-07-08 21:36:36,712 - werkzeug - INFO -  * Detected change in 'E:\\2024 RESET\\PocketProSBA\\backend\\tests\\test_api_fixed.py', reloading
+2026-07-08 21:36:37,505 - werkzeug - INFO -  * Restarting with stat
+🔄 Importing PocketPro:SBA application...
+2026-07-08 21:36:39,967 - backend.app - INFO - Database URI: sqlite:///app.db
+2026-07-08 21:36:40,191 - backend.app - INFO - Database tables created successfully
+2026-07-08 21:36:41,718 - backend.assistants.concierge - INFO - Self-optimizing components imported successfully
+C:\Users\deois\AppData\Roaming\Python\Python311\site-packages\langchain\document_loaders\__init__.py:36: LangChainDeprecationWarning: Importing document loaders from langchain is deprecated. Importing from langchain will no longer be supported as of langchain==0.2.0. Please import from langchain-community instead:
+
+`from langchain_community.document_loaders import DirectoryLoader`.
+
+To install langchain-community run `pip install -U langchain-community`.
+  warnings.warn(
+C:\Users\deois\AppData\Roaming\Python\Python311\site-packages\langchain\document_loaders\__init__.py:36: LangChainDeprecationWarning: Importing document loaders from langchain is deprecated. Importing from langchain will no longer be supported as of langchain==0.2.0. Please import from langchain-community instead:
+
+`from langchain_community.document_loaders import TextLoader`.
+
+To install langchain-community run `pip install -U langchain-community`.
+  warnings.warn(
+2026-07-08 21:36:47,815 - backend.enhanced_gemini_rag_service - INFO - Initializing Enhanced Gemini RAG Service...
+2026-07-08 21:36:48,820 - chromadb.telemetry.product.posthog - INFO - Anonymized telemetry enabled. See                     https://docs.trychroma.com/telemetry for more information.
+✅ Application imported successfully2026-07-08 21:36:49,629 - chromadb.telemetry.product.posthog - ERROR - Failed to send telemetry event ClientStartEvent: capture() takes 1 positional argument but 3 were given
+
+2026-07-08 21:36:49,636 - chromadb.telemetry.product.posthog - ERROR - Failed to send telemetry event ClientCreateCollectionEvent: capture() takes 1 positional argument but 3 were given
+2026-07-08 21:36:49,641 - backend.enhanced_gemini_rag_service - INFO - Enhanced Gemini RAG Service initialized successfully
+2026-07-08 21:36:49,641 - backend.app - INFO - Enhanced Gemini RAG service initialized successfully
+2026-07-08 21:36:49,661 - __main__ - INFO - 🚀 Starting PocketPro SBA via run.py on port 5000
+2026-07-08 21:36:49,670 - werkzeug - WARNING -  * Debugger is active!
+2026-07-08 21:36:49,681 - werkzeug - INFO -  * Debugger PIN: 853-510-256
+2026-07-08 21:39:00,835 - werkzeug - INFO -  * Detected change in 'E:\\2024 RESET\\PocketProSBA\\backend\\tests\\test_api_comprehensive.py', reloading
+2026-07-08 21:39:01,622 - werkzeug - INFO -  * Restarting with stat
+🔄 Importing PocketPro:SBA application...
+2026-07-08 21:39:05,274 - backend.app - INFO - Database URI: sqlite:///app.db
+2026-07-08 21:39:05,338 - backend.app - INFO - Database tables created successfully
+2026-07-08 21:39:07,198 - backend.assistants.concierge - INFO - Self-optimizing components imported successfully
+C:\Users\deois\AppData\Roaming\Python\Python311\site-packages\langchain\document_loaders\__init__.py:36: LangChainDeprecationWarning: Importing document loaders from langchain is deprecated. Importing from langchain will no longer be supported as of langchain==0.2.0. Please import from langchain-community instead:
+
+`from langchain_community.document_loaders import DirectoryLoader`.
+
+To install langchain-community run `pip install -U langchain-community`.
+  warnings.warn(
+C:\Users\deois\AppData\Roaming\Python\Python311\site-packages\langchain\document_loaders\__init__.py:36: LangChainDeprecationWarning: Importing document loaders from langchain is deprecated. Importing from langchain will no longer be supported as of langchain==0.2.0. Please import from langchain-community instead:
+
+`from langchain_community.document_loaders import TextLoader`.
+
+To install langchain-community run `pip install -U langchain-community`.
+  warnings.warn(
+2026-07-08 21:39:13,231 - backend.enhanced_gemini_rag_service - INFO - Initializing Enhanced Gemini RAG Service...
+2026-07-08 21:39:14,661 - chromadb.telemetry.product.posthog - INFO - Anonymized telemetry enabled. See                     https://docs.trychroma.com/telemetry for more information.
+✅ Application imported successfully2026-07-08 21:39:15,109 - chromadb.telemetry.product.posthog - ERROR - Failed to send telemetry event ClientStartEvent: capture() takes 1 positional argument but 3 were given
+2026-07-08 21:39:15,117 - chromadb.telemetry.product.posthog - ERROR - Failed to send telemetry event ClientCreateCollectionEvent: capture() takes 1 positional argument but 3 were given
+2026-07-08 21:39:15,121 - backend.enhanced_gemini_rag_service - INFO - Enhanced Gemini RAG Service initialized successfully
+2026-07-08 21:39:15,121 - backend.app - INFO - Enhanced Gemini RAG service initialized successfully
+
+2026-07-08 21:39:15,153 - __main__ - INFO - 🚀 Starting PocketPro SBA via run.py on port 5000
+2026-07-08 21:39:15,171 - werkzeug - WARNING -  * Debugger is active!
+2026-07-08 21:39:15,185 - werkzeug - INFO -  * Debugger PIN: 853-510-256
+2026-07-08 21:42:08,493 - werkzeug - INFO -  * Detected change in 'E:\\2024 RESET\\PocketProSBA\\backend\\tests\\test_api_comprehensive.py', reloading
+2026-07-08 21:42:09,222 - werkzeug - INFO -  * Restarting with stat
+🔄 Importing PocketPro:SBA application...
+2026-07-08 21:42:11,879 - backend.app - INFO - Database URI: sqlite:///app.db
+2026-07-08 21:42:11,945 - backend.app - INFO - Database tables created successfully
+2026-07-08 21:42:14,260 - backend.assistants.concierge - INFO - Self-optimizing components imported successfully
+C:\Users\deois\AppData\Roaming\Python\Python311\site-packages\langchain\document_loaders\__init__.py:36: LangChainDeprecationWarning: Importing document loaders from langchain is deprecated. Importing from langchain will no longer be supported as of langchain==0.2.0. Please import from langchain-community instead:
+
+`from langchain_community.document_loaders import DirectoryLoader`.
+
+To install langchain-community run `pip install -U langchain-community`.
+  warnings.warn(
+C:\Users\deois\AppData\Roaming\Python\Python311\site-packages\langchain\document_loaders\__init__.py:36: LangChainDeprecationWarning: Importing document loaders from langchain is deprecated. Importing from langchain will no longer be supported as of langchain==0.2.0. Please import from langchain-community instead:
+
+`from langchain_community.document_loaders import TextLoader`.
+
+To install langchain-community run `pip install -U langchain-community`.
+  warnings.warn(
+2026-07-08 21:42:20,682 - backend.enhanced_gemini_rag_service - INFO - Initializing Enhanced Gemini RAG Service...
+2026-07-08 21:42:22,813 - chromadb.telemetry.product.posthog - INFO - Anonymized telemetry enabled. See                     https://docs.trychroma.com/telemetry for more information.
+✅ Application imported successfully2026-07-08 21:42:23,709 - chromadb.telemetry.product.posthog - ERROR - Failed to send telemetry event ClientStartEvent: capture() takes 1 positional argument but 3 were given
+
+2026-07-08 21:42:23,716 - chromadb.telemetry.product.posthog - ERROR - Failed to send telemetry event ClientCreateCollectionEvent: capture() takes 1 positional argument but 3 were given
+2026-07-08 21:42:23,725 - backend.enhanced_gemini_rag_service - INFO - Enhanced Gemini RAG Service initialized successfully
+2026-07-08 21:42:23,725 - backend.app - INFO - Enhanced Gemini RAG service initialized successfully
+2026-07-08 21:42:23,797 - __main__ - INFO - 🚀 Starting PocketPro SBA via run.py on port 5000
+2026-07-08 21:42:23,855 - werkzeug - WARNING -  * Debugger is active!
+2026-07-08 21:42:23,865 - werkzeug - INFO -  * Debugger PIN: 853-510-256
+2026-07-08 21:44:09,108 - backend.app - INFO - Request: GET /api/health
+2026-07-08 21:44:09,108 - backend.app - INFO - Response: 200 OK
+2026-07-08 21:44:09,109 - werkzeug - INFO - 127.0.0.1 - - [08/Jul/2026 21:44:09] "GET /api/health HTTP/1.1" 200 -
+2026-07-08 21:44:09,127 - backend.app - INFO - Request: GET /api/chromadb_health
+2026-07-08 21:44:09,130 - backend.services.rag - INFO - Connecting to ChromaDB at localhost:8000
+2026-07-08 21:44:09,141 - chromadb.telemetry.product.posthog - INFO - Anonymized telemetry enabled. See                     https://docs.trychroma.com/telemetry for more information.
+2026-07-08 21:44:09,244 - chromadb.telemetry.product.posthog - INFO - Anonymized telemetry enabled. See                     https://docs.trychroma.com/telemetry for more information.
+2026-07-08 21:44:13,811 - backend.services.chroma_fixed - ERROR - ChromaDB initialization failed: Could not connect to a Chroma server. Are you sure it is running?
+2026-07-08 21:44:13,811 - backend.services.rag - ERROR - ChromaDB service is not available
+2026-07-08 21:44:13,812 - backend.services.rag - WARNING - ChromaDB RAG manager is not available yet; retrying on next request.
+2026-07-08 21:44:13,812 - backend.app - INFO - Response: 200 OK
+2026-07-08 21:44:13,813 - werkzeug - INFO - 127.0.0.1 - - [08/Jul/2026 21:44:13] "GET /api/chromadb_health HTTP/1.1" 200 -
+2026-07-08 21:44:13,820 - backend.app - INFO - Request: GET /api/info
+2026-07-08 21:44:13,820 - backend.services.rag - INFO - Connecting to ChromaDB at localhost:8000
+2026-07-08 21:44:13,826 - chromadb.telemetry.product.posthog - INFO - Anonymized telemetry enabled. See                     https://docs.trychroma.com/telemetry for more information.
+2026-07-08 21:44:13,826 - chromadb.telemetry.product.posthog - INFO - Anonymized telemetry enabled. See                     https://docs.trychroma.com/telemetry for more information.
+2026-07-08 21:44:18,158 - backend.services.chroma_fixed - ERROR - ChromaDB initialization failed: Could not connect to a Chroma server. Are you sure it is running?
+2026-07-08 21:44:18,158 - backend.services.rag - ERROR - ChromaDB service is not available
+2026-07-08 21:44:18,158 - backend.services.rag - WARNING - ChromaDB RAG manager is not available yet; retrying on next request.
+2026-07-08 21:44:18,159 - backend.app - INFO - Response: 200 OK
+2026-07-08 21:44:18,159 - werkzeug - INFO - 127.0.0.1 - - [08/Jul/2026 21:44:18] "GET /api/info HTTP/1.1" 200 -
+2026-07-08 21:44:18,166 - backend.app - INFO - Request: GET /api/rag/health
+2026-07-08 21:44:18,166 - backend.services.rag - INFO - Connecting to ChromaDB at localhost:8000
+2026-07-08 21:44:18,173 - chromadb.telemetry.product.posthog - INFO - Anonymized telemetry enabled. See                     https://docs.trychroma.com/telemetry for more information.
+2026-07-08 21:44:18,174 - chromadb.telemetry.product.posthog - INFO - Anonymized telemetry enabled. See                     https://docs.trychroma.com/telemetry for more information.
+2026-07-08 21:44:22,639 - backend.services.chroma_fixed - ERROR - ChromaDB initialization failed: Could not connect to a Chroma server. Are you sure it is running?
+2026-07-08 21:44:22,639 - backend.services.rag - ERROR - ChromaDB service is not available
+2026-07-08 21:44:22,639 - backend.services.rag - WARNING - ChromaDB RAG manager is not available yet; retrying on next request.
+2026-07-08 21:44:22,640 - backend.app - INFO - Response: 503 SERVICE UNAVAILABLE
+2026-07-08 21:44:22,640 - werkzeug - INFO - 127.0.0.1 - - [08/Jul/2026 21:44:22] "GET /api/rag/health HTTP/1.1" 503 -

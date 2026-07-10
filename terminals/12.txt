@@ -1,0 +1,9 @@
+---
+pid: 11580
+cwd: "E:\2024 RESET\PocketProSBA"
+command: "pip install \"google-ai-generativelanguage==0.4.0\" -q"
+started_at: 2026-07-09T00:56:44.170Z
+running_for_ms: 17355003 
+---
+ERROR: pip's dependency resolver does not currently take into account all the packages that are installed. This behaviour is the source of the following dependency conflicts.
+opentelemetry-proto 1.43.0 requires protobuf<8.0,>=5.0, but you have protobuf 4.25.9 which is incompatible.

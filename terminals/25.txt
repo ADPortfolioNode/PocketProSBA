@@ -1,0 +1,187 @@
+---
+pid: 368
+cwd: "E:\2024 RESET\PocketProSBA"
+command: "cmd /c \"set FLASK_ENV=development&& set PYTHONPATH=E:\\2024 RESET\\PocketProSBA;E:\\2024 RESET\\PocketProSBA\\backend&& cd /d E:\\2024 RESET\\PocketProSBA&& python run.py\""
+started_at: 2026-07-09T01:13:32.517Z
+running_for_ms: 16364996 
+---
+🔄 Importing PocketPro:SBA application...
+2026-07-08 21:13:35,756 - backend.app - INFO - Database URI: sqlite:///app.db
+2026-07-08 21:13:35,808 - backend.app - INFO - Database tables created successfully
+2026-07-08 21:13:37,319 - backend.assistants.concierge - INFO - Self-optimizing components imported successfully
+C:\Users\deois\AppData\Roaming\Python\Python311\site-packages\langchain\vectorstores\__init__.py:35: LangChainDeprecationWarning: Importing vector stores from langchain is deprecated. Importing from langchain will no longer be supported as of langchain==0.2.0. Please import from langchain-community instead:
+
+`from langchain_community.vectorstores import Chroma`.
+
+To install langchain-community run `pip install -U langchain-community`.
+  warnings.warn(
+C:\Users\deois\AppData\Roaming\Python\Python311\site-packages\langchain\document_loaders\__init__.py:36: LangChainDeprecationWarning: Importing document loaders from langchain is deprecated. Importing from langchain will no longer be supported as of langchain==0.2.0. Please import from langchain-community instead:
+
+`from langchain_community.document_loaders import DirectoryLoader`.
+
+To install langchain-community run `pip install -U langchain-community`.
+  warnings.warn(
+C:\Users\deois\AppData\Roaming\Python\Python311\site-packages\langchain\document_loaders\__init__.py:36: LangChainDeprecationWarning: Importing document loaders from langchain is deprecated. Importing from langchain will no longer be supported as of langchain==0.2.0. Please import from langchain-community instead:
+
+`from langchain_community.document_loaders import TextLoader`.
+
+To install langchain-community run `pip install -U langchain-community`.
+  warnings.warn(
+2026-07-08 21:13:41,951 - backend.enhanced_gemini_rag_service - INFO - Initializing Enhanced Gemini RAG Service...
+✅ Application imported successfully
+ * Serving Flask app 'backend.app'
+ * Debug mode: on
+2026-07-08 21:13:42,841 - backend.enhanced_gemini_rag_service - ERROR - Failed to initialize vector store: You are using a deprecated configuration of Chroma.
+
+If you do not have data you wish to migrate, you only need to change how you construct
+your Chroma client. Please see the "New Clients" section of https://docs.trychroma.com/migration.
+________________________________________________________________________________________________
+
+If you do have data you wish to migrate, we have a migration tool you can use in order to
+migrate your data to the new Chroma architecture.
+Please `pip install chroma-migrate` and run `chroma-migrate` to migrate your data and then
+change how you construct your Chroma client.
+
+See https://docs.trychroma.com/migration for more information or join our discord at https://discord.gg/8g5FESbj for help!
+2026-07-08 21:13:42,841 - backend.app - WARNING - Failed to initialize Enhanced Gemini RAG service
+2026-07-08 21:13:42,868 - __main__ - INFO - 🚀 Starting PocketPro SBA via run.py on port 5000
+2026-07-08 21:13:42,917 - werkzeug - INFO - WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.1.152:5000
+2026-07-08 21:13:42,917 - werkzeug - INFO - Press CTRL+C to quit
+2026-07-08 21:13:42,918 - werkzeug - INFO -  * Restarting with stat
+🔄 Importing PocketPro:SBA application...
+2026-07-08 21:13:45,018 - backend.app - INFO - Database URI: sqlite:///app.db
+2026-07-08 21:13:45,114 - backend.app - INFO - Database tables created successfully
+2026-07-08 21:13:47,300 - backend.assistants.concierge - INFO - Self-optimizing components imported successfully
+C:\Users\deois\AppData\Roaming\Python\Python311\site-packages\langchain\vectorstores\__init__.py:35: LangChainDeprecationWarning: Importing vector stores from langchain is deprecated. Importing from langchain will no longer be supported as of langchain==0.2.0. Please import from langchain-community instead:
+
+`from langchain_community.vectorstores import Chroma`.
+
+To install langchain-community run `pip install -U langchain-community`.
+  warnings.warn(
+C:\Users\deois\AppData\Roaming\Python\Python311\site-packages\langchain\document_loaders\__init__.py:36: LangChainDeprecationWarning: Importing document loaders from langchain is deprecated. Importing from langchain will no longer be supported as of langchain==0.2.0. Please import from langchain-community instead:
+
+`from langchain_community.document_loaders import DirectoryLoader`.
+
+To install langchain-community run `pip install -U langchain-community`.
+  warnings.warn(
+C:\Users\deois\AppData\Roaming\Python\Python311\site-packages\langchain\document_loaders\__init__.py:36: LangChainDeprecationWarning: Importing document loaders from langchain is deprecated. Importing from langchain will no longer be supported as of langchain==0.2.0. Please import from langchain-community instead:
+
+`from langchain_community.document_loaders import TextLoader`.
+
+To install langchain-community run `pip install -U langchain-community`.
+  warnings.warn(
+2026-07-08 21:13:53,632 - backend.enhanced_gemini_rag_service - INFO - Initializing Enhanced Gemini RAG Service...
+✅ Application imported successfully2026-07-08 21:13:54,692 - backend.enhanced_gemini_rag_service - ERROR - Failed to initialize vector store: You are using a deprecated configuration of Chroma.
+
+If you do not have data you wish to migrate, you only need to change how you construct
+your Chroma client. Please see the "New Clients" section of https://docs.trychroma.com/migration.
+________________________________________________________________________________________________
+
+If you do have data you wish to migrate, we have a migration tool you can use in order to
+migrate your data to the new Chroma architecture.
+Please `pip install chroma-migrate` and run `chroma-migrate` to migrate your data and then
+change how you construct your Chroma client.
+
+See https://docs.trychroma.com/migration for more information or join our discord at https://discord.gg/8g5FESbj for help!
+2026-07-08 21:13:54,693 - backend.app - WARNING - Failed to initialize Enhanced Gemini RAG service
+2026-07-08 21:13:54,711 - __main__ - INFO - 🚀 Starting PocketPro SBA via run.py on port 5000
+2026-07-08 21:13:54,718 - werkzeug - WARNING -  * Debugger is active!
+2026-07-08 21:13:54,723 - werkzeug - INFO -  * Debugger PIN: 853-510-256
+
+2026-07-08 21:14:06,609 - werkzeug - INFO -  * Detected change in 'E:\\2024 RESET\\PocketProSBA\\backend\\enhanced_gemini_rag_service.py', reloading
+2026-07-08 21:14:07,358 - werkzeug - INFO -  * Restarting with stat
+🔄 Importing PocketPro:SBA application...
+2026-07-08 21:14:09,830 - backend.app - INFO - Database URI: sqlite:///app.db
+2026-07-08 21:14:09,913 - backend.app - INFO - Database tables created successfully
+2026-07-08 21:14:11,723 - backend.assistants.concierge - INFO - Self-optimizing components imported successfully
+C:\Users\deois\AppData\Roaming\Python\Python311\site-packages\langchain\document_loaders\__init__.py:36: LangChainDeprecationWarning: Importing document loaders from langchain is deprecated. Importing from langchain will no longer be supported as of langchain==0.2.0. Please import from langchain-community instead:
+
+`from langchain_community.document_loaders import DirectoryLoader`.
+
+To install langchain-community run `pip install -U langchain-community`.
+  warnings.warn(
+C:\Users\deois\AppData\Roaming\Python\Python311\site-packages\langchain\document_loaders\__init__.py:36: LangChainDeprecationWarning: Importing document loaders from langchain is deprecated. Importing from langchain will no longer be supported as of langchain==0.2.0. Please import from langchain-community instead:
+
+`from langchain_community.document_loaders import TextLoader`.
+
+To install langchain-community run `pip install -U langchain-community`.
+  warnings.warn(
+2026-07-08 21:14:17,425 - backend.enhanced_gemini_rag_service - INFO - Initializing Enhanced Gemini RAG Service...
+✅ Application imported successfully
+2026-07-08 21:14:19,012 - backend.enhanced_gemini_rag_service - ERROR - Failed to initialize vector store: You are using a deprecated configuration of Chroma.
+
+If you do not have data you wish to migrate, you only need to change how you construct
+your Chroma client. Please see the "New Clients" section of https://docs.trychroma.com/migration.
+________________________________________________________________________________________________
+
+If you do have data you wish to migrate, we have a migration tool you can use in order to
+migrate your data to the new Chroma architecture.
+Please `pip install chroma-migrate` and run `chroma-migrate` to migrate your data and then
+change how you construct your Chroma client.
+
+See https://docs.trychroma.com/migration for more information or join our discord at https://discord.gg/8g5FESbj for help!
+2026-07-08 21:14:19,012 - backend.app - WARNING - Failed to initialize Enhanced Gemini RAG service
+2026-07-08 21:14:19,079 - __main__ - INFO - 🚀 Starting PocketPro SBA via run.py on port 5000
+2026-07-08 21:14:19,095 - werkzeug - WARNING -  * Debugger is active!
+2026-07-08 21:14:19,111 - werkzeug - INFO -  * Debugger PIN: 853-510-256
+2026-07-08 21:15:10,631 - werkzeug - INFO -  * Detected change in 'E:\\2024 RESET\\PocketProSBA\\backend\\utils\\chroma_utils.py', reloading
+2026-07-08 21:15:11,195 - werkzeug - INFO -  * Restarting with stat
+🔄 Importing PocketPro:SBA application...
+2026-07-08 21:15:12,879 - backend.app - INFO - Database URI: sqlite:///app.db
+2026-07-08 21:15:12,923 - backend.app - INFO - Database tables created successfully
+2026-07-08 21:15:15,704 - backend.assistants.concierge - INFO - Self-optimizing components imported successfully
+C:\Users\deois\AppData\Roaming\Python\Python311\site-packages\langchain\document_loaders\__init__.py:36: LangChainDeprecationWarning: Importing document loaders from langchain is deprecated. Importing from langchain will no longer be supported as of langchain==0.2.0. Please import from langchain-community instead:
+
+`from langchain_community.document_loaders import DirectoryLoader`.
+
+To install langchain-community run `pip install -U langchain-community`.
+  warnings.warn(
+C:\Users\deois\AppData\Roaming\Python\Python311\site-packages\langchain\document_loaders\__init__.py:36: LangChainDeprecationWarning: Importing document loaders from langchain is deprecated. Importing from langchain will no longer be supported as of langchain==0.2.0. Please import from langchain-community instead:
+
+`from langchain_community.document_loaders import TextLoader`.
+
+To install langchain-community run `pip install -U langchain-community`.
+  warnings.warn(
+2026-07-08 21:15:20,712 - backend.enhanced_gemini_rag_service - INFO - Initializing Enhanced Gemini RAG Service...
+2026-07-08 21:15:22,126 - chromadb.telemetry.product.posthog - INFO - Anonymized telemetry enabled. See                     https://docs.trychroma.com/telemetry for more information.
+2026-07-08 21:15:23,162 - chromadb.telemetry.product.posthog - ERROR - Failed to send telemetry event ClientStartEvent: capture() takes 1 positional argument but 3 were given
+✅ Application imported successfully2026-07-08 21:15:23,236 - chromadb.telemetry.product.posthog - ERROR - Failed to send telemetry event ClientCreateCollectionEvent: capture() takes 1 positional argument but 3 were given
+
+2026-07-08 21:15:23,247 - chromadb.telemetry.product.posthog - ERROR - Failed to send telemetry event ClientCreateCollectionEvent: capture() takes 1 positional argument but 3 were given
+2026-07-08 21:15:23,252 - backend.app - WARNING - Failed to initialize Enhanced Gemini RAG service
+2026-07-08 21:15:23,305 - __main__ - INFO - 🚀 Starting PocketPro SBA via run.py on port 5000
+2026-07-08 21:15:23,318 - werkzeug - WARNING -  * Debugger is active!
+2026-07-08 21:15:23,341 - werkzeug - INFO -  * Debugger PIN: 853-510-256
+2026-07-08 21:18:04,306 - werkzeug - INFO -  * Detected change in 'E:\\2024 RESET\\PocketProSBA\\backend\\enhanced_gemini_rag_service.py', reloading
+2026-07-08 21:18:05,042 - werkzeug - INFO -  * Restarting with stat
+🔄 Importing PocketPro:SBA application...
+2026-07-08 21:18:08,073 - backend.app - INFO - Database URI: sqlite:///app.db
+2026-07-08 21:18:08,190 - backend.app - INFO - Database tables created successfully
+2026-07-08 21:18:09,988 - backend.assistants.concierge - INFO - Self-optimizing components imported successfully
+C:\Users\deois\AppData\Roaming\Python\Python311\site-packages\langchain\document_loaders\__init__.py:36: LangChainDeprecationWarning: Importing document loaders from langchain is deprecated. Importing from langchain will no longer be supported as of langchain==0.2.0. Please import from langchain-community instead:
+
+`from langchain_community.document_loaders import DirectoryLoader`.
+
+To install langchain-community run `pip install -U langchain-community`.
+  warnings.warn(
+C:\Users\deois\AppData\Roaming\Python\Python311\site-packages\langchain\document_loaders\__init__.py:36: LangChainDeprecationWarning: Importing document loaders from langchain is deprecated. Importing from langchain will no longer be supported as of langchain==0.2.0. Please import from langchain-community instead:
+
+`from langchain_community.document_loaders import TextLoader`.
+
+To install langchain-community run `pip install -U langchain-community`.
+  warnings.warn(
+2026-07-08 21:18:14,308 - backend.enhanced_gemini_rag_service - INFO - Initializing Enhanced Gemini RAG Service...
+2026-07-08 21:18:16,198 - chromadb.telemetry.product.posthog - INFO - Anonymized telemetry enabled. See                     https://docs.trychroma.com/telemetry for more information.
+✅ Application imported successfully
+2026-07-08 21:18:16,735 - chromadb.telemetry.product.posthog - ERROR - Failed to send telemetry event ClientStartEvent: capture() takes 1 positional argument but 3 were given
+2026-07-08 21:18:16,744 - chromadb.telemetry.product.posthog - ERROR - Failed to send telemetry event ClientCreateCollectionEvent: capture() takes 1 positional argument but 3 were given
+2026-07-08 21:18:16,779 - backend.app - WARNING - Failed to initialize Enhanced Gemini RAG service
+2026-07-08 21:18:16,814 - __main__ - INFO - 🚀 Starting PocketPro SBA via run.py on port 5000
+2026-07-08 21:18:16,820 - werkzeug - WARNING -  * Debugger is active!
+2026-07-08 21:18:16,850 - werkzeug - INFO -  * Debugger PIN: 853-510-256
+2026-07-08 21:18:30,870 - werkzeug - INFO -  * Detected change in 'E:\\2024 RESET\\PocketProSBA\\backend\\enhanced_gemini_rag_service.py', reloading
+2026-07-08 21:18:31,481 - werkzeug - INFO -  * Restarting with stat
+🔄 Importing PocketPro:SBA application...

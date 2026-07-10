@@ -1,0 +1,18 @@
+---
+pid: 1580
+cwd: "E:\2024 RESET\PocketProSBA"
+command: "$env:FLASK_ENV=\"development\"; $env:PYTHONPATH=\"E:\\2024 RESET\\PocketProSBA;E:\\2024 RESET\\PocketProSBA\\backend\"; python run.py"
+started_at: 2026-07-09T01:06:09.497Z
+running_for_ms: 16805013 
+---
+At line:1 char:35
++ (cd "E:\\2024 RESET\\PocketProSBA" ; $env:FLASK_ENV="development"; $e ...
++                                   ~
+Missing closing ')' in expression.
+At line:1 char:162
++ ... ESET\PocketProSBA;E:\2024 RESET\PocketProSBA\backend"; python run.py)
++                                                                         ~
+Unexpected token ')' in expression or statement.
+    + CategoryInfo          : ParserError: (:) [], ParentContainsErrorRecordException
+    + FullyQualifiedErrorId : MissingEndParenthesisInExpression
+ 

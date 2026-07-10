@@ -1,0 +1,18 @@
+---
+pid: 11788
+cwd: "E:\2024 RESET\PocketProSBA"
+command: "python -m pytest backend/tests/test_app.py -q --tb=no"
+started_at: 2026-07-02T12:34:26.820Z
+running_for_ms: 2160002  
+---
+At line:1 char:35
++ (cd "E:\\2024 RESET\\PocketProSBA" ; python -m pytest backend/tests/t ...
++                                   ~
+Missing closing ')' in expression.
+At line:1 char:91
++ ... ocketProSBA" ; python -m pytest backend/tests/test_app.py -q --tb=no)
++                                                                         ~
+Unexpected token ')' in expression or statement.
+    + CategoryInfo          : ParserError: (:) [], ParentContainsErrorRecordException
+    + FullyQualifiedErrorId : MissingEndParenthesisInExpression
+ 

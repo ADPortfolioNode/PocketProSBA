@@ -1,0 +1,27 @@
+---
+pid: 4172
+cwd: "E:\2024 RESET\PocketProSBA"
+command: "python -m pytest \"E:\\2024 RESET\\PocketProSBA\\backend\\tests\\test_api_comprehensive.py::TestAPIComprehensive::test_validate_step_no_data\" \"E:\\2024 RESET\\PocketProSBA\\backend\\tests\\test_sba_service.py::TestSBAContentAPI::test_get_article_success\" -q --tb=short"
+started_at: 2026-07-09T01:38:56.432Z
+running_for_ms: 14825006 
+---
+..                                                                       [100%]
+============================== warnings summary ===============================
+backend/tests/test_api_comprehensive.py::TestAPIComprehensive::test_validate_step_no_data
+  C:\Users\deois\AppData\Roaming\Python\Python311\site-packages\langchain\document_loaders\__init__.py:36: LangChainDeprecationWarning: Importing document loaders from langchain is deprecated. Importing from langchain will no longer be supported as of langchain==0.2.0. Please import from langchain-community instead:
+  
+  `from langchain_community.document_loaders import DirectoryLoader`.
+  
+  To install langchain-community run `pip install -U langchain-community`.
+    warnings.warn(
+
+backend/tests/test_api_comprehensive.py::TestAPIComprehensive::test_validate_step_no_data
+  C:\Users\deois\AppData\Roaming\Python\Python311\site-packages\langchain\document_loaders\__init__.py:36: LangChainDeprecationWarning: Importing document loaders from langchain is deprecated. Importing from langchain will no longer be supported as of langchain==0.2.0. Please import from langchain-community instead:
+  
+  `from langchain_community.document_loaders import TextLoader`.
+  
+  To install langchain-community run `pip install -U langchain-community`.
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+2 passed, 2 warnings in 11.77s

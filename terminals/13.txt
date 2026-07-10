@@ -1,0 +1,126 @@
+---
+pid: 3572
+cwd: "E:\2024 RESET\PocketProSBA"
+command: "python -m pytest \"E:\\2024 RESET\\PocketProSBA\\backend\\tests\" -q --tb=line"
+started_at: 2026-07-09T00:57:12.587Z
+running_for_ms: 17330013 
+---
+............F.....F.F..F..F.FF.F..F....F.FFF.F..FF......F.FFF.....FFF... [ 63%]
+.......FFFFF.FFFF.........FF.............                                [100%]
+================================== FAILURES ===================================
+E:\2024 RESET\PocketProSBA\backend\tests\test_agentic_workflows.py:219: AssertionError: assert 'error' in {'document_count': 0, 'rag_status': 'unavailable', 'service': 'PocketPro:SBA Edition', 'status': 'operational', ...}
+E:\2024 RESET\PocketProSBA\backend\tests\test_api.py:27: assert 500 == 200
+E:\2024 RESET\PocketProSBA\backend\tests\test_api.py:38: AssertionError: assert 'validation' in {'confidence': 0.9, 'feedback': 'Step result validated successfully', 'status': 'PASS'}
+E:\2024 RESET\PocketProSBA\backend\tests\test_api.py:53: AssertionError: assert 'No JSON data provided' == 'Query is required'
+E:\2024 RESET\PocketProSBA\backend\tests\test_api_comprehensive.py:52: AssertionError: assert {'sources': [], 'text': 'Thanks for your question about test message. The SBA provides comprehensive support for small...ant programs and resources. What specific area would you like to focus on?', 'timestamp': '2026-07-08T20:57:34.463421'} == 'test response'
+E:\2024 RESET\PocketProSBA\backend\tests\test_api_comprehensive.py:63: assert 500 == 400
+E:\2024 RESET\PocketProSBA\backend\tests\test_api_comprehensive.py:73: assert 500 == 200
+E:\2024 RESET\PocketProSBA\backend\tests\test_api_comprehensive.py:93: KeyError: 'validation'
+E:\2024 RESET\PocketProSBA\backend\tests\test_api_comprehensive.py:115: AssertionError: assert 'No JSON data provided' == 'Query is required'
+E:\2024 RESET\PocketProSBA\backend\tests\test_api_comprehensive.py:154: assert 200 == 500
+E:\2024 RESET\PocketProSBA\backend\tests\test_api_endpoints.py:20: assert 404 == 200
+E:\2024 RESET\PocketProSBA\backend\tests\test_api_endpoints.py:30: assert 404 == 200
+E:\2024 RESET\PocketProSBA\backend\tests\test_api_endpoints.py:37: assert 404 == 200
+E:\2024 RESET\PocketProSBA\backend\tests\test_api_fixed.py:12: AssertionError: assert 'PocketPro:SBA Edition' == 'PocketPro SBA'
+E:\2024 RESET\PocketProSBA\backend\tests\test_api_fixed.py:28: assert 500 == 200
+E:\2024 RESET\PocketProSBA\backend\tests\test_api_fixed.py:35: AssertionError: assert 'No JSON data provided' == 'Instruction is required'
+E:\2024 RESET\PocketProSBA\backend\tests\test_app.py:19: assert 500 == 400
+E:\2024 RESET\PocketProSBA\backend\tests\test_chat_service.py:39: KeyError: 'text'
+E:\2024 RESET\PocketProSBA\backend\tests\test_chat_service.py:51: assert 'text' in {'additional_data': {}, 'response': "Hello! I'm your SBA assistant. I'm here to help you navigate Small Business Admin...programs, loans, and resources. What can I help you with today?", 'session_id': 'test_session_123', 'sources': [], ...}
+E:\2024 RESET\PocketProSBA\backend\tests\test_chat_service.py:72: AssertionError: assert 'text' in {'additional_data': {}, 'response': 'Response to empty message', 'session_id': 'test_session_123', 'sources': [], ...}
+E:\2024 RESET\PocketProSBA\backend\tests\test_chat_service_fixed.py:39: KeyError: 'text'
+E:\2024 RESET\PocketProSBA\backend\tests\test_chat_service_fixed.py:51: assert 'text' in {'additional_data': {}, 'response': "Hello! I'm your SBA assistant. I'm here to help you navigate Small Business Admin...programs, loans, and resources. What can I help you with today?", 'session_id': 'test_session_123', 'sources': [], ...}
+E:\2024 RESET\PocketProSBA\backend\tests\test_chat_service_fixed.py:73: AssertionError: assert 'text' in {'additional_data': {}, 'response': 'Response to empty message', 'session_id': 'test_session_123', 'sources': [], ...}
+E:\2024 RESET\PocketProSBA\backend\tests\test_memory_repository.py:35: TypeError: MemoryRepository.store_task_result() takes 2 positional arguments but 3 were given
+E:\2024 RESET\PocketProSBA\backend\tests\test_memory_repository.py:50: AttributeError: 'MemoryRepository' object has no attribute 'store_step_result'
+E:\2024 RESET\PocketProSBA\backend\tests\test_memory_repository.py:70: AttributeError: 'MemoryRepository' object has no attribute 'log_step_attempts'
+E:\2024 RESET\PocketProSBA\backend\tests\test_memory_repository.py:90: AttributeError: 'MemoryRepository' object has no attribute 'log_step_attempts'
+E:\2024 RESET\PocketProSBA\backend\tests\test_memory_repository.py:104: AssertionError: assert [] == ['similar_tas...milar_task_2']
+E:\2024 RESET\PocketProSBA\backend\tests\test_memory_repository.py:124: AttributeError: 'MemoryRepository' object has no attribute 'store_task_embedding'
+E:\2024 RESET\PocketProSBA\backend\tests\test_memory_repository.py:133: AttributeError: 'MemoryRepository' object has no attribute 'get_task_history'
+E:\2024 RESET\PocketProSBA\backend\tests\test_memory_repository.py:139: TypeError: MemoryRepository.store_task_result() takes 2 positional arguments but 3 were given
+E:\2024 RESET\PocketProSBA\backend\tests\test_memory_repository.py:153: AttributeError: 'MemoryRepository' object has no attribute '_update_strategy_score'
+C:\Program Files\Python311\Lib\unittest\mock.py:1183: Exception: Connection error
+C:\Program Files\Python311\Lib\unittest\mock.py:939: AssertionError: expected call not found.
+============================== warnings summary ===============================
+backend\tests\test_integration.py:5
+  E:\2024 RESET\PocketProSBA\backend\tests\test_integration.py:5: PytestUnknownMarkWarning: Unknown pytest.mark.integration - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.integration
+
+backend\tests\test_integration.py:27
+  E:\2024 RESET\PocketProSBA\backend\tests\test_integration.py:27: PytestUnknownMarkWarning: Unknown pytest.mark.integration - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.integration
+
+backend\tests\test_integration.py:34
+  E:\2024 RESET\PocketProSBA\backend\tests\test_integration.py:34: PytestUnknownMarkWarning: Unknown pytest.mark.integration - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.integration
+
+backend\tests\test_integration.py:41
+  E:\2024 RESET\PocketProSBA\backend\tests\test_integration.py:41: PytestUnknownMarkWarning: Unknown pytest.mark.integration - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.integration
+
+backend\tests\test_integration.py:48
+  E:\2024 RESET\PocketProSBA\backend\tests\test_integration.py:48: PytestUnknownMarkWarning: Unknown pytest.mark.integration - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.integration
+
+backend/tests/test_api.py::test_health_check
+  C:\Users\deois\AppData\Roaming\Python\Python311\site-packages\langchain\vectorstores\__init__.py:35: LangChainDeprecationWarning: Importing vector stores from langchain is deprecated. Importing from langchain will no longer be supported as of langchain==0.2.0. Please import from langchain-community instead:
+  
+  `from langchain_community.vectorstores import Chroma`.
+  
+  To install langchain-community run `pip install -U langchain-community`.
+    warnings.warn(
+
+backend/tests/test_api.py::test_health_check
+  C:\Users\deois\AppData\Roaming\Python\Python311\site-packages\langchain\document_loaders\__init__.py:36: LangChainDeprecationWarning: Importing document loaders from langchain is deprecated. Importing from langchain will no longer be supported as of langchain==0.2.0. Please import from langchain-community instead:
+  
+  `from langchain_community.document_loaders import DirectoryLoader`.
+  
+  To install langchain-community run `pip install -U langchain-community`.
+    warnings.warn(
+
+backend/tests/test_api.py::test_health_check
+  C:\Users\deois\AppData\Roaming\Python\Python311\site-packages\langchain\document_loaders\__init__.py:36: LangChainDeprecationWarning: Importing document loaders from langchain is deprecated. Importing from langchain will no longer be supported as of langchain==0.2.0. Please import from langchain-community instead:
+  
+  `from langchain_community.document_loaders import TextLoader`.
+  
+  To install langchain-community run `pip install -U langchain-community`.
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED backend/tests/test_agentic_workflows.py::TestAgenticWorkflows::test_get_system_info_service_error_handling
+FAILED backend/tests/test_api.py::test_execute_step_success - assert 500 == 200
+FAILED backend/tests/test_api.py::test_validate_step_success - AssertionError...
+FAILED backend/tests/test_api.py::test_query_documents_no_query - AssertionEr...
+FAILED backend/tests/test_api_comprehensive.py::TestAPIComprehensive::test_decompose_task_success
+FAILED backend/tests/test_api_comprehensive.py::TestAPIComprehensive::test_decompose_task_no_data
+FAILED backend/tests/test_api_comprehensive.py::TestAPIComprehensive::test_execute_step_success
+FAILED backend/tests/test_api_comprehensive.py::TestAPIComprehensive::test_validate_step_success
+FAILED backend/tests/test_api_comprehensive.py::TestAPIComprehensive::test_query_documents_no_query
+FAILED backend/tests/test_api_comprehensive.py::TestAPIComprehensive::test_error_handling_500
+FAILED backend/tests/test_api_endpoints.py::test_get_data_endpoint - assert 4...
+FAILED backend/tests/test_api_endpoints.py::test_post_chat_message - assert 4...
+FAILED backend/tests/test_api_endpoints.py::test_rag_endpoint - assert 404 ==...
+FAILED backend/tests/test_api_fixed.py::test_get_system_info - AssertionError...
+FAILED backend/tests/test_api_fixed.py::test_execute_step_success - assert 50...
+FAILED backend/tests/test_api_fixed.py::test_execute_step_no_data - Assertion...
+FAILED backend/tests/test_app.py::test_400_error_handler - assert 500 == 400
+FAILED backend/tests/test_chat_service.py::TestChatProcessingFunctions::test_process_chat_message_success
+FAILED backend/tests/test_chat_service.py::TestChatProcessingFunctions::test_process_chat_message_missing_user_id
+FAILED backend/tests/test_chat_service.py::TestChatProcessingFunctions::test_process_chat_message_missing_message
+FAILED backend/tests/test_chat_service_fixed.py::TestChatProcessingFunctions::test_process_chat_message_success
+FAILED backend/tests/test_chat_service_fixed.py::TestChatProcessingFunctions::test_process_chat_message_missing_user_id
+FAILED backend/tests/test_chat_service_fixed.py::TestChatProcessingFunctions::test_process_chat_message_missing_message
+FAILED backend/tests/test_memory_repository.py::TestMemoryRepository::test_store_task_result
+FAILED backend/tests/test_memory_repository.py::TestMemoryRepository::test_store_step_result
+FAILED backend/tests/test_memory_repository.py::TestMemoryRepository::test_log_step_attempts
+FAILED backend/tests/test_memory_repository.py::TestMemoryRepository::test_get_best_strategy
+FAILED backend/tests/test_memory_repository.py::TestMemoryRepository::test_find_similar_tasks
+FAILED backend/tests/test_memory_repository.py::TestMemoryRepository::test_store_task_embedding
+FAILED backend/tests/test_memory_repository.py::TestMemoryRepository::test_get_task_history_nonexistent
+FAILED backend/tests/test_memory_repository.py::TestMemoryRepository::test_get_metrics
+FAILED backend/tests/test_memory_repository.py::TestMemoryRepository::test_strategy_score_update
+FAILED backend/tests/test_sba_service.py::TestSBAContentAPI::test_search_articles_request_error
+FAILED backend/tests/test_sba_service.py::TestSBAContentAPI::test_get_article_success
+34 failed, 79 passed, 8 warnings in 29.17s

@@ -1,0 +1,10 @@
+---
+pid: 1412
+cwd: "E:\2024 RESET\PocketProSBA"
+command: "curl.exe -s -X POST http://localhost:5000/api/decompose -H \"Content-Type: application/json\" -d \"{\\\"message\\\":\\\"Help me plan an SBA loan application\\\",\\\"session_id\\\":\\\"test-1\\\"}\""
+started_at: 2026-07-09T01:06:57.985Z
+running_for_ms: 16740012 
+---
+{
+  "error": "Failed to process message: 400 Bad Request: Failed to decode JSON object: Expecting property name enclosed in double quotes: line 1 column 2 (char 1)"
+}

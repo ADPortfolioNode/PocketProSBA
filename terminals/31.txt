@@ -1,0 +1,79 @@
+---
+pid: 6780
+cwd: "E:\2024 RESET\PocketProSBA"
+command: "python -m pytest \"E:\\2024 RESET\\PocketProSBA\\backend\\tests\" -q --tb=short -k \"health or test_root or test_app\""
+started_at: 2026-07-09T01:28:08.757Z
+running_for_ms: 15470008 
+---
+.......F...                                                              [100%]
+================================== FAILURES ===================================
+___________________________ test_400_error_handler ____________________________
+backend\tests\test_app.py:19: in test_400_error_handler
+    assert response.status_code == 400
+E   assert 500 == 400
+E    +  where 500 = <WrapperTestResponse streamed [500 INTERNAL SERVER ERROR]>.status_code
+---------------------------- Captured stderr setup ----------------------------
+2026-07-08 21:28:23,430 - backend.app - INFO - Database URI: sqlite:///:memory:
+2026-07-08 21:28:23,444 - backend.app - INFO - Database tables created successfully
+2026-07-08 21:28:23,469 - backend.enhanced_gemini_rag_service - INFO - Initializing Enhanced Gemini RAG Service...
+2026-07-08 21:28:23,524 - chromadb.telemetry.product.posthog - ERROR - Failed to send telemetry event ClientStartEvent: capture() takes 1 positional argument but 3 were given
+2026-07-08 21:28:23,536 - chromadb.telemetry.product.posthog - ERROR - Failed to send telemetry event ClientCreateCollectionEvent: capture() takes 1 positional argument but 3 were given
+2026-07-08 21:28:23,537 - backend.enhanced_gemini_rag_service - INFO - Enhanced Gemini RAG Service initialized successfully
+2026-07-08 21:28:23,538 - backend.app - INFO - Enhanced Gemini RAG service initialized successfully
+----------------------------- Captured log setup ------------------------------
+INFO     backend.app:__init__.py:23 Database URI: sqlite:///:memory:
+INFO     backend.app:__init__.py:32 Database tables created successfully
+INFO     backend.enhanced_gemini_rag_service:enhanced_gemini_rag_service.py:52 Initializing Enhanced Gemini RAG Service...
+ERROR    chromadb.telemetry.product.posthog:posthog.py:59 Failed to send telemetry event ClientStartEvent: capture() takes 1 positional argument but 3 were given
+ERROR    chromadb.telemetry.product.posthog:posthog.py:59 Failed to send telemetry event ClientCreateCollectionEvent: capture() takes 1 positional argument but 3 were given
+INFO     backend.enhanced_gemini_rag_service:enhanced_gemini_rag_service.py:75 Enhanced Gemini RAG Service initialized successfully
+INFO     backend.app:__init__.py:77 Enhanced Gemini RAG service initialized successfully
+---------------------------- Captured stderr call -----------------------------
+2026-07-08 21:28:23,544 - backend.app - INFO - Request: POST /api/decompose
+2026-07-08 21:28:23,544 - backend.routes.api - ERROR - Error decomposing task: 400 Bad Request: The browser (or proxy) sent a request that this server could not understand.
+2026-07-08 21:28:23,545 - backend.app - INFO - Response: 500 INTERNAL SERVER ERROR
+------------------------------ Captured log call ------------------------------
+INFO     backend.app:__init__.py:107 Request: POST /api/decompose
+ERROR    backend.routes.api:api.py:99 Error decomposing task: 400 Bad Request: The browser (or proxy) sent a request that this server could not understand.
+INFO     backend.app:__init__.py:111 Response: 500 INTERNAL SERVER ERROR
+============================== warnings summary ===============================
+backend\tests\test_integration.py:5
+  E:\2024 RESET\PocketProSBA\backend\tests\test_integration.py:5: PytestUnknownMarkWarning: Unknown pytest.mark.integration - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.integration
+
+backend\tests\test_integration.py:27
+  E:\2024 RESET\PocketProSBA\backend\tests\test_integration.py:27: PytestUnknownMarkWarning: Unknown pytest.mark.integration - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.integration
+
+backend\tests\test_integration.py:34
+  E:\2024 RESET\PocketProSBA\backend\tests\test_integration.py:34: PytestUnknownMarkWarning: Unknown pytest.mark.integration - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.integration
+
+backend\tests\test_integration.py:41
+  E:\2024 RESET\PocketProSBA\backend\tests\test_integration.py:41: PytestUnknownMarkWarning: Unknown pytest.mark.integration - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.integration
+
+backend\tests\test_integration.py:48
+  E:\2024 RESET\PocketProSBA\backend\tests\test_integration.py:48: PytestUnknownMarkWarning: Unknown pytest.mark.integration - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.integration
+
+backend/tests/test_api.py::test_health_check
+  C:\Users\deois\AppData\Roaming\Python\Python311\site-packages\langchain\document_loaders\__init__.py:36: LangChainDeprecationWarning: Importing document loaders from langchain is deprecated. Importing from langchain will no longer be supported as of langchain==0.2.0. Please import from langchain-community instead:
+  
+  `from langchain_community.document_loaders import DirectoryLoader`.
+  
+  To install langchain-community run `pip install -U langchain-community`.
+    warnings.warn(
+
+backend/tests/test_api.py::test_health_check
+  C:\Users\deois\AppData\Roaming\Python\Python311\site-packages\langchain\document_loaders\__init__.py:36: LangChainDeprecationWarning: Importing document loaders from langchain is deprecated. Importing from langchain will no longer be supported as of langchain==0.2.0. Please import from langchain-community instead:
+  
+  `from langchain_community.document_loaders import TextLoader`.
+  
+  To install langchain-community run `pip install -U langchain-community`.
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED backend/tests/test_app.py::test_400_error_handler - assert 500 == 400
+1 failed, 10 passed, 102 deselected, 7 warnings in 17.17s

@@ -29,20 +29,19 @@ def post_message():
             logger.warning("No JSON data provided for chat message")
             return jsonify({'error': 'No JSON data provided'}), 400
 
-        user_id = data.get('user_id')
-        message = data.get('message')
-        session_id = data.get('session_id')
+        # Prebuilt App.js (source map line ~127) posts {message, session_id}
+        # without user_id — default for anonymous/dev clients to avoid UX hard-fail.
+        user_id = data.get('user_id') or data.get('userId') or 1
+        # Accept common aliases used by older clients
+        message = data.get('message') or data.get('query') or data.get('text') or data.get('input')
+        session_id = data.get('session_id') or data.get('sessionId')
 
-        if not user_id:
-            logger.warning("User ID is required for chat message")
-            return jsonify({'error': 'User ID is required'}), 400
-            
-        if not message or not message.strip():
+        if not message or not str(message).strip():
             logger.warning("Message content is required for chat message")
             return jsonify({'error': 'Message content is required'}), 400
 
         # Process the message with Concierge assistant
-        response = process_chat_message(user_id, message.strip(), session_id)
+        response = process_chat_message(user_id, str(message).strip(), session_id)
         
         # Return the processed response
         return jsonify(response), 200 if response.get('success', True) else 500

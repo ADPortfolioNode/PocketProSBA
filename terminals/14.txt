@@ -1,0 +1,20 @@
+---
+pid: 8724
+cwd: "E:\2024 RESET\PocketProSBA"
+command: "pip install \"chromadb==0.4.24\" -q"
+started_at: 2026-07-09T01:00:26.442Z
+running_for_ms: 17135001 
+---
+  WARNING: The script chroma.exe is installed in 'C:\Users\deois\AppData\Roaming\Python\Python311\Scripts' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+ERROR: pip's dependency resolver does not currently take into account all the packages that are installed. This behaviour is the source of the following dependency conflicts.
+google-ai-generativelanguage 0.4.0 requires protobuf!=3.20.0,!=3.20.1,!=4.21.0,!=4.21.1,!=4.21.2,!=4.21.3,!=4.21.4,!=4.21.5,<5.0.0dev,>=3.19.5, but you have protobuf 7.35.1 which is incompatible.
+langchain 0.1.14 requires numpy<2,>=1, but you have numpy 2.4.6 which is incompatible.
+langchain 0.1.14 requires tenacity<9.0.0,>=8.1.0, but you have tenacity 9.1.4 which is incompatible.
+langchain-community 0.0.38 requires numpy<2,>=1, but you have numpy 2.4.6 which is incompatible.
+langchain-community 0.0.38 requires tenacity<9.0.0,>=8.1.0, but you have tenacity 9.1.4 which is incompatible.
+langchain-core 0.1.53 requires packaging<24.0,>=23.2, but you have packaging 26.2 which is incompatible.
+langchain-core 0.1.53 requires tenacity<9.0.0,>=8.1.0, but you have tenacity 9.1.4 which is incompatible.
+proto-plus 1.27.1 requires protobuf<7.0.0,>=3.19.0, but you have protobuf 7.35.1 which is incompatible.
+transformers 4.57.6 requires huggingface-hub<1.0,>=0.34.0, but you have huggingface-hub 1.21.0 which is incompatible.
+transformers 4.57.6 requires tokenizers<=0.23.0,>=0.22.0, but you have tokenizers 0.23.1 which is incompatible.

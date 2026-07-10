@@ -1,0 +1,18 @@
+---
+pid: 7084
+cwd: "E:\2024 RESET\PocketProSBA"
+command: "pip install \"numpy<2\" -q"
+started_at: 2026-07-09T01:11:01.761Z
+running_for_ms: 16500018 
+---
+  WARNING: The script f2py.exe is installed in 'C:\Users\deois\AppData\Roaming\Python\Python311\Scripts' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+  WARNING: Failed to remove contents in a temporary directory 'C:\Users\deois\AppData\Roaming\Python\Python311\site-packages\~umpy.libs'.
+  You can safely remove it manually.
+  WARNING: Failed to remove contents in a temporary directory 'C:\Users\deois\AppData\Roaming\Python\Python311\site-packages\~umpy'.
+  You can safely remove it manually.
+ERROR: pip's dependency resolver does not currently take into account all the packages that are installed. This behaviour is the source of the following dependency conflicts.
+langchain 0.1.14 requires tenacity<9.0.0,>=8.1.0, but you have tenacity 9.1.4 which is incompatible.
+langchain-community 0.0.38 requires tenacity<9.0.0,>=8.1.0, but you have tenacity 9.1.4 which is incompatible.
+transformers 4.57.6 requires huggingface-hub<1.0,>=0.34.0, but you have huggingface-hub 1.21.0 which is incompatible.
+transformers 4.57.6 requires tokenizers<=0.23.0,>=0.22.0, but you have tokenizers 0.23.1 which is incompatible.

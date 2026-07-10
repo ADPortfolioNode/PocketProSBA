@@ -32,7 +32,8 @@ const RETRY_DELAY = 1000;
 
 const axiosInstance = axios.create({
   baseURL: BASE_URL,
-  timeout: 10000,
+  // SBA content can include live sba.gov scrapes — 10s was blanking Resources cards
+  timeout: 60000,
   headers: {
     'Content-Type': 'application/json'
   }

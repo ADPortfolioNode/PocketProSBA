@@ -255,29 +255,108 @@ const DocumentsSection = () => (
   </div>
 );
 
-const AnalyticsSection = () => (
-  <div className="analytics-section">
-    <h2 className="section-title">Analytics</h2>
-    <Row>
-      <Col lg={6} className="mb-4">
-        <Card>
+const AnalyticsSection = () => {
+  const [stats, setStats] = useState(null);
+  const [docs, setDocs] = useState([]);
+  const [health, setHealth] = useState(null);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      setLoading(true);
+      setError('');
+      try {
+        const base = process.env.REACT_APP_API_URL
+          ? process.env.REACT_APP_API_URL.replace(/\/api\/?$/, '')
+          : 'http://localhost:5000';
+        const [infoRes, healthRes, docsRes, chromaRes] = await Promise.all([
+          fetch(`${base}/api/info`).then((r) => r.json()).catch(() => null),
+          fetch(`${base}/api/health`).then((r) => r.json()).catch(() => null),
+          fetch(`${base}/api/documents/list`).then((r) => r.json()).catch(() => ({ files: [] })),
+          fetch(`${base}/api/chromadb_health`).then((r) => r.json()).catch(() => null),
+        ]);
+        if (cancelled) return;
+        setStats(infoRes);
+        setHealth({ api: healthRes, chroma: chromaRes });
+        setDocs(Array.isArray(docsRes?.files) ? docsRes.files : []);
+      } catch (e) {
+        if (!cancelled) setError(e.message || 'Failed to load analytics');
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+    load();
+    const id = setInterval(load, 30000);
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
+  }, []);
+
+  const docCount = docs.length;
+  const totalBytes = docs.reduce((sum, f) => sum + (f.size || 0), 0);
+  const chromaDocs = health?.chroma?.document_count ?? stats?.document_count ?? 0;
+  const ragStatus = stats?.rag_status || health?.chroma?.status || 'unknown';
+  const apiOk = health?.api?.status === 'healthy' || health?.api?.status === 'ok';
+
+  return (
+    <div className="analytics-section">
+      <h2 className="section-title">Analytics</h2>
+      {error && <Alert variant="warning">{error}</Alert>}
+      {loading && !stats && <p className="text-muted">Loading live metrics…</p>}
+      <Row>
+        <Col lg={6} className="mb-4">
+          <Card>
+            <Card.Body>
+              <Card.Title>Usage Analytics</Card.Title>
+              <ul className="mb-0">
+                <li>API status: <strong>{apiOk ? 'healthy' : 'checking…'}</strong></li>
+                <li>Service: <strong>{stats?.service || 'PocketPro SBA'}</strong></li>
+                <li>Uploaded files: <strong>{docCount}</strong></li>
+                <li>Upload volume: <strong>{(totalBytes / 1024).toFixed(1)} KB</strong></li>
+                <li>RAG status: <strong>{ragStatus}</strong></li>
+              </ul>
+            </Card.Body>
+          </Card>
+        </Col>
+        <Col lg={6} className="mb-4">
+          <Card>
+            <Card.Body>
+              <Card.Title>Performance Metrics</Card.Title>
+              <ul className="mb-0">
+                <li>Chroma documents: <strong>{chromaDocs}</strong></li>
+                <li>Vector store: <strong>{stats?.vector_store || 'ChromaDB'}</strong></li>
+                <li>Version: <strong>{stats?.version || '1.0.0'}</strong></li>
+                <li>
+                  Chroma message:{' '}
+                  <strong>{health?.chroma?.message || 'n/a'}</strong>
+                </li>
+                <li className="text-muted small">Auto-refreshes every 30s from live APIs</li>
+              </ul>
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
+      {docCount > 0 && (
+        <Card className="mb-3">
           <Card.Body>
-            <Card.Title>Usage Analytics</Card.Title>
-            <Card.Text>Analytics dashboard coming soon</Card.Text>
+            <Card.Title>Recent documents</Card.Title>
+            <ul className="mb-0">
+              {docs.slice(0, 8).map((f) => (
+                <li key={f.filename}>
+                  {f.filename}{' '}
+                  <span className="text-muted">({f.size} bytes)</span>
+                </li>
+              ))}
+            </ul>
           </Card.Body>
         </Card>
-      </Col>
-      <Col lg={6} className="mb-4">
-        <Card>
-          <Card.Body>
-            <Card.Title>Performance Metrics</Card.Title>
-            <Card.Text>Performance tracking coming soon</Card.Text>
-          </Card.Body>
-        </Card>
-      </Col>
-    </Row>
-  </div>
-);
+      )}
+    </div>
+  );
+};
 
 const ResourcesSection = () => (
   <div className="resources-section">

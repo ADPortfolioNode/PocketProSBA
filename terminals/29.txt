@@ -1,0 +1,62 @@
+---
+pid: 2656
+cwd: "E:\2024 RESET\PocketProSBA"
+command: "python -m pytest \"E:\\2024 RESET\\PocketProSBA\\backend\\tests\" -q --tb=line 2>&1 | findstr /i \"FAILED ERROR\""
+started_at: 2026-07-09T01:23:58.222Z
+running_for_ms: 15720009 
+---
+E:\2024 RESET\PocketProSBA\backend\tests\test_api.py:38: AssertionError: assert 'validation' in {'confidence': 0.9, 'feedback': 'Step result validated successfully', 'status': 'PASS'}
+E:\2024 RESET\PocketProSBA\backend\tests\test_api.py:53: AssertionError: assert 'No JSON data provided' == 'Query is required'
+E:\2024 RESET\PocketProSBA\backend\tests\test_api_comprehensive.py:93: KeyError: 'validation'
+E:\2024 RESET\PocketProSBA\backend\tests\test_api_comprehensive.py:115: AssertionError: assert 'No JSON data provided' == 'Query is required'
+E:\2024 RESET\PocketProSBA\backend\tests\test_api_fixed.py:12: AssertionError: assert 'PocketPro:SBA Edition' == 'PocketPro SBA'
+E:\2024 RESET\PocketProSBA\backend\tests\test_api_fixed.py:35: AssertionError: assert 'No JSON data provided' == 'Instruction is required'
+E:\2024 RESET\PocketProSBA\backend\tests\test_chat_service.py:39: KeyError: 'text'
+E:\2024 RESET\PocketProSBA\backend\tests\test_chat_service.py:72: AssertionError: assert 'text' in {'additional_data': {}, 'response': 'Response to empty message', 'session_id': 'test_session_123', 'sources': [], ...}
+E:\2024 RESET\PocketProSBA\backend\tests\test_chat_service_fixed.py:39: KeyError: 'text'
+E:\2024 RESET\PocketProSBA\backend\tests\test_chat_service_fixed.py:73: AssertionError: assert 'text' in {'additional_data': {}, 'response': 'Response to empty message', 'session_id': 'test_session_123', 'sources': [], ...}
+E:\2024 RESET\PocketProSBA\backend\tests\test_memory_repository.py:35: TypeError: MemoryRepository.store_task_result() takes 2 positional arguments but 3 were given
+E:\2024 RESET\PocketProSBA\backend\tests\test_memory_repository.py:50: AttributeError: 'MemoryRepository' object has no attribute 'store_step_result'
+E:\2024 RESET\PocketProSBA\backend\tests\test_memory_repository.py:70: AttributeError: 'MemoryRepository' object has no attribute 'log_step_attempts'
+E:\2024 RESET\PocketProSBA\backend\tests\test_memory_repository.py:90: AttributeError: 'MemoryRepository' object has no attribute 'log_step_attempts'
+E:\2024 RESET\PocketProSBA\backend\tests\test_memory_repository.py:104: AssertionError: assert [] == ['similar_tas...milar_task_2']
+E:\2024 RESET\PocketProSBA\backend\tests\test_memory_repository.py:124: AttributeError: 'MemoryRepository' object has no attribute 'store_task_embedding'
+E:\2024 RESET\PocketProSBA\backend\tests\test_memory_repository.py:133: AttributeError: 'MemoryRepository' object has no attribute 'get_task_history'
+E:\2024 RESET\PocketProSBA\backend\tests\test_memory_repository.py:139: TypeError: MemoryRepository.store_task_result() takes 2 positional arguments but 3 were given
+E:\2024 RESET\PocketProSBA\backend\tests\test_memory_repository.py:153: AttributeError: 'MemoryRepository' object has no attribute '_update_strategy_score'
+C:\Program Files\Python311\Lib\unittest\mock.py:1183: Exception: Connection error
+C:\Program Files\Python311\Lib\unittest\mock.py:939: AssertionError: expected call not found.
+FAILED backend/tests/test_api.py::test_execute_step_success - assert 500 == 200
+FAILED backend/tests/test_api.py::test_validate_step_success - AssertionError...
+FAILED backend/tests/test_api.py::test_query_documents_no_query - AssertionEr...
+FAILED backend/tests/test_api_comprehensive.py::TestAPIComprehensive::test_decompose_task_success
+FAILED backend/tests/test_api_comprehensive.py::TestAPIComprehensive::test_decompose_task_no_data
+FAILED backend/tests/test_api_comprehensive.py::TestAPIComprehensive::test_execute_step_success
+FAILED backend/tests/test_api_comprehensive.py::TestAPIComprehensive::test_validate_step_success
+FAILED backend/tests/test_api_comprehensive.py::TestAPIComprehensive::test_query_documents_no_query
+FAILED backend/tests/test_api_comprehensive.py::TestAPIComprehensive::test_error_handling_500
+FAILED backend/tests/test_api_endpoints.py::test_get_data_endpoint - assert 4...
+FAILED backend/tests/test_api_endpoints.py::test_post_chat_message - assert 4...
+FAILED backend/tests/test_api_endpoints.py::test_rag_endpoint - assert 404 ==...
+FAILED backend/tests/test_api_fixed.py::test_get_system_info - AssertionError...
+FAILED backend/tests/test_api_fixed.py::test_execute_step_success - assert 50...
+FAILED backend/tests/test_api_fixed.py::test_execute_step_no_data - Assertion...
+FAILED backend/tests/test_app.py::test_400_error_handler - assert 500 == 400
+FAILED backend/tests/test_chat_service.py::TestChatProcessingFunctions::test_process_chat_message_success
+FAILED backend/tests/test_chat_service.py::TestChatProcessingFunctions::test_process_chat_message_missing_user_id
+FAILED backend/tests/test_chat_service.py::TestChatProcessingFunctions::test_process_chat_message_missing_message
+FAILED backend/tests/test_chat_service_fixed.py::TestChatProcessingFunctions::test_process_chat_message_success
+FAILED backend/tests/test_chat_service_fixed.py::TestChatProcessingFunctions::test_process_chat_message_missing_user_id
+FAILED backend/tests/test_chat_service_fixed.py::TestChatProcessingFunctions::test_process_chat_message_missing_message
+FAILED backend/tests/test_memory_repository.py::TestMemoryRepository::test_store_task_result
+FAILED backend/tests/test_memory_repository.py::TestMemoryRepository::test_store_step_result
+FAILED backend/tests/test_memory_repository.py::TestMemoryRepository::test_log_step_attempts
+FAILED backend/tests/test_memory_repository.py::TestMemoryRepository::test_get_best_strategy
+FAILED backend/tests/test_memory_repository.py::TestMemoryRepository::test_find_similar_tasks
+FAILED backend/tests/test_memory_repository.py::TestMemoryRepository::test_store_task_embedding
+FAILED backend/tests/test_memory_repository.py::TestMemoryRepository::test_get_task_history_nonexistent
+FAILED backend/tests/test_memory_repository.py::TestMemoryRepository::test_get_metrics
+FAILED backend/tests/test_memory_repository.py::TestMemoryRepository::test_strategy_score_update
+FAILED backend/tests/test_sba_service.py::TestSBAContentAPI::test_search_articles_request_error
+FAILED backend/tests/test_sba_service.py::TestSBAContentAPI::test_get_article_success
+33 failed, 80 passed, 7 warnings in 75.87s (0:01:15)

@@ -1,0 +1,10 @@
+---
+pid: 8396
+cwd: "E:\2024 RESET\PocketProSBA"
+command: "python -m pytest \"E:\\2024 RESET\\PocketProSBA\\backend\\tests\" -q --tb=no -k \"health or test_root or test_app\" 2>&1 | Select-Object -Last 3"
+started_at: 2026-07-09T01:45:20.761Z
+running_for_ms: 14440000 
+---
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+12 passed, 101 deselected, 7 warnings in 20.65s

@@ -1,0 +1,10 @@
+---
+pid: 13496
+cwd: "E:\2024 RESET\PocketProSBA"
+command: "python -m pytest \"E:\\2024 RESET\\PocketProSBA\\backend\\tests\" -q --tb=no 2>&1 | Select-Object -Last 3"
+started_at: 2026-07-09T01:42:05.455Z
+running_for_ms: 14635004 
+---
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+103 passed, 10 skipped, 7 warnings in 78.38s (0:01:18)

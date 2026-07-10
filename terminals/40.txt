@@ -1,0 +1,17 @@
+---
+pid: 13740
+cwd: "E:\2024 RESET\PocketProSBA"
+command: "python -c \"
+import requests, json
+base='http://127.0.0.1:5000'
+for p in ['/api/health','/api/chromadb_health','/api/info','/api/rag/health']:
+ r=requests.get(base+p,timeout=15)
+ print(p, r.status_code, json.dumps(r.json())[:160])
+\""
+started_at: 2026-07-09T01:44:06.507Z
+running_for_ms: 14515005 
+---
+/api/health 200 {"server": {"self": "http://127.0.0.1:5000"}, "status": "healthy"}
+/api/chromadb_health 200 {"document_count": 0, "message": "ChromaDB is not available", "server": {"self": "http://127.0.0.1:5000"}, "status": "error"}
+/api/info 200 {"document_count": 0, "rag_status": "unavailable", "server": {"host": "127.0.0.1:5000", "scheme": "http", "self": "http://127.0.0.1:5000"}, "service": "PocketPr
+/api/rag/health 503 {"message": "RAG system is not available", "status": "error"}

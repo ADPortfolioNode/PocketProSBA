@@ -13,11 +13,58 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+
+class CompatPathRewriteMiddleware:
+    """Rewrite legacy / prebuilt SPA URL shapes onto current Flask routes.
+
+    1) /api/api/* → /api/*
+       Baked chat baseURL is http://localhost:5000/api + path /api/chat.
+    2) /api/sba-content/* → /api/sba/content/*
+       Baked SBAContentExplorer uses /api/sba-content/{type}?query=&page=
+       while live routes live under /api/sba/content/*.
+    """
+
+    def __init__(self, wsgi_app):
+        self.wsgi_app = wsgi_app
+
+    def __call__(self, environ, start_response):
+        path = environ.get('PATH_INFO', '') or ''
+        original = path
+
+        # Double /api prefix first (may wrap sba-content too)
+        if path == '/api/api' or path.startswith('/api/api/'):
+            path = '/api' + path[len('/api/api'):]
+            if not path:
+                path = '/api'
+
+        # Prebuilt SBA content explorer: /api/sba-content/events → /api/sba/content/events
+        if path == '/api/sba-content' or path.startswith('/api/sba-content/'):
+            path = '/api/sba/content' + path[len('/api/sba-content'):]
+            if path == '/api/sba/content':
+                # bare collection → resources catalog
+                path = '/api/sba/resources'
+
+        if path != original:
+            environ['PATH_INFO'] = path
+            for key in ('REQUEST_URI', 'RAW_URI'):
+                if key in environ and isinstance(environ[key], str):
+                    environ[key] = environ[key].replace(original, path, 1)
+            logger.debug('Compat path rewrite: %s → %s', original, path)
+
+        return self.wsgi_app(environ, start_response)
+
+
+# Back-compat alias if anything imported the old name
+StripDoubleApiPrefixMiddleware = CompatPathRewriteMiddleware
+
+
 def create_app(config_name=None):
     """Application factory pattern"""
     config_class = get_config(config_name)
     app = Flask(__name__)
     app.config.from_object(config_class)
+    # Must wrap after app exists; applied so all blueprints see rewritten paths
+    app.wsgi_app = CompatPathRewriteMiddleware(app.wsgi_app)
 
     # Log database configuration
     logger.info(f"Database URI: {app.config['SQLALCHEMY_DATABASE_URI']}")
@@ -25,9 +72,13 @@ def create_app(config_name=None):
     # Initialize database
     db.init_app(app)
 
-    # Create database tables
+    # Create database tables (import models so metadata is complete)
     with app.app_context():
         try:
+            try:
+                from backend.models.user import User  # noqa: F401
+            except Exception as model_err:
+                logger.warning("User model import deferred: %s", model_err)
             db.create_all()
             logger.info("Database tables created successfully")
         except Exception as e:
@@ -65,21 +116,33 @@ def create_app(config_name=None):
     from backend.routes.sba import sba_bp
     from backend.routes.rag import rag_bp
     from backend.routes.orchestrator import orchestrator_bp
+    from backend.routes.auth import auth_bp
     try:
         from backend.routes.documents import documents_bp
     except Exception as docs_import_err:
         documents_bp = None
         logger.warning("Documents blueprint unavailable: %s", docs_import_err)
+    try:
+        from backend.routes.assistants import assistants_bp
+    except Exception as asst_err:
+        assistants_bp = None
+        logger.warning("Assistants blueprint unavailable: %s", asst_err)
 
     app.register_blueprint(api_bp, url_prefix='/api')
+    # Auth under /api/auth/* (canonical)
+    app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(chat_bp, url_prefix='/api/chat')
     app.register_blueprint(sba_bp, url_prefix='/api/sba')
     app.register_blueprint(rag_bp, url_prefix='/api/rag')
     app.register_blueprint(orchestrator_bp, url_prefix='/api/orchestrator')
     if documents_bp is not None:
         app.register_blueprint(documents_bp, url_prefix='/api/documents')
+    if assistants_bp is not None:
+        app.register_blueprint(assistants_bp, url_prefix='/api/assistants')
 
-    # Compat: older/baked frontend uses baseURL .../api + path /api/health → /api/api/health
+    # Compat for /api/api/* is handled by StripDoubleApiPrefixMiddleware
+    # (prebuilt SPA: baseURL .../api + path /api/chat → /api/api/chat).
+    # Explicit health/info shims kept as belt-and-suspenders documentation routes.
     @app.route('/api/api/health', methods=['GET', 'OPTIONS', 'HEAD'])
     def health_double_api_prefix():
         return jsonify({

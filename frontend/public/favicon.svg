@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="PocketPro">
+  <defs>
+    <linearGradient id="fg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#60a5fa"/>
+      <stop offset="100%" stop-color="#1d4ed8"/>
+    </linearGradient>
+  </defs>
+  <rect width="32" height="32" rx="8" fill="#eff6ff"/>
+  <circle cx="16" cy="15" r="8" fill="url(#fg)"/>
+  <circle cx="16" cy="15" r="3.2" fill="#fff"/>
+  <path d="M8 25c2.2-4.5 5.5-6.5 8-6.5s5.8 2 8 6.5" fill="none" stroke="url(#fg)" stroke-width="2" stroke-linecap="round"/>
+</svg>

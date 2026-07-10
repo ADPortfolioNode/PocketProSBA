@@ -1,0 +1,31 @@
+---
+pid: 14772
+cwd: "E:\2024 RESET\PocketProSBA"
+command: "docker exec pocketpro-backend-dev pip install --no-cache-dir \"onnxruntime>=1.18.0\" 2>&1 | Select-Object -Last 15"
+started_at: 2026-07-02T22:27:30.060Z
+running_for_ms: 509999   
+---
+Collecting onnxruntime>=1.18.0
+  Downloading onnxruntime-1.27.0-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (5.4 kB)
+Requirement already satisfied: flatbuffers in /usr/local/lib/python3.11/site-packages (from onnxruntime>=1.18.0) (25.12.19)
+Requirement already satisfied: numpy>=1.21.6 in /usr/local/lib/python3.11/site-packages (from onnxruntime>=1.18.0) (1.26.2)
+Requirement already satisfied: packaging in /usr/local/lib/python3.11/site-packages (from onnxruntime>=1.18.0) (23.2)
+Requirement already satisfied: protobuf>=4.25.8 in /usr/local/lib/python3.11/site-packages (from onnxruntime>=1.18.0) (4.25.9)
+Downloading onnxruntime-1.27.0-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (18.6 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 18.6/18.6 MB 3.2 MB/s  0:00:05
+Installing collected packages: onnxruntime
+  Attempting uninstall: onnxruntime
+    Found existing installation: onnxruntime 1.15.1
+    Uninstalling onnxruntime-1.15.1:
+      Successfully uninstalled onnxruntime-1.15.1
+Successfully installed onnxruntime-1.27.0
+docker : WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the 
+system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment 
+instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want 
+to suppress this warning.
+At line:1 char:1
++ docker exec pocketpro-backend-dev pip install --no-cache-dir "onnxrun ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (WARNING: Runnin...s this warning.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 

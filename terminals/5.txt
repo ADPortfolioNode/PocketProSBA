@@ -1,0 +1,24 @@
+---
+pid: 12440
+cwd: "E:\2024 RESET\PocketProSBA"
+command: "python -m pytest \"E:\\2024 RESET\\PocketProSBA\\backend\\tests\" -q --tb=line"
+started_at: 2026-07-02T14:52:02.770Z
+running_for_ms: 2270003  
+---
+2026-07-02 10:52:08,356 - backend.app - INFO - Database URI: sqlite:///app.db
+2026-07-02 10:52:08,492 - backend.app - INFO - Database tables created successfully
+2026-07-02 10:52:18,292 - backend.assistants.concierge - WARNING - Failed to import self-optimizing components: No module named 'services.task_orchestrator'
+2026-07-02 10:52:21,643 - backend.enhanced_gemini_rag_service - INFO - Initializing Enhanced Gemini RAG Service...
+2026-07-02 10:52:21,648 - backend.enhanced_gemini_rag_service - ERROR - Failed to initialize RAG service: langchain_google_genai module is installed but is missing required classes: No module named 'google.ai.generativelanguage'
+2026-07-02 10:52:21,650 - backend.app - WARNING - Failed to initialize Enhanced Gemini RAG service
+C:\Users\deois\AppData\Roaming\Python\Python311\site-packages\_pytest\config\__init__.py:331: PluggyTeardownRaisedWarning: A plugin raised an exception during an old-style hookwrapper teardown.
+Plugin: helpconfig, Hook: pytest_cmdline_parse
+ConftestImportFailure: ImportError: cannot import name 'TestConfig' from 'config' (E:\2024 RESET\PocketProSBA\config.py) (from E:\2024 RESET\PocketProSBA\backend\conftest.py)
+For more information see https://pluggy.readthedocs.io/en/stable/api_reference.html#pluggy.PluggyTeardownRaisedWarning
+  config = pluginmanager.hook.pytest_cmdline_parse(
+ImportError while loading conftest 'E:\2024 RESET\PocketProSBA\backend\conftest.py'.
+Importing chroma_service
+ChromaDB imports completed
+backend\conftest.py:4: in <module>
+    from config import TestConfig
+E   ImportError: cannot import name 'TestConfig' from 'config' (E:\2024 RESET\PocketProSBA\config.py)
