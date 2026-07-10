@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#2563eb" />
+  <title>SBA Resources · PocketPro</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://images.unsplash.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: linear-gradient(165deg, #ffffff 0%, #eef5ff 45%, #e3efff 100%);
+      --surface: #ffffff;
+      --ink: #0f172a;
+      --muted: #64748b;
+      --line: #dbe7f8;
+      --blue: #2563eb;
+      --blue-deep: #1d4ed8;
+      --soft: #dbeafe;
+      --radius: 16px;
+      --shadow: 0 12px 28px -12px rgba(37, 99, 235, 0.2);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, "Segoe UI", system-ui, sans-serif;
+      color: var(--ink);
+      background: var(--bg);
+      background-attachment: fixed;
+    }
+    a { color: var(--blue); text-decoration: none; }
+    a:hover { color: var(--blue-deep); }
+    .shell { max-width: 1160px; margin: 0 auto; padding: 1rem 1.25rem 2.5rem; }
+    .topbar {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 1rem; padding: 0.85rem 0 1.25rem; flex-wrap: wrap;
+    }
+    .brand { display: flex; align-items: center; gap: 0.55rem; font-weight: 700; letter-spacing: -0.02em; color: var(--ink); }
+    .brand-dot {
+      width: 12px; height: 12px; border-radius: 999px;
+      background: linear-gradient(135deg, #60a5fa, #2563eb);
+      box-shadow: 0 0 0 4px var(--soft);
+    }
+    .top-links { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .chip {
+      padding: 0.4rem 0.85rem; border-radius: 999px; border: 1px solid var(--line);
+      background: #fff; color: var(--muted); font-size: 0.9rem; font-weight: 500;
+    }
+    .chip:hover, .chip.active { background: linear-gradient(135deg, #3b82f6, #2563eb); color: #fff; border-color: transparent; }
+    h1 { margin: 0 0 0.35rem; font-size: clamp(1.6rem, 3vw, 2rem); letter-spacing: -0.03em; }
+    .lead { margin: 0 0 1.25rem; color: var(--muted); }
+    .layout { display: grid; grid-template-columns: 280px 1fr; gap: 1rem; align-items: start; }
+    @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+    .panel {
+      background: rgba(255,255,255,0.96); border: 1px solid var(--line);
+      border-radius: var(--radius); box-shadow: var(--shadow);
+    }
+    .panel-h {
+      padding: 0.85rem 1rem; border-bottom: 1px solid var(--line);
+      display: flex; justify-content: space-between; align-items: center; gap: 0.5rem;
+    }
+    .panel-h strong { font-size: 0.95rem; }
+    .panel-b { padding: 0.75rem; }
+    .group-label {
+      font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--muted); font-weight: 600; padding: 0.5rem 0.5rem 0.25rem;
+    }
+    .nav-item {
+      width: 100%; text-align: left; border: 1px solid transparent; background: transparent;
+      border-radius: 12px; padding: 0.65rem 0.7rem; cursor: pointer; display: flex; gap: 0.5rem;
+      color: var(--ink); font: inherit;
+    }
+    .nav-item:hover { background: var(--soft); }
+    .nav-item.active {
+      background: linear-gradient(135deg, #eff6ff, #fff);
+      border-color: #bfdbfe; box-shadow: var(--shadow);
+    }
+    .nav-item .ico { font-size: 1.15rem; line-height: 1.2; }
+    .nav-item .name { font-weight: 600; font-size: 0.92rem; display: block; }
+    .nav-item .desc { font-size: 0.78rem; color: var(--muted); display: block; margin-top: 0.15rem; }
+    .toolbar { display: flex; flex-wrap: wrap; gap: 0.75rem; justify-content: space-between; align-items: flex-start; }
+    .meta-row { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; margin-top: 0.4rem; }
+    .badge {
+      display: inline-flex; align-items: center; border-radius: 999px; padding: 0.15rem 0.55rem;
+      font-size: 0.72rem; font-weight: 600;
+    }
+    .badge.ok { background: #dcfce7; color: #166534; }
+    .badge.no { background: #e2e8f0; color: #475569; }
+    .badge.soft { background: #eff6ff; color: #1d4ed8; }
+    .search { display: flex; gap: 0.4rem; min-width: min(100%, 320px); flex: 1; }
+    .search input {
+      flex: 1; border: 1px solid var(--line); border-radius: 999px; padding: 0.55rem 0.9rem;
+      font: inherit; outline: none;
+    }
+    .search input:focus { border-color: #93c5fd; box-shadow: 0 0 0 3px rgba(37,99,235,0.12); }
+    .btn {
+      border: none; border-radius: 999px; padding: 0.55rem 1rem; font: inherit; font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-primary { background: linear-gradient(135deg, #3b82f6, #2563eb); color: #fff; box-shadow: 0 8px 18px rgba(37,99,235,0.22); }
+    .btn-ghost { background: #fff; border: 1px solid var(--line); color: var(--ink); }
+    .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.85rem; }
+    @media (max-width: 700px) { .grid { grid-template-columns: 1fr; } }
+    .card {
+      border: 1px solid var(--line); border-radius: var(--radius); background: #fff;
+      padding: 1rem; cursor: pointer; transition: transform .14s ease, box-shadow .14s ease, border-color .14s ease;
+      display: flex; flex-direction: column; min-height: 160px; text-align: left; font: inherit; color: inherit;
+      width: 100%;
+    }
+    .card:hover { transform: translateY(-2px); border-color: #93c5fd; box-shadow: var(--shadow); }
+    .card h3 { margin: 0 0 0.45rem; font-size: 1rem; letter-spacing: -0.01em; }
+    .card p { margin: 0 0 0.75rem; color: var(--muted); font-size: 0.88rem; flex: 1; }
+    .card .more { color: var(--blue); font-weight: 600; font-size: 0.85rem; }
+    .empty, .loading { text-align: center; padding: 2.5rem 1rem; color: var(--muted); }
+    .spinner {
+      width: 28px; height: 28px; border: 3px solid var(--soft); border-top-color: var(--blue);
+      border-radius: 50%; margin: 0 auto 0.75rem; animation: spin .7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .alert {
+      background: #fff; border: 1px solid #bfdbfe; border-radius: 12px; padding: 0.75rem 1rem;
+      color: var(--muted); margin-bottom: 0.85rem; font-size: 0.9rem;
+    }
+    .alert.warn { border-color: #fde68a; background: #fffbeb; }
+    /* Modal detail card */
+    .overlay {
+      position: fixed; inset: 0; background: rgba(15, 23, 42, 0.45); display: none;
+      align-items: center; justify-content: center; padding: 1rem; z-index: 50;
+    }
+    .overlay.open { display: flex; }
+    .modal {
+      width: min(640px, 100%); max-height: min(85vh, 720px); overflow: auto;
+      background: #fff; border-radius: 20px; box-shadow: 0 24px 60px rgba(15,23,42,0.25);
+      border: 1px solid var(--line);
+    }
+    .modal-h { padding: 1.1rem 1.2rem 0.5rem; display: flex; justify-content: space-between; gap: 1rem; align-items: flex-start; }
+    .modal-h h2 { margin: 0; font-size: 1.2rem; letter-spacing: -0.02em; }
+    .modal-b { padding: 0.5rem 1.2rem 1.2rem; }
+    .modal-f { padding: 0 1.2rem 1.2rem; display: flex; gap: 0.5rem; justify-content: flex-end; flex-wrap: wrap; }
+    .meta { display: grid; grid-template-columns: 120px 1fr; gap: 0.35rem 0.75rem; font-size: 0.9rem; margin-top: 1rem; }
+    .meta dt { color: var(--muted); margin: 0; text-transform: capitalize; }
+    .meta dd { margin: 0; word-break: break-word; }
+    .x {
+      border: none; background: var(--soft); width: 32px; height: 32px; border-radius: 999px;
+      cursor: pointer; font-size: 1.1rem; color: var(--blue-deep);
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <div class="topbar">
+      <a class="brand" href="/">
+        <span class="brand-dot"></span>
+        PocketPro <span style="color:var(--blue);font-weight:600">SBA</span>
+      </a>
+      <nav class="top-links">
+        <a class="chip" href="/">Home</a>
+        <a class="chip" href="/chat">Chat</a>
+        <a class="chip active" href="/browse">Resources</a>
+        <a class="chip" href="/rag">RAG</a>
+        <a class="chip" href="/sba">SBA</a>
+      </nav>
+    </div>
+
+    <h1>SBA Resources</h1>
+    <p class="lead">Navigation is loaded from <code>/api/sba/resources</code>. Click a category to load items, then click a card for details.</p>
+
+    <div id="alert" class="alert" style="display:none"></div>
+
+    <div class="layout">
+      <aside class="panel" id="navPanel">
+        <div class="panel-h">
+          <strong>Browse</strong>
+          <button class="btn btn-ghost" type="button" id="refreshNav" style="padding:0.35rem 0.7rem;font-size:0.8rem">Refresh</button>
+        </div>
+        <div class="panel-b" id="navList">
+          <div class="loading"><div class="spinner"></div>Loading resources…</div>
+        </div>
+      </aside>
+
+      <main class="panel">
+        <div class="panel-h">
+          <div class="toolbar" style="width:100%">
+            <div>
+              <strong id="activeTitle">Select a resource</strong>
+              <div class="meta-row" id="activeMeta"></div>
+            </div>
+            <form class="search" id="searchForm">
+              <input id="searchInput" type="search" placeholder="Filter results…" disabled />
+              <button class="btn btn-primary" type="submit" id="searchBtn" disabled>Search</button>
+            </form>
+          </div>
+        </div>
+        <div class="panel-b" id="results">
+          <div class="empty">Choose a category on the left to load its items from the API.</div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <div class="overlay" id="overlay" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal">
+      <div class="modal-h">
+        <h2 id="modalTitle">Details</h2>
+        <button class="x" type="button" id="closeModal" aria-label="Close">×</button>
+      </div>
+      <div class="modal-b" id="modalBody"></div>
+      <div class="modal-f">
+        <button class="btn btn-ghost" type="button" id="closeModal2">Close</button>
+        <a class="btn btn-primary" id="modalLink" href="#" target="_blank" rel="noopener noreferrer" style="display:none">Official source</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const ICONS = {
+      loans: '💰', loan_types: '📋', articles: '📰', blogs: '✍️', courses: '🎓',
+      documents: '📄', events: '📅', offices: '🏢', sbir: '🔬', lenders: '🏦', sources: '🛰️'
+    };
+
+    const state = {
+      resources: [],
+      active: null,
+      items: [],
+      page: 1,
+      totalPages: 1,
+      query: '',
+      meta: null,
+    };
+
+    const $ = (id) => document.getElementById(id);
+    const navList = $('navList');
+    const results = $('results');
+    const alertBox = $('alert');
+
+    function showAlert(msg, warn) {
+      if (!msg) { alertBox.style.display = 'none'; return; }
+      alertBox.style.display = 'block';
+      alertBox.className = 'alert' + (warn ? ' warn' : '');
+      alertBox.textContent = msg;
+    }
+
+    function normalizeItem(raw, index) {
+      if (!raw || typeof raw !== 'object') {
+        const text = String(raw || '').trim();
+        if (!text) return null;
+        return { id: 'item-' + index, title: text.slice(0, 120), description: text, url: '', type: 'content', meta: {} };
+      }
+      let title = String(raw.title || raw.name || raw.label || raw.award_title || raw.firm || raw.type || '').trim();
+      let description = String(raw.description || raw.summary || raw.teaser || raw.body || raw.abstract || raw.message || '').trim();
+      const url = String(raw.url || raw.link || raw.href || raw.award_link || raw.source_page || '').trim();
+      if (!title && url) {
+        title = decodeURIComponent((url.split('/').filter(Boolean).pop() || 'SBA resource')).replace(/[-_]/g, ' ');
+      }
+      if (!title && description) title = description.slice(0, 80) + (description.length > 80 ? '…' : '');
+      if (!description && title) description = url ? (title + ' — ' + url) : ('SBA resource: ' + title);
+      if (!title && !description && !url) return null;
+      const meta = Object.assign({}, raw.meta || {});
+      ['agency','firm','phase','program','award_amount','award_year','phone','email','address','location','source_page','retrieved_at','is_current','freshness','source','max_amount','terms','rates','use_cases','base','status_code','error','ok']
+        .forEach((k) => { if (raw[k] !== undefined && raw[k] !== null && raw[k] !== '') meta[k] = raw[k]; });
+      return {
+        id: raw.id != null ? raw.id : ('item-' + index),
+        title, description, url,
+        type: raw.type || 'content',
+        is_current: raw.is_current,
+        source: raw.source,
+        meta,
+      };
+    }
+
+    function sourcesToItems(data) {
+      return Object.entries(data || {}).map(([key, value], i) => {
+        if (value && typeof value === 'object') {
+          const parts = [
+            value.base ? ('Base: ' + value.base) : null,
+            value.status_code != null ? ('HTTP ' + value.status_code) : null,
+            value.error ? ('Error: ' + value.error) : null,
+            value.ok === true ? 'Healthy' : (value.ok === false ? 'Unavailable' : null),
+          ].filter(Boolean);
+          return normalizeItem({
+            id: key, title: key.replace(/_/g, ' '), description: parts.join(' · ') || JSON.stringify(value),
+            type: 'source_status', is_current: value.ok === true, url: value.base || '', meta: value,
+          }, i);
+        }
+        return normalizeItem({ id: key, title: key.replace(/_/g, ' '), description: String(value), type: 'source_status' }, i);
+      }).filter(Boolean);
+    }
+
+    function overviewToItems(data) {
+      const types = data && data.available_loan_types;
+      if (!Array.isArray(types)) return [];
+      return types.map((t, i) => normalizeItem({
+        id: 'loan-type-' + i,
+        title: t.type || t.name || t.title || ('Loan type ' + (i + 1)),
+        description: [t.description, t.max_amount && ('Max: ' + t.max_amount), t.terms && ('Terms: ' + t.terms), t.rates && ('Rates: ' + t.rates), Array.isArray(t.use_cases) && ('Uses: ' + t.use_cases.join(', '))].filter(Boolean).join(' · '),
+        url: t.url || '', type: 'loan_type', is_current: t.is_current, retrieved_at: t.retrieved_at,
+        max_amount: t.max_amount, terms: t.terms, rates: t.rates, use_cases: t.use_cases,
+      }, i)).filter(Boolean);
+    }
+
+    async function apiGet(path, params) {
+      const url = new URL(path, window.location.origin);
+      if (params) Object.entries(params).forEach(([k, v]) => {
+        if (v !== undefined && v !== null && v !== '') url.searchParams.set(k, v);
+      });
+      const res = await fetch(url.toString(), { headers: { Accept: 'application/json' } });
+      if (!res.ok) throw new Error('HTTP ' + res.status + ' for ' + path);
+      return res.json();
+    }
+
+    function renderNav() {
+      const groups = {};
+      state.resources.forEach((r) => {
+        const g = r.group || 'Resources';
+        (groups[g] = groups[g] || []).push(r);
+      });
+      const parts = [];
+      Object.keys(groups).forEach((g) => {
+        parts.push('<div class="group-label">' + escapeHtml(g) + '</div>');
+        groups[g].forEach((r) => {
+          const active = state.active && state.active.id === r.id;
+          parts.push(
+            '<button type="button" class="nav-item' + (active ? ' active' : '') + '" data-id="' + escapeHtml(r.id) + '">' +
+              '<span class="ico">' + (r.icon || '📁') + '</span>' +
+              '<span><span class="name">' + escapeHtml(r.name) + '</span>' +
+              '<span class="desc">' + escapeHtml(r.description || '') + '</span></span>' +
+            '</button>'
+          );
+        });
+      });
+      navList.innerHTML = parts.join('') || '<div class="empty">No resources from API.</div>';
+      navList.querySelectorAll('.nav-item').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const res = state.resources.find((x) => x.id === btn.getAttribute('data-id'));
+          if (res) loadResource(res, 1, '');
+        });
+      });
+    }
+
+    function escapeHtml(s) {
+      return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    async function loadCatalog() {
+      navList.innerHTML = '<div class="loading"><div class="spinner"></div>Loading resources…</div>';
+      showAlert('');
+      try {
+        const data = await apiGet('/api/sba/resources');
+        state.resources = (data.resources || []).filter((r) => r && r.id && r.path).map((r) => ({
+          id: r.id,
+          name: r.name || r.id,
+          description: r.description || '',
+          path: r.path,
+          group: r.group || 'Resources',
+          icon: ICONS[r.icon || r.id] || '📁',
+        }));
+        renderNav();
+        if (!state.resources.length) showAlert('No resources returned from /api/sba/resources');
+      } catch (e) {
+        navList.innerHTML = '<div class="empty">Failed to load navigation.</div>';
+        showAlert('Could not load /api/sba/resources: ' + e.message, true);
+      }
+    }
+
+    async function loadResource(resource, page, query) {
+      state.active = resource;
+      state.page = page || 1;
+      state.query = query || '';
+      $('searchInput').disabled = false;
+      $('searchBtn').disabled = false;
+      $('searchInput').value = state.query;
+      $('activeTitle').textContent = resource.icon + ' ' + resource.name;
+      $('activeMeta').innerHTML = '';
+      results.innerHTML = '<div class="loading"><div class="spinner"></div>Loading ' + escapeHtml(resource.name) + '…</div>';
+      showAlert('');
+      renderNav();
+
+      try {
+        const isOverview = resource.path.indexOf('sba-overview') !== -1;
+        const isSources = resource.path.indexOf('/sources') !== -1;
+        const params = (isOverview || isSources)
+          ? { fresh: 1 }
+          : { page: state.page, fresh: 1, query: state.query || undefined };
+        const data = await apiGet(resource.path, params);
+
+        let items = [];
+        if (isSources) items = sourcesToItems(data);
+        else if (isOverview || Array.isArray(data.available_loan_types)) items = overviewToItems(data);
+        else if (Array.isArray(data.items)) items = data.items.map(normalizeItem).filter(Boolean);
+
+        state.items = items;
+        state.totalPages = Number(data.totalPages) || 1;
+        state.meta = {
+          is_current: data.is_current,
+          source: data.source || data.mode,
+          retrieved_at: data.retrieved_at,
+          message: data.message,
+          count: items.length,
+        };
+
+        const badges = [];
+        if (state.meta.is_current === true) badges.push('<span class="badge ok">Current</span>');
+        if (state.meta.is_current === false) badges.push('<span class="badge no">Not current</span>');
+        if (state.meta.source) badges.push('<span class="badge soft">' + escapeHtml(state.meta.source) + '</span>');
+        badges.push('<span class="badge soft">' + items.length + ' items</span>');
+        if (state.meta.retrieved_at) {
+          badges.push('<span class="badge soft">' + escapeHtml(new Date(state.meta.retrieved_at).toLocaleString()) + '</span>');
+        }
+        $('activeMeta').innerHTML = badges.join('');
+
+        if (!items.length) {
+          results.innerHTML = '<div class="empty">No items for this resource.</div>';
+          if (state.meta.message) showAlert(state.meta.message, true);
+          return;
+        }
+
+        results.innerHTML = '<div class="grid">' + items.map((item, idx) => (
+          '<button type="button" class="card" data-idx="' + idx + '">' +
+            '<div style="display:flex;justify-content:space-between;gap:0.5rem;align-items:flex-start">' +
+              '<h3>' + escapeHtml(item.title) + '</h3>' +
+              '<div>' +
+                (item.is_current === true ? '<span class="badge ok">Current</span> ' : '') +
+                (item.is_current === false ? '<span class="badge no">Not current</span> ' : '') +
+                (item.type ? '<span class="badge soft">' + escapeHtml(item.type) + '</span>' : '') +
+              '</div>' +
+            '</div>' +
+            '<p>' + escapeHtml((item.description || '').slice(0, 220)) + ((item.description || '').length > 220 ? '…' : '') + '</p>' +
+            metaPreview(item) +
+            '<div class="more">Open details →</div>' +
+          '</button>'
+        )).join('') + '</div>' + paginationHtml();
+
+        results.querySelectorAll('.card').forEach((btn) => {
+          btn.addEventListener('click', () => openDetail(state.items[Number(btn.getAttribute('data-idx'))]));
+        });
+        const prev = results.querySelector('[data-page="prev"]');
+        const next = results.querySelector('[data-page="next"]');
+        if (prev) prev.addEventListener('click', () => loadResource(resource, state.page - 1, state.query));
+        if (next) next.addEventListener('click', () => loadResource(resource, state.page + 1, state.query));
+      } catch (e) {
+        results.innerHTML = '<div class="empty">Failed to load items.</div>';
+        showAlert('Load failed: ' + e.message, true);
+      }
+    }
+
+    function metaPreview(item) {
+      const entries = Object.entries(item.meta || {}).slice(0, 3);
+      if (!entries.length) return '';
+      return '<div style="font-size:0.8rem;color:var(--muted);border-top:1px solid var(--line);padding-top:0.5rem;margin-bottom:0.5rem">' +
+        entries.map(([k, v]) => '<div><strong>' + escapeHtml(k.replace(/_/g, ' ')) + ':</strong> ' +
+          escapeHtml(Array.isArray(v) ? v.join(', ') : String(v).slice(0, 90)) + '</div>').join('') +
+        '</div>';
+    }
+
+    function paginationHtml() {
+      if (state.totalPages <= 1) return '';
+      return '<div style="display:flex;justify-content:center;gap:0.5rem;margin-top:1rem">' +
+        '<button class="btn btn-ghost" type="button" data-page="prev"' + (state.page <= 1 ? ' disabled' : '') + '>Prev</button>' +
+        '<span class="badge soft" style="padding:0.55rem 0.9rem">Page ' + state.page + ' / ' + state.totalPages + '</span>' +
+        '<button class="btn btn-ghost" type="button" data-page="next"' + (state.page >= state.totalPages ? ' disabled' : '') + '>Next</button>' +
+        '</div>';
+    }
+
+    function openDetail(item) {
+      if (!item) return;
+      $('modalTitle').textContent = item.title || 'Details';
+      const metaEntries = Object.entries(item.meta || {}).filter(([, v]) => v !== undefined && v !== null && v !== '');
+      let html = '<div class="meta-row" style="margin-bottom:0.75rem">';
+      if (item.type) html += '<span class="badge soft">' + escapeHtml(item.type) + '</span>';
+      if (item.is_current === true) html += '<span class="badge ok">Current</span>';
+      if (item.is_current === false) html += '<span class="badge no">Not current</span>';
+      if (item.source || item.meta.source) html += '<span class="badge soft">' + escapeHtml(item.source || item.meta.source) + '</span>';
+      html += '</div>';
+      html += '<p style="color:var(--muted);white-space:pre-wrap;line-height:1.55">' + escapeHtml(item.description || '') + '</p>';
+      if (metaEntries.length) {
+        html += '<dl class="meta">';
+        metaEntries.forEach(([k, v]) => {
+          html += '<dt>' + escapeHtml(k.replace(/_/g, ' ')) + '</dt><dd>' +
+            escapeHtml(Array.isArray(v) ? v.join(', ') : (typeof v === 'object' ? JSON.stringify(v) : String(v))) +
+            '</dd>';
+        });
+        html += '</dl>';
+      }
+      $('modalBody').innerHTML = html;
+      const link = $('modalLink');
+      if (item.url) {
+        link.href = item.url;
+        link.style.display = 'inline-flex';
+      } else {
+        link.style.display = 'none';
+      }
+      $('overlay').classList.add('open');
+    }
+
+    function closeDetail() { $('overlay').classList.remove('open'); }
+
+    $('closeModal').addEventListener('click', closeDetail);
+    $('closeModal2').addEventListener('click', closeDetail);
+    $('overlay').addEventListener('click', (e) => { if (e.target === $('overlay')) closeDetail(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeDetail(); });
+    $('refreshNav').addEventListener('click', loadCatalog);
+    $('searchForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      if (!state.active) { showAlert('Select a resource first', true); return; }
+      loadResource(state.active, 1, $('searchInput').value.trim());
+    });
+
+    loadCatalog();
+  </script>
+</body>
+</html>
