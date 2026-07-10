@@ -30,6 +30,53 @@ def health_check():
     server_info = {'self': request.host_url.rstrip('/')}
     return jsonify({'status': 'healthy', 'server': server_info}), 200
 
+
+@api_bp.route('/programs', methods=['GET'])
+def list_sba_programs():
+    """
+    Static SBA program catalog for the SBA Content tab.
+    Avoids empty UI when external program APIs are unavailable.
+    """
+    programs = [
+        {
+            'id': 'loans',
+            'name': 'SBA Loans',
+            'description': '7(a), 504, Microloan, and Express financing options',
+            'icon': '💰',
+        },
+        {
+            'id': 'contracting',
+            'name': 'Government Contracting',
+            'description': 'Certifications and support to win federal contracts',
+            'icon': '📝',
+        },
+        {
+            'id': 'disaster',
+            'name': 'Disaster Assistance',
+            'description': 'Recovery loans after declared disasters',
+            'icon': '🚨',
+        },
+        {
+            'id': 'counseling',
+            'name': 'Counseling & Training',
+            'description': 'SBDC, SCORE, WBC, and VBOC mentoring',
+            'icon': '👥',
+        },
+        {
+            'id': 'international',
+            'name': 'International Trade',
+            'description': 'Export financing and market expansion support',
+            'icon': '🌎',
+        },
+        {
+            'id': 'innovation',
+            'name': 'SBIR/STTR',
+            'description': 'R&D grants for innovative small businesses',
+            'icon': '💡',
+        },
+    ]
+    return jsonify(programs), 200
+
 @api_bp.route('/chromadb_health', methods=['GET'])
 def chromadb_health_check():
     """ChromaDB health check endpoint"""

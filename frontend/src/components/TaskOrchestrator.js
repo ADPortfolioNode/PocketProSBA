@@ -24,11 +24,29 @@ const TaskOrchestrator = () => {
     setStepResults([]);
     setValidationResults([]);
     try {
+      const message = taskMessage.trim();
+      const sessionId = 'session_' + Date.now();
+      // Prefer structured steps from decompose; also capture free-text response for UX.
       const res = await apiClient.post('/api/decompose', {
-        message: taskMessage.trim(),
-        session_id: 'session_' + Date.now()
+        message,
+        session_id: sessionId
       });
-      setDecomposedSteps(res.response?.steps || []);
+      const payload = res?.data || res || {};
+      const steps =
+        payload.steps ||
+        payload.response?.steps ||
+        [];
+      setDecomposedSteps(Array.isArray(steps) ? steps : []);
+      // Soft-run orchestrator so Tasks tab also exercises the production path
+      try {
+        await apiClient.post('/api/orchestrator/submit', {
+          message,
+          user_id: '1',
+          session_id: sessionId,
+        });
+      } catch (orchErr) {
+        console.warn('Orchestrator submit optional path failed:', orchErr);
+      }
       setTaskMessage('');
     } catch (err) {
       setError('Failed to decompose task.');

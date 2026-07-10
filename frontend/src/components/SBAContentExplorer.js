@@ -73,8 +73,7 @@ const SBAContentExplorer = ({ selectedResource, endpoints }) => {
 
   // Search SBA content using endpoint registry (node structure)
   const searchContent = async (pageNum = 1) => {
-    if (!searchQuery.trim() && contentType !== 'offices') return;
-
+    // Allow empty query so Browse can list/degrade-state without forcing search first
     setLoading(true);
     setError(null);
 
@@ -91,11 +90,17 @@ const SBAContentExplorer = ({ selectedResource, endpoints }) => {
       });
 
       // Expect response.items to be an array of nodes, each with possible children
-      if (response?.data && response.data.items) {
+      if (response?.data && Array.isArray(response.data.items)) {
         setResults(response.data.items);
         setTotalPages(response.data.totalPages || 1);
         setPage(pageNum);
         setNodeMap({}); // Reset node map on new search
+        if (response.data.degraded || response.data.items.length === 0) {
+          setError(
+            response.data.message ||
+              'SBA.gov content is temporarily unavailable. Try RAG chat or SBA overview for local guidance.'
+          );
+        }
       } else {
         setError('No SBA content found for your query.');
         setResults([]);

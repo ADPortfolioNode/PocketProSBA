@@ -45,12 +45,28 @@ def decompose_task_service(message, session_id):
     try:
         concierge = Concierge()
         response = concierge.handle_message(message, session_id)
-        return {
-            'response': {
-                'text': response.get('text', ''),
-                'sources': response.get('sources', []),
-                'timestamp': response.get('timestamp')
+        text = response.get('text', '') or ''
+        # Soft single-step shape for Task Orchestrator / RAG UI that expect steps[]
+        steps = [
+            {
+                'type': 'message',
+                'data': {
+                    'instruction': message,
+                    'suggested_agent_type': 'Concierge',
+                    'session_id': session_id,
+                    'preview': text[:280],
+                },
             }
+        ]
+        return {
+            'task_id': session_id or 'ad-hoc',
+            'steps': steps,
+            'response': {
+                'text': text,
+                'sources': response.get('sources', []),
+                'timestamp': response.get('timestamp'),
+                'steps': steps,
+            },
         }
     except Exception as e:
         logger.error(f"Error decomposing task: {str(e)}")

@@ -65,12 +65,19 @@ def create_app(config_name=None):
     from backend.routes.sba import sba_bp
     from backend.routes.rag import rag_bp
     from backend.routes.orchestrator import orchestrator_bp
+    try:
+        from backend.routes.documents import documents_bp
+    except Exception as docs_import_err:
+        documents_bp = None
+        logger.warning("Documents blueprint unavailable: %s", docs_import_err)
 
     app.register_blueprint(api_bp, url_prefix='/api')
     app.register_blueprint(chat_bp, url_prefix='/api/chat')
     app.register_blueprint(sba_bp, url_prefix='/api/sba')
     app.register_blueprint(rag_bp, url_prefix='/api/rag')
     app.register_blueprint(orchestrator_bp, url_prefix='/api/orchestrator')
+    if documents_bp is not None:
+        app.register_blueprint(documents_bp, url_prefix='/api/documents')
 
     # Compat: older/baked frontend uses baseURL .../api + path /api/health → /api/api/health
     @app.route('/api/api/health', methods=['GET', 'OPTIONS', 'HEAD'])

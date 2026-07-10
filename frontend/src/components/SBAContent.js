@@ -1,22 +1,26 @@
 import React, { useState, useEffect } from 'react';
-import { businessLifecycleStages, localResourceTypes } from '../sbaResources';
+import { businessLifecycleStages, localResourceTypes, sbaPrograms } from '../sbaResources';
 import apiClient from '../api/apiClient'; // Corrected import path
 import { Card, Nav, Row, Col, Container, Badge } from 'react-bootstrap';
 
 const SBAContent = ({ onProgramSelect, onResourceSelect }) => {
   const [activeTab, setActiveTab] = useState('programs');
-  const [programs, setPrograms] = useState([]);
+  const [programs, setPrograms] = useState(sbaPrograms || []);
 
   useEffect(() => {
-    // Load SBA programs from backend endpoint on mount
+    // Prefer API catalog; fall back to local sbaPrograms so the tab never renders empty.
     async function fetchPrograms() {
       try {
-        const response = await apiClient.get('programs'); // Use apiClient.get
-        setPrograms(response.data);
+        const response = await apiClient.get('/api/programs');
+        const data = response?.data;
+        if (Array.isArray(data) && data.length > 0) {
+          setPrograms(data);
+          return;
+        }
       } catch (err) {
-        setPrograms([]);
-        // Optionally log or show error
+        // keep local fallback
       }
+      setPrograms(sbaPrograms || []);
     }
     fetchPrograms();
   }, []);
