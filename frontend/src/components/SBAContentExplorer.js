@@ -1,762 +1,545 @@
-import React, { useState, useEffect } from 'react';
-import { Card, ListGroup, Form, Button, InputGroup, Spinner, Alert, Badge, Row, Col, Pagination, Container, Navbar, Nav, Dropdown } from 'react-bootstrap';
-import apiClient from '../api/apiClient'; // Corrected import path
+import React, { useState, useEffect, useCallback } from 'react';
+import {
+  Card,
+  Form,
+  Button,
+  InputGroup,
+  Spinner,
+  Alert,
+  Badge,
+  Row,
+  Col,
+  Pagination,
+  Container,
+} from 'react-bootstrap';
+import apiClient from '../api/apiClient';
 
-const SBAContentExplorer = ({ selectedResource, endpoints }) => {
-  const [contentType, setContentType] = useState('loans');
+/**
+ * Browse flow:
+ *  1) Load /api/sba/resources once (catalog cards — no content query yet)
+ *  2) User clicks a resource → query that endpoint once
+ *  3) Render result cards with full title/description/url/meta (never empty)
+ */
+const RESOURCE_ICONS = {
+  loans: '💰',
+  articles: '📰',
+  blogs: '✍️',
+  courses: '🎓',
+  documents: '📄',
+  events: '📅',
+  offices: '🏢',
+  sbir: '🔬',
+  lenders: '🏦',
+  loan_types: '📋',
+  sources: '🛰️',
+};
+
+const SBAContentExplorer = () => {
+  const [resources, setResources] = useState([]);
+  const [activeResource, setActiveResource] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [results, setResults] = useState([]); // Top-level nodes
-  const [nodeMap, setNodeMap] = useState({}); // id -> children
-  const [expandedNodes, setExpandedNodes] = useState({}); // id -> bool
+  const [loadingCatalog, setLoadingCatalog] = useState(true);
+  const [loadingItems, setLoadingItems] = useState(false);
+  const [results, setResults] = useState([]);
   const [error, setError] = useState(null);
   const [selectedItem, setSelectedItem] = useState(null);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [resultMeta, setResultMeta] = useState({
-    is_current: null,
-    freshness: null,
-    retrieved_at: null,
-    source: null,
-    message: null,
-  });
+  const [resultMeta, setResultMeta] = useState(null);
+  const [queriedOnce, setQueriedOnce] = useState(false);
 
-  // Content type options (aligned with multi-source backend)
-  const contentTypes = [
-    { value: 'loans', label: 'Loan Programs' },
-    { value: 'articles', label: 'Articles & Guides' },
-    { value: 'blogs', label: 'Blog Posts' },
-    { value: 'courses', label: 'Courses' },
-    { value: 'events', label: 'Events' },
-    { value: 'documents', label: 'Documents' },
-    { value: 'offices', label: 'Offices' },
-    { value: 'sbir', label: 'SBIR Awards' },
-    { value: 'lenders', label: 'Lenders' },
-  ];
-
-  // Endpoint registry for SBA content
-  const endpointRegistry = {
-    sba_content_loans: '/api/sba/content/loans',
-    sba_content_articles: '/api/sba/content/articles',
-    sba_content_blogs: '/api/sba/content/blogs',
-    sba_content_courses: '/api/sba/content/courses',
-    sba_content_events: '/api/sba/content/events',
-    sba_content_documents: '/api/sba/content/documents',
-    sba_content_offices: '/api/sba/content/offices',
-    sba_content_sbir: '/api/sba/content/sbir',
-    sba_content_lenders: '/api/sba/content/lenders',
-    sba_content_details: '/api/sba/content/node'
-  };
-
-  // Resource status (chromadb, flask)
-  const [resourceStatus, setResourceStatus] = useState({
-    chromadb: { status: 'unknown', message: '' },
-    flask: { status: 'unknown', message: '' }
-  });
-
-  // Fetch resource status from backend endpoints
-  const fetchResourceStatus = async () => {
-    try {
-      // Flask health
-      const flaskResp = await apiClient.get('/api/health', {}, { quiet: true });
-      const flaskStatus = flaskResp.data?.status;
-      setResourceStatus(prev => ({
-        ...prev,
-        flask: { status: ['ok', 'healthy'].includes(flaskStatus) ? 'online' : 'error', message: flaskResp.data?.message || '' }
-      }));
-    } catch (err) {
-      setResourceStatus(prev => ({ ...prev, flask: { status: 'error', message: err.message } }));
+  const normalizeItem = useCallback((raw, index = 0) => {
+    if (!raw || typeof raw !== 'object') {
+      const text = String(raw || '').trim();
+      if (!text) return null;
+      return {
+        id: `item-${index}`,
+        title: text.slice(0, 120),
+        description: text,
+        url: '',
+        type: 'content',
+      };
     }
-    try {
-      // ChromaDB health
-      const chromaResp = await apiClient.get('/api/chromadb_health', {}, { quiet: true });
-      const chromaStatus = chromaResp.data?.status;
-      setResourceStatus(prev => ({
-        ...prev,
-        chromadb: { status: chromaStatus === 'ok' ? 'online' : 'error', message: chromaResp.data?.message || '' }
-      }));
-    } catch (err) {
-      setResourceStatus(prev => ({ ...prev, chromadb: { status: 'error', message: err.message } }));
-    }
-  };
+    const title = String(
+      raw.title || raw.name || raw.label || raw.award_title || raw.firm || ''
+    ).trim();
+    const description = String(
+      raw.description || raw.summary || raw.teaser || raw.body || raw.abstract || ''
+    ).trim();
+    const url = String(raw.url || raw.link || raw.href || raw.award_link || '').trim();
+    if (!title && !description && !url) return null;
 
-  useEffect(() => {
-    fetchResourceStatus();
+    let finalTitle = title;
+    let finalDescription = description;
+    if (!finalTitle && url) {
+      finalTitle = url.split('/').filter(Boolean).pop()?.replace(/-/g, ' ') || 'SBA resource';
+    }
+    if (!finalTitle && finalDescription) {
+      finalTitle = finalDescription.slice(0, 80) + (finalDescription.length > 80 ? '…' : '');
+    }
+    if (!finalDescription && finalTitle) {
+      finalDescription = url
+        ? `${finalTitle}. Official source: ${url}`
+        : `SBA resource: ${finalTitle}`;
+    }
+
+    const meta = { ...(raw.meta || {}) };
+    [
+      'agency',
+      'firm',
+      'phase',
+      'program',
+      'award_amount',
+      'award_year',
+      'phone',
+      'email',
+      'address',
+      'location',
+      'source_page',
+      'retrieved_at',
+      'is_current',
+      'freshness',
+      'source',
+    ].forEach((key) => {
+      if (raw[key] !== undefined && raw[key] !== null && raw[key] !== '') {
+        meta[key] = raw[key];
+      }
+    });
+
+    return {
+      ...raw,
+      id: raw.id ?? `item-${index}`,
+      title: finalTitle,
+      name: raw.name || finalTitle,
+      description: finalDescription,
+      summary: raw.summary || finalDescription,
+      url,
+      type: raw.type || 'content',
+      meta,
+    };
   }, []);
 
-  // Search SBA content using endpoint registry (node structure)
-  const searchContent = async (pageNum = 1) => {
-    // Allow empty query so Browse can list/degrade-state without forcing search first
-    setLoading(true);
+  const loadCatalog = useCallback(async () => {
+    setLoadingCatalog(true);
     setError(null);
-
     try {
-      const endpointKey = `sba_content_${contentType}`;
-      const endpoint = endpointRegistry[endpointKey];
-      if (!endpoint) {
-        setError('SBA content endpoint not found. Please check your backend configuration or registry.');
-        setResults([]);
-        return;
+      const res = await apiClient.get('/api/sba/resources', {}, { quiet: true });
+      const list = res?.data?.resources || res?.resources || [];
+      // Keep only queryable content resources (skip status-only endpoints as primary cards optional)
+      const cards = (Array.isArray(list) ? list : [])
+        .filter((r) => r && r.path && r.id !== 'sources')
+        .map((r) => ({
+          id: r.id,
+          name: r.name || r.id,
+          description: r.description || `Browse ${r.name || r.id}`,
+          path: r.path,
+          icon: RESOURCE_ICONS[r.id] || '📁',
+        }));
+      setResources(cards);
+      if (!cards.length) {
+        setError('No SBA resource categories available from the API.');
       }
-      const response = await apiClient.get(endpoint, {
-        // Prefer current live SBA content (backend clears short TTL when fresh=1)
-        params: { query: searchQuery, page: pageNum, fresh: 1 }
-      });
+    } catch (err) {
+      setError(`Failed to load SBA resources: ${err.message}`);
+      setResources([]);
+    } finally {
+      setLoadingCatalog(false);
+    }
+  }, []);
 
-      // Expect response.items to be an array of nodes, each with possible children
-      if (response?.data && Array.isArray(response.data.items)) {
-        setResults(response.data.items);
-        setTotalPages(response.data.totalPages || 1);
-        setPage(pageNum);
-        setNodeMap({}); // Reset node map on new search
+  useEffect(() => {
+    loadCatalog();
+  }, [loadCatalog]);
+
+  const queryResource = useCallback(
+    async (resource, pageNum = 1, query = searchQuery) => {
+      if (!resource?.path) return;
+      setLoadingItems(true);
+      setError(null);
+      setSelectedItem(null);
+      setQueriedOnce(true);
+      setActiveResource(resource);
+
+      try {
+        const isOverview = resource.path.includes('/rag/');
+        const response = await apiClient.get(
+          resource.path,
+          {
+            params: isOverview
+              ? { fresh: 1 }
+              : { query: query || undefined, page: pageNum, fresh: 1 },
+          },
+          { quiet: true }
+        );
+        const data = response?.data || response || {};
+
+        // Support both item lists and overview-style payloads
+        let rawItems = Array.isArray(data.items)
+          ? data.items
+          : Array.isArray(data.available_loan_types)
+            ? data.available_loan_types.map((t, i) => ({
+                id: `loan-type-${i}`,
+                title: t.type || t.name || t.title,
+                description: [
+                  t.description,
+                  t.max_amount ? `Max: ${t.max_amount}` : null,
+                  t.terms ? `Terms: ${t.terms}` : null,
+                  t.rates ? `Rates: ${t.rates}` : null,
+                  Array.isArray(t.use_cases) ? `Uses: ${t.use_cases.join(', ')}` : null,
+                  t.url,
+                ]
+                  .filter(Boolean)
+                  .join(' · '),
+                url: t.url || '',
+                type: 'loan_type',
+                is_current: t.is_current,
+                retrieved_at: t.retrieved_at,
+              }))
+            : [];
+
+        const items = rawItems
+          .map((item, i) => normalizeItem(item, i))
+          .filter(Boolean);
+
+        setResults(items);
+        setPage(data.currentPage || pageNum);
+        setTotalPages(data.totalPages || 1);
         setResultMeta({
-          is_current: response.data.is_current,
-          freshness: response.data.freshness,
-          retrieved_at: response.data.retrieved_at,
-          source: response.data.source,
-          message: response.data.message,
+          is_current: data.is_current,
+          freshness: data.freshness,
+          retrieved_at: data.retrieved_at,
+          source: data.source || data.mode,
+          message: data.message,
+          resource: resource.name,
         });
-        if (response.data.is_current === false) {
+
+        if (!items.length) {
           setError(
-            response.data.message ||
-              'Showing offline/fallback SBA info (not current). Live sba.gov content unavailable.'
+            data.message ||
+              `No items returned for ${resource.name}. Try another category or refine search.`
           );
-        } else if (response.data.items.length === 0) {
-          setError(response.data.message || 'No SBA content found for your query.');
-        } else {
-          setError(null);
         }
-      } else {
-        setError('No SBA content found for your query.');
+      } catch (err) {
+        console.error(err);
         setResults([]);
-        setResultMeta({
-          is_current: false,
-          freshness: 'not_current',
-          retrieved_at: null,
-          source: null,
-          message: null,
-        });
+        setError(`Query failed for ${resource.name}: ${err.message}`);
+        setResultMeta(null);
+      } finally {
+        setLoadingItems(false);
       }
-    } catch (err) {
-      console.error('Error searching SBA content:', err);
-      setError(`Error fetching SBA content: ${err.message}`);
-      setResults([]);
-    } finally {
-      setLoading(false);
-    }
+    },
+    [normalizeItem, searchQuery]
+  );
+
+  const handleResourceClick = (resource) => {
+    setSearchQuery('');
+    queryResource(resource, 1, '');
   };
 
-  // Fetch children for a node (by id)
-  const fetchNodeChildren = async (nodeId) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const endpointKey = `sba_content_${contentType}_children`;
-      if (!endpoints || !endpoints[endpointKey]) throw new Error('Children endpoint not found');
-      const response = await apiClient.get(endpoints[endpointKey], {
-        params: { id: nodeId }
-      });
-      setNodeMap(prev => ({ ...prev, [nodeId]: response.data?.items || [] }));
-    } catch (err) {
-      setError(`Error fetching node children: ${err.message}`);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Handle search form submission
   const handleSearch = (e) => {
     e.preventDefault();
-    searchContent(1); // Reset to first page on new search
+    if (!activeResource) {
+      setError('Select a resource category first, then search.');
+      return;
+    }
+    queryResource(activeResource, 1, searchQuery);
   };
 
-  // Auto-load catalogs that work without a required query
-  useEffect(() => {
-    if (['loans', 'offices', 'articles', 'courses', 'documents', 'events', 'lenders', 'blogs'].includes(contentType)) {
-      searchContent(1);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [contentType]);
-
-  // View content details using endpoint registry
-  const viewContentDetails = async (id) => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const endpoint = endpointRegistry.sba_content_details;
-      if (!endpoint) throw new Error('Endpoint not found');
-      const response = await apiClient.get(endpoint, {
-        params: { id }
-      });
-
-      setSelectedItem(response.data);
-    } catch (err) {
-      setError(`Error fetching content details: ${err.message}`);
-    } finally {
-      setLoading(false);
-    }
+  const handlePageChange = (nextPage) => {
+    if (!activeResource) return;
+    queryResource(activeResource, nextPage, searchQuery);
   };
 
-  // Reset selected item when changing content type
-  useEffect(() => {
-    setSelectedItem(null);
-    setResults([]);
-  }, [contentType]);
+  const openItem = (item) => {
+    setSelectedItem(item);
+  };
 
-  // Render pagination controls
-  const renderPagination = () => {
-    if (totalPages <= 1) return null;
-    
+  const renderMetaRows = (item) => {
+    const meta = item.meta || {};
+    const rows = Object.entries(meta).filter(
+      ([k, v]) => v !== undefined && v !== null && v !== '' && k !== 'raw'
+    );
+    if (!rows.length) return null;
     return (
-      <Pagination className="justify-content-center mt-3">
-        <Pagination.Prev 
-          onClick={() => searchContent(page - 1)}
-          disabled={page === 1}
-        />
-        
-        {page > 1 && <Pagination.Item onClick={() => searchContent(1)}>1</Pagination.Item>}
-        {page > 2 && <Pagination.Ellipsis />}
-        
-        {page > 1 && <Pagination.Item onClick={() => searchContent(page - 1)}>{page - 1}</Pagination.Item>}
-        <Pagination.Item active>{page}</Pagination.Item>
-        {page < totalPages && <Pagination.Item onClick={() => searchContent(page + 1)}>{page + 1}</Pagination.Item>}
-        
-        {page < totalPages - 1 && <Pagination.Ellipsis />}
-        {page < totalPages && <Pagination.Item onClick={() => searchContent(totalPages)}>{totalPages}</Pagination.Item>}
-        
-        <Pagination.Next 
-          onClick={() => searchContent(page + 1)}
-          disabled={page === totalPages}
-        />
-      </Pagination>
+      <dl className="svc-meta-grid mb-0 mt-3">
+        {rows.map(([key, value]) => (
+          <div key={key} className="svc-meta-row">
+            <dt>{key.replace(/_/g, ' ')}</dt>
+            <dd>{typeof value === 'object' ? JSON.stringify(value) : String(value)}</dd>
+          </div>
+        ))}
+      </dl>
     );
   };
 
-  // Format date string
-  const formatDate = (dateString) => {
-    if (!dateString) return 'N/A';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
-    });
-  };
-
-  // Render content item details
-  const renderContentDetails = () => {
+  const renderSelectedItem = () => {
     if (!selectedItem) return null;
-
-    let details;
-
-    switch (contentType) {
-      case 'articles':
-        details = (
-          <>
-            <div className="d-flex align-items-center mb-3">
-              <i className="fas fa-newspaper text-primary me-3 fs-2"></i>
-              <div>
-                <h3 className="mb-1">{selectedItem.title}</h3>
-                <small className="text-muted">Published: {formatDate(selectedItem.created)}</small>
-              </div>
-            </div>
-            {selectedItem.summary && <p className="lead text-muted">{selectedItem.summary}</p>}
-            {selectedItem.body && <div className="content-body" dangerouslySetInnerHTML={{ __html: selectedItem.body }} />}
-          </>
-        );
-        break;
-
-      case 'blogs':
-        details = (
-          <>
-            <div className="d-flex align-items-center mb-3">
-              <i className="fas fa-blog text-success me-3 fs-2"></i>
-              <div>
-                <h3 className="mb-1">{selectedItem.title}</h3>
-                <small className="text-muted">Published: {formatDate(selectedItem.created)} | Author: {selectedItem.author || 'Unknown'}</small>
-              </div>
-            </div>
-            {selectedItem.summary && <p className="lead text-muted">{selectedItem.summary}</p>}
-            {selectedItem.body && <div className="content-body" dangerouslySetInnerHTML={{ __html: selectedItem.body }} />}
-          </>
-        );
-        break;
-
-      case 'courses':
-        details = (
-          <>
-            <div className="d-flex align-items-center mb-3">
-              <i className="fas fa-graduation-cap text-info me-3 fs-2"></i>
-              <div>
-                <h3 className="mb-1">{selectedItem.title}</h3>
-                <Badge bg="primary" className="mb-2">{selectedItem.type || 'Course'}</Badge>
-              </div>
-            </div>
-            <p className="lead text-muted">{selectedItem.summary}</p>
-            {selectedItem.description && <div className="content-body" dangerouslySetInnerHTML={{ __html: selectedItem.description }} />}
-            {selectedItem.link && (
-              <Button
-                variant="primary"
-                href={selectedItem.link}
-                target="_blank"
-                className="mt-3"
-                style={{ background: 'linear-gradient(45deg, #667eea, #764ba2)', border: 'none' }}
-              >
-                <i className="fas fa-external-link-alt me-2"></i>
-                Access Course
-              </Button>
-            )}
-          </>
-        );
-        break;
-
-      case 'events':
-        details = (
-          <>
-            <div className="d-flex align-items-center mb-3">
-              <i className="fas fa-calendar-alt text-warning me-3 fs-2"></i>
-              <div>
-                <h3 className="mb-1">{selectedItem.title}</h3>
-                <small className="text-muted">
-                  {formatDate(selectedItem.startDate)}
-                  {selectedItem.endDate && ` - ${formatDate(selectedItem.endDate)}`}
-                </small>
-              </div>
-            </div>
-            <p><strong>Location:</strong> {selectedItem.location || 'Online'}</p>
-            {selectedItem.description && <div className="content-body" dangerouslySetInnerHTML={{ __html: selectedItem.description }} />}
-            {selectedItem.registrationLink && (
-              <Button
-                variant="primary"
-                href={selectedItem.registrationLink}
-                target="_blank"
-                className="mt-3"
-                style={{ background: 'linear-gradient(45deg, #667eea, #764ba2)', border: 'none' }}
-              >
-                <i className="fas fa-user-plus me-2"></i>
-                Register for Event
-              </Button>
-            )}
-          </>
-        );
-        break;
-
-      case 'documents':
-        details = (
-          <>
-            <div className="d-flex align-items-center mb-3">
-              <i className="fas fa-file-alt text-secondary me-3 fs-2"></i>
-              <div>
-                <h3 className="mb-1">{selectedItem.title}</h3>
-                <small className="text-muted">Published: {formatDate(selectedItem.created)}</small>
-              </div>
-            </div>
-            {selectedItem.description && <p className="lead text-muted">{selectedItem.description}</p>}
-            {selectedItem.fileUrl && (
-              <Button
-                variant="primary"
-                href={selectedItem.fileUrl}
-                target="_blank"
-                className="mt-3"
-                style={{ background: 'linear-gradient(45deg, #667eea, #764ba2)', border: 'none' }}
-              >
-                <i className="fas fa-download me-2"></i>
-                Download Document
-              </Button>
-            )}
-          </>
-        );
-        break;
-
-      case 'offices':
-        details = (
-          <>
-            <div className="d-flex align-items-center mb-3">
-              <i className="fas fa-building text-danger me-3 fs-2"></i>
-              <div>
-                <h3 className="mb-1">{selectedItem.title}</h3>
-              </div>
-            </div>
-            <Row>
-              <Col md={6}>
-                <p><i className="fas fa-map-marker-alt me-2 text-muted"></i><strong>Address:</strong> {selectedItem.address || 'N/A'}</p>
-                <p><i className="fas fa-phone me-2 text-muted"></i><strong>Phone:</strong> {selectedItem.phone || 'N/A'}</p>
-              </Col>
-              <Col md={6}>
-                <p><i className="fas fa-envelope me-2 text-muted"></i><strong>Email:</strong> {selectedItem.email || 'N/A'}</p>
-                {selectedItem.hours && <p><i className="fas fa-clock me-2 text-muted"></i><strong>Hours:</strong> {selectedItem.hours}</p>}
-              </Col>
-            </Row>
-            {selectedItem.description && <div className="content-body" dangerouslySetInnerHTML={{ __html: selectedItem.description }} />}
-            {selectedItem.website && (
-              <Button
-                variant="primary"
-                href={selectedItem.website}
-                target="_blank"
-                className="mt-3"
-                style={{ background: 'linear-gradient(45deg, #667eea, #764ba2)', border: 'none' }}
-              >
-                <i className="fas fa-external-link-alt me-2"></i>
-                Visit Website
-              </Button>
-            )}
-          </>
-        );
-        break;
-
-      default:
-        details = <p>No details available</p>;
-    }
-
+    const item = selectedItem;
     return (
-      <Card className="shadow-lg border-0 mt-4" style={{ background: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(10px)' }}>
-        <Card.Header className="bg-gradient-primary text-white border-0">
-          <div className="d-flex align-items-center justify-content-between">
-            <h4 className="mb-0">
-              <i className="fas fa-info-circle me-2"></i>
-              Content Details
-            </h4>
-            <Badge bg="light" text="dark" className="fs-6">
-              {contentTypes.find(type => type.value === contentType)?.label}
-            </Badge>
+      <Card className="svc-detail-card mt-4 border-0 shadow">
+        <Card.Header className="d-flex justify-content-between align-items-center">
+          <div>
+            <h4 className="mb-1">{item.title}</h4>
+            <div className="d-flex flex-wrap gap-2">
+              {item.type && <Badge bg="primary">{item.type}</Badge>}
+              {item.is_current === true && <Badge bg="success">Current</Badge>}
+              {item.is_current === false && <Badge bg="secondary">Not current</Badge>}
+              {item.source && (
+                <Badge bg="light" text="dark">
+                  {item.source}
+                </Badge>
+              )}
+            </div>
           </div>
-        </Card.Header>
-        <Card.Body className="p-4">
-          {details}
-        </Card.Body>
-        <Card.Footer className="bg-light border-0">
-          <Button
-            variant="outline-secondary"
-            onClick={() => setSelectedItem(null)}
-            className="w-100"
-          >
-            <i className="fas fa-arrow-left me-2"></i>
-            Back to Results
+          <Button variant="outline-secondary" size="sm" onClick={() => setSelectedItem(null)}>
+            Back to results
           </Button>
-        </Card.Footer>
+        </Card.Header>
+        <Card.Body>
+          {(item.description || item.summary) && (
+            <p className="lead text-muted">{item.description || item.summary}</p>
+          )}
+          {renderMetaRows(item)}
+          {item.url && (
+            <Button
+              variant="primary"
+              className="mt-3"
+              href={item.url}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Open official source
+            </Button>
+          )}
+        </Card.Body>
       </Card>
     );
   };
 
-  // Render node tree recursively
-  const renderNodeTree = (nodes, level = 0) => {
-    if (!nodes || nodes.length === 0) {
-      return (
-        <Alert variant="info" className={level === 0 ? '' : 'ms-4'}>
-          {level === 0
-            ? (contentType === 'offices' && !searchQuery.trim() && !loading
-                ? "Loading offices..."
-                : "No results found. Try a different search term.")
-            : "No child nodes."}
-        </Alert>
-      );
-    }
-    return (
-      <ListGroup className={level > 0 ? 'ms-4' : ''}>
-        {nodes.map((item, idx) => {
-          const hasChildren = item.hasChildren || (nodeMap[item.id] && nodeMap[item.id].length > 0);
-          const expanded = expandedNodes[item.id];
-          return (
-            <ListGroup.Item key={item.id || idx} className="d-flex flex-column align-items-stretch gap-2">
-              <div className="d-flex align-items-start gap-2">
-                <div style={{ flex: 1 }}>
-                  <div className="d-flex flex-wrap align-items-center gap-2">
-                    <span style={{ fontWeight: 'bold' }}>{item.title || item.name}</span>
-                    {item.is_current === true && (
-                      <Badge bg="success" title={item.retrieved_at || ''}>Current</Badge>
-                    )}
-                    {item.is_current === false && (
-                      <Badge bg="secondary" title="Not live sba.gov content">Not current</Badge>
-                    )}
-                    {item.source && (
-                      <Badge bg="light" text="dark">{item.source}</Badge>
-                    )}
-                  </div>
-                  {(item.description || item.summary) && (
-                    <div className="text-muted small mt-1">
-                      {(item.description || item.summary).substring(0, 280)}
-                      {(item.description || item.summary).length > 280 ? '…' : ''}
-                    </div>
-                  )}
-                  {item.url && (
-                    <a
-                      href={item.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="small"
-                    >
-                      Open official source
-                    </a>
-                  )}
-                </div>
-                {hasChildren && (
-                  <Button
-                    variant="outline-secondary"
-                    size="sm"
-                    className="me-2"
-                    onClick={async () => {
-                      setExpandedNodes(prev => ({ ...prev, [item.id]: !expanded }));
-                      if (!expanded && !nodeMap[item.id]) {
-                        await fetchNodeChildren(item.id);
-                      }
-                    }}
-                    aria-label={expanded ? 'Collapse' : 'Expand'}
-                  >
-                    {expanded ? '-' : '+'}
-                  </Button>
-                )}
-                <Button
-                  variant="primary"
-                  size="sm"
-                  onClick={() => {
-                    if (item.url) {
-                      window.open(item.url, '_blank', 'noopener,noreferrer');
-                    } else {
-                      viewContentDetails(item.id);
-                    }
-                  }}
-                >
-                  {item.url ? 'Open' : 'View'}
-                </Button>
-              </div>
-              {expanded && nodeMap[item.id] && (
-                <div style={{ width: '100%' }}>
-                  {renderNodeTree(nodeMap[item.id], level + 1)}
-                </div>
-              )}
-            </ListGroup.Item>
-          );
-        })}
-      </ListGroup>
-    );
-  };
-
-  // Fetch resource details if selectedResource prop is provided
-  useEffect(() => {
-    if (selectedResource) {
-      setLoading(true);
-      setError(null);
-      const endpointKey = 'sba_content_resource_details';
-      if (!endpoints || !endpoints[endpointKey]) {
-        setError('Resource details endpoint not found');
-        setLoading(false);
-        return;
-      }
-      apiClient.get(endpoints[endpointKey], {
-        params: { id: selectedResource }
-      })
-        .then(response => {
-          setSelectedItem(response.data);
-          setLoading(false);
-        })
-        .catch(err => {
-          setError(`Unable to load resource: ${err.message}`);
-          setLoading(false);
-        });
-    } else {
-      setSelectedItem(null);
-    }
-  }, [selectedResource, endpoints]);
-
   return (
     <Container fluid className="sba-content-explorer svc-browse py-4">
-      {/* Modern Header */}
-      <div className="text-center mb-5 svc-browse-hero">
-        <h1 className="display-5 fw-bold mb-3 svc-browse-title">
-          SBA Content Explorer
-        </h1>
-        <p className="lead text-muted">
-          Live sba.gov content when available — RAG/offline answers are labeled not current
+      <div className="text-center mb-4 svc-browse-hero">
+        <h1 className="display-5 fw-bold mb-2 svc-browse-title">SBA Resources</h1>
+        <p className="lead text-muted mb-0">
+          Choose a category to load live data once — cards always show the data they reference.
         </p>
-        {resultMeta?.freshness && (
-          <div className="d-inline-flex flex-wrap gap-2 align-items-center bg-white rounded-pill px-3 py-2 shadow-sm">
-            <Badge bg={resultMeta.is_current ? 'success' : 'secondary'}>
-              {resultMeta.is_current ? 'Current (live SBA)' : 'Not current'}
-            </Badge>
-            {resultMeta.source && <span className="small text-muted">source: {resultMeta.source}</span>}
-            {resultMeta.retrieved_at && (
-              <span className="small text-muted">
-                retrieved: {new Date(resultMeta.retrieved_at).toLocaleString()}
-              </span>
-            )}
-          </div>
-        )}
       </div>
 
-      {/* Resource Status Section - Modern Design */}
-      <Row className="mb-4">
-        <Col lg={12}>
-          <Card className="shadow-lg border-0" style={{ background: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(10px)' }}>
-            <Card.Header className="bg-gradient-primary text-white border-0">
-              <div className="d-flex align-items-center">
-                <i className="fas fa-server me-2"></i>
-                <h5 className="mb-0">System Resources</h5>
-              </div>
-            </Card.Header>
-            <Card.Body>
-              <Row>
-                <Col md={6}>
-                  <div className="d-flex align-items-center p-3 rounded" style={{ background: 'rgba(0,123,255,0.1)' }}>
-                    <div className={`status-indicator me-3 ${resourceStatus.flask.status === 'online' ? 'bg-success' : 'bg-danger'}`}></div>
-                    <div>
-                      <span className="fw-bold">Flask Server</span>
-                      <Badge bg={resourceStatus.flask.status === 'online' ? 'success' : 'danger'} className="ms-2">
-                        {resourceStatus.flask.status}
-                      </Badge>
-                    </div>
-                  </div>
-                </Col>
-                <Col md={6}>
-                  <div className="d-flex align-items-center p-3 rounded" style={{ background: 'rgba(40,167,69,0.1)' }}>
-                    <div className={`status-indicator me-3 ${resourceStatus.chromadb.status === 'online' ? 'bg-success' : 'bg-danger'}`}></div>
-                    <div>
-                      <span className="fw-bold">ChromaDB</span>
-                      <Badge bg={resourceStatus.chromadb.status === 'online' ? 'success' : 'danger'} className="ms-2">
-                        {resourceStatus.chromadb.status}
-                      </Badge>
-                    </div>
-                  </div>
-                </Col>
-              </Row>
-            </Card.Body>
-          </Card>
-        </Col>
-      </Row>
+      {error && (
+        <Alert
+          variant={results.length ? 'warning' : 'info'}
+          dismissible
+          onClose={() => setError(null)}
+        >
+          {error}
+        </Alert>
+      )}
 
-      {/* Main Content */}
-      <Row>
-        <Col lg={12}>
-          {selectedItem ? (
-            renderContentDetails()
+      {/* Step 1: resource catalog — click to query */}
+      <Card className="border-0 shadow-sm mb-4">
+        <Card.Header className="bg-white">
+          <div className="d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <strong>Resource categories</strong>
+            <Button
+              size="sm"
+              variant="outline-primary"
+              onClick={loadCatalog}
+              disabled={loadingCatalog}
+            >
+              {loadingCatalog ? 'Loading…' : 'Refresh catalog'}
+            </Button>
+          </div>
+        </Card.Header>
+        <Card.Body>
+          {loadingCatalog ? (
+            <div className="text-center py-4">
+              <Spinner animation="border" variant="primary" />
+              <div className="text-muted mt-2">Loading SBA resources…</div>
+            </div>
           ) : (
-            <Card className="shadow-lg border-0" style={{ background: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(10px)' }}>
-              <Card.Header className="bg-gradient-secondary text-white border-0">
-                <div className="d-flex align-items-center justify-content-between">
-                  <div className="d-flex align-items-center">
-                    <i className="fas fa-search me-2"></i>
-                    <h4 className="mb-0">Explore SBA Content</h4>
-                  </div>
-                  <Badge bg="light" text="dark" className="fs-6">
-                    {contentTypes.find(type => type.value === contentType)?.label}
-                  </Badge>
-                </div>
-              </Card.Header>
-              <Card.Body className="p-4">
-                <Form onSubmit={handleSearch}>
-                  <Row className="mb-4">
-                    <Col md={4}>
-                      <Form.Group>
-                        <Form.Label className="fw-bold text-muted">Content Type</Form.Label>
-                        <Form.Select
-                          value={contentType}
-                          onChange={(e) => setContentType(e.target.value)}
-                          className="form-control-lg border-0 shadow-sm"
-                          style={{ background: 'rgba(255,255,255,0.8)' }}
-                        >
-                          {contentTypes.map(type => (
-                            <option key={type.value} value={type.value}>
-                              {type.label}
-                            </option>
-                          ))}
-                        </Form.Select>
-                      </Form.Group>
-                    </Col>
-                    <Col md={8}>
-                      <Form.Group>
-                        <Form.Label className="fw-bold text-muted">Search Query</Form.Label>
-                        <InputGroup className="input-group-lg">
-                          <Form.Control
-                            type="search"
-                            placeholder={`Search SBA ${contentType}...`}
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="border-0 shadow-sm"
-                            style={{ background: 'rgba(255,255,255,0.8)' }}
-                          />
-                          <Button
-                            variant="primary"
-                            type="submit"
-                            disabled={loading || (!searchQuery.trim() && contentType !== 'offices')}
-                            className="px-4"
-                            style={{ background: 'linear-gradient(45deg, #667eea, #764ba2)', border: 'none' }}
-                          >
-                            {loading ? (
-                              <Spinner animation="border" size="sm" className="me-2" />
-                            ) : (
-                              <i className="fas fa-search me-2"></i>
-                            )}
-                            {loading ? 'Searching...' : 'Search'}
-                          </Button>
-                        </InputGroup>
-                      </Form.Group>
-                    </Col>
-                  </Row>
-                </Form>
+            <Row xs={1} sm={2} lg={3} className="g-3">
+              {resources.map((resource) => {
+                const active = activeResource?.id === resource.id;
+                return (
+                  <Col key={resource.id}>
+                    <Card
+                      className={`h-100 svc-resource-card ${active ? 'is-active' : ''}`}
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => handleResourceClick(resource)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          handleResourceClick(resource);
+                        }
+                      }}
+                    >
+                      <Card.Body>
+                        <div className="d-flex gap-3 align-items-start">
+                          <span className="svc-resource-icon" aria-hidden="true">
+                            {resource.icon}
+                          </span>
+                          <div>
+                            <Card.Title as="h3" className="h6 mb-1">
+                              {resource.name}
+                            </Card.Title>
+                            <Card.Text className="small text-muted mb-2">
+                              {resource.description}
+                            </Card.Text>
+                            <span className="svc-link small">
+                              {active && loadingItems ? 'Loading…' : 'Load resources →'}
+                            </span>
+                          </div>
+                        </div>
+                      </Card.Body>
+                    </Card>
+                  </Col>
+                );
+              })}
+            </Row>
+          )}
+        </Card.Body>
+      </Card>
 
-                {error && (
-                  <Alert variant="danger" className="border-0 shadow-sm">
-                    <i className="fas fa-exclamation-triangle me-2"></i>
-                    {error}
+      {/* Step 2: query results after click */}
+      {activeResource && (
+        <Card className="border-0 shadow-sm mb-3">
+          <Card.Header className="bg-white">
+            <div className="d-flex flex-wrap justify-content-between align-items-center gap-2">
+              <div>
+                <strong>{activeResource.name}</strong>
+                {resultMeta && (
+                  <div className="d-flex flex-wrap gap-2 mt-1">
+                    <Badge bg={resultMeta.is_current ? 'success' : 'secondary'}>
+                      {resultMeta.is_current ? 'Current' : 'Not current'}
+                    </Badge>
+                    {resultMeta.source && (
+                      <Badge bg="light" text="dark">
+                        {resultMeta.source}
+                      </Badge>
+                    )}
+                    {resultMeta.retrieved_at && (
+                      <span className="small text-muted">
+                        {new Date(resultMeta.retrieved_at).toLocaleString()}
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+              <Form onSubmit={handleSearch} className="d-flex gap-2" style={{ minWidth: 260 }}>
+                <InputGroup size="sm">
+                  <Form.Control
+                    placeholder={`Filter ${activeResource.name}…`}
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                  <Button type="submit" variant="primary" disabled={loadingItems}>
+                    Search
+                  </Button>
+                </InputGroup>
+              </Form>
+            </div>
+          </Card.Header>
+          <Card.Body>
+            {loadingItems ? (
+              <div className="text-center py-5">
+                <Spinner animation="border" variant="primary" />
+                <div className="text-muted mt-2">Querying {activeResource.name}…</div>
+              </div>
+            ) : selectedItem ? (
+              renderSelectedItem()
+            ) : (
+              <>
+                {!queriedOnce && (
+                  <Alert variant="light" className="border">
+                    Click a category above to load its resources.
                   </Alert>
                 )}
-
-                {loading ? (
-                  <div className="text-center py-5">
-                    <div className="spinner-border text-primary" style={{ width: '3rem', height: '3rem' }} role="status">
-                      <span className="visually-hidden">Loading...</span>
-                    </div>
-                    <p className="mt-3 text-muted">Discovering SBA content...</p>
-                  </div>
-                ) : (
-                  <div className="results-container">
-                    {renderNodeTree(results)}
-                  </div>
+                {queriedOnce && results.length === 0 && !error && (
+                  <Alert variant="info">No items to display for this resource.</Alert>
                 )}
-                {renderPagination()}
-              </Card.Body>
-            </Card>
-          )}
-        </Col>
-      </Row>
+                <Row xs={1} md={2} className="g-3">
+                  {results.map((item) => (
+                    <Col key={String(item.id)}>
+                      <Card className="h-100 svc-result-card">
+                        <Card.Body className="d-flex flex-column">
+                          <div className="d-flex justify-content-between gap-2 mb-2">
+                            <Card.Title as="h3" className="h6 mb-0">
+                              {item.title}
+                            </Card.Title>
+                            <div className="d-flex flex-column align-items-end gap-1">
+                              {item.is_current === true && (
+                                <Badge bg="success">Current</Badge>
+                              )}
+                              {item.is_current === false && (
+                                <Badge bg="secondary">Not current</Badge>
+                              )}
+                              {item.type && (
+                                <Badge bg="light" text="dark">
+                                  {item.type}
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                          <Card.Text className="small text-muted flex-grow-1">
+                            {item.description}
+                          </Card.Text>
+                          {item.meta && Object.keys(item.meta).length > 0 && (
+                            <div className="small text-muted mb-2">
+                              {Object.entries(item.meta)
+                                .slice(0, 4)
+                                .map(([k, v]) => (
+                                  <div key={k}>
+                                    <strong>{k.replace(/_/g, ' ')}:</strong>{' '}
+                                    {String(v).slice(0, 80)}
+                                  </div>
+                                ))}
+                            </div>
+                          )}
+                          <div className="d-flex gap-2 mt-auto">
+                            <Button
+                              size="sm"
+                              variant="outline-primary"
+                              onClick={() => openItem(item)}
+                            >
+                              View details
+                            </Button>
+                            {item.url && (
+                              <Button
+                                size="sm"
+                                variant="primary"
+                                href={item.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                Open source
+                              </Button>
+                            )}
+                          </div>
+                        </Card.Body>
+                      </Card>
+                    </Col>
+                  ))}
+                </Row>
 
-      <style>{`
-        .bg-gradient-primary {
-          background: linear-gradient(45deg, #667eea, #764ba2);
-        }
-        .bg-gradient-secondary {
-          background: linear-gradient(45deg, #f093fb, #f5576c);
-        }
-        .status-indicator {
-          width: 12px;
-          height: 12px;
-          border-radius: 50%;
-          animation: pulse 2s infinite;
-        }
-        @keyframes pulse {
-          0% { opacity: 1; }
-          50% { opacity: 0.5; }
-          100% { opacity: 1; }
-        }
-        .card {
-          transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-        .card:hover {
-          transform: translateY(-5px);
-          box-shadow: 0 15px 35px rgba(0,0,0,0.1) !important;
-        }
-        .btn {
-          transition: all 0.3s ease;
-        }
-        .btn:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-        }
-        .form-control:focus, .form-select:focus {
-          border-color: #667eea;
-          box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
-        }
-      `}</style>
+                {totalPages > 1 && (
+                  <Pagination className="justify-content-center mt-4 mb-0">
+                    <Pagination.Prev
+                      disabled={page <= 1 || loadingItems}
+                      onClick={() => handlePageChange(page - 1)}
+                    />
+                    <Pagination.Item active>{page}</Pagination.Item>
+                    <Pagination.Next
+                      disabled={page >= totalPages || loadingItems}
+                      onClick={() => handlePageChange(page + 1)}
+                    />
+                  </Pagination>
+                )}
+              </>
+            )}
+          </Card.Body>
+        </Card>
+      )}
     </Container>
   );
 };

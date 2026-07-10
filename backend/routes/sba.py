@@ -24,6 +24,83 @@ def _page_args():
     return query, max(1, page), force_fresh
 
 
+def _normalize_item(raw, index=0):
+    """Ensure every card has title + body text + optional url (no empty cards)."""
+    if not isinstance(raw, dict):
+        text = str(raw).strip()
+        if not text:
+            return None
+        return {
+            'id': f'item-{index}',
+            'title': text[:120],
+            'description': text,
+            'summary': text,
+            'url': '',
+            'type': 'content',
+        }
+
+    title = (
+        raw.get('title')
+        or raw.get('name')
+        or raw.get('label')
+        or raw.get('award_title')
+        or raw.get('firm')
+        or ''
+    )
+    title = str(title).strip()
+    description = (
+        raw.get('description')
+        or raw.get('summary')
+        or raw.get('teaser')
+        or raw.get('body')
+        or raw.get('abstract')
+        or raw.get('message')
+        or ''
+    )
+    description = str(description).strip()
+    url = str(raw.get('url') or raw.get('link') or raw.get('href') or raw.get('award_link') or '').strip()
+
+    # If only URL is present, still render a card from it
+    if not title and url:
+        title = url.rstrip('/').split('/')[-1].replace('-', ' ').title() or 'SBA resource'
+    if not title and description:
+        title = description[:80] + ('…' if len(description) > 80 else '')
+    if not description and title:
+        description = f'Official SBA resource: {title}'
+        if url:
+            description += f' — {url}'
+
+    # Drop pure-empty records
+    if not title and not description and not url:
+        return None
+
+    # Skip obvious nav chrome titles with no useful body
+    low = title.lower()
+    if low in {'home', 'menu', 'search', 'login', 'sign in', 'share', 'print'} and len(description) < 40:
+        return None
+
+    item = dict(raw)
+    item['id'] = raw.get('id') or raw.get('nid') or f'item-{index}'
+    item['title'] = title
+    item['name'] = raw.get('name') or title
+    item['description'] = description
+    item['summary'] = raw.get('summary') or description
+    item['url'] = url
+    item['type'] = raw.get('type') or 'content'
+    # Surface extra reference fields for the UI
+    extras = {}
+    for key in (
+        'agency', 'firm', 'phase', 'program', 'award_amount', 'award_year',
+        'phone', 'email', 'address', 'location', 'source_page', 'retrieved_at',
+        'is_current', 'freshness', 'source',
+    ):
+        if raw.get(key) not in (None, ''):
+            extras[key] = raw.get(key)
+    if extras:
+        item['meta'] = extras
+    return item
+
+
 def _envelope(result, page=1):
     """Normalize multi-source client payloads into the frontend contract."""
     if not isinstance(result, dict):
@@ -60,17 +137,23 @@ def _envelope(result, page=1):
     if not isinstance(items, list):
         items = []
 
-    total_pages = result.get('totalPages', result.get('total_pages', 1 if items else 0))
+    normalized = []
+    for i, raw in enumerate(items):
+        item = _normalize_item(raw, i)
+        if item:
+            normalized.append(item)
+
+    total_pages = result.get('totalPages', result.get('total_pages', 1 if normalized else 0))
     is_current = result.get('is_current')
     if is_current is None:
         is_current = result.get('source', '').startswith('sba_html') or result.get('source') in (
             'legacy_json', 'sbir',
         )
     return {
-        'items': items,
+        'items': normalized,
         'totalPages': total_pages,
         'currentPage': result.get('currentPage', page),
-        'count': result.get('count', len(items)),
+        'count': len(normalized),
         'degraded': bool(result.get('degraded')),
         'is_current': bool(is_current),
         'freshness': result.get('freshness') or ('current' if is_current else 'not_current'),

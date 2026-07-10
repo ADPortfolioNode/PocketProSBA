@@ -60,17 +60,26 @@ const SBAContent = ({ onProgramSelect, onResourceSelect }) => {
         {activeTab === 'programs' && (
           <Container fluid>
             <Row xs={1} md={2} lg={3} className="g-3">
-              {programs.map(program => (
-                <Col key={program.id}>
+              {(programs || [])
+                .filter((p) => p && (p.name || p.title) && (p.description || p.detailedDescription || p.url))
+                .map((program) => (
+                <Col key={program.id || program.name}>
                   <Card 
-                    className="program-card h-100" 
+                    className="program-card h-100 svc-result-card" 
                     onClick={() => onProgramSelect && onProgramSelect(program.id)}
                   >
                     <Card.Body className="d-flex">
                       <div className="program-icon me-3">{program.icon || '💼'}</div>
                       <div className="program-content">
-                        <Card.Title as="h5">{program.name}</Card.Title>
-                        <Card.Text className="small text-muted">{program.description}</Card.Text>
+                        <Card.Title as="h5">{program.name || program.title}</Card.Title>
+                        <Card.Text className="small text-muted">
+                          {program.description || program.detailedDescription}
+                        </Card.Text>
+                        {program.url && (
+                          <a href={program.url} target="_blank" rel="noopener noreferrer" className="small">
+                            Official source
+                          </a>
+                        )}
                       </div>
                     </Card.Body>
                   </Card>
@@ -83,18 +92,27 @@ const SBAContent = ({ onProgramSelect, onResourceSelect }) => {
         {activeTab === 'lifecycle' && (
           <Container fluid>
             <Row xs={1} md={2} lg={3} className="g-3">
-              {businessLifecycleStages.map(stage => (
+              {(businessLifecycleStages || [])
+                .filter((s) => s && s.name && s.description)
+                .map((stage) => (
                 <Col key={stage.id}>
                   <Card 
-                    className="lifecycle-card h-100" 
+                    className="lifecycle-card h-100 svc-result-card" 
                     onClick={() => onResourceSelect && onResourceSelect(`${stage.id} stage`)}
                   >
                     <Card.Body className="d-flex">
-                      <div className="lifecycle-icon me-3">{stage.icon}</div>
+                      <div className="lifecycle-icon me-3">{stage.icon || '📌'}</div>
                       <div className="lifecycle-content">
                         <Card.Title as="h5">{stage.name}</Card.Title>
                         <Card.Text className="small text-muted">{stage.description}</Card.Text>
-                        <Badge bg="info" pill className="mt-2">{stage.phase}</Badge>
+                        {stage.phase && <Badge bg="info" pill className="mt-2">{stage.phase}</Badge>}
+                        {Array.isArray(stage.resources) && stage.resources.length > 0 && (
+                          <ul className="small mt-2 mb-0 ps-3">
+                            {stage.resources.slice(0, 4).map((r) => (
+                              <li key={typeof r === 'string' ? r : r.name || r.id}>{typeof r === 'string' ? r : r.name || r.title}</li>
+                            ))}
+                          </ul>
+                        )}
                       </div>
                     </Card.Body>
                   </Card>
@@ -107,17 +125,24 @@ const SBAContent = ({ onProgramSelect, onResourceSelect }) => {
         {activeTab === 'local' && (
           <Container fluid>
             <Row xs={1} md={2} lg={3} className="g-3">
-              {localResourceTypes.map(resource => (
+              {(localResourceTypes || [])
+                .filter((r) => r && r.name && r.description)
+                .map((resource) => (
                 <Col key={resource.id}>
                   <Card 
-                    className="resource-card h-100" 
+                    className="resource-card h-100 svc-result-card" 
                     onClick={() => onResourceSelect && onResourceSelect(`${resource.id} resources`)}
                   >
                     <Card.Body className="d-flex">
-                      <div className="resource-icon me-3">{resource.icon}</div>
+                      <div className="resource-icon me-3">{resource.icon || '📍'}</div>
                       <div className="resource-content">
                         <Card.Title as="h5">{resource.name}</Card.Title>
                         <Card.Text className="small text-muted">{resource.description}</Card.Text>
+                        {resource.url && (
+                          <a href={resource.url} target="_blank" rel="noopener noreferrer" className="small">
+                            Learn more
+                          </a>
+                        )}
                       </div>
                     </Card.Body>
                   </Card>
