@@ -18,6 +18,7 @@ const ROUTE_TAB_MAP = {
   home: 'home',
   chat: 'chat',
   browse: 'browse',
+  resources: 'browse',
   rag: 'rag',
   documents: 'documents',
   sba: 'sba',
@@ -36,6 +37,15 @@ function MainLayout({ useConnectionHook = useConnection }) {
   useEffect(() => {
     const tab = resolveTabFromPath(location.pathname);
     setActiveTab(tab);
+    // Prefer the live standalone Resources UI (nginx → resources.html)
+    // so click-to-load + detail cards work without a CRA rebuild.
+    const path = (location.pathname || '').toLowerCase();
+    if (path === '/browse' || path === '/resources') {
+      if (typeof window !== 'undefined' && !window.__PP_RESOURCES_REDIRECT__) {
+        window.__PP_RESOURCES_REDIRECT__ = true;
+        window.location.replace('/browse');
+      }
+    }
   }, [location.pathname]);
   const [messages, setMessages] = useState([]);
   const [diagnostics, setDiagnostics] = useState(null);

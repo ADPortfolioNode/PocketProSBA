@@ -28,6 +28,12 @@ const SBAContent = ({ onProgramSelect, onResourceSelect }) => {
   return (
     <Card className="sba-content-explorer">
       <Card.Header>
+        <div className="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+          <span className="small text-muted">Program overview</span>
+          <a href="/browse" className="btn btn-sm btn-primary">
+            Open full Resources browser →
+          </a>
+        </div>
         <Nav variant="tabs" className="navigation-tabs">
           <Nav.Item>
             <Nav.Link 

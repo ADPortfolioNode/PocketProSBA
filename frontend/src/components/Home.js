@@ -84,9 +84,10 @@ function Home() {
             <Link to="/chat" className="pp-btn pp-btn-primary">
               Start chat
             </Link>
-            <Link to="/browse" className="pp-btn pp-btn-ghost">
+            {/* Full page load → live resources.html (API nav + detail cards) */}
+            <a href="/browse" className="pp-btn pp-btn-ghost">
               Browse resources
-            </Link>
+            </a>
           </div>
         </div>
         <div className="svc-hero-media">
@@ -154,9 +155,9 @@ function Home() {
               Browse pulls live text from official sba.gov pages so what you read matches the real
               world — not stale offline copy.
             </p>
-            <Link to="/browse" className="pp-btn pp-btn-primary">
+            <a href="/browse" className="pp-btn pp-btn-primary">
               View live loans
-            </Link>
+            </a>
           </div>
           <img
             src={IMG.loans}

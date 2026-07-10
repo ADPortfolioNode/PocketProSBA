@@ -45,10 +45,24 @@ export const useApi = () => {
 export const useSBAContent = () => {
   const api = useApi();
 
-  const searchContent = useCallback(async (contentType, query = '', page = 1) => {
+  /** Catalog used to build Resources page navigation */
+  const getResources = useCallback(async () => {
+    return api.get('/api/sba/resources');
+  }, [api]);
+
+  const searchContent = useCallback(async (contentType, query = '', page = 1, fresh = true) => {
     const endpoint = `/api/sba/content/${contentType}`;
-    const params = query ? { query, page } : { page };
+    const params = { page, ...(query ? { query } : {}), ...(fresh ? { fresh: 1 } : {}) };
     return api.get(endpoint, { params });
+  }, [api]);
+
+  /** Query a resource entry from /api/sba/resources by its path */
+  const queryResourcePath = useCallback(async (path, { query = '', page = 1, fresh = true } = {}) => {
+    if (!path) throw new Error('Resource path is required');
+    const params = path.includes('/sources') || path.includes('overview')
+      ? { ...(fresh ? { fresh: 1 } : {}) }
+      : { page, ...(query ? { query } : {}), ...(fresh ? { fresh: 1 } : {}) };
+    return api.get(path, { params });
   }, [api]);
 
   const getContentDetails = useCallback(async (contentType, id) => {
@@ -61,6 +75,8 @@ export const useSBAContent = () => {
   }, [api]);
 
   return {
+    getResources,
+    queryResourcePath,
     searchContent,
     getContentDetails,
     getNodeDetails,
