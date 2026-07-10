@@ -1,3 +1,5 @@
+"""SBA content routes — multi-source public API consumption."""
+
 from flask import Blueprint, request, jsonify
 import logging
 from backend.services.SBA_Content import SBAContentAPI
@@ -8,245 +10,280 @@ sba_bp = Blueprint('sba', __name__)
 sba_api = SBAContentAPI()
 
 
+def _page_args():
+    query = request.args.get('query') or request.args.get('q') or ''
+    try:
+        page = int(request.args.get('page', 1))
+    except (TypeError, ValueError):
+        page = 1
+    return query, max(1, page)
+
+
+def _envelope(result, page=1):
+    """Normalize multi-source client payloads into the frontend contract."""
+    if not isinstance(result, dict):
+        return {
+            'items': [],
+            'totalPages': 0,
+            'currentPage': page,
+            'degraded': True,
+            'message': 'Unexpected SBA client response',
+            'source': 'unknown',
+        }
+
+    # Hard error with no items
+    if result.get('error') and not result.get('items') and not result.get('results'):
+        logger.warning("SBA source error: %s", result.get('error'))
+        return {
+            'items': [],
+            'totalPages': 0,
+            'currentPage': page,
+            'degraded': True,
+            'message': result.get('message') or result.get('error'),
+            'source': result.get('source', 'unknown'),
+        }
+
+    items = result.get('items')
+    if items is None:
+        items = result.get('results', [])
+    if not isinstance(items, list):
+        items = []
+
+    total_pages = result.get('totalPages', result.get('total_pages', 1 if items else 0))
+    return {
+        'items': items,
+        'totalPages': total_pages,
+        'currentPage': result.get('currentPage', page),
+        'count': result.get('count', len(items)),
+        'degraded': bool(result.get('degraded')),
+        'source': result.get('source'),
+        'message': result.get('message'),
+    }
+
+
 @sba_bp.route('/resources', methods=['GET'])
 def list_resources():
-    """
-    Lightweight resource index used by the prebuilt frontend navigation.
-    Does not call external SBA.gov (avoids 404/noise when their API is down).
-    """
-    return jsonify({
-        'resources': [
-            {
-                'id': 'articles',
-                'name': 'Articles',
-                'description': 'SBA learning articles and guides',
-                'path': '/api/sba/content/articles',
-            },
-            {
-                'id': 'blogs',
-                'name': 'Blogs',
-                'description': 'SBA blog posts',
-                'path': '/api/sba/content/blogs',
-            },
-            {
-                'id': 'courses',
-                'name': 'Courses',
-                'description': 'SBA training courses',
-                'path': '/api/sba/content/courses',
-            },
-            {
-                'id': 'documents',
-                'name': 'Documents',
-                'description': 'SBA documents and forms',
-                'path': '/api/sba/content/documents',
-            },
-            {
-                'id': 'events',
-                'name': 'Events',
-                'description': 'SBA events and webinars',
-                'path': '/api/sba/content/events',
-            },
-            {
-                'id': 'offices',
-                'name': 'Offices',
-                'description': 'SBA district offices',
-                'path': '/api/sba/content/offices',
-            },
-            {
-                'id': 'loan_types',
-                'name': 'Loan Types',
-                'description': 'SBA 7(a), 504, Microloan, Express overview',
-                'path': '/api/rag/sba-overview',
-            },
-        ],
-        'count': 7,
-        'status': 'ok',
-    }), 200
+    """Resource index for navigation and discovery."""
+    resources = [
+        {
+            'id': 'loans',
+            'name': 'Loan Programs',
+            'description': '7(a), 504, Microloan and related financing (sba.gov + curated)',
+            'path': '/api/sba/content/loans',
+        },
+        {
+            'id': 'articles',
+            'name': 'Articles & Guides',
+            'description': 'SBA business guides and learning content',
+            'path': '/api/sba/content/articles',
+        },
+        {
+            'id': 'blogs',
+            'name': 'Blogs & News',
+            'description': 'SBA blog and newsroom content',
+            'path': '/api/sba/content/blogs',
+        },
+        {
+            'id': 'courses',
+            'name': 'Courses',
+            'description': 'SBA learning resources',
+            'path': '/api/sba/content/courses',
+        },
+        {
+            'id': 'documents',
+            'name': 'Documents',
+            'description': 'SBA forms and documents',
+            'path': '/api/sba/content/documents',
+        },
+        {
+            'id': 'events',
+            'name': 'Events',
+            'description': 'SBA events and webinars',
+            'path': '/api/sba/content/events',
+        },
+        {
+            'id': 'offices',
+            'name': 'Offices & Local Help',
+            'description': 'District offices and local assistance finders',
+            'path': '/api/sba/content/offices',
+        },
+        {
+            'id': 'sbir',
+            'name': 'SBIR/STTR Awards',
+            'description': 'Public SBIR.gov awards API (when available)',
+            'path': '/api/sba/content/sbir',
+        },
+        {
+            'id': 'loan_types',
+            'name': 'Loan Types Overview',
+            'description': 'RAG/static overview of SBA loan products',
+            'path': '/api/rag/sba-overview',
+        },
+        {
+            'id': 'sources',
+            'name': 'API Source Status',
+            'description': 'Health of public SBA data sources',
+            'path': '/api/sba/sources',
+        },
+    ]
+    return jsonify({'resources': resources, 'count': len(resources), 'status': 'ok'}), 200
+
+
+@sba_bp.route('/sources', methods=['GET'])
+def source_status():
+    """Probe public SBA-related APIs / pages."""
+    try:
+        return jsonify(sba_api.get_source_status()), 200
+    except Exception as e:
+        logger.error("SBA source status failed: %s", e)
+        return jsonify({'error': str(e)}), 500
 
 
 @sba_bp.route('/content/articles', methods=['GET'])
 def search_articles():
-    """Search SBA articles"""
+    query, page = _page_args()
     try:
-        query = request.args.get('query', '')
-        page = int(request.args.get('page', 1))
-
-        params = {'query': query, 'page': page} if query else {'page': page}
-        result = sba_api.search_articles(**params)
-
-        if 'error' in result:
-            # External SBA.gov API may 404/change; degrade instead of hard-failing the product UI.
-            logger.warning("SBA articles unavailable: %s", result.get('error'))
-            return jsonify({
-                'items': [],
-                'totalPages': 0,
-                'currentPage': page,
-                'degraded': True,
-                'message': result.get('error'),
-            }), 200
-
-        return jsonify({
-            'items': result.get('results', result.get('items', [])),
-            'totalPages': result.get('total_pages', result.get('totalPages', 1)),
-            'currentPage': page
-        })
-
+        result = sba_api.search_articles(query=query, page=page)
+        return jsonify(_envelope(result, page)), 200
     except Exception as e:
-        logger.error(f"Error searching articles: {str(e)}")
-        return jsonify({
-            'items': [],
-            'totalPages': 0,
-            'currentPage': 1,
-            'degraded': True,
-            'error': 'Failed to search articles',
-        }), 200
+        logger.error("Error searching articles: %s", e)
+        return jsonify(_envelope({'error': str(e), 'items': []}, page)), 200
+
 
 @sba_bp.route('/content/articles/<int:article_id>', methods=['GET'])
 def get_article_details(article_id):
-    """Get article details"""
     try:
         result = sba_api.get_article(article_id)
-
-        if 'error' in result:
+        if isinstance(result, dict) and result.get('error'):
             return jsonify({'error': result['error']}), 404
-
         return jsonify(result)
-
     except Exception as e:
-        logger.error(f"Error getting article details: {str(e)}")
+        logger.error("Error getting article details: %s", e)
         return jsonify({'error': 'Failed to get article details'}), 500
+
 
 @sba_bp.route('/content/blogs', methods=['GET'])
 def search_blogs():
-    """Search SBA blog posts"""
+    query, page = _page_args()
     try:
-        query = request.args.get('query', '')
-        page = int(request.args.get('page', 1))
-
-        params = {'query': query, 'page': page} if query else {'page': page}
-        result = sba_api.search_blogs(**params)
-
-        if 'error' in result:
-            logger.warning("SBA blogs unavailable: %s", result.get('error'))
-            return jsonify({'items': [], 'totalPages': 0, 'currentPage': page, 'degraded': True, 'message': result.get('error')}), 200
-
-        return jsonify({
-            'items': result.get('results', result.get('items', [])),
-            'totalPages': result.get('total_pages', 1),
-            'currentPage': page
-        })
-
+        result = sba_api.search_blogs(query=query, page=page)
+        return jsonify(_envelope(result, page)), 200
     except Exception as e:
-        logger.error(f"Error searching blogs: {str(e)}")
-        return jsonify({'items': [], 'totalPages': 0, 'currentPage': 1, 'degraded': True, 'error': 'Failed to search blogs'}), 200
+        logger.error("Error searching blogs: %s", e)
+        return jsonify(_envelope({'error': str(e), 'items': []}, page)), 200
+
 
 @sba_bp.route('/content/courses', methods=['GET'])
 def search_courses():
-    """Search SBA courses"""
+    query, page = _page_args()
     try:
-        query = request.args.get('query', '')
-        page = int(request.args.get('page', 1))
-
-        params = {'query': query, 'page': page} if query else {'page': page}
-        result = sba_api.search_courses(**params)
-
-        if 'error' in result:
-            logger.warning("SBA courses unavailable: %s", result.get('error'))
-            return jsonify({'items': [], 'totalPages': 0, 'currentPage': page, 'degraded': True, 'message': result.get('error')}), 200
-
-        return jsonify({
-            'items': result.get('results', result.get('items', [])),
-            'totalPages': result.get('total_pages', 1),
-            'currentPage': page
-        })
-
+        result = sba_api.search_courses(query=query, page=page)
+        return jsonify(_envelope(result, page)), 200
     except Exception as e:
-        logger.error(f"Error searching courses: {str(e)}")
-        return jsonify({'items': [], 'totalPages': 0, 'currentPage': 1, 'degraded': True, 'error': 'Failed to search courses'}), 200
+        logger.error("Error searching courses: %s", e)
+        return jsonify(_envelope({'error': str(e), 'items': []}, page)), 200
+
 
 @sba_bp.route('/content/documents', methods=['GET'])
 def search_documents():
-    """Search SBA documents"""
+    query, page = _page_args()
     try:
-        query = request.args.get('query', '')
-        page = int(request.args.get('page', 1))
-
-        params = {'query': query, 'page': page} if query else {'page': page}
-        result = sba_api.search_documents(**params)
-
-        if 'error' in result:
-            logger.warning("SBA documents unavailable: %s", result.get('error'))
-            return jsonify({'items': [], 'totalPages': 0, 'currentPage': page, 'degraded': True, 'message': result.get('error')}), 200
-
-        return jsonify({
-            'items': result.get('results', result.get('items', [])),
-            'totalPages': result.get('total_pages', 1),
-            'currentPage': page
-        })
-
+        result = sba_api.search_documents(query=query, page=page)
+        return jsonify(_envelope(result, page)), 200
     except Exception as e:
-        logger.error(f"Error searching documents: {str(e)}")
-        return jsonify({'items': [], 'totalPages': 0, 'currentPage': 1, 'degraded': True, 'error': 'Failed to search documents'}), 200
+        logger.error("Error searching documents: %s", e)
+        return jsonify(_envelope({'error': str(e), 'items': []}, page)), 200
+
 
 @sba_bp.route('/content/events', methods=['GET'])
 def search_events():
-    """Search SBA events"""
+    query, page = _page_args()
     try:
-        query = request.args.get('query', '')
-        page = int(request.args.get('page', 1))
-
-        params = {'query': query, 'page': page} if query else {'page': page}
-        result = sba_api.search_events(**params)
-
-        if 'error' in result:
-            logger.warning("SBA events unavailable: %s", result.get('error'))
-            return jsonify({'items': [], 'totalPages': 0, 'currentPage': page, 'degraded': True, 'message': result.get('error')}), 200
-
-        return jsonify({
-            'items': result.get('results', result.get('items', [])),
-            'totalPages': result.get('total_pages', 1),
-            'currentPage': page
-        })
-
+        result = sba_api.search_events(query=query, page=page)
+        return jsonify(_envelope(result, page)), 200
     except Exception as e:
-        logger.error(f"Error searching events: {str(e)}")
-        return jsonify({'items': [], 'totalPages': 0, 'currentPage': 1, 'degraded': True, 'error': 'Failed to search events'}), 200
+        logger.error("Error searching events: %s", e)
+        return jsonify(_envelope({'error': str(e), 'items': []}, page)), 200
+
 
 @sba_bp.route('/content/offices', methods=['GET'])
 def search_offices():
-    """Search SBA offices"""
+    query, page = _page_args()
     try:
-        query = request.args.get('query', '')
-        page = int(request.args.get('page', 1))
-
-        params = {'query': query, 'page': page} if query else {'page': page}
-        result = sba_api.search_offices(**params)
-
-        if 'error' in result:
-            logger.warning("SBA offices unavailable: %s", result.get('error'))
-            return jsonify({'items': [], 'totalPages': 0, 'currentPage': page, 'degraded': True, 'message': result.get('error')}), 200
-
-        return jsonify({
-            'items': result.get('results', result.get('items', [])),
-            'totalPages': result.get('total_pages', 1),
-            'currentPage': page
-        })
-
+        result = sba_api.search_offices(query=query, page=page)
+        return jsonify(_envelope(result, page)), 200
     except Exception as e:
-        logger.error(f"Error searching offices: {str(e)}")
-        return jsonify({'items': [], 'totalPages': 0, 'currentPage': 1, 'degraded': True, 'error': 'Failed to search offices'}), 200
+        logger.error("Error searching offices: %s", e)
+        return jsonify(_envelope({'error': str(e), 'items': []}, page)), 200
+
+
+@sba_bp.route('/content/loans', methods=['GET'])
+def search_loans():
+    """Official SBA loan program content (HTML + curated catalog)."""
+    query, page = _page_args()
+    try:
+        result = sba_api.search_loans(query=query, page=page)
+        return jsonify(_envelope(result, page)), 200
+    except Exception as e:
+        logger.error("Error searching loans: %s", e)
+        return jsonify(_envelope({'error': str(e), 'items': []}, page)), 200
+
+
+@sba_bp.route('/content/sbir', methods=['GET'])
+def search_sbir():
+    """
+    SBIR/STTR public awards API.
+    Docs: https://www.sbir.gov/api
+    Query params: query/firm, agency, year, page, rows
+    """
+    query, page = _page_args()
+    agency = request.args.get('agency')
+    firm = request.args.get('firm') or (query if query else None)
+    year = request.args.get('year')
+    try:
+        year_i = int(year) if year else None
+    except ValueError:
+        year_i = None
+    try:
+        rows = int(request.args.get('rows', 20))
+    except ValueError:
+        rows = 20
+
+    try:
+        result = sba_api.search_sbir_awards(
+            query=query,
+            agency=agency,
+            year=year_i,
+            firm=firm,
+            rows=rows,
+            page=page,
+        )
+        env = _envelope(result, page)
+        # Soft 200 even when rate-limited so Browse UI does not hard-fail
+        return jsonify(env), 200
+    except Exception as e:
+        logger.error("Error searching SBIR awards: %s", e)
+        return jsonify(_envelope({'error': str(e), 'items': [], 'source': 'sbir'}, page)), 200
+
+
+@sba_bp.route('/content/lenders', methods=['GET'])
+def search_lenders():
+    query, page = _page_args()
+    try:
+        result = sba_api.search_lenders(query=query, page=page)
+        return jsonify(_envelope(result, page)), 200
+    except Exception as e:
+        logger.error("Error searching lenders: %s", e)
+        return jsonify(_envelope({'error': str(e), 'items': []}, page)), 200
+
 
 @sba_bp.route('/content/node/<int:node_id>', methods=['GET'])
 def get_node_details(node_id):
-    """Get node details by ID"""
     try:
         result = sba_api.get_node(node_id)
-
-        if 'error' in result:
+        if isinstance(result, dict) and result.get('error'):
             return jsonify({'error': result['error']}), 404
-
         return jsonify(result)
-
     except Exception as e:
-        logger.error(f"Error getting node details: {str(e)}")
+        logger.error("Error getting node details: %s", e)
         return jsonify({'error': 'Failed to get node details'}), 500

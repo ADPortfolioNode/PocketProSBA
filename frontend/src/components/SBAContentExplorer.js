@@ -3,7 +3,7 @@ import { Card, ListGroup, Form, Button, InputGroup, Spinner, Alert, Badge, Row, 
 import apiClient from '../api/apiClient'; // Corrected import path
 
 const SBAContentExplorer = ({ selectedResource, endpoints }) => {
-  const [contentType, setContentType] = useState('articles');
+  const [contentType, setContentType] = useState('loans');
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState([]); // Top-level nodes
@@ -14,24 +14,30 @@ const SBAContentExplorer = ({ selectedResource, endpoints }) => {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  // Content type options
+  // Content type options (aligned with multi-source backend)
   const contentTypes = [
-    { value: 'articles', label: 'Articles' },
+    { value: 'loans', label: 'Loan Programs' },
+    { value: 'articles', label: 'Articles & Guides' },
     { value: 'blogs', label: 'Blog Posts' },
     { value: 'courses', label: 'Courses' },
     { value: 'events', label: 'Events' },
     { value: 'documents', label: 'Documents' },
-    { value: 'offices', label: 'Offices' }
+    { value: 'offices', label: 'Offices' },
+    { value: 'sbir', label: 'SBIR Awards' },
+    { value: 'lenders', label: 'Lenders' },
   ];
 
   // Endpoint registry for SBA content
   const endpointRegistry = {
+    sba_content_loans: '/api/sba/content/loans',
     sba_content_articles: '/api/sba/content/articles',
     sba_content_blogs: '/api/sba/content/blogs',
     sba_content_courses: '/api/sba/content/courses',
     sba_content_events: '/api/sba/content/events',
     sba_content_documents: '/api/sba/content/documents',
     sba_content_offices: '/api/sba/content/offices',
+    sba_content_sbir: '/api/sba/content/sbir',
+    sba_content_lenders: '/api/sba/content/lenders',
     sba_content_details: '/api/sba/content/node'
   };
 
@@ -138,11 +144,12 @@ const SBAContentExplorer = ({ selectedResource, endpoints }) => {
     searchContent(1); // Reset to first page on new search
   };
 
-  // Load offices without a search query
+  // Auto-load catalogs that work without a required query
   useEffect(() => {
-    if (contentType === 'offices') {
-      searchContent(page);
+    if (['loans', 'offices', 'articles', 'courses', 'documents', 'events', 'lenders', 'blogs'].includes(contentType)) {
+      searchContent(1);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [contentType]);
 
   // View content details using endpoint registry
