@@ -222,29 +222,65 @@ class TaskOrchestrator:
             List of task steps
         """
         try:
-            # Use existing decomposition service
-            from services.api_service import decompose_task_service
+            # Dual-path import: container PYTHONPATH uses /app (backend.*) not bare services.*
+            try:
+                from backend.services.api_service import decompose_task_service
+            except ImportError:
+                from services.api_service import decompose_task_service
             result = decompose_task_service(message, session_id)
 
-            if not result or 'steps' not in result:
-                return []
-
             steps = []
-            for i, step_data in enumerate(result['steps']):
-                step = TaskStep(
-                    id=f"{result.get('task_id', 'unknown')}_step_{i}",
-                    task_id=result.get('task_id', 'unknown'),
-                    type=step_data.get('type', 'unknown'),
-                    data=step_data.get('data', {}),
-                    status=StepStatus.PENDING
-                )
-                steps.append(step)
+            if result and isinstance(result, dict) and result.get('steps'):
+                for i, step_data in enumerate(result['steps']):
+                    if not isinstance(step_data, dict):
+                        continue
+                    step = TaskStep(
+                        id=f"{result.get('task_id', 'unknown')}_step_{i}",
+                        task_id=result.get('task_id', 'unknown'),
+                        type=step_data.get('type', 'unknown'),
+                        data=step_data.get('data', {}),
+                        status=StepStatus.PENDING
+                    )
+                    steps.append(step)
+
+            # Soft single-step fallback: api_service currently returns a response, not steps.
+            # Avoid failing the whole task when decomposition shape differs.
+            if not steps:
+                task_id = str(uuid.uuid4())
+                steps = [
+                    TaskStep(
+                        id=f"{task_id}_step_0",
+                        task_id=task_id,
+                        type="message",
+                        data={
+                            "instruction": message,
+                            "suggested_agent_type": "Concierge",
+                            "session_id": session_id,
+                        },
+                        status=StepStatus.PENDING,
+                    )
+                ]
+                logger.info("Using single-step fallback decomposition for task %s", task_id)
 
             return steps
 
         except Exception as e:
             logger.error(f"Error decomposing task: {str(e)}")
-            return []
+            # Last-resort soft step so submit does not hard-fail on import/runtime errors
+            task_id = str(uuid.uuid4())
+            return [
+                TaskStep(
+                    id=f"{task_id}_step_0",
+                    task_id=task_id,
+                    type="message",
+                    data={
+                        "instruction": message,
+                        "suggested_agent_type": "Concierge",
+                        "session_id": session_id,
+                    },
+                    status=StepStatus.PENDING,
+                )
+            ]
 
     def _execute_steps(self, task: Task) -> bool:
         """
@@ -333,8 +369,11 @@ class TaskOrchestrator:
             step.strategy_used = strategy
             start_time = time.time()
 
-            # Execute step using strategy
-            from services.step_strategies import StepStrategyFactory
+            # Execute step using strategy (dual-path import for container layout)
+            try:
+                from backend.services.step_strategies import StepStrategyFactory
+            except ImportError:
+                from services.step_strategies import StepStrategyFactory
             strategy_instance = StepStrategyFactory.get_strategy(strategy)
             result = strategy_instance.execute(step)
 
@@ -429,6 +468,21 @@ class TaskOrchestrator:
             'updated_at': task.updated_at.isoformat()
         }
 
+    @staticmethod
+    def _json_safe(value: Any) -> Any:
+        """Convert enums/datetimes/dataclasses into JSON-serializable values."""
+        if isinstance(value, Enum):
+            return value.value
+        if isinstance(value, datetime):
+            return value.isoformat()
+        if isinstance(value, list):
+            return [TaskOrchestrator._json_safe(v) for v in value]
+        if isinstance(value, dict):
+            return {k: TaskOrchestrator._json_safe(v) for k, v in value.items()}
+        if hasattr(value, '__dataclass_fields__'):
+            return TaskOrchestrator._json_safe(asdict(value))
+        return value
+
     def get_task_details(self, task_id: str) -> Optional[Dict[str, Any]]:
         """
         Get detailed information about a task
@@ -444,8 +498,8 @@ class TaskOrchestrator:
             return None
 
         return {
-            'task': asdict(task),
-            'steps': [asdict(step) for step in task.steps]
+            'task': self._json_safe(task),
+            'steps': [self._json_safe(step) for step in task.steps],
         }
 
     def execute_task(self, task_id: str, task_data: Dict[str, Any]):
@@ -487,13 +541,29 @@ def get_orchestrator():
     if _orchestrator_instance is None:
         # Initialize with dependencies
         try:
-            from services.memory_repository import MemoryRepository
-            from services.feedback_manager import FeedbackManager
-            from services.metrics_collector import MetricsCollector
+            try:
+                from backend.services.memory_repository import MemoryRepository
+            except ImportError:
+                from services.memory_repository import MemoryRepository
+            # Optional advanced deps — missing modules soft-fail to basic orchestrator
+            try:
+                from backend.services.feedback_manager import FeedbackManager
+            except ImportError:
+                try:
+                    from services.feedback_manager import FeedbackManager
+                except ImportError:
+                    FeedbackManager = None
+            try:
+                from backend.services.metrics_collector import MetricsCollector
+            except ImportError:
+                try:
+                    from services.metrics_collector import MetricsCollector
+                except ImportError:
+                    MetricsCollector = None
 
             memory_repo = MemoryRepository()
-            feedback_mgr = FeedbackManager()
-            metrics_collector = MetricsCollector()
+            feedback_mgr = FeedbackManager() if FeedbackManager else None
+            metrics_collector = MetricsCollector() if MetricsCollector else None
 
             _orchestrator_instance = TaskOrchestrator(
                 memory_repository=memory_repo,

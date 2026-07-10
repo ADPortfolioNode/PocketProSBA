@@ -7,6 +7,63 @@ logger = logging.getLogger(__name__)
 sba_bp = Blueprint('sba', __name__)
 sba_api = SBAContentAPI()
 
+
+@sba_bp.route('/resources', methods=['GET'])
+def list_resources():
+    """
+    Lightweight resource index used by the prebuilt frontend navigation.
+    Does not call external SBA.gov (avoids 404/noise when their API is down).
+    """
+    return jsonify({
+        'resources': [
+            {
+                'id': 'articles',
+                'name': 'Articles',
+                'description': 'SBA learning articles and guides',
+                'path': '/api/sba/content/articles',
+            },
+            {
+                'id': 'blogs',
+                'name': 'Blogs',
+                'description': 'SBA blog posts',
+                'path': '/api/sba/content/blogs',
+            },
+            {
+                'id': 'courses',
+                'name': 'Courses',
+                'description': 'SBA training courses',
+                'path': '/api/sba/content/courses',
+            },
+            {
+                'id': 'documents',
+                'name': 'Documents',
+                'description': 'SBA documents and forms',
+                'path': '/api/sba/content/documents',
+            },
+            {
+                'id': 'events',
+                'name': 'Events',
+                'description': 'SBA events and webinars',
+                'path': '/api/sba/content/events',
+            },
+            {
+                'id': 'offices',
+                'name': 'Offices',
+                'description': 'SBA district offices',
+                'path': '/api/sba/content/offices',
+            },
+            {
+                'id': 'loan_types',
+                'name': 'Loan Types',
+                'description': 'SBA 7(a), 504, Microloan, Express overview',
+                'path': '/api/rag/sba-overview',
+            },
+        ],
+        'count': 7,
+        'status': 'ok',
+    }), 200
+
+
 @sba_bp.route('/content/articles', methods=['GET'])
 def search_articles():
     """Search SBA articles"""

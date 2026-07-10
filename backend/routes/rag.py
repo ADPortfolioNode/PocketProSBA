@@ -1,5 +1,8 @@
 from flask import Blueprint, request, jsonify
 import logging
+import os
+import re
+from pathlib import Path
 from backend.services.api_service import (
     decompose_task_service,
     execute_step_service,
@@ -16,8 +19,194 @@ except Exception as e:
     logger.warning(f"Enhanced Gemini RAG service is unavailable: {e}")
     class _FallbackEnhancedRAGService:
         is_initialized = False
+
+        def get_sba_overview(self):
+            return _static_sba_overview()
+
+        def query_sba_loans(self, question: str):
+            return _local_kb_sba_answer(question)
     enhanced_rag_service = _FallbackEnhancedRAGService()
 rag_bp = Blueprint('rag', __name__)
+
+
+def _knowledge_base_roots():
+    """Candidate knowledge-base paths (host bind-mount and container layouts)."""
+    here = Path(__file__).resolve()
+    return [
+        here.parents[1] / "knowledge_base",  # backend/knowledge_base
+        Path("./backend/knowledge_base"),
+        Path("/app/backend/knowledge_base"),
+        Path("./knowledge_base"),
+    ]
+
+
+def _static_sba_overview():
+    """Static overview so /sba-overview stays available without Gemini embeddings."""
+    if hasattr(enhanced_rag_service, "get_sba_overview") and type(enhanced_rag_service).__name__ != "_FallbackEnhancedRAGService":
+        try:
+            return enhanced_rag_service.get_sba_overview()
+        except Exception:
+            pass
+    return {
+        "available_loan_types": [
+            {
+                "type": "SBA 7(a) Loans",
+                "max_amount": "$5 million",
+                "use_cases": ["working capital", "equipment", "real estate", "business acquisition"],
+                "terms": "7-25 years",
+                "rates": "Prime + 2.25% to 4.75%",
+            },
+            {
+                "type": "SBA 504 Loans",
+                "max_amount": "$5.5 million per project",
+                "use_cases": ["real estate", "major equipment", "construction"],
+                "terms": "10-25 years",
+                "rates": "Fixed, below market",
+            },
+            {
+                "type": "SBA Microloans",
+                "max_amount": "$50,000",
+                "use_cases": ["working capital", "inventory", "supplies", "equipment"],
+                "terms": "Up to 6 years",
+                "rates": "8-13% (varies by lender)",
+            },
+            {
+                "type": "SBA Express Loans",
+                "max_amount": "$500,000",
+                "use_cases": ["same as 7(a) but faster"],
+                "terms": "7-25 years",
+                "rates": "Prime + 4.5% to 6.5%",
+            },
+        ],
+        "topics_covered": [
+            "Loan eligibility requirements",
+            "Application process steps",
+            "Required documentation",
+            "Current interest rates and terms",
+            "Collateral requirements",
+            "Timeline expectations",
+            "Fee structures",
+            "Prepayment penalties",
+            "Down payment requirements",
+        ],
+        "sample_questions": [
+            "What are the eligibility requirements for an SBA 7(a) loan?",
+            "How long does the SBA loan application process take?",
+            "What documents do I need to apply for an SBA loan?",
+            "What can SBA loans be used for?",
+            "What are the current SBA loan interest rates?",
+        ],
+        "mode": "static_fallback",
+        "note": "Served from static knowledge summary (Gemini RAG not fully initialized).",
+    }
+
+
+def _normalize_kb_text(value: str) -> str:
+    """Compact alphanumerics only so 7(a)/7-a/7A all match token 7a."""
+    return re.sub(r"[^a-z0-9]+", "", (value or "").lower())
+
+
+def _local_kb_sba_answer(question: str, max_chunks: int = 4):
+    """
+    Lightweight keyword retrieval over local knowledge_base text files.
+    Used when Gemini embeddings / enhanced RAG are unavailable — no new deps.
+    """
+    q_spaced = re.sub(r"[^a-z0-9\s]", " ", (question or "").lower())
+    q_compact = _normalize_kb_text(question)
+    tokens = [t for t in re.findall(r"[a-z0-9]{3,}", q_spaced) if t not in {
+        "the", "and", "for", "what", "how", "are", "with", "from", "this", "that",
+        "can", "does", "about", "loan", "loans", "sba",  # too common in all docs
+    }]
+    # High-signal SBA terms (including short codes like 7a / 504)
+    for keep in ("7a", "504", "microloan", "express", "eligibility", "rate", "rates"):
+        if keep in q_compact and keep not in tokens:
+            tokens.append(keep)
+
+    scored = []
+    seen_paths = set()
+    for root in _knowledge_base_roots():
+        if not root.exists():
+            continue
+        for path in root.rglob("*.txt"):
+            key = str(path.resolve())
+            if key in seen_paths:
+                continue
+            seen_paths.add(key)
+            try:
+                text = path.read_text(encoding="utf-8", errors="replace")
+            except Exception:
+                continue
+            lower = text.lower()
+            compact = _normalize_kb_text(text)
+            score = sum(compact.count(tok) for tok in tokens) if tokens else 1
+            if score <= 0:
+                continue
+            # Prefer a relevant paragraph/snippet from original text
+            snippet = text.strip()
+            if tokens:
+                idx_candidates = []
+                for tok in tokens:
+                    pos = lower.find(tok)
+                    if pos >= 0:
+                        idx_candidates.append(pos)
+                    else:
+                        # Map compact match approx onto original via digit/letter run
+                        cpos = compact.find(tok)
+                        if cpos >= 0 and tok[:1].isdigit():
+                            m = re.search(r"7\s*[\(\-]?\s*a", lower)
+                            if m:
+                                idx_candidates.append(m.start())
+                idx = min(idx_candidates) if idx_candidates else 0
+                start = max(0, idx - 120)
+                end = min(len(text), start + 600)
+                snippet = text[start:end].strip()
+                if start > 0:
+                    snippet = "..." + snippet
+                if end < len(text):
+                    snippet = snippet + "..."
+            scored.append((score, path.name, snippet, str(path)))
+
+    scored.sort(key=lambda x: x[0], reverse=True)
+    top = scored[:max_chunks]
+
+    if not top:
+        overview = _static_sba_overview()
+        types = overview.get("available_loan_types", [])
+        lines = [
+            "I don't have live Gemini RAG embeddings right now, but here is a brief SBA overview:",
+        ]
+        for item in types[:4]:
+            lines.append(
+                f"- {item.get('type')}: up to {item.get('max_amount')} "
+                f"({item.get('terms')}; {item.get('rates')})"
+            )
+        answer = "\n".join(lines)
+        return {
+            "question": question,
+            "answer": answer,
+            "source_documents": [],
+            "mode": "static_fallback",
+        }
+
+    answer_parts = [
+        "Based on the local SBA knowledge base (keyword match; Gemini embeddings unavailable):",
+        "",
+    ]
+    sources = []
+    for score, name, snippet, full in top:
+        answer_parts.append(snippet)
+        answer_parts.append("")
+        sources.append({
+            "content": snippet[:200] + ("..." if len(snippet) > 200 else ""),
+            "metadata": {"source": name, "path": full, "score": score},
+        })
+
+    return {
+        "question": question,
+        "answer": "\n".join(answer_parts).strip(),
+        "source_documents": sources,
+        "mode": "local_kb_fallback",
+    }
 
 @rag_bp.route('/health', methods=['GET'])
 def rag_health():
@@ -137,28 +326,34 @@ def query_documents():
 
 @rag_bp.route('/sba-query', methods=['POST'])
 def query_sba_documents():
-    """Query SBA documents using Gemini RAG"""
+    """Query SBA documents using Gemini RAG, with local KB fallback."""
     try:
         data = request.get_json()
         if not data:
             logger.warning("No JSON data provided for SBA query")
             return jsonify({'error': 'No JSON data provided'}), 400
 
-        query = data.get('query', '')
+        # Accept both "query" and "question" for client compatibility
+        query = (data.get('query') or data.get('question') or '').strip()
 
         if not query:
             logger.warning("Query is required for SBA query")
             return jsonify({'error': 'Query is required'}), 400
 
-        # Use enhanced Gemini RAG service for SBA queries
-        if enhanced_rag_service.is_initialized:
-            result = enhanced_rag_service.query_sba_loans(query)
-            return jsonify(result)
-        else:
-            return jsonify({
-                'error': 'Gemini RAG service not available',
-                'answer': 'SBA query service is currently unavailable. Please try again later.'
-            }), 503
+        # Prefer enhanced Gemini RAG when fully initialized
+        if getattr(enhanced_rag_service, 'is_initialized', False):
+            try:
+                result = enhanced_rag_service.query_sba_loans(query)
+                # If the service returns a soft error, fall back to local KB
+                if isinstance(result, dict) and result.get('error') and not result.get('answer'):
+                    logger.warning("Enhanced RAG returned error; using local KB fallback: %s", result.get('error'))
+                    return jsonify(_local_kb_sba_answer(query))
+                return jsonify(result)
+            except Exception as rag_err:
+                logger.warning("Enhanced RAG query failed; using local KB fallback: %s", rag_err)
+
+        # Soft degrade: keyword search over on-disk knowledge base (no Gemini required)
+        return jsonify(_local_kb_sba_answer(query))
 
     except Exception as e:
         logger.error(f"Error querying SBA documents: {str(e)}")
@@ -166,16 +361,18 @@ def query_sba_documents():
 
 @rag_bp.route('/sba-overview', methods=['GET'])
 def get_sba_overview():
-    """Get SBA loan information overview"""
+    """Get SBA loan information overview (always available via static/local data)."""
     try:
-        if enhanced_rag_service.is_initialized:
-            overview = enhanced_rag_service.get_sba_overview()
-            return jsonify(overview)
-        else:
-            return jsonify({
-                'error': 'Gemini RAG service not available',
-                'message': 'SBA overview service is currently unavailable.'
-            }), 503
+        # Static overview does not need embeddings or Gemini init
+        if getattr(enhanced_rag_service, 'is_initialized', False) and hasattr(enhanced_rag_service, 'get_sba_overview'):
+            try:
+                overview = enhanced_rag_service.get_sba_overview()
+                if isinstance(overview, dict):
+                    overview.setdefault('mode', 'gemini_rag')
+                return jsonify(overview)
+            except Exception as ov_err:
+                logger.warning("Enhanced overview failed; static fallback: %s", ov_err)
+        return jsonify(_static_sba_overview())
 
     except Exception as e:
         logger.error(f"Error getting SBA overview: {str(e)}")

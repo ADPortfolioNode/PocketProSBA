@@ -1,81 +1,55 @@
- import React from 'react';
-import { Navbar, Nav, Container } from 'react-bootstrap';
+import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import ConnectionStatusIndicator from './ConnectionStatusIndicator';
+
+const NAV_ITEMS = [
+  { to: '/', label: 'Home', testId: 'nav-home', exact: true },
+  { to: '/chat', label: 'Chat', testId: 'nav-chat' },
+  { to: '/browse', label: 'Browse', testId: 'nav-browse' },
+  { to: '/rag', label: 'RAG', testId: 'nav-rag' },
+  { to: '/documents', label: 'Docs', testId: 'nav-documents' },
+  { to: '/sba', label: 'SBA', testId: 'nav-sba' },
+  { to: '/orchestrator', label: 'Tasks', testId: 'nav-orchestrator' },
+];
 
 const SBANavigation = ({ serverConnected, apiUrl }) => {
   const location = useLocation();
   const currentPath = location.pathname.toLowerCase();
 
   return (
-    <Navbar bg="light" expand="lg" className="mb-4 main-navbar">
-      <Container>
-        <Navbar.Brand as={Link} to="/">Home</Navbar.Brand>
-        <Navbar.Toggle aria-controls="basic-navbar-nav" />
-        <Navbar.Collapse id="basic-navbar-nav">
-          <Nav className="me-auto">
-            <Nav.Link
-              as={Link}
-              to="/chat"
-              active={currentPath === '/chat'}
-              data-testid="nav-chat"
-            >
-              Chat
-            </Nav.Link>
-            <Nav.Link
-              as={Link}
-              to="/browse"
-              active={currentPath === '/browse'}
-              data-testid="nav-browse"
-            >
-              Browse Resources
-            </Nav.Link>
-            <Nav.Link
-              as={Link}
-              to="/rag"
-              active={currentPath === '/rag'}
-              data-testid="nav-rag"
-            >
-              RAG
-            </Nav.Link>
-            <Nav.Link
-              as={Link}
-              to="/documents"
-              active={currentPath === '/documents'}
-              data-testid="nav-documents"
-            >
-              Document Center
-            </Nav.Link>
-            <Nav.Link
-              as={Link}
-              to="/sba"
-              active={currentPath === '/sba'}
-              data-testid="nav-sba"
-            >
-              SBA Content
-            </Nav.Link>
-            <Nav.Link
-              as={Link}
-              to="/orchestrator"
-              active={currentPath === '/orchestrator'}
-              data-testid="nav-orchestrator"
-            >
-              🤖 Task Orchestrator
-            </Nav.Link>
-          </Nav>
-          <div className="d-flex align-items-center">
-            <ConnectionStatusIndicator connected={serverConnected} apiUrl={apiUrl} />
-          </div>
-        </Navbar.Collapse>
-      </Container>
-    </Navbar>
+    <nav className="pp-nav" aria-label="Primary">
+      <div className="pp-shell pp-nav-inner">
+        <div className="pp-nav-links" role="list">
+          {NAV_ITEMS.map((item) => {
+            const active = item.exact
+              ? currentPath === '/' || currentPath === ''
+              : currentPath === item.to || currentPath.startsWith(`${item.to}/`);
+            return (
+              <Link
+                key={item.to}
+                to={item.to}
+                role="listitem"
+                data-testid={item.testId}
+                className={`pp-nav-link${active ? ' is-active' : ''}`}
+                aria-current={active ? 'page' : undefined}
+              >
+                {item.label}
+              </Link>
+            );
+          })}
+        </div>
+        <div className="pp-nav-status">
+          <ConnectionStatusIndicator connected={serverConnected} apiUrl={apiUrl} />
+        </div>
+      </div>
+    </nav>
   );
 };
 
 SBANavigation.propTypes = {
   serverConnected: PropTypes.bool.isRequired,
-  apiUrl: PropTypes.oneOfType([PropTypes.func, PropTypes.string]).isRequired
+  apiUrl: PropTypes.oneOfType([PropTypes.func, PropTypes.string]),
 };
 
 export default SBANavigation;

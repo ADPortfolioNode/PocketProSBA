@@ -1,0 +1,219 @@
+/* Live override for prebuilt main.f54a4e20.js — minimalist shell */
+:root {
+  --pp-bg: #f7f7f5;
+  --pp-surface: #ffffff;
+  --pp-ink: #141414;
+  --pp-muted: #6b6b6b;
+  --pp-line: #e8e8e4;
+  --pp-radius: 12px;
+  --pp-shadow: 0 1px 2px rgba(20, 20, 20, 0.04), 0 8px 24px rgba(20, 20, 20, 0.04);
+  --pp-shell: 1120px;
+}
+
+html, body {
+  background: var(--pp-bg) !important;
+  color: var(--pp-ink) !important;
+  font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif !important;
+}
+
+body {
+  margin: 0 !important;
+  padding: 0 !important;
+  min-height: 100vh;
+  background-image: none !important;
+}
+
+body::before {
+  display: none !important;
+}
+
+/* Hide legacy HAL demo markup if any residual nodes exist outside #root */
+body > main.app,
+body > .app:not(#root),
+.hal-eye,
+#halEye {
+  display: none !important;
+}
+
+#root {
+  min-height: 100vh;
+  background: var(--pp-bg);
+}
+
+/* Navbar / chrome from bootstrap + baked styles */
+.navbar,
+.main-navbar,
+.app-header,
+.top-navbar {
+  background: rgba(247, 247, 245, 0.94) !important;
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--pp-line) !important;
+  box-shadow: none !important;
+  margin-bottom: 0 !important;
+  padding-top: 0.35rem !important;
+  padding-bottom: 0.35rem !important;
+}
+
+.navbar-brand,
+.nav-link,
+.navbar-nav .nav-item .nav-link {
+  color: var(--pp-ink) !important;
+}
+
+.nav-link {
+  border-radius: 999px !important;
+  padding: 0.4rem 0.8rem !important;
+  color: var(--pp-muted) !important;
+  font-size: 0.92rem !important;
+}
+
+.nav-link:hover,
+.nav-link.active {
+  color: var(--pp-ink) !important;
+  background: #fff !important;
+  box-shadow: inset 0 0 0 1px var(--pp-line);
+}
+
+.container {
+  max-width: var(--pp-shell) !important;
+}
+
+/* Cards & panels */
+.card,
+.alert,
+.modal-content,
+.home-hero-banner,
+.status-card,
+.suggestion-panel,
+.prompt-card {
+  background: var(--pp-surface) !important;
+  color: var(--pp-ink) !important;
+  border: 1px solid var(--pp-line) !important;
+  border-radius: var(--pp-radius) !important;
+  box-shadow: none !important;
+}
+
+.card:hover {
+  transform: none !important;
+  box-shadow: var(--pp-shadow) !important;
+}
+
+.home-hero-banner {
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  border-radius: 0 !important;
+  padding-top: 1.5rem !important;
+}
+
+.home-hero-banner h1,
+.display-5,
+.fw-bold {
+  color: var(--pp-ink) !important;
+  letter-spacing: -0.03em;
+}
+
+.lead,
+.text-muted,
+.form-label,
+label,
+small {
+  color: var(--pp-muted) !important;
+}
+
+/* Buttons */
+.btn {
+  border-radius: 999px !important;
+}
+
+.btn-primary,
+.btn-primary:hover,
+.btn-primary:focus {
+  background: var(--pp-ink) !important;
+  border-color: var(--pp-ink) !important;
+  box-shadow: none !important;
+  transform: none !important;
+  color: #fff !important;
+}
+
+.btn-outline-primary,
+.btn-outline-secondary,
+.btn-outline-info,
+.btn-outline-danger {
+  color: var(--pp-ink) !important;
+  border-color: var(--pp-line) !important;
+  background: transparent !important;
+}
+
+.btn-outline-primary:hover,
+.btn-outline-secondary:hover {
+  background: #fff !important;
+}
+
+/* Forms */
+.form-control,
+.form-select,
+textarea,
+.input-group-text {
+  background: #fff !important;
+  border: 1px solid var(--pp-line) !important;
+  color: var(--pp-ink) !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+}
+
+.form-control:focus,
+.form-select:focus,
+textarea:focus {
+  border-color: #2563eb !important;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12) !important;
+}
+
+/* Badges / status */
+.badge,
+.connection-status-badge {
+  border-radius: 999px !important;
+  font-weight: 500 !important;
+}
+
+/* Footer */
+footer,
+.app-footer,
+footer.app-footer {
+  background: transparent !important;
+  border-top: 1px solid var(--pp-line) !important;
+  color: var(--pp-muted) !important;
+  box-shadow: none !important;
+}
+
+/* Reduce noisy gradients from old theme */
+.card-header,
+.card-footer {
+  background: #fafaf8 !important;
+  border-color: var(--pp-line) !important;
+  color: var(--pp-ink) !important;
+}
+
+/* Chat / panels denser whitespace */
+.min-vh-100 {
+  background: var(--pp-bg);
+}
+
+/* Status / connection alert quieter */
+.alert-danger,
+.alert-info,
+.alert-success {
+  background: #fff !important;
+}
+
+.alert-danger {
+  border-color: #f0c7c7 !important;
+}
+
+.alert-success {
+  border-color: #cde8d5 !important;
+}
+
+.alert-info {
+  border-color: var(--pp-line) !important;
+}

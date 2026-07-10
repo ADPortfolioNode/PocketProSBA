@@ -1,125 +1,58 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
-const promptCards = [
-  {
-    prompt: 'What SBA loan options are best for a small retail startup?',
-    label: 'Loan guidance',
-  },
-  {
-    prompt: 'How do I prepare for the SBA 7(a) application?',
-    label: 'Application readiness',
-  },
-  {
-    prompt: 'What resources support minority-owned businesses?',
-    label: 'Resource discovery',
-  },
-  {
-    prompt: 'Can you compare SBA disaster relief programs?',
-    label: 'Disaster assistance',
-  },
-];
-
-const useCases = [
-  {
-    title: 'Smart Loan Planning',
-    description: 'Personalize SBA loan guidance, compare terms, and identify optimal funding paths for small business growth.',
-    image: '/images/use-case-1.jpg',
-    alt: 'Business planning meeting',
-  },
-  {
-    title: 'Grant & Funding Insights',
-    description: 'Discover SBA grants and disaster relief options tailored to your industry and operational needs.',
-    image: '/images/use-case-2.jpg',
-    alt: 'Business finance dashboard',
-  },
-  {
-    title: 'Fast Approval Roadmap',
-    description: 'Prepare documentation, track readiness, and reduce approval time with guided SBA workflows.',
-    image: '/images/use-case-3.jpg',
-    alt: 'Business owner review',
-  },
+const prompts = [
+  { label: 'Loans', text: 'Which SBA loan fits a retail startup?' },
+  { label: 'Apply', text: 'How do I prepare for a 7(a) application?' },
+  { label: 'Compare', text: 'Compare 7(a) and 504 at a glance.' },
+  { label: 'Eligibility', text: 'What are the basic SBA eligibility rules?' },
 ];
 
 function Home() {
   return (
-    <main className="home-hero page-home">
-      <section className="home-hero-banner container py-5">
-        <div className="row align-items-center gy-4">
-          <div className="col-lg-6">
-            <span className="badge bg-info text-dark mb-3">SBA Assistant</span>
-            <h1 className="display-5 fw-bold">Simplified SBA guidance for small business success.</h1>
-            <p className="lead text-muted">
-              Track current SBA program status, explore real-world use cases, and get intelligent funding recommendations in one streamlined workspace.
-            </p>
-            <div className="home-hero-actions d-flex flex-wrap gap-3 mt-4">
-              <Link to="/chat" className="btn btn-primary btn-lg">Start SBA Chat</Link>
-              <Link to="/" className="btn btn-outline-primary btn-lg">Browse Use Cases</Link>
-            </div>
-
-            <div className="hero-prompt-cards row g-3 mt-5">
-              {promptCards.map((card, index) => (
-                <div key={index} className="col-12 col-sm-6">
-                  <div className="prompt-card p-3 rounded-4 shadow-sm h-100">
-                    <span className="prompt-label badge bg-secondary mb-2">{card.label}</span>
-                    <p className="mb-0 prompt-text">{card.prompt}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-          <div className="col-lg-6">
-            <div className="home-hero-visual shadow-lg rounded-4 overflow-hidden">
-              <img
-                src="/images/hero-dashboard.jpg"
-                alt="SBA assistant dashboard"
-                className="img-fluid home-hero-image"
-                loading="eager"
-              />
-            </div>
-          </div>
+    <main className="pp-home">
+      <section className="pp-hero">
+        <p className="pp-eyebrow">SBA workspace</p>
+        <h1 className="pp-hero-title">Clear guidance for small business funding.</h1>
+        <p className="pp-hero-lead">
+          Chat, browse resources, and run RAG workflows in one calm interface.
+        </p>
+        <div className="pp-hero-actions">
+          <Link to="/chat" className="pp-btn pp-btn-primary">
+            Start chat
+          </Link>
+          <Link to="/browse" className="pp-btn pp-btn-ghost">
+            Browse resources
+          </Link>
         </div>
       </section>
 
-      <section className="home-status container pb-5">
-        <div className="row g-4">
-          <div className="col-md-4">
-            <div className="status-card p-4 rounded-4 h-100">
-              <h5>Current SBA Status</h5>
-              <p className="text-muted">Live snapshot of SBA program availability and trending support areas.</p>
-              <ul className="status-list list-unstyled mt-4">
-                <li><strong>Open applications:</strong> 12,400+</li>
-                <li><strong>Approval rate:</strong> 86% for SBA 7(a)</li>
-                <li><strong>Top sector:</strong> Technology & services</li>
-              </ul>
-            </div>
-          </div>
-          <div className="col-md-8">
-            <div className="suggestion-panel p-4 rounded-4 h-100">
-              <div className="d-flex justify-content-between align-items-start mb-3">
-                <div>
-                  <span className="badge bg-white text-dark">Use Case Suggestions</span>
-                  <h4 className="mt-3">Get started with the most valuable SBA scenarios</h4>
-                </div>
-                <div className="text-end text-muted">
-                  <small>Updated daily • Photorealistic insights</small>
-                </div>
-              </div>
-              <div className="row g-3">
-                {useCases.map((useCase, index) => (
-                  <div key={index} className="col-sm-6 col-xl-4">
-                    <div className="use-case-card rounded-4 overflow-hidden h-100 shadow-sm">
-                      <img src={useCase.image} alt={useCase.alt} className="img-fluid" loading="lazy" />
-                      <div className="p-3 bg-dark text-white">
-                        <h6 className="mb-2">{useCase.title}</h6>
-                        <p className="small text-white-75 mb-0">{useCase.description}</p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
+      <section className="pp-prompt-grid" aria-label="Suggested prompts">
+        {prompts.map((item) => (
+          <Link
+            key={item.label}
+            to="/chat"
+            className="pp-prompt-card"
+            state={{ draft: item.text }}
+          >
+            <span className="pp-prompt-label">{item.label}</span>
+            <span className="pp-prompt-text">{item.text}</span>
+          </Link>
+        ))}
+      </section>
+
+      <section className="pp-feature-row" aria-label="Workspace areas">
+        <div className="pp-feature">
+          <h2>Chat</h2>
+          <p>Ask concierge-style questions about SBA programs and next steps.</p>
+        </div>
+        <div className="pp-feature">
+          <h2>RAG</h2>
+          <p>Query the local knowledge base when live embeddings are offline.</p>
+        </div>
+        <div className="pp-feature">
+          <h2>Tasks</h2>
+          <p>Submit orchestration jobs with soft fallbacks for reliability.</p>
         </div>
       </section>
     </main>

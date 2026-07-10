@@ -39,19 +39,23 @@ def create_app(config_name=None):
         'http://localhost',
         'http://localhost:3000',
         'http://127.0.0.1',
+        'http://127.0.0.1:3000',
         'http://frontend:80',
     ]
     cors_origins = app.config.get('FRONTEND_URL')
     if cors_origins and cors_origins not in allowed_origins:
         allowed_origins.append(cors_origins)
 
+    # Prebuilt frontend (main.*.js) sends Cache-Control on health fetches.
+    # Use broad allow_headers so preflight never fails on browser-added headers.
     CORS(app, resources={
-        r"/api/*": {
+        r"/*": {
             "origins": allowed_origins,
-            "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-            "allow_headers": ["Content-Type", "Authorization"],
+            "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH", "HEAD"],
+            "allow_headers": "*",
             "supports_credentials": False,
-            "expose_headers": ["Access-Control-Allow-Origin"]
+            "expose_headers": ["Access-Control-Allow-Origin"],
+            "max_age": 86400,
         }
     })
 
@@ -67,6 +71,24 @@ def create_app(config_name=None):
     app.register_blueprint(sba_bp, url_prefix='/api/sba')
     app.register_blueprint(rag_bp, url_prefix='/api/rag')
     app.register_blueprint(orchestrator_bp, url_prefix='/api/orchestrator')
+
+    # Compat: older/baked frontend uses baseURL .../api + path /api/health → /api/api/health
+    @app.route('/api/api/health', methods=['GET', 'OPTIONS', 'HEAD'])
+    def health_double_api_prefix():
+        return jsonify({
+            'status': 'healthy',
+            'server': {'self': request.host_url.rstrip('/')},
+            'compat': 'api_double_prefix',
+        }), 200
+
+    @app.route('/api/api/info', methods=['GET', 'OPTIONS', 'HEAD'])
+    def info_double_api_prefix():
+        return jsonify({
+            'service': 'PocketPro SBA',
+            'version': '1.0.0',
+            'status': 'operational',
+            'compat': 'api_double_prefix',
+        }), 200
 
     # Initialize Gemini RAG service
     try:
@@ -102,13 +124,55 @@ def create_app(config_name=None):
     def test_cors():
         return jsonify({'message': 'CORS test successful'})
 
+    def _cors_origin_allowed(origin: str) -> bool:
+        if not origin:
+            return False
+        if origin in allowed_origins:
+            return True
+        # Dev convenience: any localhost / 127.0.0.1 port
+        return origin.startswith('http://localhost:') or origin.startswith('http://127.0.0.1:')
+
     @app.before_request
     def log_request_info():
         logger.info('Request: %s %s', request.method, request.path)
+        # Fast-path OPTIONS so preflight never depends on blueprint 404s
+        if request.method == 'OPTIONS':
+            resp = app.make_default_options_response()
+            origin = request.headers.get('Origin')
+            if _cors_origin_allowed(origin):
+                resp.headers['Access-Control-Allow-Origin'] = origin
+                resp.headers['Access-Control-Allow-Methods'] = (
+                    'GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD'
+                )
+                req_hdrs = request.headers.get('Access-Control-Request-Headers')
+                resp.headers['Access-Control-Allow-Headers'] = (
+                    req_hdrs
+                    or 'Content-Type, Authorization, Cache-Control, Pragma, Expires, Accept, Origin, X-Requested-With'
+                )
+                resp.headers['Access-Control-Max-Age'] = '86400'
+                resp.headers['Vary'] = 'Origin'
+            return resp
 
     @app.after_request
     def log_response_info(response):
         logger.info('Response: %s', response.status)
+        # Belt-and-suspenders CORS for all responses (including 404 error handlers)
+        origin = request.headers.get('Origin')
+        if _cors_origin_allowed(origin):
+            response.headers['Access-Control-Allow-Origin'] = origin
+            req_hdrs = request.headers.get('Access-Control-Request-Headers')
+            if req_hdrs:
+                response.headers['Access-Control-Allow-Headers'] = req_hdrs
+            else:
+                response.headers.setdefault(
+                    'Access-Control-Allow-Headers',
+                    'Content-Type, Authorization, Cache-Control, Pragma, Expires, Accept, Origin, X-Requested-With',
+                )
+            response.headers.setdefault(
+                'Access-Control-Allow-Methods',
+                'GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD',
+            )
+            response.headers.setdefault('Vary', 'Origin')
         return response
 
     @app.errorhandler(400)

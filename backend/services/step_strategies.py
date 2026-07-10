@@ -32,11 +32,17 @@ class DefaultStrategy(StepStrategy):
     def execute(self, step) -> Dict[str, Any]:
         """Execute step using default approach"""
         try:
-            from services.api_service import execute_step_service
-            result = execute_step_service(step.data)
+            try:
+                from backend.services.api_service import execute_step_service
+            except ImportError:
+                from services.api_service import execute_step_service
+            payload = step.data if hasattr(step, "data") else (step if isinstance(step, dict) else {})
+            result = execute_step_service(payload if isinstance(payload, dict) else {"instruction": str(payload)})
+            if not isinstance(result, dict):
+                return {'success': True, 'data': {'result': result}, 'error': None}
             return {
-                'success': result.get('success', False),
-                'data': result.get('data', {}),
+                'success': result.get('success', True),
+                'data': result.get('data', result),
                 'error': result.get('error')
             }
         except Exception as e:
@@ -51,16 +57,7 @@ class ConservativeStrategy(StepStrategy):
 
     def execute(self, step) -> Dict[str, Any]:
         """Execute step with conservative approach"""
-        try:
-            from services.api_service import execute_step_service
-            result = execute_step_service(step.data)
-            return {
-                'success': result.get('success', False),
-                'data': result.get('data', {}),
-                'error': result.get('error')
-            }
-        except Exception as e:
-            return {'success': False, 'error': str(e)}
+        return DefaultStrategy().execute(step)
 
 class AggressiveStrategy(StepStrategy):
     """Aggressive strategy optimized for speed"""
@@ -71,16 +68,7 @@ class AggressiveStrategy(StepStrategy):
 
     def execute(self, step) -> Dict[str, Any]:
         """Execute step with aggressive approach"""
-        try:
-            from services.api_service import execute_step_service
-            result = execute_step_service(step.data)
-            return {
-                'success': result.get('success', False),
-                'data': result.get('data', {}),
-                'error': result.get('error')
-            }
-        except Exception as e:
-            return {'success': False, 'error': str(e)}
+        return DefaultStrategy().execute(step)
 
 class DocumentSearchStrategy(DefaultStrategy):
     @property

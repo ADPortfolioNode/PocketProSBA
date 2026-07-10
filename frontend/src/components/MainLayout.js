@@ -10,9 +10,12 @@ import ModernConciergeChat from './ModernConciergeChat';
 import UploadsManagerComponent from './UploadsManager';
 import SBAContent from './SBAContent';
 import TaskOrchestrator from './TaskOrchestrator';
+import Home from './Home';
 import { useConnection } from '../hooks/useConnection'; // Import the new hook
 
 const ROUTE_TAB_MAP = {
+  '': 'home',
+  home: 'home',
   chat: 'chat',
   browse: 'browse',
   rag: 'rag',
@@ -22,11 +25,11 @@ const ROUTE_TAB_MAP = {
 };
 
 function MainLayout({ useConnectionHook = useConnection }) {
-  const [activeTab, setActiveTab] = useState('chat');
+  const [activeTab, setActiveTab] = useState('home');
   const location = useLocation();
 
   const resolveTabFromPath = (pathname) => {
-    const segment = pathname.split('/')[1].toLowerCase();
+    const segment = (pathname.split('/')[1] || '').toLowerCase();
     return ROUTE_TAB_MAP[segment] || 'chat';
   };
 
@@ -184,6 +187,8 @@ function MainLayout({ useConnectionHook = useConnection }) {
     }
 
     switch (activeTab) {
+      case 'home':
+        return <Home />;
       case 'chat':
         return (
           <ModernConciergeChat
@@ -205,28 +210,22 @@ function MainLayout({ useConnectionHook = useConnection }) {
       case 'orchestrator':
         return <TaskOrchestrator />;
       default:
-        return (
-          <ModernConciergeChat
-            onSend={handleChatSend}
-            messages={messages}
-            loading={!serverConnected}
-            userName="User"
-            connectionInfo={connectionInfo}
-          />
-        );
+        return <Home />;
     }
   };
 
   return (
-    <div className="d-flex flex-column min-vh-100">
+    <div className="pp-app d-flex flex-column min-vh-100">
       <Header />
       <SBANavigation
         serverConnected={serverConnected}
         apiUrl={apiUrl}
       />
-      <Container className="flex-grow-1">
-        {renderContent()}
-      </Container>
+      <main className="pp-main flex-grow-1">
+        <Container className="pp-main-inner">
+          {renderContent()}
+        </Container>
+      </main>
       <Footer />
     </div>
   );

@@ -6,21 +6,22 @@ import Login from './Login';
 import Register from './Register';
 import ForgotPassword from './ForgotPassword';
 import MainLayout from './components/MainLayout';
-import Home from './components/Home';
 import { AppProvider } from './context/AppProvider';
 
 function App() {
   return (
     <AppProvider>
-      <Router>
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/" element={<Home />} />
-          <Route path="/*" element={<MainLayout />} />
-        </Routes>
-      </Router>
+      <div className="pp-app">
+        <Router>
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            {/* Home + app tabs share one minimal shell (MainLayout) */}
+            <Route path="/*" element={<MainLayout />} />
+          </Routes>
+        </Router>
+      </div>
     </AppProvider>
   );
 }

@@ -11,7 +11,8 @@ const ServerStatusMonitor = ({ onStatusChange }) => {
   const checkServer = async () => {
     setStatus('checking');
     try {
-      const response = await apiClient.get('/health');
+      // Prefer /api/health (apiClient baseURL is host without trailing /api)
+      const response = await apiClient.get('/api/health');
       setServerInfo(response.data);
       setStatus('online');
       setMessage('Connected to server successfully');
