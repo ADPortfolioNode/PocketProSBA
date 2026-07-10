@@ -16,7 +16,12 @@ def _page_args():
         page = int(request.args.get('page', 1))
     except (TypeError, ValueError):
         page = 1
-    return query, max(1, page)
+    fresh_raw = (request.args.get('fresh') or request.args.get('force_fresh') or '').lower()
+    force_fresh = fresh_raw in ('1', 'true', 'yes')
+    if force_fresh:
+        from backend.services.SBA_Content import clear_sba_cache
+        clear_sba_cache()
+    return query, max(1, page), force_fresh
 
 
 def _envelope(result, page=1):
@@ -27,8 +32,11 @@ def _envelope(result, page=1):
             'totalPages': 0,
             'currentPage': page,
             'degraded': True,
+            'is_current': False,
+            'freshness': 'not_current',
             'message': 'Unexpected SBA client response',
             'source': 'unknown',
+            'render_policy': 'current_unless_rag',
         }
 
     # Hard error with no items
@@ -39,8 +47,11 @@ def _envelope(result, page=1):
             'totalPages': 0,
             'currentPage': page,
             'degraded': True,
+            'is_current': False,
+            'freshness': 'not_current',
             'message': result.get('message') or result.get('error'),
             'source': result.get('source', 'unknown'),
+            'render_policy': 'current_unless_rag',
         }
 
     items = result.get('items')
@@ -50,14 +61,23 @@ def _envelope(result, page=1):
         items = []
 
     total_pages = result.get('totalPages', result.get('total_pages', 1 if items else 0))
+    is_current = result.get('is_current')
+    if is_current is None:
+        is_current = result.get('source', '').startswith('sba_html') or result.get('source') in (
+            'legacy_json', 'sbir',
+        )
     return {
         'items': items,
         'totalPages': total_pages,
         'currentPage': result.get('currentPage', page),
         'count': result.get('count', len(items)),
         'degraded': bool(result.get('degraded')),
+        'is_current': bool(is_current),
+        'freshness': result.get('freshness') or ('current' if is_current else 'not_current'),
+        'retrieved_at': result.get('retrieved_at'),
         'source': result.get('source'),
         'message': result.get('message'),
+        'render_policy': result.get('render_policy') or 'current_unless_rag',
     }
 
 
@@ -141,9 +161,9 @@ def source_status():
 
 @sba_bp.route('/content/articles', methods=['GET'])
 def search_articles():
-    query, page = _page_args()
+    query, page, force_fresh = _page_args()
     try:
-        result = sba_api.search_articles(query=query, page=page)
+        result = sba_api.search_articles(query=query, page=page, fresh=force_fresh)
         return jsonify(_envelope(result, page)), 200
     except Exception as e:
         logger.error("Error searching articles: %s", e)
@@ -164,9 +184,9 @@ def get_article_details(article_id):
 
 @sba_bp.route('/content/blogs', methods=['GET'])
 def search_blogs():
-    query, page = _page_args()
+    query, page, force_fresh = _page_args()
     try:
-        result = sba_api.search_blogs(query=query, page=page)
+        result = sba_api.search_blogs(query=query, page=page, fresh=force_fresh)
         return jsonify(_envelope(result, page)), 200
     except Exception as e:
         logger.error("Error searching blogs: %s", e)
@@ -175,9 +195,9 @@ def search_blogs():
 
 @sba_bp.route('/content/courses', methods=['GET'])
 def search_courses():
-    query, page = _page_args()
+    query, page, force_fresh = _page_args()
     try:
-        result = sba_api.search_courses(query=query, page=page)
+        result = sba_api.search_courses(query=query, page=page, fresh=force_fresh)
         return jsonify(_envelope(result, page)), 200
     except Exception as e:
         logger.error("Error searching courses: %s", e)
@@ -186,9 +206,9 @@ def search_courses():
 
 @sba_bp.route('/content/documents', methods=['GET'])
 def search_documents():
-    query, page = _page_args()
+    query, page, force_fresh = _page_args()
     try:
-        result = sba_api.search_documents(query=query, page=page)
+        result = sba_api.search_documents(query=query, page=page, fresh=force_fresh)
         return jsonify(_envelope(result, page)), 200
     except Exception as e:
         logger.error("Error searching documents: %s", e)
@@ -197,9 +217,9 @@ def search_documents():
 
 @sba_bp.route('/content/events', methods=['GET'])
 def search_events():
-    query, page = _page_args()
+    query, page, force_fresh = _page_args()
     try:
-        result = sba_api.search_events(query=query, page=page)
+        result = sba_api.search_events(query=query, page=page, fresh=force_fresh)
         return jsonify(_envelope(result, page)), 200
     except Exception as e:
         logger.error("Error searching events: %s", e)
@@ -208,9 +228,9 @@ def search_events():
 
 @sba_bp.route('/content/offices', methods=['GET'])
 def search_offices():
-    query, page = _page_args()
+    query, page, force_fresh = _page_args()
     try:
-        result = sba_api.search_offices(query=query, page=page)
+        result = sba_api.search_offices(query=query, page=page, fresh=force_fresh)
         return jsonify(_envelope(result, page)), 200
     except Exception as e:
         logger.error("Error searching offices: %s", e)
@@ -219,10 +239,10 @@ def search_offices():
 
 @sba_bp.route('/content/loans', methods=['GET'])
 def search_loans():
-    """Official SBA loan program content (HTML + curated catalog)."""
-    query, page = _page_args()
+    """Official SBA loan program content — current live page text when available."""
+    query, page, force_fresh = _page_args()
     try:
-        result = sba_api.search_loans(query=query, page=page)
+        result = sba_api.search_loans(query=query, page=page, fresh=force_fresh)
         return jsonify(_envelope(result, page)), 200
     except Exception as e:
         logger.error("Error searching loans: %s", e)
@@ -234,9 +254,9 @@ def search_sbir():
     """
     SBIR/STTR public awards API.
     Docs: https://www.sbir.gov/api
-    Query params: query/firm, agency, year, page, rows
+    Query params: query/firm, agency, year, page, rows, fresh
     """
-    query, page = _page_args()
+    query, page, force_fresh = _page_args()
     agency = request.args.get('agency')
     firm = request.args.get('firm') or (query if query else None)
     year = request.args.get('year')
@@ -259,7 +279,6 @@ def search_sbir():
             page=page,
         )
         env = _envelope(result, page)
-        # Soft 200 even when rate-limited so Browse UI does not hard-fail
         return jsonify(env), 200
     except Exception as e:
         logger.error("Error searching SBIR awards: %s", e)
@@ -268,9 +287,9 @@ def search_sbir():
 
 @sba_bp.route('/content/lenders', methods=['GET'])
 def search_lenders():
-    query, page = _page_args()
+    query, page, force_fresh = _page_args()
     try:
-        result = sba_api.search_lenders(query=query, page=page)
+        result = sba_api.search_lenders(query=query, page=page, fresh=force_fresh)
         return jsonify(_envelope(result, page)), 200
     except Exception as e:
         logger.error("Error searching lenders: %s", e)

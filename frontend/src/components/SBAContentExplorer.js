@@ -13,6 +13,13 @@ const SBAContentExplorer = ({ selectedResource, endpoints }) => {
   const [selectedItem, setSelectedItem] = useState(null);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [resultMeta, setResultMeta] = useState({
+    is_current: null,
+    freshness: null,
+    retrieved_at: null,
+    source: null,
+    message: null,
+  });
 
   // Content type options (aligned with multi-source backend)
   const contentTypes = [
@@ -92,7 +99,8 @@ const SBAContentExplorer = ({ selectedResource, endpoints }) => {
         return;
       }
       const response = await apiClient.get(endpoint, {
-        params: { query: searchQuery, page: pageNum }
+        // Prefer current live SBA content (backend clears short TTL when fresh=1)
+        params: { query: searchQuery, page: pageNum, fresh: 1 }
       });
 
       // Expect response.items to be an array of nodes, each with possible children
@@ -101,15 +109,33 @@ const SBAContentExplorer = ({ selectedResource, endpoints }) => {
         setTotalPages(response.data.totalPages || 1);
         setPage(pageNum);
         setNodeMap({}); // Reset node map on new search
-        if (response.data.degraded || response.data.items.length === 0) {
+        setResultMeta({
+          is_current: response.data.is_current,
+          freshness: response.data.freshness,
+          retrieved_at: response.data.retrieved_at,
+          source: response.data.source,
+          message: response.data.message,
+        });
+        if (response.data.is_current === false) {
           setError(
             response.data.message ||
-              'SBA.gov content is temporarily unavailable. Try RAG chat or SBA overview for local guidance.'
+              'Showing offline/fallback SBA info (not current). Live sba.gov content unavailable.'
           );
+        } else if (response.data.items.length === 0) {
+          setError(response.data.message || 'No SBA content found for your query.');
+        } else {
+          setError(null);
         }
       } else {
         setError('No SBA content found for your query.');
         setResults([]);
+        setResultMeta({
+          is_current: false,
+          freshness: 'not_current',
+          retrieved_at: null,
+          source: null,
+          message: null,
+        });
       }
     } catch (err) {
       console.error('Error searching SBA content:', err);
@@ -432,34 +458,68 @@ const SBAContentExplorer = ({ selectedResource, endpoints }) => {
           const hasChildren = item.hasChildren || (nodeMap[item.id] && nodeMap[item.id].length > 0);
           const expanded = expandedNodes[item.id];
           return (
-            <ListGroup.Item key={item.id} className="d-flex align-items-center">
-              <div style={{ flex: 1 }}>
-                <span style={{ fontWeight: 'bold' }}>{item.title}</span>
-                {item.summary && <span className="ms-2 text-muted">{item.summary.substring(0, 60)}...</span>}
-              </div>
-              {hasChildren && (
+            <ListGroup.Item key={item.id || idx} className="d-flex flex-column align-items-stretch gap-2">
+              <div className="d-flex align-items-start gap-2">
+                <div style={{ flex: 1 }}>
+                  <div className="d-flex flex-wrap align-items-center gap-2">
+                    <span style={{ fontWeight: 'bold' }}>{item.title || item.name}</span>
+                    {item.is_current === true && (
+                      <Badge bg="success" title={item.retrieved_at || ''}>Current</Badge>
+                    )}
+                    {item.is_current === false && (
+                      <Badge bg="secondary" title="Not live sba.gov content">Not current</Badge>
+                    )}
+                    {item.source && (
+                      <Badge bg="light" text="dark">{item.source}</Badge>
+                    )}
+                  </div>
+                  {(item.description || item.summary) && (
+                    <div className="text-muted small mt-1">
+                      {(item.description || item.summary).substring(0, 280)}
+                      {(item.description || item.summary).length > 280 ? '…' : ''}
+                    </div>
+                  )}
+                  {item.url && (
+                    <a
+                      href={item.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="small"
+                    >
+                      Open official source
+                    </a>
+                  )}
+                </div>
+                {hasChildren && (
+                  <Button
+                    variant="outline-secondary"
+                    size="sm"
+                    className="me-2"
+                    onClick={async () => {
+                      setExpandedNodes(prev => ({ ...prev, [item.id]: !expanded }));
+                      if (!expanded && !nodeMap[item.id]) {
+                        await fetchNodeChildren(item.id);
+                      }
+                    }}
+                    aria-label={expanded ? 'Collapse' : 'Expand'}
+                  >
+                    {expanded ? '-' : '+'}
+                  </Button>
+                )}
                 <Button
-                  variant="outline-secondary"
+                  variant="primary"
                   size="sm"
-                  className="me-2"
-                  onClick={async () => {
-                    setExpandedNodes(prev => ({ ...prev, [item.id]: !expanded }));
-                    if (!expanded && !nodeMap[item.id]) {
-                      await fetchNodeChildren(item.id);
+                  onClick={() => {
+                    if (item.url) {
+                      window.open(item.url, '_blank', 'noopener,noreferrer');
+                    } else {
+                      viewContentDetails(item.id);
                     }
                   }}
-                  aria-label={expanded ? 'Collapse' : 'Expand'}
                 >
-                  {expanded ? '-' : '+'}
+                  {item.url ? 'Open' : 'View'}
                 </Button>
-              )}
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={() => viewContentDetails(item.id)}
-              >
-                View
-              </Button>
+              </div>
               {expanded && nodeMap[item.id] && (
                 <div style={{ width: '100%' }}>
                   {renderNodeTree(nodeMap[item.id], level + 1)}
@@ -506,7 +566,22 @@ const SBAContentExplorer = ({ selectedResource, endpoints }) => {
         <h1 className="display-4 text-white fw-bold mb-3" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.3)' }}>
           SBA Content Explorer
         </h1>
-        <p className="lead text-white-50">Discover SBA resources, articles, courses, and more</p>
+        <p className="lead text-white-50">
+          Live sba.gov content when available — RAG/offline answers are labeled not current
+        </p>
+        {resultMeta?.freshness && (
+          <div className="d-inline-flex flex-wrap gap-2 align-items-center bg-white rounded-pill px-3 py-2 shadow-sm">
+            <Badge bg={resultMeta.is_current ? 'success' : 'secondary'}>
+              {resultMeta.is_current ? 'Current (live SBA)' : 'Not current'}
+            </Badge>
+            {resultMeta.source && <span className="small text-muted">source: {resultMeta.source}</span>}
+            {resultMeta.retrieved_at && (
+              <span className="small text-muted">
+                retrieved: {new Date(resultMeta.retrieved_at).toLocaleString()}
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Resource Status Section - Modern Design */}

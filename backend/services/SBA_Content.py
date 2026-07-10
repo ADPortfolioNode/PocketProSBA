@@ -54,6 +54,7 @@ import logging
 import os
 import re
 import time
+from datetime import datetime, timezone
 from html.parser import HTMLParser
 from typing import Any, Dict, List, Optional, Tuple
 from urllib.parse import urljoin, urlencode
@@ -82,9 +83,15 @@ DEFAULT_HEADERS = {
     "Accept": "application/json, text/html;q=0.9,*/*;q=0.8",
 }
 
-# In-process TTL cache (seconds) to avoid thrashing external sites on low-RAM hosts
+# Short TTL so non-RAG rendered SBA info stays current.
+# Static/RAG content is never claimed as "current".
 _CACHE: Dict[str, Tuple[float, Any]] = {}
-_CACHE_TTL = int(os.getenv("SBA_CACHE_TTL_SECONDS", "300"))
+_CACHE_TTL = int(os.getenv("SBA_CACHE_TTL_SECONDS", "90"))
+_LIVE_SOURCES = frozenset({"legacy_json", "sbir", "sba_html", "sba_html+live"})
+
+
+def _now_iso() -> str:
+    return datetime.now(timezone.utc).isoformat()
 
 
 def _cache_get(key: str) -> Optional[Any]:
@@ -102,21 +109,47 @@ def _cache_set(key: str, value: Any, ttl: int = _CACHE_TTL) -> None:
     _CACHE[key] = (time.time() + ttl, value)
 
 
-class _LinkHeadingParser(HTMLParser):
-    """Extract (text, href) pairs and h1-h3 headings from SBA HTML pages."""
+def clear_sba_cache() -> None:
+    """Drop all in-process SBA caches (used when ?fresh=1)."""
+    _CACHE.clear()
+
+
+class _PageContentParser(HTMLParser):
+    """Extract links, headings, meta description, and visible paragraph text."""
 
     def __init__(self) -> None:
         super().__init__()
         self.links: List[Dict[str, str]] = []
         self.headings: List[str] = []
+        self.meta_description = ""
+        self.paragraphs: List[str] = []
+        self.title = ""
         self._in_a = False
         self._a_href = ""
         self._a_text: List[str] = []
         self._in_heading = False
         self._heading_text: List[str] = []
+        self._in_p = False
+        self._p_text: List[str] = []
+        self._in_title = False
+        self._title_text: List[str] = []
+        self._skip_depth = 0  # script/style/noscript
 
     def handle_starttag(self, tag, attrs):
         attrs_d = dict(attrs)
+        if tag in ("script", "style", "noscript", "svg"):
+            self._skip_depth += 1
+            return
+        if self._skip_depth:
+            return
+        if tag == "meta":
+            name = (attrs_d.get("name") or attrs_d.get("property") or "").lower()
+            if name in ("description", "og:description") and attrs_d.get("content"):
+                if not self.meta_description:
+                    self.meta_description = attrs_d["content"].strip()
+        if tag == "title":
+            self._in_title = True
+            self._title_text = []
         if tag == "a" and attrs_d.get("href"):
             self._in_a = True
             self._a_href = attrs_d.get("href", "")
@@ -124,8 +157,19 @@ class _LinkHeadingParser(HTMLParser):
         if tag in ("h1", "h2", "h3"):
             self._in_heading = True
             self._heading_text = []
+        if tag == "p":
+            self._in_p = True
+            self._p_text = []
 
     def handle_endtag(self, tag):
+        if tag in ("script", "style", "noscript", "svg"):
+            self._skip_depth = max(0, self._skip_depth - 1)
+            return
+        if self._skip_depth:
+            return
+        if tag == "title" and self._in_title:
+            self.title = re.sub(r"\s+", " ", "".join(self._title_text)).strip()
+            self._in_title = False
         if tag == "a" and self._in_a:
             text = re.sub(r"\s+", " ", "".join(self._a_text)).strip()
             href = self._a_href.strip()
@@ -137,12 +181,89 @@ class _LinkHeadingParser(HTMLParser):
             if text and len(text) > 2:
                 self.headings.append(text)
             self._in_heading = False
+        if tag == "p" and self._in_p:
+            text = re.sub(r"\s+", " ", "".join(self._p_text)).strip()
+            if len(text) >= 40:
+                self.paragraphs.append(text)
+            self._in_p = False
 
     def handle_data(self, data):
+        if self._skip_depth:
+            return
+        if self._in_title:
+            self._title_text.append(data)
         if self._in_a:
             self._a_text.append(data)
         if self._in_heading:
             self._heading_text.append(data)
+        if self._in_p:
+            self._p_text.append(data)
+
+
+# Back-compat alias used by older call sites in this module
+_LinkHeadingParser = _PageContentParser
+
+
+_BOILERPLATE_SNIPPETS = (
+    "an official website of the united states government",
+    "official websites use .gov",
+    "secure .gov websites use https",
+    "here's how you know",
+    "share this page",
+    "last updated",
+    "javascript",
+    "freedom 250",
+    "small business pledge",
+    "get your free certificate",
+    "honor america",
+)
+
+
+def _is_boilerplate(text: str) -> bool:
+    low = (text or "").lower()
+    if len(low) < 40:
+        return True
+    return any(b in low for b in _BOILERPLATE_SNIPPETS)
+
+
+def _strip_promos(text: str) -> str:
+    """Remove leading promo sentences that appear on many sba.gov pages."""
+    if not text:
+        return ""
+    # Drop sentences that are pure site-wide campaigns
+    sentences = re.split(r"(?<=[.!?])\s+", text.strip())
+    kept = [s for s in sentences if not _is_boilerplate(s)]
+    return " ".join(kept).strip() or text.strip()
+
+
+def _snippet_from_parser(parser: _PageContentParser, max_len: int = 480) -> str:
+    """Prefer meta description, then first non-banner paragraphs from the live page."""
+    parts: List[str] = []
+    if parser.meta_description and not _is_boilerplate(parser.meta_description):
+        parts.append(_strip_promos(parser.meta_description.strip()))
+    for p in parser.paragraphs:
+        cleaned = _strip_promos(p)
+        if not cleaned or _is_boilerplate(cleaned):
+            continue
+        # Prefer paragraphs that mention loans/programs when available
+        if cleaned not in parts:
+            parts.append(cleaned)
+        if len(" ".join(parts)) >= max_len:
+            break
+    # Prefer loan-ish paragraphs first
+    loanish = [p for p in parts if re.search(r"\b(loan|7\(a\)|504|microloan|financ|lender)\b", p, re.I)]
+    if loanish:
+        parts = loanish + [p for p in parts if p not in loanish]
+    if len(" ".join(parts)) < 80:
+        for h in parser.headings:
+            if not _is_boilerplate(h) and h not in parts:
+                parts.append(h)
+            if len(" ".join(parts)) >= 120:
+                break
+    text = " ".join(parts).strip()
+    if len(text) > max_len:
+        text = text[: max_len - 1].rsplit(" ", 1)[0] + "…"
+    return text
 
 
 def _normalize_page(
@@ -152,22 +273,50 @@ def _normalize_page(
     source: str = "static",
     degraded: bool = False,
     message: Optional[str] = None,
+    is_current: Optional[bool] = None,
+    retrieved_at: Optional[str] = None,
 ) -> Dict[str, Any]:
+    """
+    is_current=True  → live SBA.gov / public API fetch (suitable for rendered UI as current)
+    is_current=False → static fallback or RAG/KB (must not be presented as live SBA)
+    """
     page = max(1, int(page or 1))
     page_size = max(1, min(int(page_size or 20), 50))
     total = len(items)
     total_pages = max(1, (total + page_size - 1) // page_size) if total else 0
     start = (page - 1) * page_size
-    chunk = items[start : start + page_size]
+    retrieved_at = retrieved_at or _now_iso()
+    if is_current is None:
+        is_current = source in _LIVE_SOURCES and not degraded
+        # HTML scrape is still "current" (live page) even if labeled degraded vs JSON API
+        if source.startswith("sba_html"):
+            is_current = True
+        if source in ("static", "static_fallback", "rag", "local_kb_fallback"):
+            is_current = False
+
+    chunk = []
+    for raw in items[start : start + page_size]:
+        item = dict(raw) if isinstance(raw, dict) else {"title": str(raw)}
+        item.setdefault("is_current", is_current)
+        item.setdefault("retrieved_at", retrieved_at)
+        item.setdefault("freshness", "current" if is_current else "not_current")
+        item.setdefault("source", source)
+        chunk.append(item)
+
     out: Dict[str, Any] = {
         "items": chunk,
-        "results": chunk,  # legacy key used by some callers
+        "results": chunk,
         "total_pages": total_pages,
         "totalPages": total_pages,
         "currentPage": page,
         "count": total,
         "source": source,
         "degraded": degraded,
+        "is_current": is_current,
+        "freshness": "current" if is_current else "not_current",
+        "retrieved_at": retrieved_at,
+        # Policy flag for clients: non-RAG SBA UI should prefer is_current payloads
+        "render_policy": "current_unless_rag",
     }
     if message:
         out["message"] = message
@@ -226,29 +375,42 @@ class SBAContentAPI:
     # ------------------------------------------------------------------
     # HTTP helpers
     # ------------------------------------------------------------------
-    def _get_json(self, url: str, params: Optional[dict] = None, timeout: int = 12) -> Any:
+    def _get_json(
+        self,
+        url: str,
+        params: Optional[dict] = None,
+        timeout: int = 12,
+        force_fresh: bool = False,
+    ) -> Any:
         cache_key = f"json:{url}?{urlencode(params or {}, doseq=True)}"
-        cached = _cache_get(cache_key)
-        if cached is not None:
-            return cached
+        if not force_fresh:
+            cached = _cache_get(cache_key)
+            if cached is not None:
+                return cached
         try:
             response = self.session.get(url, params=params, timeout=timeout)
             if response.status_code == 429:
                 return {"error": "rate_limited", "status_code": 429, "success": False}
             response.raise_for_status()
             data = response.json()
-            _cache_set(cache_key, data)
+            _cache_set(cache_key, data, ttl=_CACHE_TTL)
             return data
         except requests.RequestException as e:
             return {"error": str(e), "success": False}
         except ValueError as e:
             return {"error": f"invalid_json: {e}", "success": False}
 
-    def _get_html(self, url: str, timeout: int = 15) -> Optional[str]:
+    def _get_html(
+        self,
+        url: str,
+        timeout: int = 15,
+        force_fresh: bool = False,
+    ) -> Optional[str]:
         cache_key = f"html:{url}"
-        cached = _cache_get(cache_key)
-        if cached is not None:
-            return cached
+        if not force_fresh:
+            cached = _cache_get(cache_key)
+            if cached is not None:
+                return cached
         try:
             response = self.session.get(
                 url,
@@ -257,11 +419,69 @@ class SBAContentAPI:
             )
             response.raise_for_status()
             text = response.text
-            _cache_set(cache_key, text, ttl=max(_CACHE_TTL, 600))
+            # Keep live page HTML fresh (short TTL) so rendered SBA info stays current
+            _cache_set(cache_key, text, ttl=_CACHE_TTL)
             return text
         except requests.RequestException as e:
             logger.warning("SBA HTML fetch failed %s: %s", url, e)
             return None
+
+    def _parse_page(self, html: str) -> _PageContentParser:
+        parser = _PageContentParser()
+        try:
+            parser.feed(html)
+        except Exception as e:
+            logger.warning("HTML parse failed: %s", e)
+        return parser
+
+    def _live_loan_program_cards(self, force_fresh: bool = False) -> List[Dict[str, Any]]:
+        """
+        Build loan program cards from *current* official SBA page text
+        (meta description + lead paragraphs), not hard-coded program terms.
+        """
+        retrieved_at = _now_iso()
+        programs = [
+            ("7a", "SBA 7(a) loans", self.LOAN_PAGES["7a"]),
+            ("504", "SBA 504 loans", self.LOAN_PAGES["504"]),
+            ("microloans", "SBA Microloans", self.LOAN_PAGES["microloans"]),
+            ("loans_hub", "SBA-backed loans overview", self.LOAN_PAGES["loans_hub"]),
+        ]
+        items: List[Dict[str, Any]] = []
+        for pid, fallback_title, url in programs:
+            html = self._get_html(url, force_fresh=force_fresh)
+            if not html:
+                continue
+            parser = self._parse_page(html)
+            title = fallback_title
+            # Prefer first H1 when it looks like a page title
+            for h in parser.headings[:3]:
+                if "loan" in h.lower() or "7(a)" in h.lower() or "504" in h or "micro" in h.lower():
+                    title = h
+                    break
+            if parser.title and "sba" in parser.title.lower():
+                # e.g. "7(a) loans | U.S. Small Business Administration"
+                t = parser.title.split("|")[0].strip()
+                if t:
+                    title = t
+            description = _snippet_from_parser(parser)
+            if not description:
+                continue
+            items.append(
+                {
+                    "id": pid,
+                    "title": title,
+                    "name": title,
+                    "description": description,
+                    "summary": description,
+                    "url": url,
+                    "type": "loan_program",
+                    "source_page": url,
+                    "is_current": True,
+                    "freshness": "current",
+                    "retrieved_at": retrieved_at,
+                }
+            )
+        return items
 
     def _legacy_search(self, content_type: str, **params) -> Dict[str, Any]:
         url = f"{self.base_url}/{content_type}.json"
@@ -443,37 +663,52 @@ class SBAContentAPI:
         item_type: str,
         query: str = "",
         page: int = 1,
+        force_fresh: bool = False,
     ) -> Optional[Dict[str, Any]]:
         items: List[Dict[str, Any]] = []
         seen = set()
+        retrieved_at = _now_iso()
+        page_summaries: List[Dict[str, Any]] = []
+
         for url in urls:
-            html = self._get_html(url)
+            html = self._get_html(url, force_fresh=force_fresh)
             if not html:
                 continue
-            parser = _LinkHeadingParser()
-            try:
-                parser.feed(html)
-            except Exception as e:
-                logger.warning("HTML parse failed for %s: %s", url, e)
-                continue
-            # Prefer in-site content links
+            parser = self._parse_page(html)
+            page_snippet = _snippet_from_parser(parser)
+
+            # One current page-level card from live meta/lead text
+            if page_snippet:
+                page_title = parser.title.split("|")[0].strip() if parser.title else url.rstrip("/").split("/")[-1]
+                for h in parser.headings[:2]:
+                    if len(h) > 8 and "navigation" not in h.lower():
+                        page_title = h
+                        break
+                page_summaries.append(
+                    {
+                        "id": abs(hash(("page", url))) % (10**10),
+                        "title": page_title,
+                        "description": page_snippet,
+                        "summary": page_snippet,
+                        "url": url,
+                        "type": item_type,
+                        "source_page": url,
+                        "is_current": True,
+                        "freshness": "current",
+                        "retrieved_at": retrieved_at,
+                    }
+                )
+
             for link in parser.links:
                 title = link["title"]
                 href = urljoin(SBA_SITE, link["href"])
                 if "sba.gov" not in href:
                     continue
-                # Skip chrome/nav noise
                 low = title.lower()
                 if low in {
-                    "home",
-                    "menu",
-                    "search",
-                    "skip to main content",
-                    "primary navigation",
-                    "footer navigation",
-                    "breadcrumb",
-                    "login",
-                    "sign in",
+                    "home", "menu", "search", "skip to main content",
+                    "primary navigation", "footer navigation", "breadcrumb",
+                    "login", "sign in", "share", "print",
                 }:
                     continue
                 if len(title) < 4 or len(title) > 160:
@@ -482,45 +717,38 @@ class SBAContentAPI:
                 if key in seen:
                     continue
                 seen.add(key)
+                # Prefer live page snippet when link is the same page section
+                desc = page_snippet if page_snippet and href.rstrip("/") == url.rstrip("/") else (
+                    f"Current link on sba.gov — open source for full official details."
+                )
                 items.append(
                     {
                         "id": abs(hash(key)) % (10**10),
                         "title": title,
-                        "description": f"From {url}",
+                        "description": desc,
+                        "summary": desc,
                         "url": href,
                         "type": item_type,
                         "source_page": url,
+                        "is_current": True,
+                        "freshness": "current",
+                        "retrieved_at": retrieved_at,
                     }
                 )
-            # Also capture headings as topic stubs when few links
-            if len(items) < 5:
-                for h in parser.headings:
-                    low = h.lower()
-                    if low in {"primary navigation", "breadcrumb", "footer navigation"}:
-                        continue
-                    key = (h.lower(), url)
-                    if key in seen:
-                        continue
-                    seen.add(key)
-                    items.append(
-                        {
-                            "id": abs(hash(key)) % (10**10),
-                            "title": h,
-                            "description": f"Topic on {url}",
-                            "url": url,
-                            "type": item_type,
-                            "source_page": url,
-                        }
-                    )
-        if not items:
+
+        # Put full-page current summaries first (best for rendered UI)
+        merged = page_summaries + items
+        if not merged:
             return None
-        items = _filter_items(items, query)
+        merged = _filter_items(merged, query)
         return _normalize_page(
-            items,
+            merged,
             page=page,
             source="sba_html",
-            degraded=True,
-            message="Served from official sba.gov HTML (JSON content API unavailable).",
+            degraded=False,
+            is_current=True,
+            retrieved_at=retrieved_at,
+            message="Live content extracted from official sba.gov pages.",
         )
 
     # ------------------------------------------------------------------
@@ -829,46 +1057,65 @@ class SBAContentAPI:
 
     def search_loans(self, **params) -> Dict[str, Any]:
         """
-        Loan program catalog: prefer live HTML from official loan pages,
-        fall back to curated catalog.
+        Loan program catalog for rendered UI.
+
+        Policy: use *current* official page text only when live fetch succeeds.
+        Hard-coded program blurbs are last-resort and marked is_current=false
+        (RAG/static — not for primary SBA rendering).
         """
         page = int(params.get("page") or 1)
         query = params.get("query") or params.get("q") or ""
+        force_fresh = bool(params.get("fresh") or params.get("force_fresh"))
 
-        html = self._extract_from_html_pages(
-            [
-                self.LOAN_PAGES["loans_hub"],
-                self.LOAN_PAGES["7a"],
-                self.LOAN_PAGES["504"],
-                self.LOAN_PAGES["microloans"],
-            ],
+        # 1) Live program cards built from current sba.gov page copy
+        live_cards = self._live_loan_program_cards(force_fresh=force_fresh)
+        live_cards = _filter_items(live_cards, query)
+
+        # 2) Additional current links from the loans hub
+        hub = self._extract_from_html_pages(
+            [self.LOAN_PAGES["loans_hub"]],
             item_type="loan",
             query=query,
-            page=page,
+            page=1,
+            force_fresh=force_fresh,
         )
-        # Always merge curated loan types so UI has stable program cards
-        static_items = _filter_items(self._static_loan_items(), query)
-        if html and html.get("items"):
-            # Prepend static program cards (dedupe by title)
-            titles = {i.get("title", "").lower() for i in html["items"]}
-            merged = list(static_items)
-            for item in html["items"]:
-                if item.get("title", "").lower() not in titles:
-                    merged.append(item)
+        extra = []
+        if hub and hub.get("items"):
+            known = {c.get("url", "").rstrip("/") for c in live_cards}
+            for item in hub["items"]:
+                u = (item.get("url") or "").rstrip("/")
+                if u and u not in known:
+                    extra.append(item)
+
+        if live_cards:
+            merged = live_cards + extra
             return _normalize_page(
                 merged,
                 page=page,
-                source="sba_html+static",
-                degraded=True,
-                message="Loan content from official sba.gov pages + curated program cards.",
+                source="sba_html",
+                degraded=False,
+                is_current=True,
+                message="Current loan program text retrieved from official sba.gov pages.",
             )
 
+        # 3) Static only if live pages unreachable — explicitly not current
+        static_items = _filter_items(self._static_loan_items(), query)
+        for item in static_items:
+            item["is_current"] = False
+            item["freshness"] = "not_current"
+            item["description"] = (
+                f"[Offline fallback — may be outdated] {item.get('description', '')}"
+            )
         return _normalize_page(
             static_items,
             page=page,
             source="static",
             degraded=True,
-            message="Using curated loan catalog from official SBA program definitions.",
+            is_current=False,
+            message=(
+                "Live sba.gov pages unreachable. Showing offline fallback only "
+                "(not current). Retry with ?fresh=1 when online."
+            ),
         )
 
     def get_source_status(self) -> Dict[str, Any]:

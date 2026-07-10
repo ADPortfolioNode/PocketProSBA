@@ -340,6 +340,22 @@ def query_sba_documents():
             logger.warning("Query is required for SBA query")
             return jsonify({'error': 'Query is required'}), 400
 
+        def _mark_rag(payload: dict, mode: str) -> dict:
+            """RAG / KB answers are intentionally not claimed as live SBA.gov current."""
+            if not isinstance(payload, dict):
+                payload = {'answer': str(payload)}
+            payload['is_current'] = False
+            payload['freshness'] = 'not_current'
+            payload['source'] = mode
+            payload['render_policy'] = 'current_unless_rag'
+            payload.setdefault('mode', mode)
+            payload.setdefault(
+                'message',
+                'Answer from RAG/knowledge base — may not reflect the latest sba.gov content. '
+                'Use /api/sba/content/* for current official pages.',
+            )
+            return payload
+
         # Prefer enhanced Gemini RAG when fully initialized
         if getattr(enhanced_rag_service, 'is_initialized', False):
             try:
@@ -347,13 +363,13 @@ def query_sba_documents():
                 # If the service returns a soft error, fall back to local KB
                 if isinstance(result, dict) and result.get('error') and not result.get('answer'):
                     logger.warning("Enhanced RAG returned error; using local KB fallback: %s", result.get('error'))
-                    return jsonify(_local_kb_sba_answer(query))
-                return jsonify(result)
+                    return jsonify(_mark_rag(_local_kb_sba_answer(query), 'local_kb_fallback'))
+                return jsonify(_mark_rag(result if isinstance(result, dict) else {'answer': result}, 'gemini_rag'))
             except Exception as rag_err:
                 logger.warning("Enhanced RAG query failed; using local KB fallback: %s", rag_err)
 
         # Soft degrade: keyword search over on-disk knowledge base (no Gemini required)
-        return jsonify(_local_kb_sba_answer(query))
+        return jsonify(_mark_rag(_local_kb_sba_answer(query), 'local_kb_fallback'))
 
     except Exception as e:
         logger.error(f"Error querying SBA documents: {str(e)}")
@@ -361,18 +377,76 @@ def query_sba_documents():
 
 @rag_bp.route('/sba-overview', methods=['GET'])
 def get_sba_overview():
-    """Get SBA loan information overview (always available via static/local data)."""
+    """
+    SBA loan overview for UI.
+
+    Prefer *current* live loan content from /sba content client.
+    RAG/static catalog is only used when live fetch fails (and is marked not current).
+    """
     try:
-        # Static overview does not need embeddings or Gemini init
+        # 1) Current official loan content (non-RAG)
+        try:
+            from backend.services.SBA_Content import SBAContentAPI, clear_sba_cache
+            if (request.args.get('fresh') or '').lower() in ('1', 'true', 'yes'):
+                clear_sba_cache()
+            live = SBAContentAPI().search_loans(page=1, fresh=bool(request.args.get('fresh')))
+            if isinstance(live, dict) and live.get('is_current') and live.get('items'):
+                return jsonify({
+                    'available_loan_types': [
+                        {
+                            'type': item.get('title') or item.get('name'),
+                            'description': item.get('description') or item.get('summary'),
+                            'url': item.get('url'),
+                            'is_current': True,
+                            'retrieved_at': item.get('retrieved_at'),
+                        }
+                        for item in live.get('items', [])[:8]
+                        if item.get('type') in (None, 'loan_program', 'loan') or 'loan' in (item.get('title') or '').lower()
+                    ] or [
+                        {
+                            'type': i.get('title'),
+                            'description': i.get('description'),
+                            'url': i.get('url'),
+                            'is_current': True,
+                            'retrieved_at': i.get('retrieved_at'),
+                        }
+                        for i in live.get('items', [])[:6]
+                    ],
+                    'source': live.get('source'),
+                    'is_current': True,
+                    'freshness': 'current',
+                    'retrieved_at': live.get('retrieved_at'),
+                    'mode': 'live_sba',
+                    'message': live.get('message') or 'Current loan overview from official sba.gov pages.',
+                    'render_policy': 'current_unless_rag',
+                })
+        except Exception as live_err:
+            logger.warning("Live SBA overview failed; falling back to RAG/static: %s", live_err)
+
+        # 2) RAG/static — explicitly not current
         if getattr(enhanced_rag_service, 'is_initialized', False) and hasattr(enhanced_rag_service, 'get_sba_overview'):
             try:
                 overview = enhanced_rag_service.get_sba_overview()
                 if isinstance(overview, dict):
-                    overview.setdefault('mode', 'gemini_rag')
+                    overview['mode'] = 'gemini_rag'
+                    overview['is_current'] = False
+                    overview['freshness'] = 'not_current'
+                    overview['message'] = (
+                        'RAG overview (not live sba.gov). Prefer /api/sba/content/loans for current content.'
+                    )
                 return jsonify(overview)
             except Exception as ov_err:
                 logger.warning("Enhanced overview failed; static fallback: %s", ov_err)
-        return jsonify(_static_sba_overview())
+        static = _static_sba_overview()
+        if isinstance(static, dict):
+            static['is_current'] = False
+            static['freshness'] = 'not_current'
+            static['mode'] = static.get('mode') or 'static_fallback'
+            static['message'] = (
+                'Offline/static overview only — not current sba.gov content. '
+                'Retry /api/sba/content/loans?fresh=1 when network is available.'
+            )
+        return jsonify(static)
 
     except Exception as e:
         logger.error(f"Error getting SBA overview: {str(e)}")
