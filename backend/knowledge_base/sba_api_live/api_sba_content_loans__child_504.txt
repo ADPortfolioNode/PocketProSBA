@@ -1,0 +1,12 @@
+# SBA 504 loans
+Type: loan_program
+API path: /api/sba/content/loans/504
+Parent path: /api/sba/content/loans
+ID: 504
+
+The 504 loan program provides long-term, fixed rate financing for major fixed assets that promote business growth and job creation. 504 loans are available through Certified Development Companies (CDCs), SBA's community-based nonprofit partners who promote economic development within their communities. CDCs are certified and regulated by SBA. The maximum loan amount for a 504 loan is $5.5 million. To be eligible for a 504 loan, your business must: Share sensitive…
+
+Official URL: https://www.sba.gov/funding-programs/loans/504-loans
+Action: Explore children -> /api/sba/content/loans/504
+Action: Official source -> https://www.sba.gov/funding-programs/loans/504-loans
+Location: Online / see official page

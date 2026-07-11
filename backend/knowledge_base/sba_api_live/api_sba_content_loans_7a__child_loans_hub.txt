@@ -1,0 +1,10 @@
+# SBA-backed loans overview
+Type: loan_program
+API path: /api/sba/content/loans/loans_hub
+Parent path: /api/sba/content/loans
+ID: loans_hub
+
+Find out which SBA-guaranteed loan program is best for your business, then use Lender Match to be matched to lenders. Small Business Administration (SBA) helps small businesses get funding by setting guidelines for loans and reducing lender risk. These SBA-backed loans make it easier for small businesses to get the funding they need. Share sensitive information only on official, secure websites. SBA only makes direct loans in the case of businesses and homeowners recovering…
+
+Official URL: https://www.sba.gov/funding-programs/loans
+Location: Online / see official page

@@ -2,6 +2,7 @@ import os
 import logging
 import time
 import json
+import re
 import uuid
 from datetime import datetime
 
@@ -313,59 +314,122 @@ class Concierge(BaseAssistant):
         return "good"
     
     def _handle_document_search(self, message, conversation):
-        """Handle a document search request"""
+        """Handle a document search request — human-readable answer + clickable links."""
         self._update_status("searching", 50, "Searching for relevant documents...")
-        
+
+        # Prefer live SBA API digests (parent→child explore) when keyword match is strong
+        try:
+            from backend.routes.rag import _local_kb_sba_answer
+            from backend.services.link_enrichment import enrich_answer_with_links
+
+            kb = _local_kb_sba_answer(message, max_chunks=6)
+            if isinstance(kb, dict) and kb.get("mode") == "sba_api_live" and kb.get("answer"):
+                from pathlib import Path
+                from backend.services.chat_answer_format import (
+                    format_hits_as_answer,
+                    normalize_hits,
+                )
+
+                sources = kb.get("source_documents") or kb.get("sources") or []
+                full_docs = []
+                full_meta = []
+                for s in sources:
+                    if not isinstance(s, dict):
+                        continue
+                    meta = s.get("metadata") or {}
+                    path = str(meta.get("path") or "")
+                    body = s.get("content") or s.get("snippet") or ""
+                    # Prefer full live digest file (not tiny snippet)
+                    if path.endswith(".txt"):
+                        try:
+                            p = Path(path)
+                            if p.exists() and "manifest" not in p.name:
+                                body = p.read_text(encoding="utf-8", errors="replace")
+                        except Exception:
+                            pass
+                    if "manifest" in path:
+                        continue
+                    # Infer title/route from filename api_sba_content_loans_7a__overview.txt
+                    title = meta.get("title") or ""
+                    route = ""
+                    name = path.replace("\\", "/").rsplit("/", 1)[-1]
+                    m = re.match(r"api_sba_(.+?)__(?:combined|overview|child_[^.]+)\.txt$", name)
+                    if m:
+                        slug = m.group(1)
+                        if slug.startswith("content_"):
+                            rest = slug[len("content_") :]
+                            parts = rest.split("_")
+                            if parts:
+                                route = f"/api/sba/content/{parts[0]}"
+                                if len(parts) > 1:
+                                    route += "/" + "/".join(parts[1:])
+                        title = title or route.rstrip("/").rsplit("/", 1)[-1].replace("-", " ").replace("_", " ").title()
+                    full_docs.append(body)
+                    full_meta.append(
+                        {
+                            "source": "sba_api",
+                            "title": title,
+                            "route": route,
+                            "path": route or path,
+                            "url": "",
+                        }
+                    )
+                hits = normalize_hits(full_docs, full_meta)
+                if hits:
+                    text, sources = format_hits_as_answer(message, hits)
+                    return {"text": text, "sources": sources}
+                # Last resort: cleaned text + links (never raw Source N: sba_api)
+                text = re.sub(
+                    r"^Based on (live SBA API digests|the local SBA knowledge base)[^\n]*\n+",
+                    "",
+                    kb.get("answer") or "",
+                    flags=re.I,
+                )
+                text = enrich_answer_with_links(
+                    f"Here’s a clear summary from live SBA resources about **{message.strip()}**:\n\n{text}",
+                    sources,
+                )
+                return {"text": text, "sources": sources}
+        except Exception as kb_err:
+            logger.debug("local KB path soft-fail in document search: %s", kb_err)
+
         if not self.rag_manager:
-            return {
-                "text": "I'm sorry, but the document search functionality is not available at the moment.",
-                "sources": []
-            }
-        
+            try:
+                from backend.services.link_enrichment import enrich_answer_with_links
+                return {
+                    "text": enrich_answer_with_links(
+                        "Document search is limited right now. Use the links below to open live SBA resources.",
+                        [],
+                    ),
+                    "sources": [],
+                }
+            except Exception:
+                return {
+                    "text": "I'm sorry, but the document search functionality is not available at the moment.",
+                    "sources": [],
+                }
+
         # Perform search
-        results = self.rag_manager.query_documents(message, n_results=3)
-        
+        results = self.rag_manager.query_documents(message, n_results=6)
+
         if "error" in results:
             return {
                 "text": f"I encountered an error while searching: {results['error']}",
-                "sources": []
+                "sources": [],
             }
-        
-        # Format results
-        documents = results.get("documents", [[]])[0]
-        metadatas = results.get("metadatas", [[]])[0]
-        ids = results.get("ids", [[]])[0]
-        
-        if not documents:
-            return {
-                "text": "I couldn't find any relevant documents matching your query.",
-                "sources": []
-            }
-        
-        # Build response
-        formatted_sources = []
-        context = ""
-        
-        for i, (doc, meta, doc_id) in enumerate(zip(documents, metadatas, ids)):
-            source_name = meta.get("source", f"Document {i+1}")
-            formatted_sources.append({
-                "id": doc_id,
-                "name": source_name,
-                "content": doc[:200] + "..." if len(doc) > 200 else doc,
-                "metadata": meta
-            })
-            context += f"\nSource {i+1} ({source_name}): {doc}\n"
-        
-        # Generate response with context
-        response_text = f"Here's what I found regarding your query:\n\n"
-        
-        for i, source in enumerate(formatted_sources):
-            response_text += f"Source {i+1}: {source['name']}\n"
-            response_text += f"{source['content']}\n\n"
-        
+
+        try:
+            from backend.services.chat_answer_format import format_chroma_query_result
+
+            formatted = format_chroma_query_result(message, results)
+            if formatted:
+                return formatted
+        except Exception as fmt_err:
+            logger.warning("chat answer format soft-fail: %s", fmt_err)
+
         return {
-            "text": response_text,
-            "sources": formatted_sources
+            "text": "I couldn't find any relevant documents matching your query. Try browsing SBA Loans in the app.",
+            "sources": [],
         }
     
     def _handle_task_decomposition(self, message, conversation):
@@ -392,32 +456,20 @@ class Concierge(BaseAssistant):
             try:
                 results = self.rag_manager.query_documents(message, n_results=3)
 
-                if "error" not in results and results.get("documents", [[]])[0]:
-                    documents = results.get("documents", [[]])[0]
-                    metadatas = results.get("metadatas", [[]])[0]
-                    ids = results.get("ids", [[]])[0]
+                if "error" not in results:
+                    try:
+                        from backend.services.chat_answer_format import format_chroma_query_result
 
-                    # Build context from retrieved documents
-                    context = "\n".join(documents)
-
-                    # Format sources
-                    sources = []
-                    for i, (doc, meta, doc_id) in enumerate(zip(documents, metadatas, ids)):
-                        source_name = meta.get("source", f"Document {i+1}")
-                        sources.append({
-                            "id": doc_id,
-                            "name": source_name,
-                            "content": doc[:200] + "..." if len(doc) > 200 else doc,
-                            "metadata": meta
-                        })
-
-                    # Generate response using context
-                    response_text = f"Based on SBA resources, here's how I can help you with your task:\n\n{context}\n\nWould you like me to break this down into specific steps or provide more detailed information about any particular aspect?"
-
-                    return {
-                        "text": response_text,
-                        "sources": sources
-                    }
+                        formatted = format_chroma_query_result(message, results)
+                        if formatted:
+                            # Task-oriented lead-in
+                            formatted["text"] = (
+                                "Here’s how SBA resources can help with that:\n\n"
+                                + formatted["text"]
+                            )
+                            return formatted
+                    except Exception as e:
+                        logger.warning("task RAG format soft-fail: %s", e)
             except Exception as e:
                 logger.warning(f"RAG manager query failed for task decomposition: {str(e)}")
 
@@ -467,56 +519,27 @@ class Concierge(BaseAssistant):
         
         if self.rag_manager:
             try:
-                # Use RAG to generate a response
-                results = self.rag_manager.query_documents(message, n_results=2)
-                
-                if "error" not in results and results.get("answer"):
-                    # Enhanced Gemini RAG service response format
-                    answer = results.get("answer", "")
-                    source_documents = results.get("source_documents", [])
-                    
-                    # Format sources
-                    sources = []
-                    for i, source in enumerate(source_documents):
-                        source_name = source.get("metadata", {}).get("source", f"Document {i+1}")
-                        sources.append({
-                            "id": f"source_{i}",
-                            "name": source_name,
-                            "content": source.get("content", ""),
-                            "metadata": source.get("metadata", {})
-                        })
-                    
-                    return {
-                        "text": answer,
-                        "sources": sources
-                    }
-                elif "error" not in results and results.get("documents", [[]])[0]:
-                    # Legacy RAG service response format (fallback)
-                    documents = results.get("documents", [[]])[0]
-                    metadatas = results.get("metadatas", [[]])[0]
-                    ids = results.get("ids", [[]])[0]
-                    
-                    # Build context
-                    context = "\n".join(documents)
-                    
-                    # Format sources
-                    sources = []
-                    for i, (doc, meta, doc_id) in enumerate(zip(documents, metadatas, ids)):
-                        source_name = meta.get("source", f"Document {i+1}")
-                        sources.append({
-                            "id": doc_id,
-                            "name": source_name,
-                            "content": doc[:200] + "..." if len(doc) > 200 else doc,
-                            "metadata": meta
-                        })
-                    
-                    # Generate more natural response
-                    response_text = f"Based on SBA resources, here's what I found about {message.strip()}:\n\n{context}"
-                    
-                    return {
-                        "text": response_text,
-                        "sources": sources
-                    }
+                # Use RAG to generate a response (human-readable + clickable links)
+                results = self.rag_manager.query_documents(message, n_results=6)
+
+                if "error" not in results:
+                    try:
+                        from backend.services.chat_answer_format import format_chroma_query_result
+                        from backend.services.link_enrichment import enrich_answer_with_links
+
+                        formatted = format_chroma_query_result(message, results)
+                        if formatted:
+                            return formatted
+                        if results.get("answer"):
+                            return {
+                                "text": enrich_answer_with_links(
+                                    results.get("answer", ""),
+                                    results.get("source_documents") or [],
+                                ),
+                                "sources": results.get("source_documents") or [],
+                            }
+                    except Exception as e:
+                        logger.warning("RAG format soft-fail: %s", e)
             except Exception as e:
                 logger.warning(f"RAG query failed, falling back to direct response: {str(e)}")
                 # Continue to fallback response

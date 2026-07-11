@@ -37,6 +37,19 @@ class CompatPathRewriteMiddleware:
             if not path:
                 path = '/api'
 
+        # Prebuilt SBAContentExplorer.js often omits /api entirely:
+        #   http://host:5000/sba-content/events  → /api/sba/content/events
+        if path == '/sba-content' or path.startswith('/sba-content/'):
+            path = '/api/sba/content' + path[len('/sba-content'):]
+            if path == '/api/sba/content':
+                path = '/api/sba/resources'
+
+        # Accidental over-strip variant: /sba/content/* → /api/sba/content/*
+        if path == '/sba/content' or path.startswith('/sba/content/'):
+            path = '/api' + path
+            if path == '/api/sba/content':
+                path = '/api/sba/resources'
+
         # Prebuilt SBA content explorer: /api/sba-content/events → /api/sba/content/events
         if path == '/api/sba-content' or path.startswith('/api/sba-content/'):
             path = '/api/sba/content' + path[len('/api/sba-content'):]
@@ -137,14 +150,81 @@ def create_app(config_name=None):
     app.register_blueprint(orchestrator_bp, url_prefix='/api/orchestrator')
     if documents_bp is not None:
         app.register_blueprint(documents_bp, url_prefix='/api/documents')
+    # Prebuilt RAG upload: POST /api/files (and /api/api/files via middleware rewrite)
+    try:
+        from backend.routes.files import files_bp, process_upload as files_process_upload
+        app.register_blueprint(files_bp, url_prefix='/api/files')
+        logger.info("Files upload blueprint registered at /api/files")
+    except Exception as files_err:
+        files_process_upload = None
+        logger.warning("Files blueprint unavailable: %s", files_err)
     if assistants_bp is not None:
         app.register_blueprint(assistants_bp, url_prefix='/api/assistants')
 
-    # Compat for /api/api/* is handled by StripDoubleApiPrefixMiddleware
-    # (prebuilt SPA: baseURL .../api + path /api/chat → /api/api/chat).
-    # Explicit health/info shims kept as belt-and-suspenders documentation routes.
+    def _handle_file_upload():
+        """Shared handler for all file upload URL shapes the prebuilt SPA uses."""
+        if request.method == 'OPTIONS':
+            return '', 204
+        try:
+            if files_process_upload is not None:
+                body, code = files_process_upload()
+                return jsonify(body), code
+            # Last-resort inline save if blueprint import failed
+            from werkzeug.utils import secure_filename
+            import os as _os
+            f = request.files.get('file') or next(iter(request.files.values()), None)
+            if not f or not f.filename:
+                return jsonify({'error': 'No file part', 'success': False}), 400
+            _os.makedirs('uploads', exist_ok=True)
+            name = secure_filename(f.filename)
+            path = _os.path.join('uploads', name)
+            f.save(path)
+            doc = {
+                'id': name,
+                'filename': name,
+                'name': name,
+                'size': _os.path.getsize(path),
+                'pages': 'Unknown',
+                'chunks': 1,
+                'uploadTime': __import__('datetime').datetime.utcnow().isoformat() + 'Z',
+                'rag_status': 'save_only',
+            }
+            return jsonify({
+                'success': True,
+                'message': 'File uploaded successfully',
+                'filename': name,
+                'document': doc,
+                'file': doc,
+                'result': doc,
+                'rag_status': 'save_only',
+            }), 200
+        except Exception as e:
+            logger.exception('File upload handler failed')
+            return jsonify({'error': str(e), 'success': False}), 500
+
+    # Explicit routes — do not rely only on middleware + empty blueprint rules
+    # Prebuilt: POST http://localhost:5000/api/api/files
+    @app.route('/api/api/files', methods=['POST', 'OPTIONS'])
+    @app.route('/api/api/files/', methods=['POST', 'OPTIONS'])
+    def upload_double_api_files():
+        return _handle_file_upload()
+
+    @app.route('/api/files', methods=['POST', 'OPTIONS'])
+    @app.route('/api/files/', methods=['POST', 'OPTIONS'])
+    def upload_api_files_direct():
+        return _handle_file_upload()
+
+    @app.route('/api/api/documents/upload', methods=['POST', 'OPTIONS'])
+    @app.route('/api/api/documents/upload_and_ingest_document', methods=['POST', 'OPTIONS'])
+    def upload_double_api_documents():
+        return _handle_file_upload()
+
+    # Compat for /api/api/* is also handled by CompatPathRewriteMiddleware
+    # Explicit health/info shims for ConnectionStatusIndicator (prebuilt)
     @app.route('/api/api/health', methods=['GET', 'OPTIONS', 'HEAD'])
     def health_double_api_prefix():
+        if request.method == 'OPTIONS':
+            return '', 204
         return jsonify({
             'status': 'healthy',
             'server': {'self': request.host_url.rstrip('/')},
@@ -153,11 +233,69 @@ def create_app(config_name=None):
 
     @app.route('/api/api/info', methods=['GET', 'OPTIONS', 'HEAD'])
     def info_double_api_prefix():
+        if request.method == 'OPTIONS':
+            return '', 204
         return jsonify({
             'service': 'PocketPro SBA',
             'version': '1.0.0',
             'status': 'operational',
             'compat': 'api_double_prefix',
+        }), 200
+
+    # Prebuilt chat baseURL often hits /api/api/chat — explicit alias (middleware also rewrites)
+    @app.route('/api/api/chat', methods=['POST', 'OPTIONS'])
+    @app.route('/api/api/chat/', methods=['POST', 'OPTIONS'])
+    def chat_double_api_prefix():
+        if request.method == 'OPTIONS':
+            return '', 204
+        from backend.routes.chat import post_message
+        return post_message()
+
+    # Explicit legacy SBAContentExplorer paths (prebuilt fetch /sba-content/{type})
+    # Middleware also rewrites these; explicit routes survive if PATH_INFO rewrite is skipped.
+    @app.route('/sba-content/<path:rest>', methods=['GET', 'OPTIONS', 'HEAD'])
+    @app.route('/sba/content/<path:rest>', methods=['GET', 'OPTIONS', 'HEAD'])
+    @app.route('/api/sba-content/<path:rest>', methods=['GET', 'OPTIONS', 'HEAD'])
+    def legacy_sba_content_proxy(rest):
+        if request.method == 'OPTIONS':
+            return '', 204
+        parts = [p for p in (rest or '').split('/') if p]
+        head = (parts[0] if parts else '').lower()
+        target = f'/api/sba/content/{rest}'
+        try:
+            from backend.routes import sba as sba_routes
+            mapping = {
+                'articles': getattr(sba_routes, 'search_articles', None),
+                'blogs': getattr(sba_routes, 'search_blogs', None),
+                'courses': getattr(sba_routes, 'search_courses', None),
+                'documents': getattr(sba_routes, 'search_documents', None),
+                'events': getattr(sba_routes, 'search_events', None),
+                'offices': getattr(sba_routes, 'search_offices', None),
+                'loans': getattr(sba_routes, 'search_loans', None),
+                'lenders': getattr(sba_routes, 'search_lenders', None),
+                'sbir': getattr(sba_routes, 'search_sbir', None),
+                'contracting': getattr(sba_routes, 'list_contracting', None),
+                'disaster': getattr(sba_routes, 'list_disaster', None),
+            }
+            if len(parts) == 1 and mapping.get(head):
+                return mapping[head]()
+            if head == 'loans' and len(parts) >= 2 and hasattr(sba_routes, 'get_loan_program'):
+                return sba_routes.get_loan_program(parts[1])
+            if head == 'contracting' and len(parts) >= 2 and hasattr(sba_routes, 'explore_contracting_child'):
+                return sba_routes.explore_contracting_child(parts[1])
+            if head == 'disaster' and len(parts) >= 2 and hasattr(sba_routes, 'explore_disaster_child'):
+                return sba_routes.explore_disaster_child(parts[1])
+            if head in ('articles', 'blogs', 'courses', 'documents', 'events', 'offices') and len(parts) >= 2:
+                if hasattr(sba_routes, 'get_content_item_detail'):
+                    return sba_routes.get_content_item_detail(head, '/'.join(parts[1:]))
+        except Exception as e:
+            logger.exception('legacy sba-content handler failed: %s', e)
+            return jsonify({'error': str(e), 'items': [], 'path': target, 'success': True}), 200
+        return jsonify({
+            'error': f'Unknown legacy sba-content path: {rest}',
+            'items': [],
+            'hint': f'Try {target}',
+            'success': True,
         }), 200
 
     # Initialize Gemini RAG service

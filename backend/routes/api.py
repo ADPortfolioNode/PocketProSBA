@@ -221,6 +221,88 @@ def query_documents():
         return jsonify({'error': 'Failed to query documents'}), 500
 
 
+@api_bp.route('/search', methods=['GET', 'POST', 'OPTIONS'])
+def api_search():
+    """
+    Prebuilt App.js:
+      GET {base}/api/search?query=...
+    with base http://localhost:5000/api → /api/api/search → /api/search.
+    Expects { results: [...] }.
+    """
+    if request.method == 'OPTIONS':
+        return '', 204
+    try:
+        if request.method == 'POST':
+            data = request.get_json(silent=True) or {}
+            query = (data.get('query') or data.get('q') or data.get('message') or '').strip()
+            top_k = min(int(data.get('top_k', 10)), 20)
+        else:
+            query = (request.args.get('query') or request.args.get('q') or '').strip()
+            try:
+                top_k = min(int(request.args.get('top_k', 10)), 20)
+            except ValueError:
+                top_k = 10
+
+        if not query:
+            return jsonify({'results': [], 'count': 0, 'query': '', 'success': True}), 200
+
+        results = []
+        try:
+            payload = query_documents_service(query, top_k)
+            rows = payload.get('results') if isinstance(payload, dict) else []
+            for r in rows or []:
+                if not isinstance(r, dict):
+                    continue
+                results.append({
+                    'id': r.get('id'),
+                    'title': (r.get('metadata') or {}).get('filename') or r.get('id') or 'Document',
+                    'content': r.get('content') or r.get('text') or '',
+                    'snippet': str(r.get('content') or r.get('text') or '')[:240],
+                    'score': r.get('relevance_score') or r.get('distance'),
+                    'metadata': r.get('metadata') or {},
+                })
+        except Exception as e:
+            logger.warning('api_search document query soft-fail: %s', e)
+
+        # Soft SBA catalog match so search is never totally empty
+        if not results:
+            try:
+                from backend.routes.sba import _sba_program_cards, _sba_lifecycle_cards, _sba_local_resource_cards
+                qlow = query.lower()
+                for card in (_sba_program_cards() + _sba_lifecycle_cards() + _sba_local_resource_cards()):
+                    blob = f"{card.get('name','')} {card.get('description','')}".lower()
+                    if any(tok in blob for tok in qlow.split() if len(tok) > 2):
+                        results.append({
+                            'id': card.get('id'),
+                            'title': card.get('name') or card.get('title'),
+                            'content': card.get('description'),
+                            'snippet': (card.get('description') or '')[:240],
+                            'url': card.get('url'),
+                            'source': 'sba_catalog',
+                        })
+            except Exception as e:
+                logger.warning('api_search catalog soft-fail: %s', e)
+
+        return jsonify({
+            'success': True,
+            'query': query,
+            'results': results,
+            'count': len(results),
+        }), 200
+    except Exception as e:
+        logger.exception('GET/POST /api/search failed')
+        return jsonify({'error': str(e), 'results': [], 'count': 0}), 500
+
+
+@api_bp.route('/rag', methods=['POST', 'OPTIONS'])
+def api_rag_alias():
+    """Alias so /api/rag works even if only api_bp is mounted without rewrite quirks."""
+    if request.method == 'OPTIONS':
+        return '', 204
+    from backend.routes.rag import rag_root_query
+    return rag_root_query()
+
+
 # ---- Auth aliases (frontend uses /api/login, /api/register, …) ----
 @api_bp.route('/login', methods=['POST'])
 def api_login_alias():

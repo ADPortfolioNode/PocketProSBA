@@ -5,11 +5,15 @@ const getBackendHost = () => {
 
   const normalizeHost = (host) => {
     if (!host) return host;
-    return host.replace(/\/api\/?$/, '').replace(/\/+$/, '');
+    // Prefer IPv4 — Windows often maps localhost → ::1 (flaky via WSL/Docker relay)
+    return host
+      .replace(/\/api\/?$/, '')
+      .replace(/\/+$/, '')
+      .replace('://localhost', '://127.0.0.1');
   };
 
   if (typeof window === 'undefined') {
-    return normalizeHost(envHost) || 'http://localhost:5000';
+    return normalizeHost(envHost) || 'http://127.0.0.1:5000';
   }
 
   const params = new URLSearchParams(window.location.search);
@@ -22,7 +26,13 @@ const getBackendHost = () => {
     return normalizeHost(envHost);
   }
 
+  // When UI is served from nginx :3000, use same-origin so /api is proxied (most reliable)
   const { protocol, hostname, port } = window.location;
+  if (port === '3000' || hostname === 'localhost' || hostname === '127.0.0.1') {
+    // Same origin when using frontend proxy; falls back work if absolute needed
+    return `${protocol}//${hostname === 'localhost' ? '127.0.0.1' : hostname}${port ? `:${port}` : ''}`;
+  }
+
   return `${protocol}//${hostname}${port ? `:${port}` : ''}`;
 };
 

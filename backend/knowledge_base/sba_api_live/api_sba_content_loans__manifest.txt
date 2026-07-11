@@ -1,0 +1,12 @@
+route=/api/sba/content/loans
+chunks=8
+files=8
+updated=2026-07-11T12:36:57Z
+/app/backend/knowledge_base/sba_api_live/api_sba_content_loans__combined.txt
+/app/backend/knowledge_base/sba_api_live/api_sba_content_loans__overview.txt
+/app/backend/knowledge_base/sba_api_live/api_sba_content_loans__child_7a.txt
+/app/backend/knowledge_base/sba_api_live/api_sba_content_loans__child_504.txt
+/app/backend/knowledge_base/sba_api_live/api_sba_content_loans__child_microloans.txt
+/app/backend/knowledge_base/sba_api_live/api_sba_content_loans__child_loans_hub.txt
+/app/backend/knowledge_base/sba_api_live/api_sba_content_loans__child_lender_match.txt
+/app/backend/knowledge_base/sba_api_live/api_sba_content_loans__child_956887656.txt

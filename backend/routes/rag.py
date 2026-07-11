@@ -131,6 +131,9 @@ def _local_kb_sba_answer(question: str, max_chunks: int = 4):
             key = str(path.resolve())
             if key in seen_paths:
                 continue
+            # Skip ingest manifests (metadata only)
+            if path.name.endswith("__manifest.txt"):
+                continue
             seen_paths.add(key)
             try:
                 text = path.read_text(encoding="utf-8", errors="replace")
@@ -141,6 +144,14 @@ def _local_kb_sba_answer(question: str, max_chunks: int = 4):
             score = sum(compact.count(tok) for tok in tokens) if tokens else 1
             if score <= 0:
                 continue
+            # Boost live API digests written when browsing parent→children
+            path_str = str(path).replace("\\", "/")
+            if "sba_api_live" in path_str or path.name.startswith("api_sba_"):
+                score += 12
+                if "combined" in path.name:
+                    score += 4
+                if "overview" in path.name:
+                    score += 2
             # Prefer a relevant paragraph/snippet from original text
             snippet = text.strip()
             if tokens:
@@ -188,10 +199,25 @@ def _local_kb_sba_answer(question: str, max_chunks: int = 4):
             "mode": "static_fallback",
         }
 
-    answer_parts = [
-        "Based on the local SBA knowledge base (keyword match; Gemini embeddings unavailable):",
-        "",
-    ]
+    live_hits = sum(
+        1
+        for _, name, _, p in top
+        if "sba_api_live" in str(p).replace("\\", "/")
+        or "sba_api" in str(name)
+        or str(name).startswith("api_sba_")
+    )
+    if live_hits:
+        answer_parts = [
+            "Based on live SBA API digests (from parent/child explore) plus the local knowledge base:",
+            "",
+        ]
+        kb_mode = "sba_api_live"
+    else:
+        answer_parts = [
+            "Based on the local SBA knowledge base (keyword match; Gemini embeddings unavailable):",
+            "",
+        ]
+        kb_mode = "local_kb_fallback"
     sources = []
     for score, name, snippet, full in top:
         answer_parts.append(snippet)
@@ -205,8 +231,189 @@ def _local_kb_sba_answer(question: str, max_chunks: int = 4):
         "question": question,
         "answer": "\n".join(answer_parts).strip(),
         "source_documents": sources,
-        "mode": "local_kb_fallback",
+        "mode": kb_mode,
     }
+
+@rag_bp.route('', methods=['POST', 'OPTIONS'])
+@rag_bp.route('/', methods=['POST', 'OPTIONS'])
+def rag_root_query():
+    """
+    Prebuilt App.js:
+      POST {base}/api/rag  with body {query}
+    where base is often http://localhost:5000/api → /api/api/rag → rewritten to /api/rag.
+
+    Expects JSON response with answer/response and optional sources.
+    """
+    if request.method == 'OPTIONS':
+        return '', 204
+    try:
+        data = request.get_json(silent=True) or {}
+        query = (data.get('query') or data.get('message') or data.get('question') or '').strip()
+        if not query:
+            return jsonify({'error': 'query is required', 'answer': '', 'sources': []}), 400
+
+        answer = ''
+        sources = []
+
+        mode = 'none'
+        # 1) Local SBA knowledge base (static + live API ingest files)
+        try:
+            kb = _local_kb_sba_answer(query)
+            if isinstance(kb, dict):
+                answer = kb.get('answer') or kb.get('response') or ''
+                # local helper returns source_documents; normalize for clients
+                raw_src = kb.get('sources') or kb.get('source_documents') or []
+                sources = []
+                for s in raw_src:
+                    if not isinstance(s, dict):
+                        continue
+                    meta = s.get('metadata') or {}
+                    sources.append({
+                        'title': meta.get('source') or meta.get('title') or s.get('title') or 'SBA KB',
+                        'snippet': s.get('content') or s.get('snippet') or '',
+                        'path': meta.get('path') or s.get('path') or '',
+                        'score': meta.get('score'),
+                        'source': meta.get('source') or 'local_kb',
+                    })
+                mode = kb.get('mode') or 'local_kb'
+        except Exception as e:
+            logger.warning('local KB soft-fail on /api/rag: %s', e)
+
+        # 2) Chroma / RAGManager — includes SBA API child digests when ingested
+        if not answer:
+            try:
+                from backend.services.rag import get_rag_manager
+                rag_mgr = get_rag_manager()
+                if rag_mgr and rag_mgr.is_available():
+                    results = rag_mgr.query_documents(query, n_results=5)
+                    rows = []
+                    if isinstance(results, dict):
+                        # chroma_fixed may return documents/metadatas lists
+                        docs = results.get('documents') or results.get('results') or []
+                        if docs and isinstance(docs[0], list):
+                            docs = docs[0]
+                        metas = results.get('metadatas') or []
+                        if metas and isinstance(metas[0], list):
+                            metas = metas[0]
+                        for i, doc in enumerate(docs or []):
+                            meta = metas[i] if i < len(metas) and isinstance(metas[i], dict) else {}
+                            rows.append({'content': doc, 'metadata': meta})
+                        if not rows and isinstance(results.get('results'), list):
+                            rows = results.get('results')
+                    if rows:
+                        parts = []
+                        sources = []
+                        for r in rows[:5]:
+                            if not isinstance(r, dict):
+                                parts.append(str(r)[:400])
+                                continue
+                            content = str(r.get('content') or r.get('text') or '')
+                            meta = r.get('metadata') or {}
+                            parts.append(content[:500])
+                            sources.append({
+                                'title': meta.get('title') or meta.get('route') or meta.get('source') or 'SBA API',
+                                'snippet': content[:200],
+                                'route': meta.get('route') or meta.get('child_path') or '',
+                                'source': meta.get('source') or 'chroma',
+                            })
+                        answer = '\n\n'.join(p for p in parts if p)
+                        mode = 'chroma_sba_api' if any(
+                            (s.get('source') == 'sba_api') for s in sources
+                        ) else 'chroma'
+            except Exception as e:
+                logger.warning('RAGManager query soft-fail on /api/rag: %s', e)
+
+        # 3) Vector / enhanced Gemini store
+        if not answer:
+            try:
+                if getattr(enhanced_rag_service, 'is_initialized', False):
+                    results = enhanced_rag_service.search_documents(query, limit=5)
+                    if isinstance(results, list) and results:
+                        parts = []
+                        for r in results[:5]:
+                            if isinstance(r, dict):
+                                parts.append(r.get('content') or r.get('text') or str(r))
+                                sources.append({
+                                    'title': r.get('title') or r.get('source') or 'Document',
+                                    'snippet': (r.get('content') or r.get('text') or '')[:200],
+                                })
+                            else:
+                                parts.append(str(r))
+                        answer = '\n\n'.join(parts)
+                        mode = 'enhanced_rag'
+            except Exception as e:
+                logger.warning('Enhanced RAG soft-fail on /api/rag: %s', e)
+
+        if not answer:
+            try:
+                from backend.services.api_service import query_documents_service
+                results = query_documents_service(query, 5)
+                rows = results.get('results') if isinstance(results, dict) else []
+                if rows:
+                    answer = '\n\n'.join(
+                        str(r.get('content') or r.get('text') or '')[:400] for r in rows if r
+                    )
+                    sources = [
+                        {
+                            'title': (r.get('metadata') or {}).get('filename') or r.get('id') or 'Doc',
+                            'snippet': str(r.get('content') or '')[:200],
+                        }
+                        for r in rows
+                    ]
+                    mode = 'query_documents_service'
+            except Exception as e:
+                logger.warning('query_documents_service soft-fail: %s', e)
+
+        if not answer:
+            try:
+                from backend.services.chat_processing_service import process_chat_message
+                chat = process_chat_message(1, query, session_id=None)
+                answer = chat.get('response') or chat.get('text') or ''
+                sources = chat.get('sources') or []
+            except Exception as e:
+                logger.warning('chat fallback soft-fail: %s', e)
+                answer = (
+                    f"I received your question about “{query}”. "
+                    "Upload documents in the RAG workflow or browse SBA Resources for live program content."
+                )
+
+        # Prefer live API digests when sources came from sba_api_live
+        is_live = any(
+            'sba_api' in str(s.get('source') or s.get('path') or '').lower()
+            or 'sba_api_live' in str(s.get('path') or '').lower()
+            for s in (sources or [])
+            if isinstance(s, dict)
+        )
+        # Always attach markdown hyperlinks + usable forms/docs/tools
+        try:
+            from backend.services.link_enrichment import enrich_answer_with_links
+            from backend.services.actionable_content import attach_actionable_section
+
+            answer = enrich_answer_with_links(answer, sources)
+            answer = attach_actionable_section(answer, query=query)
+        except Exception as link_err:
+            logger.warning('link enrichment soft-fail: %s', link_err)
+
+        return jsonify({
+            'success': True,
+            'query': query,
+            'answer': answer,
+            'response': answer,
+            'message': answer,
+            'sources': sources or [],
+            'context': sources or [],
+            'mode': mode,
+            'is_current': bool(is_live),
+            'freshness': 'current' if is_live else 'not_current',
+        }), 200
+    except Exception as e:
+        logger.exception('POST /api/rag failed')
+        return jsonify({
+            'error': str(e),
+            'answer': 'RAG query failed. Please try again.',
+            'sources': [],
+        }), 500
+
 
 @rag_bp.route('/health', methods=['GET'])
 def rag_health():

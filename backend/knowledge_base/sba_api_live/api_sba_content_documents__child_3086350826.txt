@@ -1,0 +1,10 @@
+# Establish business credit
+Type: document
+API path: /api/sba/content/documents/3086350826
+Parent path: /api/sba/content/documents
+ID: 3086350826
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/plan-your-business/establish-business-credit
+Location: Online / see official page

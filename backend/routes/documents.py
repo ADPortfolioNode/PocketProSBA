@@ -14,62 +14,40 @@ def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-@documents_bp.route('/upload', methods=['POST'])
+def _upload_and_ingest():
+    """Shared upload used by /upload and legacy /upload_and_ingest_document."""
+    from backend.routes.files import process_upload
+    return process_upload()
+
+
+@documents_bp.route('/upload', methods=['POST', 'OPTIONS'])
 def upload_file():
     """Upload a document and add it to RAG system"""
+    if request.method == 'OPTIONS':
+        return '', 204
     try:
-        if 'file' not in request.files:
-            return jsonify({'error': 'No file part'}), 400
-
-        file = request.files['file']
-        if file.filename == '':
-            return jsonify({'error': 'No selected file'}), 400
-
-        if file and allowed_file(file.filename):
-            filename = secure_filename(file.filename)
-            filepath = os.path.join(UPLOAD_FOLDER, filename)
-
-            # Ensure upload directory exists
-            os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-
-            # Save the file
-            file.save(filepath)
-
-            # Read file content (for now, assume text files)
-            try:
-                with open(filepath, 'r', encoding='utf-8') as f:
-                    content = f.read()
-            except UnicodeDecodeError:
-                # For binary files, just store filename
-                content = f"File: {filename}"
-
-            # Add to RAG system
-            rag_manager = get_rag_manager()
-            if rag_manager.is_available():
-                metadata = {
-                    'filename': filename,
-                    'filepath': filepath,
-                    'size': os.path.getsize(filepath)
-                }
-                result = rag_manager.add_document(content, metadata)
-                if 'error' in result:
-                    logger.error(f"Failed to add document to RAG: {result['error']}")
-                    return jsonify({'error': f"File saved but failed to add to RAG: {result['error']}"}), 500
-            else:
-                logger.warning("RAG system not available, file saved but not indexed")
-
-            return jsonify({
-                'message': 'File uploaded successfully',
-                'filename': filename,
-                'size': os.path.getsize(filepath),
-                'rag_status': 'added' if rag_manager.is_available() else 'not_available'
-            }), 200
-
-        return jsonify({'error': 'File type not allowed'}), 400
-
+        body, code = _upload_and_ingest()
+        return jsonify(body), code
     except Exception as e:
         logger.error(f"Error uploading file: {str(e)}")
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': str(e), 'success': False}), 500
+
+
+@documents_bp.route('/upload_and_ingest_document', methods=['POST', 'OPTIONS'])
+def upload_and_ingest_document():
+    """
+    Prebuilt RAG SPA fallback:
+      POST /api/documents/upload_and_ingest_document
+    (often via double-prefix /api/api/documents/... rewritten to /api/documents/...)
+    """
+    if request.method == 'OPTIONS':
+        return '', 204
+    try:
+        body, code = _upload_and_ingest()
+        return jsonify(body), code
+    except Exception as e:
+        logger.error(f"Error upload_and_ingest: {str(e)}")
+        return jsonify({'error': str(e), 'success': False}), 500
 
 @documents_bp.route('/list', methods=['GET'])
 def list_files():

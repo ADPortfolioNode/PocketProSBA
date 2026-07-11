@@ -387,6 +387,10 @@ def _as_card(
             "freshness": raw.get("freshness")
             or ("current" if (raw.get("is_current") if "is_current" in raw else is_current) else "not_current"),
             "retrieved_at": raw.get("retrieved_at") or retrieved_at,
+            # Keep parent→child drill path when present
+            "path": raw.get("path") or card.get("path") or "",
+            "parent_path": raw.get("parent_path") or card.get("parent_path") or "",
+            "parent_id": raw.get("parent_id") or card.get("parent_id") or "",
             # List helper used by some clients
             "teaser": summary[:160],
         }
@@ -403,6 +407,8 @@ def _normalize_page(
     message: Optional[str] = None,
     is_current: Optional[bool] = None,
     retrieved_at: Optional[str] = None,
+    title: Optional[str] = None,
+    description: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     is_current=True  → live SBA.gov / public API fetch (suitable for rendered UI as current)
@@ -430,6 +436,9 @@ def _normalize_page(
             retrieved_at=retrieved_at,
         )
         if card:
+            # Preserve parent→child drill paths on cards
+            if isinstance(raw, dict) and raw.get("path") and not card.get("path"):
+                card["path"] = raw["path"]
             cards.append(card)
 
     total = len(cards)
@@ -454,6 +463,11 @@ def _normalize_page(
     }
     if message:
         out["message"] = message
+    if title:
+        out["title"] = title
+        out["name"] = title
+    if description:
+        out["description"] = description
     if total == 0:
         out["message"] = message or "No SBA cards available for this query."
     return out
@@ -612,11 +626,15 @@ class SBAContentAPI:
                     "description": description,
                     "summary": description,
                     "url": url,
+                    # Parent→child: each loan program opens its own detail endpoint
+                    "path": f"/api/sba/content/loans/{pid}",
                     "type": "loan_program",
                     "source_page": url,
                     "is_current": True,
                     "freshness": "current",
                     "retrieved_at": retrieved_at,
+                    "parent_id": "loans",
+                    "parent_path": "/api/sba/content/loans",
                 }
             )
         return items
@@ -666,77 +684,249 @@ class SBAContentAPI:
     # Static / curated catalogs (grounded in official SBA pages)
     # ------------------------------------------------------------------
     def _static_loan_items(self) -> List[Dict[str, Any]]:
+        def _loan(pid, title, description, url, typ="loan_program"):
+            return {
+                "id": pid,
+                "title": title,
+                "name": title,
+                "description": description,
+                "summary": description,
+                "url": url,
+                "path": f"/api/sba/content/loans/{pid}",
+                "type": typ,
+                "parent_id": "loans",
+                "parent_path": "/api/sba/content/loans",
+            }
+
         return [
+            _loan(
+                "7a",
+                "SBA 7(a) loans",
+                "Primary SBA loan program for working capital, equipment, real estate, "
+                "and business acquisition. Max generally $5 million. Terms up to 25 years "
+                "for real estate. Source: sba.gov/funding-programs/loans/7a-loans",
+                self.LOAN_PAGES["7a"],
+            ),
+            _loan(
+                "504",
+                "SBA 504 loans",
+                "Long-term, fixed-rate financing for major fixed assets such as real estate "
+                "and heavy equipment. Typical structure: bank + CDC/SBA + borrower equity. "
+                "Source: sba.gov/funding-programs/loans/504-loans",
+                self.LOAN_PAGES["504"],
+            ),
+            _loan(
+                "microloans",
+                "SBA Microloans",
+                "Small loans up to $50,000 delivered through nonprofit intermediary lenders "
+                "for startups and existing small businesses. "
+                "Source: sba.gov/funding-programs/loans/microloans",
+                self.LOAN_PAGES["microloans"],
+            ),
+            _loan(
+                "express",
+                "SBA Express / faster 7(a) options",
+                "Expedited processing options under the 7(a) family for smaller loans with "
+                "faster lender decisions. See 7(a) loan page for current product variants.",
+                self.LOAN_PAGES["7a"],
+            ),
+            _loan(
+                "working-capital",
+                "Working capital financing",
+                "SBA-backed options can fund inventory, payroll, and day-to-day operations. "
+                "Discussed on the SBA loans hub as a common use case.",
+                self.LOAN_PAGES["loans_hub"],
+                "use_case",
+            ),
+            _loan(
+                "fixed-assets",
+                "Fixed asset financing",
+                "Purchase or improve real estate, machinery, and equipment — often via 504 "
+                "or longer-term 7(a) structures.",
+                self.LOAN_PAGES["loans_hub"],
+                "use_case",
+            ),
+            _loan(
+                "loans_hub",
+                "SBA-backed loans overview",
+                "Hub overview of SBA-backed financing programs, eligibility themes, and how to connect with lenders.",
+                self.LOAN_PAGES["loans_hub"],
+            ),
+            _loan(
+                "lender-match",
+                "Lender Match",
+                "Connect with SBA lenders interested in your financing needs.",
+                f"{SBA_SITE}/funding-programs/loans/lender-match",
+                "tool",
+            ),
+        ]
+
+    def get_loan_program(self, loan_id: str, force_fresh: bool = False) -> Dict[str, Any]:
+        """
+        Fully develop one loan program topic (parent→child detail).
+        Returns items = sections/highlights for that program.
+        """
+        lid = str(loan_id or "").strip().lower()
+        # Map aliases
+        aliases = {
+            "7(a)": "7a",
+            "7-a": "7a",
+            "sba-7a": "7a",
+            "sba-504": "504",
+            "micro": "microloans",
+            "microloan": "microloans",
+            "hub": "loans_hub",
+            "overview": "loans_hub",
+            "lender": "lender-match",
+            "lenders": "lender-match",
+        }
+        lid = aliases.get(lid, lid)
+
+        catalog = {str(i.get("id")): i for i in (self._live_loan_program_cards(force_fresh=force_fresh) or [])}
+        if lid not in catalog:
+            for i in self._static_loan_items():
+                catalog.setdefault(str(i.get("id")), i)
+
+        # Synthetic lender-match if missing from live
+        if lid == "lender-match" and lid not in catalog:
+            catalog[lid] = {
+                "id": "lender-match",
+                "title": "Lender Match",
+                "name": "Lender Match",
+                "description": "Connect with SBA lenders interested in your financing needs.",
+                "url": f"{SBA_SITE}/funding-programs/loans/lender-match",
+                "type": "tool",
+            }
+
+        base = catalog.get(lid)
+        if not base:
+            # fuzzy match title
+            for i in catalog.values():
+                if lid in str(i.get("id", "")).lower() or lid in str(i.get("title", "")).lower():
+                    base = i
+                    lid = str(i.get("id"))
+                    break
+        if not base:
+            return {
+                "error": f"Unknown loan program: {loan_id}",
+                "items": [],
+                "available": list(catalog.keys()),
+            }
+
+        url = base.get("url") or self.LOAN_PAGES.get(lid) or self.LOAN_PAGES.get("loans_hub")
+        description = base.get("description") or base.get("summary") or ""
+        # Prefer live page text when possible
+        if url:
+            html = self._get_html(url, force_fresh=force_fresh)
+            if html:
+                parser = self._parse_page(html)
+                live_snip = _snippet_from_parser(parser)
+                if live_snip:
+                    description = live_snip
+                # Extract child-like headings as section items
+                children = []
+                for h in (parser.headings or [])[:12]:
+                    hl = h.strip()
+                    if len(hl) < 4 or len(hl) > 120:
+                        continue
+                    if hl.lower() in {str(base.get("title", "")).lower(), "menu", "search"}:
+                        continue
+                    children.append({
+                        "id": f"{lid}-sec-{len(children)}",
+                        "title": hl,
+                        "name": hl,
+                        "description": f"Topic section from official page: {hl}",
+                        "url": url,
+                        "type": "loan_section",
+                        "parent_id": lid,
+                        "parent_path": f"/api/sba/content/loans/{lid}",
+                    })
+                if children:
+                    base_children = children
+                else:
+                    base_children = []
+            else:
+                base_children = []
+        else:
+            base_children = []
+
+        # Always include structured sibling programs as related children context
+        siblings = []
+        for sid, label, surl in [
+            ("7a", "SBA 7(a) loans", self.LOAN_PAGES["7a"]),
+            ("504", "SBA 504 loans", self.LOAN_PAGES["504"]),
+            ("microloans", "SBA Microloans", self.LOAN_PAGES["microloans"]),
+            ("loans_hub", "All SBA loans", self.LOAN_PAGES["loans_hub"]),
+            ("lender-match", "Lender Match", f"{SBA_SITE}/funding-programs/loans/lender-match"),
+        ]:
+            if sid == lid:
+                continue
+            siblings.append({
+                "id": sid,
+                "title": label,
+                "name": label,
+                "description": f"Related loan resource: {label}",
+                "url": surl,
+                "path": f"/api/sba/content/loans/{sid}",
+                "type": "related_loan",
+                "parent_id": "loans",
+            })
+
+        # Highlight cards for this program
+        highlights = [
             {
-                "id": "7a",
-                "title": "SBA 7(a) loans",
-                "name": "SBA 7(a) loans",
-                "description": (
-                    "Primary SBA loan program for working capital, equipment, real estate, "
-                    "and business acquisition. Max generally $5 million. Terms up to 25 years "
-                    "for real estate. Source: sba.gov/funding-programs/loans/7a-loans"
-                ),
-                "url": self.LOAN_PAGES["7a"],
+                "id": f"{lid}-overview",
+                "title": base.get("title") or base.get("name") or lid,
+                "name": base.get("title") or base.get("name") or lid,
+                "description": description,
+                "url": url,
                 "type": "loan_program",
+                "path": f"/api/sba/content/loans/{lid}",
+                "is_current": base.get("is_current", True),
             },
             {
-                "id": "504",
-                "title": "SBA 504 loans",
-                "name": "SBA 504 loans",
+                "id": f"{lid}-how",
+                "title": "How this program is used",
+                "name": "How this program is used",
                 "description": (
-                    "Long-term, fixed-rate financing for major fixed assets such as real estate "
-                    "and heavy equipment. Typical structure: bank + CDC/SBA + borrower equity. "
-                    "Source: sba.gov/funding-programs/loans/504-loans"
+                    "Use this program when the financing need matches the official use cases on sba.gov. "
+                    "Compare with sibling programs below, then use Lender Match or a local lender."
                 ),
-                "url": self.LOAN_PAGES["504"],
-                "type": "loan_program",
+                "url": url,
+                "type": "guidance",
             },
             {
-                "id": "microloans",
-                "title": "SBA Microloans",
-                "name": "SBA Microloans",
+                "id": f"{lid}-next",
+                "title": "Next steps",
+                "name": "Next steps",
                 "description": (
-                    "Small loans up to $50,000 delivered through nonprofit intermediary lenders "
-                    "for startups and existing small businesses. "
-                    "Source: sba.gov/funding-programs/loans/microloans"
+                    "1) Read the official program page. 2) Check eligibility themes. "
+                    "3) Prepare financials. 4) Connect via Lender Match or an SBA lender."
                 ),
-                "url": self.LOAN_PAGES["microloans"],
-                "type": "loan_program",
-            },
-            {
-                "id": "express",
-                "title": "SBA Express / faster 7(a) options",
-                "name": "SBA Express",
-                "description": (
-                    "Expedited processing options under the 7(a) family for smaller loans with "
-                    "faster lender decisions. See 7(a) loan page for current product variants."
-                ),
-                "url": self.LOAN_PAGES["7a"],
-                "type": "loan_program",
-            },
-            {
-                "id": "working-capital",
-                "title": "Working capital financing",
-                "name": "Working capital",
-                "description": (
-                    "SBA-backed options can fund inventory, payroll, and day-to-day operations. "
-                    "Discussed on the SBA loans hub as a common use case."
-                ),
-                "url": self.LOAN_PAGES["loans_hub"],
-                "type": "use_case",
-            },
-            {
-                "id": "fixed-assets",
-                "title": "Fixed asset financing",
-                "name": "Fixed assets",
-                "description": (
-                    "Purchase or improve real estate, machinery, and equipment — often via 504 "
-                    "or longer-term 7(a) structures."
-                ),
-                "url": self.LOAN_PAGES["loans_hub"],
-                "type": "use_case",
+                "url": f"{SBA_SITE}/funding-programs/loans/lender-match",
+                "type": "guidance",
+                "path": "/api/sba/content/lenders",
             },
         ]
+
+        items = highlights + base_children[:8] + siblings
+        return {
+            "id": lid,
+            "title": base.get("title") or base.get("name") or lid,
+            "name": base.get("title") or base.get("name") or lid,
+            "description": description,
+            "summary": description,
+            "url": url,
+            "path": f"/api/sba/content/loans/{lid}",
+            "parent_path": "/api/sba/content/loans",
+            "type": base.get("type") or "loan_program",
+            "items": items,
+            "results": items,
+            "count": len(items),
+            "source": "sba_html" if base.get("is_current") else "static",
+            "is_current": bool(base.get("is_current", True)),
+            "message": f"Full topic for {base.get('title') or lid}: overview, guidance, and related loan children.",
+        }
 
     def _static_office_items(self) -> List[Dict[str, Any]]:
         return [
@@ -764,32 +954,105 @@ class SBAContentAPI:
         ]
 
     def _static_article_like(self) -> List[Dict[str, Any]]:
-        # Core business-guide style topics linked to live sba.gov pages
+        # Core business-guide topics with assigned child resources for UI drill-down
+        site = SBA_SITE
         guides = [
-            ("Plan your business", f"{SBA_SITE}/business-guide/plan-your-business"),
-            ("Launch your business", f"{SBA_SITE}/business-guide/launch-your-business"),
-            ("Manage your business", f"{SBA_SITE}/business-guide/manage-your-business"),
-            ("Grow your business", f"{SBA_SITE}/business-guide/grow-your-business"),
-            ("Fund your business", f"{SBA_SITE}/business-guide/grow-your-business/fund-your-business"),
-            ("SBA loans overview", self.LOAN_PAGES["loans_hub"]),
-            ("7(a) loans guide", self.LOAN_PAGES["7a"]),
-            ("504 loans guide", self.LOAN_PAGES["504"]),
-            ("Microloans guide", self.LOAN_PAGES["microloans"]),
-            ("Federal contracting", f"{SBA_SITE}/federal-contracting"),
-            ("Disaster assistance", f"{SBA_SITE}/funding-programs/disaster-assistance"),
-            ("Counseling & training", f"{SBA_SITE}/local-assistance"),
+            {
+                "title": "Start a business",
+                "url": f"{site}/business-guide",
+                "description": "Plan and launch path — assigned guides for starting a small business.",
+                "lifecycle_id": "start",
+                "resources": [
+                    {"name": "Plan your business", "url": f"{site}/business-guide/plan-your-business", "description": "Research, plans, and costs."},
+                    {"name": "Launch your business", "url": f"{site}/business-guide/launch-your-business", "description": "Structure, register, licenses."},
+                    {"name": "Write a business plan", "url": f"{site}/business-guide/plan-your-business/write-your-business-plan"},
+                    {"name": "Choose a business structure", "url": f"{site}/business-guide/launch-your-business/choose-business-structure"},
+                    {"name": "Register your business", "url": f"{site}/business-guide/launch-your-business/register-your-business"},
+                    {"name": "Get tax IDs", "url": f"{site}/business-guide/launch-your-business/get-federal-state-tax-id-numbers"},
+                    {"name": "Fund your startup", "url": f"{site}/funding-programs/loans", "path": "/api/sba/content/loans"},
+                ],
+            },
+            {
+                "title": "Plan your business",
+                "url": f"{site}/business-guide/plan-your-business",
+                "description": "Market research, business plans, and startup cost calculators.",
+                "lifecycle_id": "plan",
+                "resources": [
+                    {"name": "Write a business plan", "url": f"{site}/business-guide/plan-your-business/write-your-business-plan"},
+                    {"name": "Market research & competitive analysis", "url": f"{site}/business-guide/plan-your-business/market-research-competitive-analysis"},
+                    {"name": "Calculate your startup costs", "url": f"{site}/business-guide/plan-your-business/calculate-your-startup-costs"},
+                    {"name": "Pick your business location", "url": f"{site}/business-guide/launch-your-business/pick-your-business-location"},
+                ],
+            },
+            {
+                "title": "Launch your business",
+                "url": f"{site}/business-guide/launch-your-business",
+                "description": "Structure, registration, licenses, and tax IDs to open legally.",
+                "lifecycle_id": "launch",
+                "resources": [
+                    {"name": "Choose a business structure", "url": f"{site}/business-guide/launch-your-business/choose-business-structure"},
+                    {"name": "Register your business", "url": f"{site}/business-guide/launch-your-business/register-your-business"},
+                    {"name": "Get federal & state tax IDs", "url": f"{site}/business-guide/launch-your-business/get-federal-state-tax-id-numbers"},
+                    {"name": "Apply for licenses and permits", "url": f"{site}/business-guide/launch-your-business/apply-licenses-permits-regulations"},
+                ],
+            },
+            {
+                "title": "Manage your business",
+                "url": f"{site}/business-guide/manage-your-business",
+                "description": "Finances, employees, insurance, and operations.",
+                "lifecycle_id": "manage",
+                "resources": [
+                    {"name": "Manage your finances", "url": f"{site}/business-guide/manage-your-business/manage-your-finances"},
+                    {"name": "Hire and manage employees", "url": f"{site}/business-guide/manage-your-business/hire-manage-employees"},
+                    {"name": "Get business insurance", "url": f"{site}/business-guide/manage-your-business/get-business-insurance"},
+                ],
+            },
+            {
+                "title": "Grow your business",
+                "url": f"{site}/business-guide/grow-your-business",
+                "description": "Funding, expansion, and growth strategies.",
+                "lifecycle_id": "grow",
+                "resources": [
+                    {"name": "Get more funding", "url": f"{site}/business-guide/grow-your-business/get-more-funding", "path": "/api/sba/content/loans"},
+                    {"name": "Open a new location", "url": f"{site}/business-guide/grow-your-business/open-new-location"},
+                    {"name": "Federal contracting", "url": f"{site}/federal-contracting"},
+                ],
+            },
+            {
+                "title": "Fund your business",
+                "url": f"{site}/business-guide/grow-your-business/fund-your-business",
+                "description": "SBA loan programs and capital options.",
+                "lifecycle_id": "fund",
+                "resources": [
+                    {"name": "7(a) loans", "url": f"{site}/funding-programs/loans/7a-loans", "path": "/api/sba/content/loans"},
+                    {"name": "504 loans", "url": f"{site}/funding-programs/loans/504-loans", "path": "/api/sba/content/loans"},
+                    {"name": "Microloans", "url": f"{site}/funding-programs/loans/microloans", "path": "/api/sba/content/loans"},
+                    {"name": "Lender Match", "url": f"{site}/funding-programs/loans/lender-match", "path": "/api/sba/content/lenders"},
+                ],
+            },
+            {"title": "SBA loans overview", "url": self.LOAN_PAGES["loans_hub"], "description": "Overview of SBA-backed loan programs.", "lifecycle_id": "fund"},
+            {"title": "7(a) loans guide", "url": self.LOAN_PAGES["7a"], "description": "Flexible SBA 7(a) loan program guide."},
+            {"title": "504 loans guide", "url": self.LOAN_PAGES["504"], "description": "SBA 504 fixed-asset financing guide."},
+            {"title": "Microloans guide", "url": self.LOAN_PAGES["microloans"], "description": "Smaller SBA microloan options."},
+            {"title": "Federal contracting", "url": f"{site}/federal-contracting", "description": "Sell products and services to the government."},
+            {"title": "Disaster assistance", "url": f"{site}/funding-programs/disaster-assistance", "description": "Recovery loans and disaster support."},
+            {"title": "Counseling & training", "url": f"{site}/local-assistance", "description": "Free local counseling and training partners."},
         ]
         items = []
-        for i, (title, url) in enumerate(guides, start=1):
-            items.append(
-                {
-                    "id": f"guide-{i}",
-                    "title": title,
-                    "description": f"Official SBA resource: {title}",
-                    "url": url,
-                    "type": "guide",
-                }
-            )
+        for i, g in enumerate(guides, start=1):
+            title = g["title"]
+            item = {
+                "id": g.get("lifecycle_id") and f"guide-{g['lifecycle_id']}" or f"guide-{i}",
+                "title": title,
+                "description": g.get("description") or f"Official SBA resource: {title}",
+                "url": g["url"],
+                "type": "guide",
+                "lifecycle_id": g.get("lifecycle_id") or "",
+                "path": (f"/api/sba/lifecycle/{g['lifecycle_id']}" if g.get("lifecycle_id") else ""),
+            }
+            if g.get("resources"):
+                item["resources"] = g["resources"]
+            items.append(item)
         return items
 
     # ------------------------------------------------------------------
@@ -1679,7 +1942,7 @@ class SBAContentAPI:
         live_cards = self._live_loan_program_cards(force_fresh=force_fresh)
         live_cards = _filter_items(live_cards, query)
 
-        # 2) Additional current links from the loans hub
+        # 2) Only keep hub extras that look like real loan children (not nav chrome)
         hub = self._extract_from_html_pages(
             [self.LOAN_PAGES["loans_hub"]],
             item_type="loan",
@@ -1690,20 +1953,71 @@ class SBAContentAPI:
         extra = []
         if hub and hub.get("items"):
             known = {c.get("url", "").rstrip("/") for c in live_cards}
+            known_titles = {str(c.get("title") or "").lower() for c in live_cards}
             for item in hub["items"]:
+                if not isinstance(item, dict):
+                    continue
                 u = (item.get("url") or "").rstrip("/")
-                if u and u not in known:
-                    extra.append(item)
+                title = str(item.get("title") or item.get("name") or "")
+                tl = title.lower()
+                if not u or u in known:
+                    continue
+                if tl in known_titles:
+                    continue
+                # Reject chrome / marketing noise
+                if any(x in tl for x in (
+                    "sign up", "subscribe", "certificate", "share", "print", "menu", "login", "cookie",
+                )):
+                    continue
+                # Keep loan-ish children only
+                if not re.search(r"\b(loan|7\(a\)|504|microloan|lender|financ|capital|credit)\b", tl + " " + u, re.I):
+                    continue
+                item = dict(item)
+                item.setdefault("type", "loan")
+                # Hub children still drill into loans parent catalog or a detail path when id known
+                item.setdefault("parent_path", "/api/sba/content/loans")
+                if not item.get("path"):
+                    # no dedicated id — stay as leaf under loans parent
+                    item["path"] = ""
+                extra.append(item)
+
+        # Always include Lender Match as a child of loans parent
+        lender_child = {
+            "id": "lender-match",
+            "title": "Lender Match",
+            "name": "Lender Match",
+            "description": "Connect with SBA lenders interested in your financing needs.",
+            "url": f"{SBA_SITE}/funding-programs/loans/lender-match",
+            "path": "/api/sba/content/loans/lender-match",
+            "type": "tool",
+            "parent_id": "loans",
+            "parent_path": "/api/sba/content/loans",
+            "is_current": True,
+        }
 
         if live_cards:
-            merged = live_cards + extra
+            merged = live_cards + [lender_child] + extra
+            # de-dupe by id/title
+            seen = set()
+            clean = []
+            for it in merged:
+                key = str(it.get("id") or it.get("title") or "").lower()
+                if not key or key in seen:
+                    continue
+                seen.add(key)
+                clean.append(it)
             return _normalize_page(
-                merged,
+                clean,
                 page=page,
                 source="sba_html",
                 degraded=False,
                 is_current=True,
-                message="Current loan program text retrieved from official sba.gov pages.",
+                message="SBA Loans parent → children: program cards from official sba.gov pages.",
+                title="SBA Loans",
+                description=(
+                    "All major SBA-backed loan programs. Click a child (7(a), 504, Microloans, "
+                    "Lender Match) for full program detail."
+                ),
             )
 
         # 3) Static only if live pages unreachable — explicitly not current

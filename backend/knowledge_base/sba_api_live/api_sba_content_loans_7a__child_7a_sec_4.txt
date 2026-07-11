@@ -1,0 +1,8 @@
+# 7(a) loans
+Type: loan_section
+Parent path: /api/sba/content/loans/7a
+ID: 7a-sec-4
+
+Topic section from official page: 7(a) loans
+
+Official URL: https://www.sba.gov/funding-programs/loans/7a-loans

@@ -5,354 +5,354 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="theme-color" content="#2563eb" />
   <title>SBA Resources · PocketPro</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://images.unsplash.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --bg: linear-gradient(165deg, #ffffff 0%, #eef5ff 45%, #e3efff 100%);
+      --bg: #f4f7fc;
       --surface: #ffffff;
       --ink: #0f172a;
       --muted: #64748b;
-      --line: #dbe7f8;
+      --line: #e2e8f0;
       --blue: #2563eb;
       --blue-deep: #1d4ed8;
-      --soft: #dbeafe;
-      --radius: 16px;
-      --shadow: 0 12px 28px -12px rgba(37, 99, 235, 0.2);
+      --soft: #eff6ff;
+      --ok: #16a34a;
+      --warn: #d97706;
+      --radius: 18px;
+      --shadow: 0 10px 30px -12px rgba(15, 23, 42, .18);
+      --shadow-lg: 0 24px 50px -18px rgba(37, 99, 235, .28);
+      --sidebar: 300px;
     }
     * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
     body {
-      margin: 0;
-      min-height: 100vh;
+      margin: 0; min-height: 100vh; color: var(--ink);
       font-family: Inter, "Segoe UI", system-ui, sans-serif;
-      color: var(--ink);
-      background: var(--bg);
-      background-attachment: fixed;
+      background:
+        radial-gradient(1200px 500px at 10% -10%, #dbeafe 0%, transparent 55%),
+        radial-gradient(900px 400px at 100% 0%, #e0e7ff 0%, transparent 50%),
+        var(--bg);
     }
     a { color: var(--blue); text-decoration: none; }
     a:hover { color: var(--blue-deep); }
-    .shell { max-width: 1160px; margin: 0 auto; padding: 1rem 1.25rem 2.5rem; }
-    .topbar {
-      display: flex; align-items: center; justify-content: space-between;
-      gap: 1rem; padding: 0.85rem 0 1.25rem; flex-wrap: wrap;
+    .app { display: grid; grid-template-columns: var(--sidebar) 1fr; min-height: 100vh; }
+    @media (max-width: 960px) { .app { grid-template-columns: 1fr; } .sidebar { position: sticky; top: 0; z-index: 20; } }
+
+    /* Sidebar */
+    .sidebar {
+      background: rgba(255,255,255,.92); border-right: 1px solid var(--line);
+      backdrop-filter: blur(10px); display: flex; flex-direction: column; max-height: 100vh;
     }
-    .brand { display: flex; align-items: center; gap: 0.55rem; font-weight: 700; letter-spacing: -0.02em; color: var(--ink); }
-    .brand-dot {
-      width: 12px; height: 12px; border-radius: 999px;
-      background: linear-gradient(135deg, #60a5fa, #2563eb);
-      box-shadow: 0 0 0 4px var(--soft);
-    }
-    .top-links { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .side-head { padding: 1rem 1rem .75rem; border-bottom: 1px solid var(--line); }
+    .brand { display: flex; align-items: center; gap: .55rem; font-weight: 800; letter-spacing: -.02em; color: var(--ink); }
+    .brand img { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; box-shadow: 0 0 0 2px var(--soft); }
+    .side-nav { display: flex; flex-wrap: wrap; gap: .35rem; margin-top: .75rem; }
     .chip {
-      padding: 0.4rem 0.85rem; border-radius: 999px; border: 1px solid var(--line);
-      background: #fff; color: var(--muted); font-size: 0.9rem; font-weight: 500;
+      padding: .3rem .65rem; border-radius: 999px; border: 1px solid var(--line);
+      background: #fff; color: var(--muted); font-size: .78rem; font-weight: 600;
     }
     .chip:hover, .chip.active { background: linear-gradient(135deg, #3b82f6, #2563eb); color: #fff; border-color: transparent; }
-    h1 { margin: 0 0 0.35rem; font-size: clamp(1.6rem, 3vw, 2rem); letter-spacing: -0.03em; }
-    .lead { margin: 0 0 1.25rem; color: var(--muted); }
-    .layout { display: grid; grid-template-columns: 280px 1fr; gap: 1rem; align-items: start; }
-    @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
-    .panel {
-      background: rgba(255,255,255,0.96); border: 1px solid var(--line);
-      border-radius: var(--radius); box-shadow: var(--shadow);
-    }
-    .panel-h {
-      padding: 0.85rem 1rem; border-bottom: 1px solid var(--line);
-      display: flex; justify-content: space-between; align-items: center; gap: 0.5rem;
-    }
-    .panel-h strong { font-size: 0.95rem; }
-    .panel-b { padding: 0.75rem; }
+    .side-body { padding: .75rem; overflow: auto; flex: 1; }
     .group-label {
-      font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase;
-      color: var(--muted); font-weight: 600; padding: 0.5rem 0.5rem 0.25rem;
+      font-size: .68rem; letter-spacing: .1em; text-transform: uppercase;
+      color: var(--muted); font-weight: 700; padding: .65rem .4rem .3rem;
     }
     .nav-item {
       width: 100%; text-align: left; border: 1px solid transparent; background: transparent;
-      border-radius: 12px; padding: 0.65rem 0.7rem; cursor: pointer; display: flex; gap: 0.5rem;
-      color: var(--ink); font: inherit;
+      border-radius: 14px; padding: .7rem .75rem; cursor: pointer; display: flex; gap: .55rem;
+      color: var(--ink); font: inherit; margin-bottom: .25rem;
     }
     .nav-item:hover { background: var(--soft); }
     .nav-item.active {
-      background: linear-gradient(135deg, #eff6ff, #fff);
+      background: linear-gradient(145deg, #eff6ff, #fff);
       border-color: #bfdbfe; box-shadow: var(--shadow);
     }
-    .nav-item .ico { font-size: 1.15rem; line-height: 1.2; }
-    .nav-item .name { font-weight: 600; font-size: 0.92rem; display: block; }
-    .nav-item .desc { font-size: 0.78rem; color: var(--muted); display: block; margin-top: 0.15rem; }
-    .toolbar { display: flex; flex-wrap: wrap; gap: 0.75rem; justify-content: space-between; align-items: flex-start; }
-    .meta-row { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; margin-top: 0.4rem; }
-    .badge {
-      display: inline-flex; align-items: center; border-radius: 999px; padding: 0.15rem 0.55rem;
-      font-size: 0.72rem; font-weight: 600;
+    .nav-item .ico { font-size: 1.2rem; line-height: 1.2; }
+    .nav-item .name { font-weight: 700; font-size: .9rem; display: block; }
+    .nav-item .desc {
+      font-size: .72rem; color: var(--muted); display: block; margin-top: .12rem;
+      font-family: ui-monospace, Consolas, monospace; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
-    .badge.ok { background: #dcfce7; color: #166534; }
-    .badge.no { background: #e2e8f0; color: #475569; }
-    .badge.soft { background: #eff6ff; color: #1d4ed8; }
-    .search { display: flex; gap: 0.4rem; min-width: min(100%, 320px); flex: 1; }
+    .side-foot { padding: .75rem 1rem; border-top: 1px solid var(--line); font-size: .78rem; color: var(--muted); }
+
+    /* Main */
+    .main { min-width: 0; display: flex; flex-direction: column; }
+    .topbar {
+      position: sticky; top: 0; z-index: 15;
+      display: flex; align-items: center; justify-content: space-between; gap: .75rem; flex-wrap: wrap;
+      padding: .85rem 1.25rem; background: rgba(255,255,255,.86); border-bottom: 1px solid var(--line);
+      backdrop-filter: blur(12px);
+    }
+    .search { display: flex; gap: .4rem; flex: 1; min-width: min(100%, 280px); max-width: 420px; }
     .search input {
-      flex: 1; border: 1px solid var(--line); border-radius: 999px; padding: 0.55rem 0.9rem;
-      font: inherit; outline: none;
+      flex: 1; border: 1px solid var(--line); border-radius: 999px; padding: .55rem .95rem;
+      font: inherit; outline: none; background: #fff;
     }
-    .search input:focus { border-color: #93c5fd; box-shadow: 0 0 0 3px rgba(37,99,235,0.12); }
+    .search input:focus { border-color: #93c5fd; box-shadow: 0 0 0 3px rgba(37,99,235,.12); }
     .btn {
-      border: none; border-radius: 999px; padding: 0.55rem 1rem; font: inherit; font-weight: 600;
-      cursor: pointer;
+      border: none; border-radius: 999px; padding: .55rem 1rem; font: inherit; font-weight: 700; cursor: pointer;
+      display: inline-flex; align-items: center; gap: .35rem;
     }
-    .btn-primary { background: linear-gradient(135deg, #3b82f6, #2563eb); color: #fff; box-shadow: 0 8px 18px rgba(37,99,235,0.22); }
+    .btn-primary { background: linear-gradient(135deg, #3b82f6, #2563eb); color: #fff; box-shadow: 0 8px 18px rgba(37,99,235,.22); }
     .btn-ghost { background: #fff; border: 1px solid var(--line); color: var(--ink); }
-    .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.85rem; }
-    @media (max-width: 700px) { .grid { grid-template-columns: 1fr; } }
+    .btn-soft { background: var(--soft); color: var(--blue-deep); border: 1px solid #bfdbfe; }
+    .btn:disabled { opacity: .5; cursor: not-allowed; }
+
+    .content { padding: 1.1rem 1.25rem 2.5rem; max-width: 1100px; width: 100%; margin: 0 auto; }
+
+    /* Topic hero — fully developed subject */
+    .topic {
+      background: linear-gradient(145deg, #ffffff 0%, #f8fbff 55%, #eef5ff 100%);
+      border: 1px solid var(--line); border-radius: calc(var(--radius) + 4px);
+      box-shadow: var(--shadow-lg); padding: 1.35rem 1.4rem 1.2rem; margin-bottom: 1rem;
+      position: relative; overflow: hidden;
+    }
+    .topic::after {
+      content: ""; position: absolute; right: -40px; top: -40px; width: 180px; height: 180px;
+      background: radial-gradient(circle, rgba(59,130,246,.18), transparent 70%); pointer-events: none;
+    }
+    .crumb { font-size: .82rem; color: var(--muted); margin-bottom: .45rem; display: flex; flex-wrap: wrap; gap: .35rem; align-items: center; }
+    .crumb button {
+      border: none; background: transparent; color: var(--blue); font: inherit; font-weight: 600; cursor: pointer; padding: 0;
+    }
+    .topic-title {
+      margin: 0; font-size: clamp(1.45rem, 2.6vw, 1.9rem); letter-spacing: -.03em;
+      display: flex; gap: .55rem; align-items: center; flex-wrap: wrap;
+    }
+    .topic-lead { margin: .55rem 0 0; color: var(--muted); line-height: 1.65; max-width: 70ch; font-size: .98rem; }
+    .pill-row { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .75rem; }
+    .pill {
+      display: inline-flex; align-items: center; gap: .3rem; border-radius: 999px;
+      padding: .22rem .65rem; font-size: .72rem; font-weight: 700; border: 1px solid var(--line); background: #fff;
+    }
+    .pill.route { font-family: ui-monospace, Consolas, monospace; color: var(--blue-deep); background: var(--soft); border-color: #bfdbfe; cursor: pointer; max-width: 100%; }
+    .pill.ok { background: #dcfce7; color: #166534; border-color: #bbf7d0; }
+    .pill.warn { background: #fffbeb; color: #92400e; border-color: #fde68a; }
+    .pill.muted { color: var(--muted); }
+    .topic-actions { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: 1rem; }
+    .sections { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: .65rem; margin-top: 1rem; }
+    @media (max-width: 800px) { .sections { grid-template-columns: 1fr; } }
+    .section-card {
+      background: rgba(255,255,255,.85); border: 1px solid var(--line); border-radius: 14px; padding: .75rem .85rem;
+    }
+    .section-card h3 { margin: 0 0 .3rem; font-size: .88rem; }
+    .section-card p { margin: 0; color: var(--muted); font-size: .82rem; line-height: 1.5; }
+
+    /* Digestion pipeline */
+    .digest {
+      background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+      padding: .85rem 1rem; margin-bottom: 1rem; box-shadow: var(--shadow);
+    }
+    .digest-head { display: flex; justify-content: space-between; align-items: center; gap: .75rem; flex-wrap: wrap; margin-bottom: .65rem; }
+    .digest-head strong { font-size: .92rem; }
+    .pipeline { display: flex; flex-wrap: wrap; gap: .4rem; }
+    .step {
+      display: inline-flex; align-items: center; gap: .35rem; padding: .35rem .65rem;
+      border-radius: 999px; border: 1px solid var(--line); background: #f8fafc; font-size: .75rem; font-weight: 600;
+    }
+    .step .dot { width: 8px; height: 8px; border-radius: 50%; background: #94a3b8; }
+    .step.done .dot { background: var(--ok); }
+    .step.warn .dot { background: var(--warn); }
+    .step.empty .dot { background: #cbd5e1; }
+    .stats { display: flex; flex-wrap: wrap; gap: .75rem 1.1rem; margin-top: .65rem; font-size: .82rem; color: var(--muted); }
+    .stats b { color: var(--ink); }
+
+    /* Filters + results toolbar */
+    .toolbar {
+      display: flex; justify-content: space-between; align-items: center; gap: .75rem; flex-wrap: wrap;
+      margin-bottom: .75rem;
+    }
+    .facets { display: flex; flex-wrap: wrap; gap: .35rem; }
+    .facet {
+      border: 1px solid var(--line); background: #fff; border-radius: 999px; padding: .35rem .7rem;
+      font: inherit; font-size: .8rem; font-weight: 600; color: var(--muted); cursor: pointer;
+    }
+    .facet.active, .facet:hover { background: var(--soft); color: var(--blue-deep); border-color: #bfdbfe; }
+    .view-toggle { display: flex; gap: .3rem; }
+    .view-toggle .btn { padding: .4rem .7rem; font-size: .8rem; }
+
+    /* Results */
+    .grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: .85rem; }
+    .grid.list { grid-template-columns: 1fr; }
+    @media (max-width: 720px) { .grid { grid-template-columns: 1fr; } }
     .card {
       border: 1px solid var(--line); border-radius: var(--radius); background: #fff;
-      padding: 1rem; cursor: pointer; transition: transform .14s ease, box-shadow .14s ease, border-color .14s ease;
-      display: flex; flex-direction: column; min-height: 160px; text-align: left; font: inherit; color: inherit;
-      width: 100%;
+      padding: 1rem 1.05rem; text-align: left; font: inherit; color: inherit; width: 100%;
+      cursor: pointer; display: flex; flex-direction: column; gap: .45rem; min-height: 168px;
+      transition: transform .14s ease, box-shadow .14s ease, border-color .14s ease;
+      position: relative;
     }
     .card:hover { transform: translateY(-2px); border-color: #93c5fd; box-shadow: var(--shadow); }
-    .card h3 { margin: 0 0 0.45rem; font-size: 1rem; letter-spacing: -0.01em; }
-    .card p { margin: 0 0 0.75rem; color: var(--muted); font-size: 0.88rem; flex: 1; }
-    .card .more { color: var(--blue); font-weight: 600; font-size: 0.85rem; }
-    .empty, .loading { text-align: center; padding: 2.5rem 1rem; color: var(--muted); }
+    .card.expanded { min-height: 0; border-color: #93c5fd; box-shadow: var(--shadow); }
+    .card-top { display: flex; justify-content: space-between; gap: .6rem; align-items: flex-start; }
+    .card h3 { margin: 0; font-size: 1.02rem; letter-spacing: -.015em; line-height: 1.3; }
+    .card p { margin: 0; color: var(--muted); font-size: .88rem; line-height: 1.55; flex: 1; }
+    .card .more { color: var(--blue); font-weight: 700; font-size: .85rem; margin-top: auto; }
+    .card-meta { font-size: .72rem; color: var(--muted); font-family: ui-monospace, Consolas, monospace; }
+    .card-actions { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .25rem; }
+    .card-actions .btn { padding: .35rem .7rem; font-size: .78rem; }
+
+    .related {
+      margin-top: 1.25rem; background: #fff; border: 1px solid var(--line);
+      border-radius: var(--radius); padding: 1rem; box-shadow: var(--shadow);
+    }
+    .related h3 { margin: 0 0 .65rem; font-size: 1rem; }
+    .related-list { display: flex; flex-wrap: wrap; gap: .45rem; }
+    .related-list button {
+      border: 1px solid var(--line); background: var(--soft); color: var(--blue-deep);
+      border-radius: 999px; padding: .4rem .75rem; font: inherit; font-size: .8rem; font-weight: 600; cursor: pointer;
+    }
+    .related-list button:hover { background: #dbeafe; }
+
+    .empty, .loading { text-align: center; padding: 2.75rem 1rem; color: var(--muted); }
     .spinner {
-      width: 28px; height: 28px; border: 3px solid var(--soft); border-top-color: var(--blue);
-      border-radius: 50%; margin: 0 auto 0.75rem; animation: spin .7s linear infinite;
+      width: 30px; height: 30px; border: 3px solid var(--soft); border-top-color: var(--blue);
+      border-radius: 50%; margin: 0 auto .75rem; animation: spin .7s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
     .alert {
-      background: #fff; border: 1px solid #bfdbfe; border-radius: 12px; padding: 0.75rem 1rem;
-      color: var(--muted); margin-bottom: 0.85rem; font-size: 0.9rem;
+      border-radius: 12px; padding: .75rem 1rem; margin-bottom: .85rem; font-size: .9rem;
+      border: 1px solid #bfdbfe; background: #eff6ff; color: var(--muted);
     }
     .alert.warn { border-color: #fde68a; background: #fffbeb; }
-    /* Modal detail card */
+    .pager { display: flex; justify-content: center; gap: .5rem; margin-top: 1rem; align-items: center; }
+
+    /* Modal leaf detail */
     .overlay {
-      position: fixed; inset: 0; background: rgba(15, 23, 42, 0.45); display: none;
-      align-items: center; justify-content: center; padding: 1rem; z-index: 50;
+      position: fixed; inset: 0; background: rgba(15,23,42,.5); display: none;
+      align-items: center; justify-content: center; padding: 1rem; z-index: 60;
     }
     .overlay.open { display: flex; }
     .modal {
-      width: min(640px, 100%); max-height: min(85vh, 720px); overflow: auto;
-      background: #fff; border-radius: 20px; box-shadow: 0 24px 60px rgba(15,23,42,0.25);
-      border: 1px solid var(--line);
+      width: min(720px, 100%); max-height: min(88vh, 800px); overflow: auto;
+      background: #fff; border-radius: 22px; border: 1px solid var(--line);
+      box-shadow: 0 28px 70px rgba(15,23,42,.3);
     }
-    .modal-h { padding: 1.1rem 1.2rem 0.5rem; display: flex; justify-content: space-between; gap: 1rem; align-items: flex-start; }
-    .modal-h h2 { margin: 0; font-size: 1.2rem; letter-spacing: -0.02em; }
-    .modal-b { padding: 0.5rem 1.2rem 1.2rem; }
-    .modal-f { padding: 0 1.2rem 1.2rem; display: flex; gap: 0.5rem; justify-content: flex-end; flex-wrap: wrap; }
-    .meta { display: grid; grid-template-columns: 120px 1fr; gap: 0.35rem 0.75rem; font-size: 0.9rem; margin-top: 1rem; }
-    .meta dt { color: var(--muted); margin: 0; text-transform: capitalize; }
+    .modal-h { padding: 1.2rem 1.25rem .5rem; display: flex; justify-content: space-between; gap: 1rem; }
+    .modal-h h2 { margin: 0; font-size: 1.25rem; letter-spacing: -.02em; }
+    .modal-b { padding: .4rem 1.25rem 1.1rem; }
+    .modal-f { padding: 0 1.25rem 1.2rem; display: flex; gap: .5rem; justify-content: flex-end; flex-wrap: wrap; }
+    .x { border: none; background: var(--soft); width: 34px; height: 34px; border-radius: 999px; cursor: pointer; font-size: 1.15rem; }
+    .meta { display: grid; grid-template-columns: 120px 1fr; gap: .4rem .75rem; font-size: .9rem; margin-top: .9rem; }
+    .meta dt { color: var(--muted); margin: 0; }
     .meta dd { margin: 0; word-break: break-word; }
-    .x {
-      border: none; background: var(--soft); width: 32px; height: 32px; border-radius: 999px;
-      cursor: pointer; font-size: 1.1rem; color: var(--blue-deep);
-    }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
   </style>
 </head>
 <body>
-  <div class="shell">
-    <div class="topbar">
-      <a class="brand" href="/">
-        <img src="/logo.gif" alt="PocketPro SBA" width="28" height="28" style="border-radius:50%;object-fit:cover;box-shadow:0 0 0 2px #dbeafe;background:#fff" onerror="this.src='/images/yinyang.gif'" /><span class="brand-dot" style="display:none"></span>
-        PocketPro <span style="color:var(--blue);font-weight:600">SBA</span>
-      </a>
-      <nav class="top-links">
-        <a class="chip" href="/">Home</a>
-        <a class="chip" href="/chat">Chat</a>
-        <a class="chip active" href="/browse">Resources</a>
-        <a class="chip" href="/rag">RAG</a>
-        <a class="chip active" href="/sba">SBA</a>
-      </nav>
-    </div>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="side-head">
+        <a class="brand" href="/">
+          <img src="/logo.gif" alt="" onerror="this.src='/images/yinyang.gif'" />
+          PocketPro <span style="color:var(--blue)">SBA</span>
+        </a>
+        <nav class="side-nav">
+          <a class="chip" href="/">Home</a>
+          <a class="chip" href="/chat">Chat</a>
+          <a class="chip active" href="/browse">Resources</a>
+          <a class="chip" href="/sba">Programs</a>
+          <a class="chip" href="/rag">RAG</a>
+        </nav>
+      </div>
+      <div class="side-body" id="navList">
+        <div class="loading"><div class="spinner"></div>Loading endpoints…</div>
+      </div>
+      <div class="side-foot" id="sideFoot">Recursive explore · child becomes next parent</div>
+    </aside>
 
-    <h1>SBA Resources</h1>
-    <p class="lead">
-      <strong>API-driven:</strong> left tabs come from <code>/api/sba/resources</code>.
-      Click a tab to fetch that tab’s <code>path</code> and render cards from the response
-      (<code>items</code> / loan types / sources). Click a card for full detail.
-    </p>
+    <div class="main">
+      <div class="topbar">
+        <div style="display:flex;gap:.45rem;align-items:center;flex-wrap:wrap">
+          <button type="button" class="btn btn-ghost" id="backBtn" style="display:none">← Back</button>
+          <button type="button" class="btn btn-soft" id="refreshBtn">Refresh route</button>
+        </div>
+        <form class="search" id="searchForm">
+          <label class="sr-only" for="searchInput">Filter results</label>
+          <input id="searchInput" type="search" placeholder="Filter this topic…" disabled />
+          <button class="btn btn-primary" type="submit" id="searchBtn" disabled>Search</button>
+        </form>
+      </div>
 
-    <div id="alert" class="alert" style="display:none"></div>
-
-    <div class="layout">
-      <aside class="panel" id="navPanel">
-        <div class="panel-h">
-          <strong>Browse</strong>
-          <button class="btn btn-ghost" type="button" id="refreshNav" style="padding:0.35rem 0.7rem;font-size:0.8rem">Refresh</button>
+      <div class="content">
+        <div id="alert" class="alert" style="display:none"></div>
+        <div id="page">
+          <div class="loading"><div class="spinner"></div>Preparing API digestion…</div>
         </div>
-        <div class="panel-b" id="navList">
-          <div class="loading"><div class="spinner"></div>Loading resources…</div>
-        </div>
-      </aside>
-
-      <main class="panel">
-        <div class="panel-h">
-          <div class="toolbar" style="width:100%">
-            <div>
-              <strong id="activeTitle">Select a resource</strong>
-              <div class="meta-row" id="activeMeta"></div>
-            </div>
-            <form class="search" id="searchForm">
-              <input id="searchInput" type="search" placeholder="Filter results…" disabled />
-              <button class="btn btn-primary" type="submit" id="searchBtn" disabled>Search</button>
-            </form>
-          </div>
-        </div>
-        <div class="panel-b" id="results">
-          <div class="empty">Choose a category on the left to load its items from the API.</div>
-        </div>
-      </main>
+      </div>
     </div>
   </div>
 
   <div class="overlay" id="overlay" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
     <div class="modal">
       <div class="modal-h">
-        <h2 id="modalTitle">Details</h2>
+        <div>
+          <h2 id="modalTitle">Details</h2>
+          <div class="pill-row" id="modalPills"></div>
+        </div>
         <button class="x" type="button" id="closeModal" aria-label="Close">×</button>
       </div>
       <div class="modal-b" id="modalBody"></div>
       <div class="modal-f">
         <button class="btn btn-ghost" type="button" id="closeModal2">Close</button>
-        <a class="btn btn-primary" id="modalLink" href="#" target="_blank" rel="noopener noreferrer" style="display:none">Official source</a>
+        <button class="btn btn-soft" type="button" id="openRouteBtn" style="display:none">Open API route</button>
+        <a class="btn btn-primary" id="modalLink" href="#" target="_blank" rel="noopener" style="display:none">Official source</a>
       </div>
     </div>
   </div>
 
   <script>
+    /**
+     * World-class API digestion browser
+     * click endpoint → fetch route → digest topic → fully develop page
+     */
     const ICONS = {
       loans: '💰', loan_types: '📋', articles: '📰', blogs: '✍️', courses: '🎓',
-      documents: '📄', events: '📅', offices: '🏢', sbir: '🔬', lenders: '🏦', sources: '🛰️'
+      documents: '📄', events: '📅', offices: '🏢', sbir: '🔬', lenders: '🏦', sources: '🛰️',
+      lifecycle: '📌', programs: '💼', local: '📍', start: '🏁',
+      contracting: '📝', disaster: '🚨'
     };
 
     const state = {
-      resources: [],
-      active: null,
-      items: [],
+      nav: [],
+      route: '',
+      title: '',
+      query: '',
       page: 1,
       totalPages: 1,
-      query: '',
-      meta: null,
+      items: [],
+      allItems: [],
+      topic: null,
+      digestion: null,
+      facet: 'all',
+      view: 'grid', // grid | list
+      history: [],
+      expanded: {},
+      meta: {},
     };
 
     const $ = (id) => document.getElementById(id);
-    const navList = $('navList');
-    const results = $('results');
-    const alertBox = $('alert');
+
+    function escapeHtml(s) {
+      return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
 
     function showAlert(msg, warn) {
-      if (!msg) { alertBox.style.display = 'none'; return; }
-      alertBox.style.display = 'block';
-      alertBox.className = 'alert' + (warn ? ' warn' : '');
-      alertBox.textContent = msg;
-    }
-
-    function normalizeItem(raw, index) {
-      if (!raw || typeof raw !== 'object') {
-        const text = stripHtml(raw);
-        if (!text) return null;
-        return { id: 'item-' + index, title: text.slice(0, 120), description: text, url: '', type: 'content', meta: {} };
-      }
-      let title = stripHtml(raw.title || raw.name || raw.label || raw.award_title || raw.firm || raw.type || '');
-      // Prefer plain-text fields; strip HTML from body so cards always render text
-      let description = stripHtml(
-        raw.description || raw.summary || raw.teaser || raw.abstract || raw.message || raw.body || ''
-      );
-      const url = String(raw.url || raw.link || raw.href || raw.award_link || raw.source_page || raw.registrationLink || '').trim();
-      if (!title && url) {
-        try {
-          title = decodeURIComponent((url.split('/').filter(Boolean).pop() || 'SBA resource')).replace(/[-_]/g, ' ');
-        } catch (_) {
-          title = 'SBA resource';
-        }
-      }
-      if (!title && description) title = description.slice(0, 80) + (description.length > 80 ? '…' : '');
-      if (!description && title) description = url ? (title + ' — ' + url) : ('SBA resource: ' + title);
-      if (!title && !description && !url) return null;
-      // Never drop a card that has a title
-      if (!title) title = 'SBA resource ' + (index + 1);
-      if (!description) description = title;
-      const meta = Object.assign({}, raw.meta || {});
-      ['agency','firm','phase','program','award_amount','award_year','phone','email','address','location','source_page','retrieved_at','is_current','freshness','source','max_amount','terms','rates','use_cases','base','status_code','error','ok']
-        .forEach((k) => { if (raw[k] !== undefined && raw[k] !== null && raw[k] !== '') meta[k] = raw[k]; });
-      return {
-        id: raw.id != null ? raw.id : ('item-' + index),
-        title, description, url,
-        type: raw.type || 'content',
-        is_current: raw.is_current,
-        source: raw.source,
-        meta,
-      };
-    }
-
-    function extractItems(data, resource) {
-      if (!data || typeof data !== 'object') return [];
-      const isOverview = resource && resource.path && resource.path.indexOf('sba-overview') !== -1;
-      const isSources = resource && resource.path && resource.path.indexOf('/sources') !== -1;
-      if (isSources) return sourcesToItems(data);
-      if (isOverview || Array.isArray(data.available_loan_types)) return overviewToItems(data);
-      if (Array.isArray(data.items)) return data.items.map(normalizeItem).filter(Boolean);
-      if (Array.isArray(data.results)) return data.results.map(normalizeItem).filter(Boolean);
-      if (Array.isArray(data.resources)) {
-        return data.resources.map((r, i) => normalizeItem({
-          id: r.id, title: r.name || r.id, description: r.description, url: r.path, type: 'resource',
-        }, i)).filter(Boolean);
-      }
-      // Single object card
-      if (data.title || data.name || data.summary) {
-        const one = normalizeItem(data, 0);
-        return one ? [one] : [];
-      }
-      return [];
-    }
-
-    function sourcesToItems(data) {
-      return Object.entries(data || {}).map(([key, value], i) => {
-        if (value && typeof value === 'object') {
-          const parts = [
-            value.base ? ('Base: ' + value.base) : null,
-            value.status_code != null ? ('HTTP ' + value.status_code) : null,
-            value.error ? ('Error: ' + value.error) : null,
-            value.ok === true ? 'Healthy' : (value.ok === false ? 'Unavailable' : null),
-          ].filter(Boolean);
-          return normalizeItem({
-            id: key, title: key.replace(/_/g, ' '), description: parts.join(' · ') || JSON.stringify(value),
-            type: 'source_status', is_current: value.ok === true, url: value.base || '', meta: value,
-          }, i);
-        }
-        return normalizeItem({ id: key, title: key.replace(/_/g, ' '), description: String(value), type: 'source_status' }, i);
-      }).filter(Boolean);
-    }
-
-    function overviewToItems(data) {
-      const types = data && data.available_loan_types;
-      if (!Array.isArray(types)) return [];
-      return types.map((t, i) => normalizeItem({
-        id: 'loan-type-' + i,
-        title: t.type || t.name || t.title || ('Loan type ' + (i + 1)),
-        description: [t.description, t.max_amount && ('Max: ' + t.max_amount), t.terms && ('Terms: ' + t.terms), t.rates && ('Rates: ' + t.rates), Array.isArray(t.use_cases) && ('Uses: ' + t.use_cases.join(', '))].filter(Boolean).join(' · '),
-        url: t.url || '', type: 'loan_type', is_current: t.is_current, retrieved_at: t.retrieved_at,
-        max_amount: t.max_amount, terms: t.terms, rates: t.rates, use_cases: t.use_cases,
-      }, i)).filter(Boolean);
+      const el = $('alert');
+      if (!msg) { el.style.display = 'none'; return; }
+      el.style.display = 'block';
+      el.className = 'alert' + (warn ? ' warn' : '');
+      el.textContent = msg;
     }
 
     function stripHtml(s) {
       return String(s == null ? '' : s)
-        .replace(/<script[\s\S]*?<\/script>/gi, ' ')
-        .replace(/<style[\s\S]*?<\/style>/gi, ' ')
-        .replace(/<[^>]+>/g, ' ')
-        .replace(/&nbsp;/g, ' ')
-        .replace(/&amp;/g, '&')
-        .replace(/&lt;/g, '<')
-        .replace(/&gt;/g, '>')
-        .replace(/&quot;/g, '"')
-        .replace(/\s+/g, ' ')
-        .trim();
+        .replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
     }
 
     async function apiGet(path, params, timeoutMs) {
-      // Prefer same-origin proxy (/api → backend). Fall back to direct :5000 if proxy fails.
-      // Do NOT force fresh=1 on every click — that re-scrapes sba.gov and blanks the UI on timeout.
-      const bases = [window.location.origin, 'http://localhost:5000', 'http://127.0.0.1:5000'];
+      const bases = [window.location.origin, 'http://127.0.0.1:5000', 'http://localhost:5000'];
       const ms = timeoutMs || 60000;
       let lastErr = null;
       for (const base of bases) {
@@ -361,313 +361,755 @@
         try {
           const url = new URL(path, base);
           if (params) {
-            Object.entries(params).forEach(function (entry) {
-              var k = entry[0], v = entry[1];
+            Object.keys(params).forEach(function (k) {
+              const v = params[k];
               if (v !== undefined && v !== null && v !== '') url.searchParams.set(k, v);
             });
           }
-          var fetchOpts = {
+          const res = await fetch(url.toString(), {
             headers: { Accept: 'application/json' },
-          };
-          if (controller) fetchOpts.signal = controller.signal;
-          const res = await fetch(url.toString(), fetchOpts);
-          if (!res.ok) {
-            lastErr = new Error('HTTP ' + res.status + ' for ' + path);
-            if (res.status === 404 || res.status >= 500) continue;
-            throw lastErr;
-          }
-          const data = await res.json();
-          if (!data || typeof data !== 'object') {
-            throw new Error('Empty JSON for ' + path);
-          }
-          return data;
+            signal: controller ? controller.signal : undefined,
+          });
+          if (!res.ok) { lastErr = new Error('HTTP ' + res.status); continue; }
+          return await res.json();
         } catch (e) {
-          lastErr = e && e.name === 'AbortError'
-            ? new Error('Timed out loading ' + path + ' after ' + ms + 'ms')
-            : e;
+          lastErr = e && e.name === 'AbortError' ? new Error('Timed out: ' + path) : e;
         } finally {
           if (timer) clearTimeout(timer);
         }
       }
-      throw lastErr || new Error('Failed to fetch ' + path);
+      throw lastErr || new Error('Failed ' + path);
     }
 
-    function renderNav() {
-      const groups = {};
-      state.resources.forEach((r) => {
-        const g = r.group || 'Resources';
-        (groups[g] = groups[g] || []).push(r);
-      });
-      const parts = [];
-      Object.keys(groups).forEach((g) => {
-        parts.push('<div class="group-label">' + escapeHtml(g) + '</div>');
-        groups[g].forEach((r) => {
-          const active = state.active && state.active.id === r.id;
-          parts.push(
-            '<button type="button" class="nav-item' + (active ? ' active' : '') + '" data-id="' + escapeHtml(r.id) + '">' +
-              '<span class="ico">' + (r.icon || '📁') + '</span>' +
-              '<span><span class="name">' + escapeHtml(r.name) + '</span>' +
-              '<span class="desc">' + escapeHtml(r.description || '') + '</span></span>' +
-            '</button>'
-          );
-        });
-      });
-      navList.innerHTML = parts.join('') || '<div class="empty">No resources from API.</div>';
-      navList.querySelectorAll('.nav-item').forEach((btn) => {
-        btn.addEventListener('click', () => {
-          const res = state.resources.find((x) => x.id === btn.getAttribute('data-id'));
-          if (res) loadResource(res, 1, '');
-        });
-      });
-    }
-
-    function escapeHtml(s) {
-      return String(s == null ? '' : s)
-        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;');
-    }
-
-    async function loadCatalog() {
-      navList.innerHTML = '<div class="loading"><div class="spinner"></div>Loading resources…</div>';
-      results.innerHTML = '<div class="loading"><div class="spinner"></div>Loading SBA resources…</div>';
-      showAlert('');
-      try {
-        const data = await apiGet('/api/sba/resources');
-        state.resources = (data.resources || []).filter((r) => r && r.id && r.path).map((r) => ({
-          id: r.id,
-          name: r.name || r.id,
-          description: r.description || '',
-          path: r.path,
-          group: r.group || 'Resources',
-          icon: ICONS[r.icon || r.id] || '📁',
-        }));
-        renderNav();
-        if (!state.resources.length) {
-          showAlert('No resources returned from /api/sba/resources', true);
-          results.innerHTML = '<div class="empty">No resource categories available.</div>';
-          return;
-        }
-        // Auto-load first category so cards render immediately (prefer loans)
-        const preferred = state.resources.find((r) => r.id === 'loans') || state.resources[0];
-        await loadResource(preferred, 1, '');
-      } catch (e) {
-        navList.innerHTML = '<div class="empty">Failed to load navigation.</div>';
-        results.innerHTML = '<div class="empty">Could not load SBA resources.</div>';
-        showAlert('Could not load /api/sba/resources: ' + e.message, true);
+    /** Derive recursive child path under current parent route */
+    function deriveChildPath(item, parentRoute) {
+      if (!item) return '';
+      let path = String(item.path || '').trim();
+      if (path.indexOf('/api/') === 0) {
+        // Don't re-open the same parent (infinite loop)
+        if (parentRoute && path.replace(/\/$/, '') === String(parentRoute).replace(/\/$/, '')) return '';
+        return path;
       }
+      const id = item.id != null ? String(item.id) : '';
+      const type = String(item.type || '').toLowerCase();
+      const title = String(item.title || item.name || '');
+      if (item.lifecycle_id) return '/api/sba/lifecycle/' + encodeURIComponent(item.lifecycle_id);
+      if (/^sba loans$/i.test(title) || id === 'loans') return '/api/sba/content/loans';
+      // Known loan ids
+      if (['7a', '504', 'microloans', 'express', 'loans_hub', 'lender-match', 'working-capital', 'fixed-assets'].indexOf(id) >= 0) {
+        return '/api/sba/content/loans/' + encodeURIComponent(id);
+      }
+      // Recurse under current API parent: /api/sba/content/X + /childId
+      const parent = String(parentRoute || state.route || '').replace(/\/$/, '');
+      if (parent.indexOf('/api/') === 0 && id && id.indexOf('item-') !== 0 && id.indexOf('-overview') < 0 && id.indexOf('-official') < 0) {
+        // Skip pure leaf types that shouldn't recurse
+        if (['overview', 'link', 'notice', 'source_status'].indexOf(type) >= 0) return '';
+        // If parent already ends with this id, no deeper path
+        if (parent.endsWith('/' + id) || parent.endsWith('/' + encodeURIComponent(id))) return '';
+        // Only append one level under content/* or lifecycle/*
+        if (/\/api\/sba\/(content|lifecycle)(\/|$)/.test(parent)) {
+          return parent + '/' + encodeURIComponent(id);
+        }
+      }
+      return '';
     }
 
-    async function loadResource(resource, page, query) {
-      if (!resource || !resource.path) {
-        results.innerHTML = '<div class="empty">Invalid resource.</div>';
+    function normalizeItem(raw, index, parentRoute) {
+      if (!raw || typeof raw !== 'object') {
+        const text = stripHtml(raw);
+        if (!text) return null;
+        return { id: 'item-' + index, title: text.slice(0, 120), description: text, url: '', path: '', type: 'content', resources: [], drillable: false };
+      }
+      let title = stripHtml(raw.title || raw.name || raw.label || raw.type || '');
+      let description = stripHtml(raw.description || raw.summary || raw.teaser || raw.message || raw.body || '');
+      const url = String(raw.url || raw.link || raw.href || '').trim();
+      if (!title && description) title = description.slice(0, 90) + (description.length > 90 ? '…' : '');
+      if (!title) title = 'SBA resource ' + (index + 1);
+      if (!description) description = title;
+      const lifecycleId = raw.lifecycle_id || '';
+      const id = raw.id != null ? String(raw.id) : ('item-' + index);
+      const type = raw.type || 'content';
+      let path = String(raw.path || '').trim();
+      if (!path && lifecycleId) path = '/api/sba/lifecycle/' + lifecycleId;
+      const provisional = {
+        id: id, title: title, name: title, path: path, type: type, lifecycle_id: lifecycleId,
+      };
+      if (!path) path = deriveChildPath(provisional, parentRoute || state.route);
+      // Never point child at the page we're already on
+      if (path && parentRoute && path.replace(/\/$/, '') === String(parentRoute).replace(/\/$/, '')) {
+        path = '';
+      }
+      const resources = Array.isArray(raw.resources) ? raw.resources : [];
+      const drillable = !!raw.drillable || path.indexOf('/api/') === 0;
+      const fileUrl = String(raw.fileUrl || raw.file_url || '').trim();
+      const registrationLink = String(raw.registrationLink || raw.registration_link || '').trim();
+      return {
+        id: id,
+        title: title,
+        description: description,
+        body: raw.body || '',
+        url: url,
+        path: path,
+        type: type,
+        is_current: raw.is_current,
+        source: raw.source || '',
+        resources: resources,
+        lifecycle_id: lifecycleId,
+        drillable: drillable,
+        has_children: !!raw.has_children || resources.length > 0 || drillable,
+        actions: Array.isArray(raw.actions) ? raw.actions : [],
+        fileUrl: fileUrl,
+        registrationLink: registrationLink,
+        phase: raw.phase || '',
+        icon: raw.icon || '',
+        parent_path: raw.parent_path || parentRoute || '',
+      };
+    }
+
+    function extractItems(data, parentRoute) {
+      const parent = parentRoute || state.route || '';
+      if (!data || typeof data !== 'object') return [];
+      if (Array.isArray(data.items)) return data.items.map(function (raw, i) { return normalizeItem(raw, i, parent); }).filter(Boolean);
+      if (Array.isArray(data.results)) return data.results.map(function (raw, i) { return normalizeItem(raw, i, parent); }).filter(Boolean);
+      if (Array.isArray(data.available_loan_types)) {
+        return data.available_loan_types.map(function (t, i) {
+          return normalizeItem({
+            id: 'loan-type-' + i,
+            title: t.type || t.name || t.title,
+            description: [t.description, t.max_amount && ('Max: ' + t.max_amount)].filter(Boolean).join(' · '),
+            url: t.url || '', type: 'loan_type', is_current: t.is_current,
+          }, i, parent);
+        }).filter(Boolean);
+      }
+      if (data.sba_html || data.sbir_api || data.legacy_content_api !== undefined || data.api_key_configured !== undefined) {
+        return Object.keys(data).map(function (key, i) {
+          const value = data[key];
+          if (value && typeof value === 'object') {
+            const parts = [
+              value.base ? ('Base: ' + value.base) : null,
+              value.status_code != null ? ('HTTP ' + value.status_code) : null,
+              value.ok === true ? 'Healthy' : (value.ok === false ? 'Unavailable' : null),
+              value.error ? String(value.error) : null,
+            ].filter(Boolean);
+            return normalizeItem({
+              id: key, title: key.replace(/_/g, ' '), description: parts.join(' · ') || JSON.stringify(value),
+              type: 'source_status', is_current: value.ok === true, url: value.base || '',
+            }, i, parent);
+          }
+          return normalizeItem({ id: key, title: key.replace(/_/g, ' '), description: String(value), type: 'source_status' }, i, parent);
+        }).filter(Boolean);
+      }
+      // Single detail object → one card (still explorables if path/url)
+      if (data.title || data.name) {
+        const one = normalizeItem(data, 0, parent);
+        return one ? [one] : [];
+      }
+      return [];
+    }
+
+    /** Client-side digestion fallback if API lacks topic/digestion */
+    function clientDigest(items, route, title, data) {
+      const typeCounts = {};
+      items.forEach(function (it) {
+        const t = it.type || 'content';
+        typeCounts[t] = (typeCounts[t] || 0) + 1;
+      });
+      const facets = [{ id: 'all', label: 'All', count: items.length }];
+      Object.keys(typeCounts).sort().forEach(function (t) {
+        facets.push({ id: t, label: t.replace(/_/g, ' ').replace(/\b\w/g, function (c) { return c.toUpperCase(); }), count: typeCounts[t] });
+      });
+      const top = items.slice(0, 4).map(function (i) { return i.title; }).filter(Boolean);
+      const desc = (data && (data.description || data.message)) ||
+        (items.length
+          ? ('This topic surfaces ' + items.length + ' resources' + (top.length ? ('. Highlights: ' + top.join('; ')) : '.') + '.')
+          : 'No resources returned for this route yet.');
+      return {
+        topic: {
+          title: (data && data.topic && data.topic.title) || title || 'SBA Topic',
+          description: (data && data.topic && data.topic.description) || desc,
+          summary: desc,
+          route: route,
+          official_url: data && (data.url || data.official_url),
+          sections: (data && data.topic && data.topic.sections) || [
+            { id: 'overview', title: 'Overview', body: desc },
+            { id: 'resources', title: 'Resources', body: items.length + ' items from the API.', count: items.length },
+            { id: 'how', title: 'How to use', body: 'Click API-badged cards to open that route. Filter by type. Use official links for full detail.' },
+          ],
+          icon: data && data.icon,
+          phase: data && data.phase,
+        },
+        digestion: (data && data.digestion) || {
+          pipeline: [
+            { id: 'resolve', label: 'Resolve route', status: 'done', detail: route },
+            { id: 'fetch', label: 'Fetch API', status: 'done', detail: (data && data.source) || 'api' },
+            { id: 'normalize', label: 'Normalize', status: 'done', detail: items.length + ' items' },
+            { id: 'facet', label: 'Facet', status: 'done', detail: Object.keys(typeCounts).length + ' types' },
+            { id: 'ready', label: 'Topic ready', status: items.length ? 'done' : 'empty', detail: 'render' },
+          ],
+          stats: {
+            items: items.length,
+            types: Object.keys(typeCounts).length,
+            with_url: items.filter(function (i) { return i.url; }).length,
+            with_path: items.filter(function (i) { return i.drillable; }).length,
+            page: state.page,
+            total_pages: state.totalPages,
+          },
+          facets: facets,
+          related_routes: items.filter(function (i) { return i.drillable; }).slice(0, 8).map(function (i) {
+            return { path: i.path, title: i.title, type: i.type };
+          }),
+          quality: {
+            degraded: !!(data && data.degraded),
+            is_current: !!(data && data.is_current),
+            coverage: items.length ? Math.round(100 * items.filter(function (i) { return i.url; }).length / items.length) : 0,
+          },
+        },
+      };
+    }
+
+    function writeHash(route, title, page, query) {
+      const parts = ['r=' + encodeURIComponent(route || '')];
+      if (title) parts.push('t=' + encodeURIComponent(title));
+      if (page > 1) parts.push('p=' + page);
+      if (query) parts.push('q=' + encodeURIComponent(query));
+      const next = '#' + parts.join('&');
+      if (location.hash !== next) history.pushState(null, '', next);
+    }
+
+    function readHash() {
+      const h = (location.hash || '').replace(/^#/, '');
+      if (!h) return null;
+      const map = {};
+      h.split('&').forEach(function (pair) {
+        const i = pair.indexOf('=');
+        if (i < 0) return;
+        map[decodeURIComponent(pair.slice(0, i))] = decodeURIComponent(pair.slice(i + 1));
+      });
+      if (!map.r) return null;
+      return { route: map.r, title: map.t || '', page: parseInt(map.p || '1', 10) || 1, query: map.q || '' };
+    }
+
+    async function openRoute(route, title, opts) {
+      opts = opts || {};
+      if (!route || route.indexOf('/api/') !== 0) {
+        showAlert('Invalid API route: ' + route, true);
         return;
       }
-      state.active = resource;
-      state.page = page || 1;
-      state.query = query || '';
+      if (opts.pushHistory && state.route && state.route !== route) {
+        state.history.push({ route: state.route, title: state.title });
+      }
+      if (opts.resetHistory) state.history = [];
+
+      state.route = route;
+      state.title = title || route;
+      state.page = opts.page || 1;
+      state.query = opts.query || '';
+      state.facet = 'all';
+      state.expanded = {};
+      if (!opts.skipHash) writeHash(state.route, state.title, state.page, state.query);
+
       $('searchInput').disabled = false;
       $('searchBtn').disabled = false;
       $('searchInput').value = state.query;
-      $('activeTitle').textContent = (resource.icon || '') + ' ' + resource.name;
-      $('activeMeta').innerHTML = '';
-      results.innerHTML = '<div class="loading"><div class="spinner"></div>Loading ' + escapeHtml(resource.name) + '…</div>';
+      $('backBtn').style.display = state.history.length ? 'inline-flex' : 'none';
+      $('page').innerHTML = '<div class="loading"><div class="spinner"></div>Digesting ' + escapeHtml(route) + '…</div>';
       showAlert('');
       renderNav();
 
       try {
-        const isOverview = resource.path.indexOf('sba-overview') !== -1;
-        const isSources = resource.path.indexOf('/sources') !== -1;
-        // Cached API response first (fast). Use ?fresh=1 only via Refresh button path.
-        const params = (isOverview || isSources)
-          ? {}
-          : { page: state.page, query: state.query || undefined };
-        const data = await apiGet(resource.path, params, 60000);
-        let items = extractItems(data, resource);
-
-        // If API returned a 200 envelope with zero items, show a clear soft-degrade card
-        // so the panel is never blank when the tab/header exists.
-        if (!items.length) {
-          items = [normalizeItem({
-            id: resource.id + '-empty',
-            title: resource.name + ' — no rows yet',
-            description: (data && data.message)
-              ? String(data.message)
-              : ('The API at ' + resource.path + ' returned no items. Try Refresh or another tab.'),
-            url: '',
-            type: 'notice',
-            is_current: false,
-            source: (data && data.source) || 'api',
-          }, 0)].filter(Boolean);
+        const isSimple = /\/(sources|lifecycle|programs|local-resources)(\/|$)/.test(route) || route.indexOf('sba-overview') >= 0;
+        const params = isSimple ? {} : { page: state.page, query: state.query || undefined };
+        if (opts.fresh) params.fresh = 1;
+        const data = await apiGet(route, params, 60000);
+        let items = extractItems(data, route);
+        if (!items.length && data.stage && Array.isArray(data.stage.resources)) {
+          items = data.stage.resources.map(function (r, i) { return normalizeItem(r, i, route); }).filter(Boolean);
         }
-
+        // If API returned a single parent object without children, still render explore shell
+        if (!items.length && (data.title || data.name || data.description)) {
+          items = [normalizeItem(data, 0, route)].filter(Boolean);
+        }
+        state.allItems = items;
         state.items = items;
         state.totalPages = Number(data.totalPages || data.total_pages) || 1;
         state.meta = {
+          source: data.source,
           is_current: data.is_current,
-          source: data.source || data.mode,
-          retrieved_at: data.retrieved_at,
+          degraded: data.degraded,
           message: data.message,
-          count: items.length,
+          freshness: data.freshness,
+          retrieved_at: data.retrieved_at,
         };
+        const digested = clientDigest(items, route, state.title, data);
+        state.topic = digested.topic;
+        state.digestion = digested.digestion;
+        if (data.topic) state.topic = Object.assign({}, digested.topic, data.topic);
+        if (data.digestion) state.digestion = Object.assign({}, digested.digestion, data.digestion);
 
-        const badges = [];
-        if (state.meta.is_current === true) badges.push('<span class="badge ok">Current</span>');
-        if (state.meta.is_current === false) badges.push('<span class="badge no">Not current</span>');
-        if (state.meta.source) badges.push('<span class="badge soft">' + escapeHtml(String(state.meta.source)) + '</span>');
-        badges.push('<span class="badge soft">' + items.length + ' cards</span>');
-        // Prove cards come from this tab's API path
-        badges.push('<span class="badge soft" title="API path for this tab">' + escapeHtml(resource.path) + '</span>');
-        if (state.meta.retrieved_at) {
-          try {
-            badges.push('<span class="badge soft">' + escapeHtml(new Date(state.meta.retrieved_at).toLocaleString()) + '</span>');
-          } catch (_) { /* ignore date parse */ }
-        }
-        $('activeMeta').innerHTML = badges.join('');
-
-        if (!items.length) {
-          results.innerHTML = '<div class="empty">No items for this resource. Try another category or search.</div>';
-          if (state.meta.message) showAlert(state.meta.message, true);
-          return;
-        }
-
-        results.innerHTML = '<div class="grid">' + items.map((item, idx) => (
-          '<button type="button" class="card" data-idx="' + idx + '">' +
-            '<div style="display:flex;justify-content:space-between;gap:0.5rem;align-items:flex-start">' +
-              '<h3>' + escapeHtml(item.title || 'SBA resource') + '</h3>' +
-              '<div>' +
-                (item.is_current === true ? '<span class="badge ok">Current</span> ' : '') +
-                (item.is_current === false ? '<span class="badge no">Not current</span> ' : '') +
-                (item.type ? '<span class="badge soft">' + escapeHtml(String(item.type)) + '</span>' : '') +
-              '</div>' +
-            '</div>' +
-            '<p>' + escapeHtml((item.description || item.title || '').slice(0, 220)) +
-              ((item.description || '').length > 220 ? '…' : '') + '</p>' +
-            metaPreview(item) +
-            '<div class="more">Open details →</div>' +
-          '</button>'
-        )).join('') + '</div>' + paginationHtml();
-
-        results.querySelectorAll('.card').forEach((btn) => {
-          btn.addEventListener('click', () => openDetail(state.items[Number(btn.getAttribute('data-idx'))]));
-        });
-        const prev = results.querySelector('[data-page="prev"]');
-        const next = results.querySelector('[data-page="next"]');
-        if (prev) prev.addEventListener('click', () => loadResource(resource, state.page - 1, state.query));
-        if (next) next.addEventListener('click', () => loadResource(resource, state.page + 1, state.query));
+        document.title = (state.topic.title || state.title) + ' · PocketPro SBA';
+        $('sideFoot').textContent = items.length + ' results · ' + route;
+        renderTopicPage();
       } catch (e) {
-        console.error('loadResource failed', resource, e);
-        results.innerHTML = '<div class="empty">Failed to load items for ' + escapeHtml(resource.name) + '.</div>';
-        showAlert('Load failed: ' + (e && e.message ? e.message : e), true);
+        console.error(e);
+        $('page').innerHTML = '<div class="empty">Failed to digest this route.</div>';
+        showAlert('Load failed for ' + route + ': ' + (e.message || e), true);
       }
     }
 
-    function metaPreview(item) {
-      const entries = Object.entries(item.meta || {}).slice(0, 3);
-      if (!entries.length) return '';
-      return '<div style="font-size:0.8rem;color:var(--muted);border-top:1px solid var(--line);padding-top:0.5rem;margin-bottom:0.5rem">' +
-        entries.map(([k, v]) => '<div><strong>' + escapeHtml(k.replace(/_/g, ' ')) + ':</strong> ' +
-          escapeHtml(Array.isArray(v) ? v.join(', ') : String(v).slice(0, 90)) + '</div>').join('') +
-        '</div>';
+    function goBack() {
+      const prev = state.history.pop();
+      if (!prev) return;
+      openRoute(prev.route, prev.title, { skipHash: false, pushHistory: false });
     }
 
-    function paginationHtml() {
-      if (state.totalPages <= 1) return '';
-      return '<div style="display:flex;justify-content:center;gap:0.5rem;margin-top:1rem">' +
-        '<button class="btn btn-ghost" type="button" data-page="prev"' + (state.page <= 1 ? ' disabled' : '') + '>Prev</button>' +
-        '<span class="badge soft" style="padding:0.55rem 0.9rem">Page ' + state.page + ' / ' + state.totalPages + '</span>' +
-        '<button class="btn btn-ghost" type="button" data-page="next"' + (state.page >= state.totalPages ? ' disabled' : '') + '>Next</button>' +
-        '</div>';
-    }
-
-    function openDetail(item) {
-      if (!item) return;
-      $('modalTitle').textContent = item.title || 'Details';
-      const metaEntries = Object.entries(item.meta || {}).filter(([, v]) => v !== undefined && v !== null && v !== '');
-      let html = '<div class="meta-row" style="margin-bottom:0.75rem">';
-      if (item.type) html += '<span class="badge soft">' + escapeHtml(item.type) + '</span>';
-      if (item.is_current === true) html += '<span class="badge ok">Current</span>';
-      if (item.is_current === false) html += '<span class="badge no">Not current</span>';
-      if (item.source || item.meta.source) html += '<span class="badge soft">' + escapeHtml(item.source || item.meta.source) + '</span>';
-      html += '</div>';
-      html += '<p style="color:var(--muted);white-space:pre-wrap;line-height:1.55">' + escapeHtml(item.description || '') + '</p>';
-      if (metaEntries.length) {
-        html += '<dl class="meta">';
-        metaEntries.forEach(([k, v]) => {
-          html += '<dt>' + escapeHtml(k.replace(/_/g, ' ')) + '</dt><dd>' +
-            escapeHtml(Array.isArray(v) ? v.join(', ') : (typeof v === 'object' ? JSON.stringify(v) : String(v))) +
-            '</dd>';
+    function applyFacetAndFilter() {
+      let list = state.allItems.slice();
+      if (state.facet && state.facet !== 'all') {
+        list = list.filter(function (it) { return String(it.type) === state.facet; });
+      }
+      const q = (state.query || '').toLowerCase().trim();
+      if (q) {
+        list = list.filter(function (it) {
+          return (it.title + ' ' + it.description + ' ' + (it.path || '')).toLowerCase().indexOf(q) >= 0;
         });
-        html += '</dl>';
       }
+      state.items = list;
+    }
+
+    function renderTopicPage() {
+      applyFacetAndFilter();
+      const t = state.topic || { title: state.title, description: '', sections: [] };
+      const d = state.digestion || { pipeline: [], stats: {}, facets: [], related_routes: [], quality: {} };
+      const q = d.quality || {};
+      const stats = d.stats || {};
+
+      let html = '';
+      // TOPIC HERO — fully develop subject
+      html += '<article class="topic">';
+      html += '<div class="crumb">';
+      if (state.history.length) {
+        html += '<button type="button" id="crumbBack">← ' + escapeHtml(state.history[state.history.length - 1].title || 'Back') + '</button>';
+        html += '<span>/</span>';
+      }
+      html += '<span>API topic</span><span>/</span><span>' + escapeHtml(t.title || state.title) + '</span></div>';
+      html += '<h1 class="topic-title">' +
+        (t.icon ? '<span>' + escapeHtml(t.icon) + '</span>' : '') +
+        '<span>' + escapeHtml(t.title || state.title) + '</span></h1>';
+      html += '<p class="topic-lead">' + escapeHtml(t.description || t.summary || '') + '</p>';
+      html += '<div class="pill-row">';
+      html += '<span class="pill route" id="routePill" title="Reload this route">' + escapeHtml(state.route) + '</span>';
+      html += '<span class="pill">' + (state.allItems.length) + ' resources</span>';
+      if (t.phase) html += '<span class="pill">' + escapeHtml(t.phase) + '</span>';
+      if (q.is_current) html += '<span class="pill ok">Current</span>';
+      if (q.degraded || state.meta.degraded) html += '<span class="pill warn">Degraded source</span>';
+      if (state.meta.source) html += '<span class="pill muted">' + escapeHtml(String(state.meta.source)) + '</span>';
+      if (stats.coverage != null || q.coverage != null) html += '<span class="pill muted">' + (q.coverage != null ? q.coverage : stats.coverage) + '% with official links</span>';
+      html += '</div>';
+      html += '<div class="topic-actions">';
+      if (t.official_url) html += '<a class="btn btn-primary" href="' + escapeHtml(t.official_url) + '" target="_blank" rel="noopener">Official SBA page</a>';
+      html += '<button type="button" class="btn btn-soft" id="heroRefresh">Re-digest API</button>';
+      html += '<a class="btn btn-ghost" href="/sba">Programs &amp; lifecycle</a>';
+      html += '</div>';
+      if (t.sections && t.sections.length) {
+        html += '<div class="sections">';
+        t.sections.slice(0, 3).forEach(function (sec) {
+          html += '<div class="section-card"><h3>' + escapeHtml(sec.title || 'Section') +
+            (sec.count != null ? ' · ' + sec.count : '') + '</h3><p>' + escapeHtml(sec.body || '') + '</p></div>';
+        });
+        html += '</div>';
+      }
+      html += '</article>';
+
+      // DIGESTION PIPELINE
+      html += '<section class="digest" aria-label="API digestion">';
+      html += '<div class="digest-head"><strong>API digestion pipeline</strong>';
+      html += '<span class="pill muted">v' + (d.version || 1) + '</span></div>';
+      html += '<div class="pipeline">';
+      (d.pipeline || []).forEach(function (step) {
+        html += '<span class="step ' + escapeHtml(step.status || 'done') + '" title="' + escapeHtml(step.detail || '') + '">' +
+          '<span class="dot"></span>' + escapeHtml(step.label || step.id) +
+          (step.detail ? ' · ' + escapeHtml(String(step.detail).slice(0, 40)) : '') +
+          '</span>';
+      });
+      html += '</div>';
+      html += '<div class="stats">';
+      html += '<span><b>' + (stats.items != null ? stats.items : state.allItems.length) + '</b> items</span>';
+      html += '<span><b>' + (stats.types != null ? stats.types : '—') + '</b> types</span>';
+      html += '<span><b>' + (stats.with_path != null ? stats.with_path : '—') + '</b> drillable</span>';
+      html += '<span><b>' + (stats.with_url != null ? stats.with_url : '—') + '</b> linked</span>';
+      if (state.totalPages > 1) html += '<span>page <b>' + state.page + '/' + state.totalPages + '</b></span>';
+      html += '</div></section>';
+
+      // TOOLBAR
+      html += '<div class="toolbar">';
+      html += '<div class="facets" id="facets">';
+      (d.facets || [{ id: 'all', label: 'All', count: state.allItems.length }]).forEach(function (f) {
+        html += '<button type="button" class="facet' + (state.facet === f.id ? ' active' : '') + '" data-facet="' + escapeHtml(f.id) + '">' +
+          escapeHtml(f.label) + ' <span style="opacity:.7">' + f.count + '</span></button>';
+      });
+      html += '</div>';
+      html += '<div class="view-toggle">' +
+        '<button type="button" class="btn ' + (state.view === 'grid' ? 'btn-soft' : 'btn-ghost') + '" data-view="grid">Cards</button>' +
+        '<button type="button" class="btn ' + (state.view === 'list' ? 'btn-soft' : 'btn-ghost') + '" data-view="list">List</button>' +
+        '</div></div>';
+
+      // RESULTS
+      if (!state.items.length) {
+        html += '<div class="empty">No resources match this filter. Clear search or pick another type.</div>';
+      } else {
+        html += '<div class="grid' + (state.view === 'list' ? ' list' : '') + '" id="resultsGrid">';
+        state.items.forEach(function (item, idx) {
+          const open = !!state.expanded[item.id];
+          const isClickableResource = !!(
+            item.drillable ||
+            item.has_children ||
+            (item.path && item.path.indexOf('/api/') === 0) ||
+            (item.resources && item.resources.length)
+          );
+          const cta = isClickableResource
+            ? ('Explore children →')
+            : 'Open details →';
+          html += '<article class="card' + (open ? ' expanded' : '') + (isClickableResource ? ' clickable-resource' : '') + '" data-idx="' + idx + '" tabindex="0" role="button">';
+          html += '<div class="card-top"><h3>' + escapeHtml(item.title) + '</h3><div class="pill-row" style="margin:0">';
+          if (item.type) html += '<span class="pill">' + escapeHtml(item.type) + '</span>';
+          if (isClickableResource) html += '<span class="pill route">Clickable</span>';
+          if (item.drillable) html += '<span class="pill route">API</span>';
+          if (item.is_current === true) html += '<span class="pill ok">Current</span>';
+          html += '</div></div>';
+          html += '<p>' + escapeHtml(open ? item.description : (item.description || '').slice(0, state.view === 'list' ? 360 : 200)) +
+            ((!open && (item.description || '').length > 200) ? '…' : '') + '</p>';
+          if (item.path) html += '<div class="card-meta">' + escapeHtml(item.path) + '</div>';
+          if (open && item.body) html += '<div style="font-size:.88rem;color:var(--muted);margin-top:.25rem">' + item.body + '</div>';
+          html += '<div class="card-actions">';
+          if (isClickableResource) html += '<button type="button" class="btn btn-primary" data-act="route" data-idx="' + idx + '">Explore children</button>';
+          // Usable content: forms, documents, registration, official pages
+          if (item.fileUrl) {
+            const formish = /form|document/i.test(String(item.type || '') + ' ' + String(item.title || ''));
+            html += '<a class="btn btn-primary" href="' + escapeHtml(item.fileUrl) + '" target="_blank" rel="noopener" data-stop="1">' +
+              (formish ? 'Open form / document' : 'Open document') + '</a>';
+          }
+          if (item.registrationLink) {
+            html += '<a class="btn btn-soft" href="' + escapeHtml(item.registrationLink) + '" target="_blank" rel="noopener" data-stop="1">Register</a>';
+          }
+          if (item.url) html += '<a class="btn btn-ghost" href="' + escapeHtml(item.url) + '" target="_blank" rel="noopener" data-stop="1">Official</a>';
+          (item.actions || []).forEach(function (act) {
+            if (!act) return;
+            const href = act.href || act.path || act.url || '';
+            if (!href || href === item.url || href === item.fileUrl || href === item.registrationLink) return;
+            if (String(href).indexOf('/api/') === 0) return; // explore handled by route btn
+            if (String(href).indexOf('http') === 0) {
+              html += '<a class="btn btn-ghost" href="' + escapeHtml(href) + '" target="_blank" rel="noopener" data-stop="1">' +
+                escapeHtml(act.label || act.id || 'Open') + '</a>';
+            }
+          });
+          html += '<button type="button" class="btn btn-soft" data-act="detail" data-idx="' + idx + '">Full detail</button>';
+          html += '</div>';
+          html += '<div class="more">' + cta + '</div>';
+          html += '</article>';
+        });
+        html += '</div>';
+      }
+
+      if (state.totalPages > 1) {
+        html += '<div class="pager">' +
+          '<button class="btn btn-ghost" type="button" id="prevPage"' + (state.page <= 1 ? ' disabled' : '') + '>Prev</button>' +
+          '<span class="pill">Page ' + state.page + ' / ' + state.totalPages + '</span>' +
+          '<button class="btn btn-ghost" type="button" id="nextPage"' + (state.page >= state.totalPages ? ' disabled' : '') + '>Next</button>' +
+          '</div>';
+      }
+
+      // RELATED ROUTES
+      const related = d.related_routes || [];
+      if (related.length) {
+        html += '<section class="related"><h3>Related routes to digest next</h3><div class="related-list">';
+        related.forEach(function (r, i) {
+          html += '<button type="button" data-rel="' + i + '">' + escapeHtml(r.title || r.path) + '</button>';
+        });
+        html += '</div></section>';
+      }
+
+      $('page').innerHTML = html;
+      bindTopicPage(related);
+    }
+
+    function bindTopicPage(related) {
+      const crumbBack = $('crumbBack');
+      if (crumbBack) crumbBack.addEventListener('click', goBack);
+      const routePill = $('routePill');
+      if (routePill) routePill.addEventListener('click', function () {
+        openRoute(state.route, state.title, { page: state.page, query: state.query });
+      });
+      const heroRefresh = $('heroRefresh');
+      if (heroRefresh) heroRefresh.addEventListener('click', function () {
+        openRoute(state.route, state.title, { page: state.page, query: state.query, fresh: 1 });
+      });
+
+      document.querySelectorAll('.facet').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          state.facet = btn.getAttribute('data-facet') || 'all';
+          renderTopicPage();
+        });
+      });
+      document.querySelectorAll('[data-view]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          state.view = btn.getAttribute('data-view') || 'grid';
+          renderTopicPage();
+        });
+      });
+
+      document.querySelectorAll('.card').forEach(function (card) {
+        card.addEventListener('click', function (e) {
+          if (e.target.closest('[data-stop]')) return;
+          const actBtn = e.target.closest('[data-act]');
+          const idx = Number((actBtn || card).getAttribute('data-idx'));
+          const item = state.items[idx];
+          if (!item) return;
+          if (actBtn) {
+            e.stopPropagation();
+            const act = actBtn.getAttribute('data-act');
+            if (act === 'route') {
+              const p = deriveChildPath(item, state.route) || item.path;
+              if (p && p.indexOf('/api/') === 0) openRoute(p, item.title, { pushHistory: true });
+              else onItemActivate(item);
+              return;
+            }
+            if (act === 'detail') { openLeaf(item); return; }
+          }
+          onItemActivate(item);
+        });
+        card.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            const item = state.items[Number(card.getAttribute('data-idx'))];
+            if (item) onItemActivate(item);
+          }
+        });
+      });
+
+      if ($('prevPage')) $('prevPage').addEventListener('click', function () {
+        openRoute(state.route, state.title, { page: state.page - 1, query: state.query });
+      });
+      if ($('nextPage')) $('nextPage').addEventListener('click', function () {
+        openRoute(state.route, state.title, { page: state.page + 1, query: state.query });
+      });
+
+      document.querySelectorAll('[data-rel]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          const r = related[Number(btn.getAttribute('data-rel'))];
+          if (r && r.path) openRoute(r.path, r.title, { pushHistory: true });
+        });
+      });
+    }
+
+    function renderLocalParent(item, children) {
+      state.history.push({ route: state.route, title: state.title });
+      state.route = 'local://' + (item.id || item.title);
+      state.title = item.title;
+      state.allItems = children;
+      state.items = children.slice();
+      state.totalPages = 1;
+      state.facet = 'all';
+      state.expanded = {};
+      const digested = clientDigest(children, state.route, state.title, {
+        description: item.description,
+        url: item.url,
+        topic: {
+          title: item.title,
+          description: item.description,
+          official_url: item.url,
+          sections: [
+            { id: 'overview', title: 'Overview', body: item.description || '' },
+            { id: 'children', title: 'Children of this parent', body: children.length + ' items. Click any with Explore to go deeper.', count: children.length },
+            { id: 'rule', title: 'Recursive explore', body: 'Each child can become the next parent when it has an API path or nested resources.' },
+          ],
+        },
+      });
+      state.topic = digested.topic;
+      state.digestion = digested.digestion;
+      $('backBtn').style.display = 'inline-flex';
+      writeHash(state.route, state.title, 1, '');
+      renderTopicPage();
+    }
+
+    function onItemActivate(item) {
+      if (!item) return;
+      // Recursive rule: child with resolvable path becomes the new parent page
+      const nextPath = deriveChildPath(item, state.route) || (item.drillable ? item.path : '');
+      if (nextPath && nextPath.indexOf('/api/') === 0 &&
+          nextPath.replace(/\/$/, '') !== String(state.route || '').replace(/\/$/, '')) {
+        openRoute(nextPath, item.title, { pushHistory: true });
+        return;
+      }
+      // Nested resources[] → local parent page (still recursive)
+      if (item.resources && item.resources.length) {
+        const kids = item.resources.map(function (r, i) {
+          return normalizeItem(typeof r === 'string' ? { title: r, description: r } : r, i, state.route);
+        }).filter(Boolean);
+        renderLocalParent(item, kids);
+        return;
+      }
+      // Leaf: still promote to a one-node parent page (not a dead end) with actions
+      if (!item.drillable && (item.url || item.description)) {
+        const kids = [
+          normalizeItem({
+            id: (item.id || 'leaf') + '-about',
+            title: 'About ' + item.title,
+            description: item.description,
+            url: item.url,
+            type: 'overview',
+          }, 0, state.route),
+        ].filter(Boolean);
+        if (item.url) {
+          kids.push(normalizeItem({
+            id: (item.id || 'leaf') + '-official',
+            title: 'Official source',
+            description: 'Open the official SBA (or partner) page for full detail.',
+            url: item.url,
+            type: 'link',
+          }, 1, state.route));
+        }
+        // Offer jump back to known roots for continued explore
+        kids.push(normalizeItem({
+          id: 'root-loans',
+          title: 'Browse SBA Loans',
+          description: 'All SBA loan program types.',
+          path: '/api/sba/content/loans',
+          type: 'program',
+        }, 2, state.route));
+        kids.push(normalizeItem({
+          id: 'root-contracting',
+          title: 'Browse Government Contracting',
+          description: 'Federal contracting programs and certifications.',
+          path: '/api/sba/content/contracting',
+          type: 'program',
+        }, 3, state.route));
+        renderLocalParent(item, kids);
+        return;
+      }
+      openLeaf(item);
+    }
+
+    function openLeaf(item) {
+      $('modalTitle').textContent = item.title || 'Details';
+      $('modalPills').innerHTML =
+        (item.type ? '<span class="pill">' + escapeHtml(item.type) + '</span>' : '') +
+        (item.drillable ? '<span class="pill route">API</span>' : '') +
+        (item.phase ? '<span class="pill">' + escapeHtml(item.phase) + '</span>' : '');
+      let html = '<p style="color:var(--muted);line-height:1.65;white-space:pre-wrap;margin:0">' + escapeHtml(item.description || '') + '</p>';
+      html += '<dl class="meta">';
+      html += '<dt>ID</dt><dd>' + escapeHtml(item.id) + '</dd>';
+      if (item.type) html += '<dt>Type</dt><dd>' + escapeHtml(item.type) + '</dd>';
+      if (item.path) html += '<dt>Route</dt><dd><code>' + escapeHtml(item.path) + '</code></dd>';
+      if (item.url) html += '<dt>URL</dt><dd><a href="' + escapeHtml(item.url) + '" target="_blank" rel="noopener">' + escapeHtml(item.url) + '</a></dd>';
+      if (item.source) html += '<dt>Source</dt><dd>' + escapeHtml(item.source) + '</dd>';
+      html += '</dl>';
       $('modalBody').innerHTML = html;
       const link = $('modalLink');
-      if (item.url) {
-        link.href = item.url;
-        link.style.display = 'inline-flex';
-      } else {
-        link.style.display = 'none';
-      }
+      if (item.url) { link.href = item.url; link.style.display = 'inline-flex'; }
+      else link.style.display = 'none';
+      const orb = $('openRouteBtn');
+      if (item.drillable && item.path) {
+        orb.style.display = 'inline-flex';
+        orb.onclick = function () { closeModal(); openRoute(item.path, item.title, { pushHistory: true }); };
+      } else orb.style.display = 'none';
       $('overlay').classList.add('open');
     }
 
-    function closeDetail() { $('overlay').classList.remove('open'); }
+    function closeModal() { $('overlay').classList.remove('open'); }
 
-    $('closeModal').addEventListener('click', closeDetail);
-    $('closeModal2').addEventListener('click', closeDetail);
-    $('overlay').addEventListener('click', (e) => { if (e.target === $('overlay')) closeDetail(); });
-    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeDetail(); });
-    $('refreshNav').addEventListener('click', async function () {
-      // Hard refresh: re-pull catalog and force live SBA scrape for active tab
-      showAlert('Refreshing from API…');
+    function renderNav() {
+      const groups = {};
+      state.nav.forEach(function (r) {
+        const g = r.group || 'Resources';
+        (groups[g] = groups[g] || []).push(r);
+      });
+      const parts = [];
+      Object.keys(groups).forEach(function (g) {
+        parts.push('<div class="group-label">' + escapeHtml(g) + '</div>');
+        groups[g].forEach(function (r) {
+          const active = state.route === r.path;
+          parts.push(
+            '<button type="button" class="nav-item' + (active ? ' active' : '') + '" data-path="' + escapeHtml(r.path) + '" data-title="' + escapeHtml(r.name) + '">' +
+              '<span class="ico">' + (r.icon || '📁') + '</span>' +
+              '<span style="min-width:0"><span class="name">' + escapeHtml(r.name) + '</span>' +
+              '<span class="desc" title="' + escapeHtml(r.path) + '">' + escapeHtml(r.path) + '</span></span>' +
+            '</button>'
+          );
+        });
+      });
+      $('navList').innerHTML = parts.join('') || '<div class="empty">No endpoints.</div>';
+      $('navList').querySelectorAll('.nav-item').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          openRoute(btn.getAttribute('data-path'), btn.getAttribute('data-title'), { resetHistory: true, page: 1 });
+        });
+      });
+    }
+
+    async function loadCatalog() {
       try {
-        await loadCatalog();
-        if (state.active) {
-          const isOverview = state.active.path.indexOf('sba-overview') !== -1;
-          const isSources = state.active.path.indexOf('/sources') !== -1;
-          const params = (isOverview || isSources)
-            ? { fresh: 1 }
-            : { page: 1, fresh: 1, query: state.query || undefined };
-          results.innerHTML = '<div class="loading"><div class="spinner"></div>Refreshing ' + escapeHtml(state.active.name) + '…</div>';
-          const data = await apiGet(state.active.path, params, 90000);
-          let items = extractItems(data, state.active);
-          if (!items.length) {
-            items = [normalizeItem({
-              id: 'refresh-empty',
-              title: state.active.name,
-              description: (data && data.message) || 'API returned no items after refresh.',
-              type: 'notice',
-            }, 0)].filter(Boolean);
-          }
-          state.items = items;
-          state.meta = { is_current: data.is_current, source: data.source, message: data.message, count: items.length };
-          $('activeMeta').innerHTML = '<span class="badge soft">' + items.length + ' cards</span> <span class="badge soft">' + escapeHtml(state.active.path) + '</span>';
-          results.innerHTML = '<div class="grid">' + items.map(function (item, idx) {
-            return '<button type="button" class="card" data-idx="' + idx + '">' +
-              '<h3>' + escapeHtml(item.title || 'SBA resource') + '</h3>' +
-              '<p>' + escapeHtml((item.description || '').slice(0, 220)) + '</p>' +
-              '<div class="more">Open details →</div></button>';
-          }).join('') + '</div>';
-          results.querySelectorAll('.card').forEach(function (btn) {
-            btn.addEventListener('click', function () {
-              openDetail(state.items[Number(btn.getAttribute('data-idx'))]);
-            });
+        const data = await apiGet('/api/sba/resources');
+        state.nav = (data.resources || []).filter(function (r) { return r && r.path; }).map(function (r) {
+          return {
+            id: r.id, name: r.name || r.id, path: r.path,
+            group: r.group || 'Resources', icon: ICONS[r.icon || r.id] || '📁',
+          };
+        });
+        // Program parents also appear here so badges always open their endpoint children
+        state.nav.push(
+          { id: 'programs', name: 'All SBA Programs', path: '/api/sba/programs', group: 'Programs', icon: '💼' },
+          { id: 'lifecycle', name: 'Business Lifecycle', path: '/api/sba/lifecycle', group: 'Lifecycle', icon: '📌' },
+          { id: 'start', name: 'Start a Business', path: '/api/sba/lifecycle/start', group: 'Lifecycle', icon: '🏁' },
+          { id: 'plan', name: 'Plan Your Business', path: '/api/sba/lifecycle/plan', group: 'Lifecycle', icon: '📋' },
+          { id: 'launch', name: 'Launch Your Business', path: '/api/sba/lifecycle/launch', group: 'Lifecycle', icon: '🚀' },
+          { id: 'local', name: 'Local Resources', path: '/api/sba/local-resources', group: 'Connect', icon: '📍' }
+        );
+        renderNav();
+        const fromHash = readHash();
+        if (fromHash && fromHash.route.indexOf('/api/') === 0) {
+          await openRoute(fromHash.route, fromHash.title || fromHash.route, {
+            page: fromHash.page, query: fromHash.query, skipHash: true, resetHistory: true,
           });
-          showAlert('Refreshed ' + state.active.name + ' (' + items.length + ' cards)');
+        } else {
+          // Default: SBA Loans parent so first view shows loan-type children
+          const preferred = state.nav.find(function (r) { return r.id === 'loans'; }) ||
+            state.nav.find(function (r) { return r.id === 'contracting'; }) || state.nav[0];
+          if (preferred) await openRoute(preferred.path, preferred.name, { resetHistory: true });
         }
       } catch (e) {
-        showAlert('Refresh failed: ' + (e && e.message ? e.message : e), true);
+        $('navList').innerHTML = '<div class="empty">Catalog failed.</div>';
+        showAlert('Could not load /api/sba/resources: ' + (e.message || e), true);
+      }
+    }
+
+    $('backBtn').addEventListener('click', goBack);
+    $('refreshBtn').addEventListener('click', function () {
+      if (state.route && state.route.indexOf('/api/') === 0) {
+        openRoute(state.route, state.title, { page: state.page, query: state.query, fresh: 1 });
+      } else loadCatalog();
+    });
+    $('searchForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+      if (!state.route || state.route.indexOf('/api/') !== 0) return;
+      // Server search when supported; always re-filter client-side too
+      openRoute(state.route, state.title, { page: 1, query: $('searchInput').value.trim() });
+    });
+    $('closeModal').addEventListener('click', closeModal);
+    $('closeModal2').addEventListener('click', closeModal);
+    $('overlay').addEventListener('click', function (e) { if (e.target === $('overlay')) closeModal(); });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') {
+        if ($('overlay').classList.contains('open')) closeModal();
+        else if (state.history.length) goBack();
       }
     });
-    $('searchForm').addEventListener('submit', (e) => {
-      e.preventDefault();
-      if (!state.active) { showAlert('Select a resource first', true); return; }
-      loadResource(state.active, 1, $('searchInput').value.trim());
+    window.addEventListener('popstate', function () {
+      const h = readHash();
+      if (h && h.route && h.route.indexOf('/api/') === 0) {
+        openRoute(h.route, h.title || h.route, { page: h.page, query: h.query, skipHash: true });
+      }
     });
 
-    // Boot: catalog → auto-select Loans → cards from API
-    loadCatalog().catch(function (e) {
-      showAlert('Startup load failed: ' + (e && e.message ? e.message : e), true);
-    });
+    loadCatalog();
   </script>
 </body>
 </html>

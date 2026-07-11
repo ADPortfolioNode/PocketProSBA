@@ -1,0 +1,8 @@
+# What is a 7(a) loan?
+Type: loan_section
+Parent path: /api/sba/content/loans/7a
+ID: 7a-sec-6
+
+Topic section from official page: What is a 7(a) loan?
+
+Official URL: https://www.sba.gov/funding-programs/loans/7a-loans

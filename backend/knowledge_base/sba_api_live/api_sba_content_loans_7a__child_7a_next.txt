@@ -1,0 +1,9 @@
+# Next steps
+Type: guidance
+API path: /api/sba/content/lenders
+Parent path: /api/sba/content/loans/7a
+ID: 7a-next
+
+1) Read the official program page. 2) Check eligibility themes. 3) Prepare financials. 4) Connect via Lender Match or an SBA lender.
+
+Official URL: https://www.sba.gov/funding-programs/loans/lender-match

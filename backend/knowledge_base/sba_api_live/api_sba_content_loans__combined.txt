@@ -1,0 +1,108 @@
+# Combined SBA API digest for /api/sba/content/loans
+Retrieved children: 6
+Chunks: 7
+
+# SBA Loans
+Source: SBA API endpoint response
+API route: /api/sba/content/loans
+
+All major SBA-backed loan programs. Click a child (7(a), 504, Microloans, Lender Match) for full program detail. This topic currently surfaces 6 resources across 3 types. Highlights include: SBA 7(a) loans; SBA 504 loans; SBA Microloans; SBA-backed loans overview.
+
+## Overview
+All major SBA-backed loan programs. Click a child (7(a), 504, Microloans, Lender Match) for full program detail. This topic currently surfaces 6 resources across 3 types. Highlights include: SBA 7(a) loans; SBA 504 loans; SBA Microloans; SBA-backed loans overview.
+
+## Resources
+6 curated / live resources for this topic.
+
+## How to use this page
+Click any card with an API badge to open that route’s results. Use type filters to focus. Open official links for full SBA.gov detail. Use Back to return to the previous topic.
+
+---
+
+# SBA 7(a) loans
+Type: loan_program
+API path: /api/sba/content/loans/7a
+Parent path: /api/sba/content/loans
+ID: 7a
+
+The 7(a) Loan Program, SBA’s primary business loan program, provides loan guaranties to lenders that allow them to provide financial help for small businesses with special requirements. The maximum loan amount for a 7(a) loan is $5 million. Key eligibility factors are based on what the business does to receive its income, its credit history, and where the business operates. Your lender will help you figure out which type of loan is best suited for your needs. This also…
+
+Official URL: https://www.sba.gov/funding-programs/loans/7a-loans
+Action: Explore children -> /api/sba/content/loans/7a
+Action: Official source -> https://www.sba.gov/funding-programs/loans/7a-loans
+Location: Online / see official page
+
+---
+
+# SBA 504 loans
+Type: loan_program
+API path: /api/sba/content/loans/504
+Parent path: /api/sba/content/loans
+ID: 504
+
+The 504 loan program provides long-term, fixed rate financing for major fixed assets that promote business growth and job creation. 504 loans are available through Certified Development Companies (CDCs), SBA's community-based nonprofit partners who promote economic development within their communities. CDCs are certified and regulated by SBA. The maximum loan amount for a 504 loan is $5.5 million. To be eligible for a 504 loan, your business must: Share sensitive…
+
+Official URL: https://www.sba.gov/funding-programs/loans/504-loans
+Action: Explore children -> /api/sba/content/loans/504
+Action: Official source -> https://www.sba.gov/funding-programs/loans/504-loans
+Location: Online / see official page
+
+---
+
+# SBA Microloans
+Type: loan_program
+API path: /api/sba/content/loans/microloans
+Parent path: /api/sba/content/loans
+ID: microloans
+
+The microloan program provides loans up to $50,000 to help small businesses and certain not-for-profit childcare centers start up and expand. SBA provides funds to specially designated intermediary lenders, which are nonprofit community-based organizations with experience in lending as well as management and technical assistance. These intermediaries administer the Microloan program for eligible borrowers. Each intermediary lender has its own lending and credit…
+
+Official URL: https://www.sba.gov/funding-programs/loans/microloans
+Action: Explore children -> /api/sba/content/loans/microloans
+Action: Official source -> https://www.sba.gov/funding-programs/loans/microloans
+Location: Online / see official page
+
+---
+
+# SBA-backed loans overview
+Type: loan_program
+API path: /api/sba/content/loans/loans_hub
+Parent path: /api/sba/content/loans
+ID: loans_hub
+
+Find out which SBA-guaranteed loan program is best for your business, then use Lender Match to be matched to lenders. Small Business Administration (SBA) helps small businesses get funding by setting guidelines for loans and reducing lender risk. These SBA-backed loans make it easier for small businesses to get the funding they need. Share sensitive information only on official, secure websites. SBA only makes direct loans in the case of businesses and homeowners recovering…
+
+Official URL: https://www.sba.gov/funding-programs/loans
+Action: Explore children -> /api/sba/content/loans/loans_hub
+Action: Official source -> https://www.sba.gov/funding-programs/loans
+Location: Online / see official page
+
+---
+
+# Lender Match
+Type: tool
+API path: /api/sba/content/loans/lender-match
+Parent path: /api/sba/content/loans
+ID: lender-match
+
+Connect with SBA lenders interested in your financing needs.
+
+Official URL: https://www.sba.gov/funding-programs/loans/lender-match
+Action: Explore children -> /api/sba/content/loans/lender-match
+Action: Official source -> https://www.sba.gov/funding-programs/loans/lender-match
+Location: Online / see official page
+
+---
+
+# Establish business credit
+Type: loan
+API path: /api/sba/content/loans/956887656
+Parent path: /api/sba/content/loans
+ID: 956887656
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/plan-your-business/establish-business-credit
+Action: Explore children -> /api/sba/content/loans/956887656
+Action: Official source -> https://www.sba.gov/business-guide/plan-your-business/establish-business-credit
+Location: Online / see official page

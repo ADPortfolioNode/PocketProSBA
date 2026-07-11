@@ -25,7 +25,8 @@ const NAV_ITEMS = [
     to: '/sba',
     label: 'Programs',
     testId: 'nav-sba',
-    // SPA SBAContent: Programs | Lifecycle | Local from /api/sba/resources
+    // Full page → programs.html (API cards + detail modal on click)
+    hardNav: true,
   },
   { to: '/orchestrator', label: 'Tasks', testId: 'nav-orchestrator' },
 ];

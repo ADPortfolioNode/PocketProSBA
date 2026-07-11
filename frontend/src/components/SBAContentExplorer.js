@@ -36,9 +36,50 @@ const ICONS = {
   sbir: '🔬',
   lenders: '🏦',
   sources: '🛰️',
+  contracting: '📝',
+  disaster: '🚨',
 };
 
-function normalizeItem(raw, index = 0) {
+/**
+ * Click model (same as /browse Resources page):
+ *  - Nav badge / parent → GET path → list children
+ *  - Child with path or resources → click loads that path as next parent
+ *  - Leaf → detail modal only
+ *
+ * Prebuilt bundles may still call /sba-content/* (rewritten by backend/nginx).
+ */
+
+function deriveChildPath(raw, parentPath) {
+  let path = String(raw?.path || '').trim();
+  if (path.startsWith('/api/')) {
+    if (parentPath && path.replace(/\/$/, '') === String(parentPath).replace(/\/$/, '')) {
+      return '';
+    }
+    return path;
+  }
+  const id = raw?.id != null ? String(raw.id) : '';
+  const type = String(raw?.type || '').toLowerCase();
+  if (raw?.lifecycle_id) return `/api/sba/lifecycle/${encodeURIComponent(raw.lifecycle_id)}`;
+  if (['7a', '504', 'microloans', 'express', 'loans_hub', 'lender-match'].includes(id)) {
+    return `/api/sba/content/loans/${encodeURIComponent(id)}`;
+  }
+  const parent = String(parentPath || '').replace(/\/$/, '');
+  if (
+    parent.startsWith('/api/') &&
+    id &&
+    !id.startsWith('item-') &&
+    !['overview', 'link', 'notice', 'source_status'].includes(type)
+  ) {
+    if (parent.endsWith(`/${id}`) || parent.endsWith(`/${encodeURIComponent(id)}`)) return '';
+    // one level deeper under content/* or lifecycle/*
+    if (/\/api\/sba\/(content|lifecycle)(\/|$)/.test(parent)) {
+      return `${parent}/${encodeURIComponent(id)}`;
+    }
+  }
+  return '';
+}
+
+function normalizeItem(raw, index = 0, parentPath = '') {
   if (!raw || typeof raw !== 'object') {
     const text = String(raw || '').trim();
     if (!text) return null;
@@ -47,8 +88,12 @@ function normalizeItem(raw, index = 0) {
       title: text.slice(0, 120),
       description: text,
       url: '',
+      path: '',
       type: 'content',
       meta: {},
+      drillable: false,
+      has_children: false,
+      resources: [],
     };
   }
 
@@ -108,6 +153,12 @@ function normalizeItem(raw, index = 0) {
     }
   });
 
+  const resources = Array.isArray(raw.resources) ? raw.resources : [];
+  const path = deriveChildPath(raw, parentPath);
+  const drillable = Boolean(raw.drillable) || path.startsWith('/api/');
+  const has_children =
+    Boolean(raw.has_children) || resources.length > 0 || drillable;
+
   return {
     ...raw,
     id: raw.id ?? raw.nid ?? `item-${index}`,
@@ -116,8 +167,13 @@ function normalizeItem(raw, index = 0) {
     description,
     summary: raw.summary || description,
     url,
+    path,
     type: raw.type || 'content',
     meta,
+    resources,
+    drillable,
+    has_children,
+    parent_path: raw.parent_path || parentPath || '',
   };
 }
 
@@ -206,6 +262,8 @@ const SBAContentExplorer = () => {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [resultMeta, setResultMeta] = useState(null);
+  /** Stack of parents for recursive explore: { id, name, path, icon } */
+  const [trail, setTrail] = useState([]);
 
   const navGroups = useMemo(() => {
     const groups = {};
@@ -250,13 +308,6 @@ const SBAContentExplorer = () => {
     loadCatalog();
   }, [loadCatalog]);
 
-  // After catalog headers exist, load the preferred tab so the panel is never blank
-  useEffect(() => {
-    if (loadingCatalog || !resources.length || activeResource) return;
-    const preferred = resources.find((r) => r.id === 'loans') || resources[0];
-    if (preferred) queryResource(preferred, 1, '');
-  }, [loadingCatalog, resources, activeResource, queryResource]);
-
   const queryResource = useCallback(
     async (resource, pageNum = 1, query = '') => {
       if (!resource?.path) return;
@@ -284,15 +335,22 @@ const SBAContentExplorer = () => {
         );
         const data = response?.data || response || {};
 
+        const parentPath = resource.path || '';
         let items = [];
         if (isSources) {
-          items = sourcesToItems(data);
+          items = sourcesToItems(data).map((it, i) => normalizeItem(it, i, parentPath));
         } else if (isOverview || Array.isArray(data.available_loan_types)) {
-          items = overviewToItems(data);
+          items = overviewToItems(data)
+            .map((it, i) => normalizeItem(it, i, parentPath))
+            .filter(Boolean);
         } else if (Array.isArray(data.items)) {
-          items = data.items.map((item, i) => normalizeItem(item, i)).filter(Boolean);
+          items = data.items
+            .map((item, i) => normalizeItem(item, i, parentPath))
+            .filter(Boolean);
         } else if (Array.isArray(data.results)) {
-          items = data.results.map((item, i) => normalizeItem(item, i)).filter(Boolean);
+          items = data.results
+            .map((item, i) => normalizeItem(item, i, parentPath))
+            .filter(Boolean);
         }
 
         // Never leave a selected tab visually empty if the envelope is valid
@@ -309,7 +367,8 @@ const SBAContentExplorer = () => {
                 is_current: false,
                 source: data.source || 'api',
               },
-              0
+              0,
+              parentPath
             ),
           ].filter(Boolean);
         }
@@ -317,6 +376,9 @@ const SBAContentExplorer = () => {
         setResults(items);
         setPage(Number(data.currentPage) || pageNum);
         setTotalPages(Number(data.totalPages) || 1);
+        const drillableCount = items.filter(
+          (i) => i.drillable || i.has_children || (i.path && String(i.path).startsWith('/api/'))
+        ).length;
         setResultMeta({
           is_current: data.is_current,
           freshness: data.freshness,
@@ -324,6 +386,8 @@ const SBAContentExplorer = () => {
           source: data.source || data.mode,
           message: data.message,
           count: items.length,
+          drillableCount,
+          topic: data.topic || null,
         });
 
         if (!items.length) {
@@ -343,8 +407,16 @@ const SBAContentExplorer = () => {
     []
   );
 
+  // After catalog loads, open SBA Loans (or first nav item) so the panel is never blank
+  useEffect(() => {
+    if (loadingCatalog || !resources.length || activeResource) return;
+    const preferred = resources.find((r) => r.id === 'loans') || resources[0];
+    if (preferred) queryResource(preferred, 1, '');
+  }, [loadingCatalog, resources, activeResource, queryResource]);
+
   const handleNavClick = (resource) => {
     setSearchQuery('');
+    setTrail([]);
     queryResource(resource, 1, '');
   };
 
@@ -357,10 +429,94 @@ const SBAContentExplorer = () => {
     queryResource(activeResource, 1, searchQuery.trim());
   };
 
-  const openItemCard = (item) => {
+  /** Child with path/resources → next parent; leaf → detail modal */
+  const activateResult = (item) => {
+    if (!item) return;
+    const nextPath =
+      (item.path && String(item.path).startsWith('/api/') && item.path) ||
+      deriveChildPath(item, activeResource?.path || '');
+
+    if (nextPath && String(nextPath).startsWith('/api/')) {
+      if (activeResource) {
+        setTrail((prev) => [
+          ...prev,
+          {
+            id: activeResource.id,
+            name: activeResource.name,
+            path: activeResource.path,
+            icon: activeResource.icon,
+          },
+        ]);
+      }
+      queryResource(
+        {
+          id: String(item.id),
+          name: item.title || item.name || String(item.id),
+          description: item.description || `Children of ${item.title || item.id}`,
+          path: nextPath,
+          group: activeResource?.group || 'Resources',
+          icon: '📂',
+          queryable: true,
+        },
+        1,
+        ''
+      );
+      return;
+    }
+
+    if (item.resources && item.resources.length) {
+      if (activeResource) {
+        setTrail((prev) => [
+          ...prev,
+          {
+            id: activeResource.id,
+            name: activeResource.name,
+            path: activeResource.path,
+            icon: activeResource.icon,
+          },
+        ]);
+      }
+      const kids = item.resources
+        .map((r, i) =>
+          normalizeItem(
+            typeof r === 'string' ? { title: r, description: r } : r,
+            i,
+            activeResource?.path
+          )
+        )
+        .filter(Boolean);
+      setActiveResource({
+        id: String(item.id),
+        name: item.title || item.name,
+        description: item.description,
+        path: item.path || `local://${item.id}`,
+        icon: '📂',
+        group: activeResource?.group || 'Resources',
+      });
+      setResults(kids);
+      setResultMeta({
+        count: kids.length,
+        drillableCount: kids.filter((k) => k.drillable).length,
+      });
+      setPage(1);
+      setTotalPages(1);
+      return;
+    }
+
     setSelectedItem(item);
     setShowDetail(true);
   };
+
+  const goBackTrail = () => {
+    setTrail((prev) => {
+      if (!prev.length) return prev;
+      const parent = prev[prev.length - 1];
+      if (parent?.path) queryResource(parent, 1, '');
+      return prev.slice(0, -1);
+    });
+  };
+
+  const openItemCard = (item) => activateResult(item);
 
   const closeItemCard = () => {
     setShowDetail(false);
@@ -423,8 +579,9 @@ const SBAContentExplorer = () => {
       <div className="mb-4 svc-browse-hero text-center text-md-start">
         <h1 className="display-6 fw-bold mb-2 svc-browse-title">SBA Resources</h1>
         <p className="text-muted mb-0">
-          Navigation is built from <code>/api/sba/resources</code>. Click a category to load
-          items, then open any card for more detail.
+          Click a category (e.g. <strong>SBA Loans</strong>) to list its children.
+          Any result with a path or nested resources is clickable — it becomes the next
+          parent and shows <em>its</em> children. Leaves open a detail card.
         </p>
       </div>
 
@@ -514,11 +671,32 @@ const SBAContentExplorer = () => {
               <Card.Header className="bg-white">
                 <div className="d-flex flex-wrap justify-content-between align-items-start gap-3">
                   <div>
+                    {trail.length > 0 && (
+                      <div className="small mb-2 d-flex flex-wrap align-items-center gap-1">
+                        <Button
+                          size="sm"
+                          variant="outline-secondary"
+                          className="me-1"
+                          onClick={goBackTrail}
+                          type="button"
+                        >
+                          ← Back
+                        </Button>
+                        {trail.map((t, i) => (
+                          <span key={`${t.id}-${i}`} className="text-muted">
+                            {t.name}
+                            <span className="mx-1">/</span>
+                          </span>
+                        ))}
+                        <strong>{activeResource.name}</strong>
+                      </div>
+                    )}
                     <h2 className="h5 mb-1">
                       <span className="me-2">{activeResource.icon}</span>
                       {activeResource.name}
                     </h2>
-                    <p className="small text-muted mb-2">{activeResource.description}</p>
+                    <p className="small text-muted mb-1">{activeResource.description}</p>
+                    <code className="small d-block mb-2 text-break">{activeResource.path}</code>
                     {resultMeta && (
                       <div className="d-flex flex-wrap gap-2 align-items-center">
                         {resultMeta.is_current != null && (
@@ -535,6 +713,11 @@ const SBAContentExplorer = () => {
                           {resultMeta.count ?? results.length} item
                           {(resultMeta.count ?? results.length) === 1 ? '' : 's'}
                         </span>
+                        {resultMeta.drillableCount > 0 && (
+                          <Badge bg="primary">
+                            {resultMeta.drillableCount} clickable
+                          </Badge>
+                        )}
                         {resultMeta.retrieved_at && (
                           <span className="small text-muted">
                             · {new Date(resultMeta.retrieved_at).toLocaleString()}
@@ -575,17 +758,26 @@ const SBAContentExplorer = () => {
                       </Alert>
                     ) : (
                       <Row xs={1} lg={2} className="g-3">
-                        {results.map((item) => (
+                        {results.map((item) => {
+                          const clickable =
+                            item.drillable ||
+                            item.has_children ||
+                            (item.path && String(item.path).startsWith('/api/')) ||
+                            (item.resources && item.resources.length > 0);
+                          const cta = clickable
+                            ? 'Explore children →'
+                            : 'Open details →';
+                          return (
                           <Col key={String(item.id)}>
                             <Card
                               className="h-100 svc-result-card svc-clickable-card"
                               role="button"
                               tabIndex={0}
-                              onClick={() => openItemCard(item)}
+                              onClick={() => activateResult(item)}
                               onKeyDown={(e) => {
                                 if (e.key === 'Enter' || e.key === ' ') {
                                   e.preventDefault();
-                                  openItemCard(item);
+                                  activateResult(item);
                                 }
                               }}
                             >
@@ -595,6 +787,9 @@ const SBAContentExplorer = () => {
                                     {item.title}
                                   </Card.Title>
                                   <div className="d-flex flex-column align-items-end gap-1">
+                                    {clickable && (
+                                      <Badge bg="primary">Clickable</Badge>
+                                    )}
                                     {item.is_current === true && (
                                       <Badge bg="success">Current</Badge>
                                     )}
@@ -612,6 +807,11 @@ const SBAContentExplorer = () => {
                                   {(item.description || '').slice(0, 220)}
                                   {(item.description || '').length > 220 ? '…' : ''}
                                 </Card.Text>
+                                {item.path && (
+                                  <div className="small font-monospace text-muted mb-2 text-break">
+                                    {item.path}
+                                  </div>
+                                )}
                                 {item.meta && Object.keys(item.meta).length > 0 && (
                                   <div className="small text-muted mb-2 border-top pt-2">
                                     {Object.entries(item.meta)
@@ -627,12 +827,13 @@ const SBAContentExplorer = () => {
                                   </div>
                                 )}
                                 <div className="mt-auto small text-primary fw-semibold">
-                                  Open details →
+                                  {cta}
                                 </div>
                               </Card.Body>
                             </Card>
                           </Col>
-                        ))}
+                          );
+                        })}
                       </Row>
                     )}
 
@@ -673,6 +874,17 @@ const SBAContentExplorer = () => {
           <Button variant="outline-secondary" onClick={closeItemCard}>
             Close
           </Button>
+          {selectedItem?.path && String(selectedItem.path).startsWith('/api/') && (
+            <Button
+              variant="outline-primary"
+              onClick={() => {
+                closeItemCard();
+                activateResult(selectedItem);
+              }}
+            >
+              Explore children
+            </Button>
+          )}
           {selectedItem?.url && (
             <Button
               variant="primary"

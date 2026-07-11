@@ -1,0 +1,8 @@
+# How this program is used
+Type: guidance
+Parent path: /api/sba/content/loans/7a
+ID: 7a-how
+
+Use this program when the financing need matches the official use cases on sba.gov. Compare with sibling programs below, then use Lender Match or a local lender.
+
+Official URL: https://www.sba.gov/funding-programs/loans/7a-loans

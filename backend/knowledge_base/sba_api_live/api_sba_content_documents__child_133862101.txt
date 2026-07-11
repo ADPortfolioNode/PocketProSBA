@@ -1,0 +1,10 @@
+# Register your business
+Type: document
+API path: /api/sba/content/documents/133862101
+Parent path: /api/sba/content/documents
+ID: 133862101
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/launch-your-business/register-your-business
+Location: Online / see official page

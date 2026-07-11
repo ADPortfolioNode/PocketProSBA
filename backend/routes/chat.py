@@ -40,18 +40,96 @@ def post_message():
             logger.warning("Message content is required for chat message")
             return jsonify({'error': 'Message content is required'}), 400
 
-        # Process the message with Concierge assistant
-        response = process_chat_message(user_id, str(message).strip(), session_id)
-        
+        # Process the message with Concierge assistant (soft-degrade if slow/unavailable)
+        try:
+            response = process_chat_message(user_id, str(message).strip(), session_id)
+        except Exception as proc_err:
+            logger.warning("Chat processing soft-fail: %s", proc_err)
+            msg = str(message).strip()
+            try:
+                from backend.services.link_enrichment import enrich_answer_with_links
+
+                degraded_text = enrich_answer_with_links(
+                    "I'm your SBA assistant (degraded mode). "
+                    f"You asked: “{msg[:240]}”. "
+                    "Chat AI is temporarily limited — use the links below to open live SBA resources.",
+                    [
+                        {'title': 'SBA Loans', 'path': '/api/sba/content/loans'},
+                        {'title': 'Start a Business', 'path': '/api/sba/lifecycle/start'},
+                    ],
+                )
+            except Exception:
+                degraded_text = (
+                    "I'm your SBA assistant (degraded mode).\n\n"
+                    "## Links\n"
+                    f"- [SBA Programs](/sba)\n"
+                    f"- [Browse SBA Loans](/browse#r=%2Fapi%2Fsba%2Fcontent%2Floans&t=SBA%20Loans)\n"
+                    f"- [SBA Loans (official)](https://www.sba.gov/funding-programs/loans)"
+                )
+            response = {
+                'success': True,
+                'degraded': True,
+                'session_id': session_id or 'default',
+                'response': degraded_text,
+                'answer': degraded_text,
+                'message': degraded_text,
+                'sources': [
+                    {'title': 'SBA Loans', 'path': '/api/sba/content/loans', 'url': 'https://www.sba.gov/funding-programs/loans'},
+                    {'title': 'Start a Business', 'path': '/api/sba/lifecycle/start'},
+                ],
+            }
+
+        if not isinstance(response, dict):
+            response = {'success': True, 'response': str(response), 'session_id': session_id or 'default'}
+        response.setdefault('success', True)
+        response.setdefault('session_id', session_id or 'default')
+        # Normalize text fields + ensure clickable markdown links
+        try:
+            from backend.services.link_enrichment import enrich_answer_with_links
+
+            body = (
+                response.get('response')
+                or response.get('answer')
+                or response.get('message')
+                or response.get('text')
+                or ''
+            )
+            body = enrich_answer_with_links(str(body), response.get('sources') or [])
+            response['response'] = body
+            response['answer'] = body
+            response['message'] = body
+        except Exception as link_err:
+            logger.debug('chat link normalize soft-fail: %s', link_err)
         # Return the processed response
         return jsonify(response), 200 if response.get('success', True) else 500
 
     except Exception as e:
         logger.error(f"Error in chat endpoint: {str(e)}")
+        # Soft-degrade: never hard-fail the SPA chat surface
+        try:
+            from backend.services.link_enrichment import enrich_answer_with_links
+
+            soft = enrich_answer_with_links(
+                "Chat is temporarily unavailable. Open SBA resources with the links below.",
+                [],
+            )
+        except Exception:
+            soft = (
+                "Chat is temporarily unavailable.\n\n"
+                "## Links\n"
+                "- [SBA Programs](/sba)\n"
+                "- [Browse SBA Loans](/browse#r=%2Fapi%2Fsba%2Fcontent%2Floans&t=SBA%20Loans)\n"
+                "- [SBA.gov Loans](https://www.sba.gov/funding-programs/loans)"
+            )
         return jsonify({
+            'success': True,
+            'degraded': True,
             'error': 'Internal server error',
-            'message': 'Failed to process chat message'
-        }), 500
+            'message': soft,
+            'response': soft,
+            'answer': soft,
+            'session_id': (request.get_json(silent=True) or {}).get('session_id') or 'default',
+        }), 200
 
 @chat_bp.route('/history/<session_id>', methods=['GET'])
 def get_conversation(session_id):

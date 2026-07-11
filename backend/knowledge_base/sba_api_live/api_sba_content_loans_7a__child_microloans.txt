@@ -1,0 +1,10 @@
+# SBA Microloans
+Type: loan_program
+API path: /api/sba/content/loans/microloans
+Parent path: /api/sba/content/loans
+ID: microloans
+
+The microloan program provides loans up to $50,000 to help small businesses and certain not-for-profit childcare centers start up and expand. SBA provides funds to specially designated intermediary lenders, which are nonprofit community-based organizations with experience in lending as well as management and technical assistance. These intermediaries administer the Microloan program for eligible borrowers. Each intermediary lender has its own lending and credit…
+
+Official URL: https://www.sba.gov/funding-programs/loans/microloans
+Location: Online / see official page

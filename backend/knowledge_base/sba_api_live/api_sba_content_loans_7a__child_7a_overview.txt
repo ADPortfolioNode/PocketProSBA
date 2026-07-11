@@ -1,0 +1,8 @@
+# SBA 7(a) loans
+Type: loan_program
+Parent path: /api/sba/content/loans/7a
+ID: 7a-overview
+
+The 7(a) Loan Program, SBA’s primary business loan program, provides loan guaranties to lenders that allow them to provide financial help for small businesses with special requirements. The maximum loan amount for a 7(a) loan is $5 million. Key eligibility factors are based on what the business does to receive its income, its credit history, and where the business operates. Your lender will help you figure out which type of loan is best suited for your needs. This also…
+
+Official URL: https://www.sba.gov/funding-programs/loans/7a-loans

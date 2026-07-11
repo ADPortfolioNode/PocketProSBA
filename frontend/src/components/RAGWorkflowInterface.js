@@ -33,19 +33,40 @@ const RAGWorkflowInterface = ({
     }
   };
 
-  const handleUpload = () => {
-    if (selectedFile) {
-      setUploadProgress(0);
-      const fakeProgress = setInterval(() => {
-        setUploadProgress(prev => {
-          if (prev >= 90) {
-            clearInterval(fakeProgress);
-            return prev;
-          }
-          return prev + 10;
-        });
-      }, 300);
-      // ...existing code for upload...
+  const handleUpload = async () => {
+    if (!selectedFile) return;
+    setUploadProgress(0);
+    const fakeProgress = setInterval(() => {
+      setUploadProgress((prev) => {
+        if (prev == null || prev >= 90) {
+          clearInterval(fakeProgress);
+          return prev;
+        }
+        return prev + 10;
+      });
+    }, 300);
+    try {
+      if (typeof onUpload === 'function') {
+        await onUpload(selectedFile);
+      } else {
+        // Direct upload when parent handler not provided
+        const formData = new FormData();
+        formData.append('file', selectedFile);
+        let res = await fetch('/api/files', { method: 'POST', body: formData });
+        if (!res.ok) {
+          res = await fetch('/api/documents/upload', { method: 'POST', body: formData });
+        }
+        if (!res.ok) throw new Error(`Server responded with ${res.status}`);
+        await res.json();
+      }
+      setUploadProgress(100);
+      setCurrentStep('search');
+    } catch (err) {
+      console.error('File upload error:', err);
+      setUploadProgress(null);
+    } finally {
+      clearInterval(fakeProgress);
+      setTimeout(() => setUploadProgress(null), 800);
     }
   };
 

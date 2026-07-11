@@ -1,0 +1,1187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#2563eb" />
+  <title>SBA Programs · PocketPro</title>
+  <link rel="icon" href="/logo.gif" type="image/gif" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: linear-gradient(165deg, #fff 0%, #eef5ff 45%, #e3efff 100%);
+      --ink: #0f172a; --muted: #64748b; --line: #dbe7f8;
+      --blue: #2563eb; --blue-deep: #1d4ed8; --soft: #dbeafe;
+      --radius: 16px; --shadow: 0 12px 28px -12px rgba(37,99,235,.2);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh; font-family: Inter, "Segoe UI", system-ui, sans-serif;
+      color: var(--ink); background: var(--bg); background-attachment: fixed;
+    }
+    a { color: var(--blue); text-decoration: none; }
+    a:hover { color: var(--blue-deep); }
+    .shell { max-width: 1100px; margin: 0 auto; padding: 1rem 1.25rem 2.5rem; }
+    .topbar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; padding: .85rem 0 1.1rem; }
+    .brand { display: flex; align-items: center; gap: .55rem; font-weight: 700; color: var(--ink); }
+    .brand img { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; box-shadow: 0 0 0 2px var(--soft); }
+    .chips { display: flex; gap: .45rem; flex-wrap: wrap; }
+    .chip {
+      padding: .4rem .85rem; border-radius: 999px; border: 1px solid var(--line);
+      background: #fff; color: var(--muted); font-size: .9rem; font-weight: 500;
+    }
+    .chip:hover, .chip.active { background: linear-gradient(135deg, #3b82f6, #2563eb); color: #fff; border-color: transparent; }
+    h1 { margin: 0 0 .35rem; font-size: clamp(1.5rem, 3vw, 1.9rem); letter-spacing: -.03em; }
+    .lead { margin: 0 0 1rem; color: var(--muted); }
+    .panel {
+      background: rgba(255,255,255,.97); border: 1px solid var(--line);
+      border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden;
+    }
+    .tabs { display: flex; gap: .25rem; padding: .75rem .85rem 0; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+    .tab {
+      border: none; background: transparent; padding: .65rem 1rem; font: inherit; font-weight: 600;
+      color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px;
+    }
+    .tab.active { color: var(--blue-deep); border-bottom-color: var(--blue); }
+    .tab .count {
+      display: inline-flex; min-width: 1.4rem; justify-content: center; margin-left: .35rem;
+      background: var(--soft); color: var(--blue-deep); border-radius: 999px; font-size: .72rem; padding: .1rem .4rem;
+    }
+    .toolbar { display: flex; justify-content: space-between; gap: .75rem; flex-wrap: wrap; align-items: center; padding: .85rem 1rem; border-bottom: 1px solid var(--line); }
+    .btn {
+      border: none; border-radius: 999px; padding: .5rem 1rem; font: inherit; font-weight: 600; cursor: pointer;
+    }
+    .btn-primary { background: linear-gradient(135deg, #3b82f6, #2563eb); color: #fff; }
+    .btn-ghost { background: #fff; border: 1px solid var(--line); color: var(--ink); }
+    .body { padding: 1rem; }
+    .grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: .85rem; }
+    @media (max-width: 900px) { .grid { grid-template-columns: repeat(2, minmax(0,1fr)); } }
+    @media (max-width: 600px) { .grid { grid-template-columns: 1fr; } }
+    .card {
+      border: 1px solid var(--line); border-radius: var(--radius); background: #fff; padding: 1rem;
+      text-align: left; font: inherit; color: inherit; cursor: pointer; min-height: 150px;
+      display: flex; flex-direction: column; gap: .45rem; width: 100%;
+      transition: transform .14s ease, box-shadow .14s ease, border-color .14s ease;
+    }
+    .card:hover { transform: translateY(-2px); border-color: #93c5fd; box-shadow: var(--shadow); }
+    .card.expanded {
+      grid-column: 1 / -1; min-height: 0; cursor: default; transform: none;
+      border-color: #93c5fd; box-shadow: var(--shadow); background: linear-gradient(180deg, #f8fbff, #fff);
+    }
+    .card-top { display: flex; gap: .65rem; align-items: flex-start; }
+    .ico { font-size: 1.5rem; line-height: 1; }
+    .card h3 { margin: 0 0 .25rem; font-size: 1rem; }
+    .card p { margin: 0; color: var(--muted); font-size: .88rem; flex: 1; }
+    .more { color: var(--blue); font-weight: 600; font-size: .85rem; margin-top: auto; }
+    .card-head-btn {
+      display: flex; flex-direction: column; gap: .45rem; width: 100%; background: transparent;
+      border: none; padding: 0; margin: 0; text-align: left; font: inherit; color: inherit; cursor: pointer;
+    }
+    .expand-panel {
+      margin-top: .65rem; padding-top: .85rem; border-top: 1px solid var(--line);
+      display: flex; flex-direction: column; gap: .65rem;
+    }
+    .expand-crumb {
+      display: flex; flex-wrap: wrap; align-items: center; gap: .35rem; font-size: .8rem; color: var(--muted);
+    }
+    .expand-crumb button {
+      border: 1px solid var(--line); background: #fff; border-radius: 999px; padding: .2rem .55rem;
+      font: inherit; font-size: .78rem; font-weight: 600; color: var(--blue-deep); cursor: pointer;
+    }
+    .expand-crumb button:hover { background: var(--soft); }
+    .expand-meta { display: flex; flex-wrap: wrap; gap: .35rem; align-items: center; }
+    .child-list { display: flex; flex-direction: column; gap: .45rem; }
+    .child-link, .child-leaf {
+      display: flex; gap: .65rem; align-items: flex-start; width: 100%; text-align: left;
+      border: 1px solid var(--line); border-radius: 12px; background: #fff; padding: .7rem .8rem;
+      font: inherit; color: inherit; text-decoration: none; cursor: pointer;
+      transition: border-color .12s ease, box-shadow .12s ease, background .12s ease;
+    }
+    .child-link:hover, .child-leaf:hover {
+      border-color: #93c5fd; box-shadow: 0 8px 18px -12px rgba(37,99,235,.35); background: #f8fbff;
+    }
+    .child-link { border-left: 4px solid var(--blue); }
+    .child-leaf { border-left: 4px solid #cbd5e1; }
+    .child-link .child-title, .child-leaf .child-title { margin: 0 0 .2rem; font-size: .95rem; font-weight: 700; }
+    .child-link .child-desc, .child-leaf .child-desc {
+      margin: 0; color: var(--muted); font-size: .82rem; line-height: 1.45;
+    }
+    .child-link .child-cta {
+      margin-left: auto; align-self: center; flex-shrink: 0; color: var(--blue); font-weight: 700; font-size: .8rem;
+      white-space: nowrap;
+    }
+    .child-path {
+      font-family: ui-monospace, Consolas, monospace; font-size: .68rem; color: var(--muted); margin-top: .25rem;
+      word-break: break-all;
+    }
+    .expand-empty { color: var(--muted); font-size: .9rem; padding: .5rem 0; }
+    .expand-loading { display: flex; align-items: center; gap: .55rem; color: var(--muted); font-size: .9rem; }
+    .expand-loading .spinner { margin: 0; width: 18px; height: 18px; border-width: 2px; }
+    .badge {
+      display: inline-flex; align-items: center; border-radius: 999px; padding: .12rem .5rem;
+      font-size: .72rem; font-weight: 600; background: #eff6ff; color: #1d4ed8;
+      border: 1px solid #bfdbfe; cursor: pointer;
+    }
+    .badge:hover { background: #dbeafe; }
+    .badge.route { font-family: ui-monospace, Consolas, monospace; font-size: .65rem; }
+    .empty, .loading { text-align: center; padding: 2.5rem 1rem; color: var(--muted); }
+    .spinner {
+      width: 28px; height: 28px; border: 3px solid var(--soft); border-top-color: var(--blue);
+      border-radius: 50%; margin: 0 auto .75rem; animation: spin .7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .alert {
+      margin: 0 1rem; padding: .75rem 1rem; border-radius: 12px; border: 1px solid #bfdbfe;
+      background: #eff6ff; color: var(--muted); font-size: .9rem;
+    }
+    .alert.warn { border-color: #fde68a; background: #fffbeb; }
+    .hero {
+      background: linear-gradient(145deg, #fff 0%, #f8fbff 55%, #eef5ff 100%);
+      border: 1px solid var(--line); border-radius: 20px;
+      padding: 1.25rem 1.35rem; margin-bottom: 1rem; box-shadow: 0 20px 40px -18px rgba(37,99,235,.25);
+    }
+    .hero h2 { margin: 0 0 .45rem; font-size: clamp(1.3rem, 2.5vw, 1.55rem); display: flex; gap: .5rem; align-items: center; letter-spacing: -.02em; }
+    .hero .lead-text { color: var(--muted); line-height: 1.65; margin: .4rem 0 0; max-width: 70ch; }
+    .hero .actions { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .9rem; }
+    .meta-row { display: flex; flex-wrap: wrap; gap: .35rem; margin: .55rem 0; }
+    .sections { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: .6rem; margin-top: .95rem; }
+    @media (max-width: 800px) { .sections { grid-template-columns: 1fr; } }
+    .section-card { background: rgba(255,255,255,.9); border: 1px solid var(--line); border-radius: 12px; padding: .7rem .8rem; }
+    .section-card h4 { margin: 0 0 .25rem; font-size: .86rem; }
+    .section-card p { margin: 0; color: var(--muted); font-size: .8rem; line-height: 1.45; }
+    .digest {
+      background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: .8rem 1rem; margin-bottom: .9rem;
+    }
+    .pipeline { display: flex; flex-wrap: wrap; gap: .35rem; margin-top: .45rem; }
+    .step {
+      display: inline-flex; align-items: center; gap: .3rem; padding: .28rem .55rem; border-radius: 999px;
+      border: 1px solid var(--line); background: #f8fafc; font-size: .72rem; font-weight: 600; color: var(--muted);
+    }
+    .step::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: #22c55e; }
+    .facets { display: flex; flex-wrap: wrap; gap: .35rem; margin: 0 0 .85rem; }
+    .facet {
+      border: 1px solid var(--line); background: #fff; border-radius: 999px; padding: .3rem .65rem;
+      font: inherit; font-size: .78rem; font-weight: 600; color: var(--muted); cursor: pointer;
+    }
+    .facet.active, .facet:hover { background: var(--soft); color: var(--blue-deep); border-color: #bfdbfe; }
+    .overlay {
+      position: fixed; inset: 0; background: rgba(15,23,42,.48); display: none;
+      align-items: center; justify-content: center; padding: 1rem; z-index: 60;
+    }
+    .overlay.open { display: flex; }
+    .modal {
+      width: min(640px, 100%); max-height: min(88vh, 760px); overflow: auto;
+      background: #fff; border-radius: 20px; border: 1px solid var(--line);
+      box-shadow: 0 24px 60px rgba(15,23,42,.28);
+    }
+    .modal-h { padding: 1.15rem 1.2rem .5rem; display: flex; justify-content: space-between; gap: 1rem; }
+    .modal-h h2 { margin: 0; font-size: 1.2rem; }
+    .modal-b { padding: .4rem 1.2rem 1rem; }
+    .modal-f { padding: 0 1.2rem 1.15rem; display: flex; gap: .5rem; justify-content: flex-end; flex-wrap: wrap; }
+    .x { border: none; background: var(--soft); width: 34px; height: 34px; border-radius: 999px; cursor: pointer; font-size: 1.15rem; }
+    .meta { display: grid; grid-template-columns: 110px 1fr; gap: .4rem .75rem; font-size: .9rem; margin-top: .75rem; }
+    .meta dt { color: var(--muted); margin: 0; }
+    .meta dd { margin: 0; word-break: break-word; }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <div class="topbar">
+      <a class="brand" href="/">
+        <img src="/logo.gif" alt="" onerror="this.src='/images/yinyang.gif'" />
+        PocketPro <span style="color:var(--blue);font-weight:600">SBA</span>
+      </a>
+      <nav class="chips">
+        <a class="chip" href="/">Home</a>
+        <a class="chip" href="/chat">Chat</a>
+        <a class="chip" href="/browse">Resources</a>
+        <a class="chip active" href="/sba">Programs</a>
+        <a class="chip" href="/rag">RAG</a>
+      </nav>
+    </div>
+
+    <h1>SBA Programs &amp; Resources</h1>
+    <p class="lead">
+      <strong>Click a program card to expand it.</strong>
+      The card loads that API endpoint and lists children inside the card.
+      Any child that has more children is a link — click it to render the next API result in the same card.
+    </p>
+
+    <div class="panel">
+      <div class="tabs" role="tablist">
+        <button type="button" class="tab active" data-tab="programs">SBA Programs <span class="count" id="cPrograms">0</span></button>
+        <button type="button" class="tab" data-tab="lifecycle">Business Lifecycle <span class="count" id="cLifecycle">0</span></button>
+        <button type="button" class="tab" data-tab="local">Local Resources <span class="count" id="cLocal">0</span></button>
+      </div>
+      <div class="toolbar">
+        <div id="statusLine" style="color:var(--muted);font-size:.9rem">Loading…</div>
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+          <button type="button" class="btn btn-ghost" id="backBtn" style="display:none">← Back</button>
+          <button type="button" class="btn btn-ghost" id="refreshBtn">Refresh</button>
+          <a class="btn btn-primary" href="/browse">Full Resources browser</a>
+        </div>
+      </div>
+      <div id="alert" class="alert" style="display:none"></div>
+      <div class="body" id="gridBody">
+        <div class="loading"><div class="spinner"></div>Loading…</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="overlay" id="overlay" role="dialog" aria-modal="true">
+    <div class="modal">
+      <div class="modal-h">
+        <h2 id="modalTitle">Details</h2>
+        <button type="button" class="x" id="closeModal" aria-label="Close">×</button>
+      </div>
+      <div class="modal-b" id="modalBody"></div>
+      <div class="modal-f">
+        <button type="button" class="btn btn-ghost" id="closeModal2">Close</button>
+        <button type="button" class="btn btn-ghost" id="openRouteBtn" style="display:none">Open API route</button>
+        <a class="btn btn-primary" id="modalLink" href="#" target="_blank" rel="noopener" style="display:none">Official SBA page</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /**
+     * Card expand model:
+     *  tab catalog → click program (e.g. SBA Loans) → expand card → GET path → children in card
+     *  child with children → always a link → GET that path → render inside same card
+     *  leaf → detail modal
+     */
+    const TAB_ROUTES = {
+      programs: { path: '/api/sba/programs', title: 'SBA Programs', icon: '💼' },
+      lifecycle: { path: '/api/sba/lifecycle', title: 'Business Lifecycle', icon: '📌' },
+      local: { path: '/api/sba/local-resources', title: 'Local Resources', icon: '📍' },
+    };
+
+    const state = {
+      tab: 'programs',
+      catalogs: { programs: [], lifecycle: [], local: [] },
+      mode: 'catalog', // catalog | results
+      route: '',
+      title: '',
+      items: [],
+      allItems: [],
+      history: [],
+      topic: null,
+      digestion: null,
+      facet: 'all',
+      parent: null,
+      // In-card expand stack (parent → child → child)
+      expandedId: '',
+      expandStack: [], // [{ id, name, path, icon }]
+      expandRoute: '',
+      expandTitle: '',
+      expandItems: [],
+      expandLoading: false,
+      expandError: '',
+      expandMessage: '',
+    };
+
+    const $ = (id) => document.getElementById(id);
+
+    function escapeHtml(s) {
+      return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function showAlert(msg, warn) {
+      const el = $('alert');
+      if (!msg) { el.style.display = 'none'; return; }
+      el.style.display = 'block';
+      el.className = 'alert' + (warn ? ' warn' : '');
+      el.textContent = msg;
+    }
+
+    async function apiGet(path) {
+      const bases = [window.location.origin, 'http://127.0.0.1:5000', 'http://localhost:5000'];
+      let lastErr = null;
+      for (const base of bases) {
+        try {
+          const res = await fetch(new URL(path, base).toString(), { headers: { Accept: 'application/json' } });
+          if (!res.ok) { lastErr = new Error('HTTP ' + res.status); continue; }
+          return await res.json();
+        } catch (e) { lastErr = e; }
+      }
+      throw lastErr || new Error('Failed ' + path);
+    }
+
+    function normalize(raw, i, fallbackIcon, parentPath) {
+      if (!raw || typeof raw !== 'object') return null;
+      const name = String(raw.name || raw.title || '').trim();
+      const description = String(raw.description || raw.detailedDescription || raw.summary || '').trim();
+      if (!name && !description) return null;
+      let path = String(raw.path || '').trim();
+      const id = String(raw.id != null ? raw.id : (name || ('c-' + i)));
+      const type = raw.type || (raw.phase ? 'lifecycle' : 'program');
+      const parent = String(parentPath || '').replace(/\/$/, '');
+      // Ensure lifecycle stages resolve to their detail endpoint
+      if (!path && raw.phase) path = '/api/sba/lifecycle/' + encodeURIComponent(id);
+      if (!path && ['start', 'plan', 'launch', 'manage', 'grow', 'fund', 'exit'].indexOf(id) >= 0) {
+        path = '/api/sba/lifecycle/' + id;
+      }
+      // Loan children → dedicated child endpoints
+      if (!path && (type === 'loan_program' || type === 'loan' || type === 'related_loan' || type === 'tool')) {
+        if (['7a', '504', 'microloans', 'express', 'loans_hub', 'lender-match', 'working-capital', 'fixed-assets'].indexOf(id) >= 0) {
+          path = '/api/sba/content/loans/' + encodeURIComponent(id);
+        } else if (id === 'loans' || /^sba loans$/i.test(name)) {
+          path = '/api/sba/content/loans';
+        }
+      }
+      // Parent SBA Loans by name
+      if (!path && /^sba loans$/i.test(name)) path = '/api/sba/content/loans';
+      // Contracting / disaster known parents
+      if (!path && /government contracting/i.test(name)) path = '/api/sba/content/contracting';
+      if (!path && /disaster/i.test(name)) path = '/api/sba/content/disaster';
+      // Program cards without path but with group/content intent
+      if (!path && raw.group === 'Funding') path = '/api/sba/content/loans';
+      // Stamp child under current parent so nested explore always has a link target
+      const leafTypes = { overview: 1, link: 1, notice: 1, source_status: 1, loan_section: 1 };
+      if (
+        !path &&
+        parent.indexOf('/api/') === 0 &&
+        id &&
+        id.indexOf('item-') !== 0 &&
+        !leafTypes[String(type).toLowerCase()] &&
+        !/-(overview|official|about|how)($|-)/.test(id) &&
+        id.indexOf('-sec-') < 0
+      ) {
+        const candidate = parent + '/' + encodeURIComponent(id);
+        if (candidate.replace(/\/$/, '') !== parent) path = candidate;
+      }
+      // Don't loop to same parent
+      if (path && parent && path.replace(/\/$/, '') === parent) path = '';
+
+      const resources = Array.isArray(raw.resources) ? raw.resources.map(function (r, j) {
+        if (!r || typeof r !== 'object') {
+          return { id: 'r-' + j, name: String(r), title: String(r), path: '', type: 'assigned_resource', resources: [], has_children: false, drillable: false };
+        }
+        return normalize(r, j, '📄', path || parent) || {
+          id: r.id || ('r-' + j),
+          name: r.name || r.title,
+          title: r.title || r.name,
+          description: r.description || '',
+          path: r.path || '',
+          url: r.url || '',
+          type: r.type || 'assigned_resource',
+          resources: [],
+          has_children: false,
+          drillable: false,
+        };
+      }).filter(Boolean) : [];
+
+      const drillable = !!(raw.drillable || (path && path.indexOf('/api/') === 0));
+      const has_children = !!(
+        raw.has_children ||
+        drillable ||
+        resources.length > 0
+      );
+
+      return {
+        id: id,
+        name: name || ('Item ' + (i + 1)),
+        title: name || ('Item ' + (i + 1)),
+        description: description || name,
+        icon: raw.icon || fallbackIcon || '📁',
+        url: raw.url || raw.link || '',
+        path: path,
+        phase: raw.phase || '',
+        group: raw.group || '',
+        type: type,
+        resources: resources,
+        drillable: drillable,
+        has_children: has_children,
+        parent_path: raw.parent_path || parent || '',
+      };
+    }
+
+    function extractItems(data, fallbackIcon, parentPath) {
+      if (!data || typeof data !== 'object') return [];
+      let list = data.items || data.results || data.available_loan_types || null;
+      if (!list && Array.isArray(data.resources) && data.stage) list = data.resources;
+      if (!list && Array.isArray(data.sbaPrograms)) list = data.sbaPrograms;
+      if (!Array.isArray(list)) list = [];
+      const parent = parentPath || data.path || data.parent_path || '';
+      return list.map(function (row, i) { return normalize(row, i, fallbackIcon, parent); }).filter(Boolean);
+    }
+
+    function hasApiRoute(item) {
+      return !!(item && item.path && String(item.path).indexOf('/api/') === 0);
+    }
+
+    /** Child can drill further → always treat as a link */
+    function hasChildren(item) {
+      if (!item) return false;
+      if (item.has_children) return true;
+      if (item.drillable) return true;
+      if (hasApiRoute(item)) return true;
+      if (item.resources && item.resources.length) return true;
+      const t = String(item.type || '').toLowerCase();
+      if (['program', 'lifecycle', 'endpoint', 'loan_program', 'funding', 'related_loan', 'tool', 'contract_program'].indexOf(t) >= 0) {
+        return true;
+      }
+      if (/^sba loans$/i.test(item.name || item.title || '')) return true;
+      return false;
+    }
+
+    /** Parent = has route or children → always open children, never leaf modal first */
+    function isParent(item) {
+      return hasChildren(item);
+    }
+
+    function resolveRoute(item) {
+      if (!item) return '';
+      if (hasApiRoute(item)) return item.path;
+      if (/^sba loans$/i.test(item.name || item.title || '') || item.id === 'loans') return '/api/sba/content/loans';
+      if (/government contracting/i.test(item.name || item.title || '') || item.id === 'contracting') {
+        return '/api/sba/content/contracting';
+      }
+      if (item.phase || item.type === 'lifecycle') return '/api/sba/lifecycle/' + encodeURIComponent(item.id);
+      if (['loan_program', 'loan', 'related_loan', 'tool'].indexOf(String(item.type || '')) >= 0) {
+        return '/api/sba/content/loans/' + encodeURIComponent(item.id);
+      }
+      if (item.resources && item.resources.length) return 'local://' + item.id;
+      return '';
+    }
+
+    function writeHash() {
+      if (state.mode === 'results' && state.route) {
+        const h = '#r=' + encodeURIComponent(state.route) +
+          '&t=' + encodeURIComponent(state.title || '') +
+          '&tab=' + encodeURIComponent(state.tab);
+        if (location.hash !== h) history.pushState(null, '', h);
+      } else {
+        const h = '#tab=' + encodeURIComponent(state.tab);
+        if (location.hash !== h) history.replaceState(null, '', h);
+      }
+    }
+
+    function readHash() {
+      const h = (location.hash || '').replace(/^#/, '');
+      if (!h) return {};
+      const map = {};
+      h.split('&').forEach(function (pair) {
+        const i = pair.indexOf('=');
+        if (i < 0) return;
+        map[decodeURIComponent(pair.slice(0, i))] = decodeURIComponent(pair.slice(i + 1));
+      });
+      return map;
+    }
+
+    async function loadCatalogs() {
+      state.mode = 'catalog';
+      $('backBtn').style.display = 'none';
+      $('gridBody').innerHTML = '<div class="loading"><div class="spinner"></div>Loading catalogs…</div>';
+      showAlert('');
+      try {
+        const data = await apiGet('/api/sba/resources');
+        state.catalogs.programs = (data.sbaPrograms || data.programs || []).map(function (c, i) {
+          return normalize(c, i, '💼');
+        }).filter(Boolean);
+        state.catalogs.lifecycle = (data.businessLifecycleStages || data.lifecycle || []).map(function (c, i) {
+          return normalize(c, i, '📌');
+        }).filter(Boolean);
+        state.catalogs.local = (data.localResourceTypes || data.local || []).map(function (c, i) {
+          return normalize(c, i, '📍');
+        }).filter(Boolean);
+
+        // Fallback dedicated endpoints
+        if (!state.catalogs.programs.length) {
+          const p = await apiGet('/api/sba/programs');
+          state.catalogs.programs = extractItems(p, '💼');
+        }
+        if (!state.catalogs.lifecycle.length) {
+          const p = await apiGet('/api/sba/lifecycle');
+          state.catalogs.lifecycle = extractItems(p, '📌');
+        }
+        if (!state.catalogs.local.length) {
+          const p = await apiGet('/api/sba/local-resources');
+          state.catalogs.local = extractItems(p, '📍');
+        }
+
+        // Guarantee every lifecycle card has a resolvable API path
+        state.catalogs.lifecycle.forEach(function (c) {
+          if (!hasApiRoute(c)) c.path = '/api/sba/lifecycle/' + encodeURIComponent(c.id);
+        });
+
+        // Guarantee program cards with known API maps keep paths for expand
+        state.catalogs.programs.forEach(function (c) {
+          if (!hasApiRoute(c)) {
+            const r = resolveRoute(c);
+            if (r && r.indexOf('/api/') === 0) c.path = r;
+          }
+          c.drillable = hasApiRoute(c);
+          c.has_children = hasChildren(c);
+        });
+
+        $('cPrograms').textContent = String(state.catalogs.programs.length);
+        $('cLifecycle').textContent = String(state.catalogs.lifecycle.length);
+        $('cLocal').textContent = String(state.catalogs.local.length);
+        $('statusLine').textContent =
+          'Catalog ready · click a card (e.g. SBA Loans) to expand and load API children';
+
+        const hash = readHash();
+        if (hash.tab && TAB_ROUTES[hash.tab]) state.tab = hash.tab;
+        document.querySelectorAll('.tab').forEach(function (t) {
+          t.classList.toggle('active', t.getAttribute('data-tab') === state.tab);
+        });
+
+        if (hash.r && hash.r.indexOf('/api/') === 0) {
+          // Prefer expand matching program card; fall back to full results view
+          const match = catalogList().find(function (c) {
+            return hasApiRoute(c) && c.path.replace(/\/$/, '') === hash.r.replace(/\/$/, '');
+          });
+          if (match) {
+            await expandCard(match);
+          } else {
+            // Nested route (e.g. loans/7a): expand parent loans card then drill
+            const loansParent = catalogList().find(function (c) {
+              return c.id === 'loans' || /^sba loans$/i.test(c.name || '');
+            });
+            if (loansParent && hash.r.indexOf('/api/sba/content/loans') === 0) {
+              state.expandedId = String(loansParent.id);
+              state.expandStack = [{
+                id: loansParent.id,
+                name: loansParent.name,
+                path: resolveRoute(loansParent),
+                icon: loansParent.icon,
+              }];
+              await loadIntoExpand(hash.r, hash.t || hash.r, {});
+            } else {
+              await openRoute(hash.r, hash.t || hash.r, { fromHash: true });
+            }
+          }
+        } else {
+          renderCatalog();
+        }
+      } catch (e) {
+        $('gridBody').innerHTML = '<div class="empty">Could not load catalogs.</div>';
+        showAlert('Load failed: ' + (e.message || e), true);
+        $('statusLine').textContent = 'API error';
+      }
+    }
+
+    function catalogList() {
+      return state.catalogs[state.tab] || [];
+    }
+
+    function clearExpand() {
+      state.expandedId = '';
+      state.expandStack = [];
+      state.expandRoute = '';
+      state.expandTitle = '';
+      state.expandItems = [];
+      state.expandLoading = false;
+      state.expandError = '';
+      state.expandMessage = '';
+    }
+
+    function renderExpandPanelHtml() {
+      let html = '<div class="expand-panel">';
+      if (state.expandStack.length) {
+        html += '<div class="expand-crumb">';
+        html += '<button type="button" data-expand-back="1">← Back</button>';
+        state.expandStack.forEach(function (crumb, i) {
+          html += '<span>' + (i ? ' / ' : '') + escapeHtml(crumb.name) + '</span>';
+        });
+        html += '<span> / <strong>' + escapeHtml(state.expandTitle) + '</strong></span>';
+        html += '</div>';
+      }
+      html += '<div class="expand-meta">';
+      if (state.expandRoute && state.expandRoute.indexOf('/api/') === 0) {
+        html += '<span class="badge route">' + escapeHtml(state.expandRoute) + '</span>';
+      }
+      if (!state.expandLoading) {
+        html += '<span class="badge">' + state.expandItems.length + ' children</span>';
+      }
+      html += '<a class="badge" href="/browse#r=' + encodeURIComponent(state.expandRoute || '') +
+        '&t=' + encodeURIComponent(state.expandTitle || '') + '" data-stop="1">Full browser</a>';
+      html += '</div>';
+
+      if (state.expandLoading) {
+        html += '<div class="expand-loading"><div class="spinner"></div>Loading API results…</div>';
+      } else if (state.expandError) {
+        html += '<div class="expand-empty" style="color:#b45309">' + escapeHtml(state.expandError) + '</div>';
+      } else if (!state.expandItems.length) {
+        html += '<div class="expand-empty">' +
+          escapeHtml(state.expandMessage || 'No children returned for this endpoint.') +
+          '</div>';
+      } else {
+        html += '<div class="child-list">';
+        state.expandItems.forEach(function (child, cidx) {
+          const linkable = hasChildren(child);
+          const cls = linkable ? 'child-link' : 'child-leaf';
+          html += '<button type="button" class="' + cls + '" data-child-idx="' + cidx + '"' +
+            (linkable ? ' data-has-children="1"' : '') + '>';
+          html += '<div style="flex:1;min-width:0">';
+          html += '<div class="child-title">' + escapeHtml(child.name || child.title) + '</div>';
+          if (child.type) html += '<span class="badge">' + escapeHtml(child.type) + '</span> ';
+          if (linkable) html += '<span class="badge route">Link · has children</span> ';
+          html += '<p class="child-desc">' +
+            escapeHtml(String(child.description || '').slice(0, 200)) +
+            (String(child.description || '').length > 200 ? '…' : '') +
+            '</p>';
+          if (hasApiRoute(child)) {
+            html += '<div class="child-path">' + escapeHtml(child.path) + '</div>';
+          }
+          html += '</div>';
+          if (linkable) {
+            html += '<div class="child-cta">Render →</div>';
+          } else {
+            html += '<div class="child-cta" style="color:var(--muted)">Details</div>';
+          }
+          html += '</button>';
+        });
+        html += '</div>';
+      }
+      html += '</div>';
+      return html;
+    }
+
+    function bindExpandPanel(root) {
+      if (!root) return;
+      const back = root.querySelector('[data-expand-back]');
+      if (back) {
+        back.addEventListener('click', function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+          expandGoBack();
+        });
+      }
+      root.querySelectorAll('[data-child-idx]').forEach(function (el) {
+        el.addEventListener('click', function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+          const child = state.expandItems[Number(el.getAttribute('data-child-idx'))];
+          onChildActivate(child);
+        });
+      });
+      root.querySelectorAll('[data-stop]').forEach(function (el) {
+        el.addEventListener('click', function (e) { e.stopPropagation(); });
+      });
+    }
+
+    async function loadIntoExpand(route, title, opts) {
+      opts = opts || {};
+      if (!route) return;
+      state.expandLoading = true;
+      state.expandError = '';
+      state.expandMessage = '';
+      state.expandRoute = route;
+      state.expandTitle = title || route;
+      if (opts.pushStack && state.expandRoute) {
+        /* stack pushed by caller */
+      }
+      renderCatalog();
+
+      try {
+        if (route.indexOf('local://') === 0) {
+          const parent = opts.parent;
+          const kids = (parent && parent.resources) || [];
+          state.expandItems = kids.map(function (r, i) {
+            return typeof r === 'string'
+              ? normalize({ name: r, description: r }, i, '📄', '')
+              : normalize(r, i, '📄', '');
+          }).filter(Boolean);
+          state.expandMessage = state.expandItems.length ? '' : 'No assigned children.';
+        } else {
+          const data = await apiGet(route);
+          state.expandItems = extractItems(data, '📄', route);
+          state.expandMessage = data.message || data.description || '';
+          if (!state.expandItems.length && Array.isArray(data.resources)) {
+            state.expandItems = data.resources.map(function (r, i) {
+              return normalize(r, i, '📄', route);
+            }).filter(Boolean);
+          }
+        }
+        $('statusLine').textContent =
+          state.expandItems.length + ' children · ' + (title || route);
+      } catch (e) {
+        state.expandItems = [];
+        state.expandError = 'Failed to load ' + route + ': ' + (e.message || e);
+        $('statusLine').textContent = 'Expand error';
+      } finally {
+        state.expandLoading = false;
+        renderCatalog();
+      }
+    }
+
+    async function expandCard(item) {
+      if (!item) return;
+      const route = resolveRoute(item);
+      if (!route) {
+        openLeaf(item);
+        return;
+      }
+      // Toggle collapse if same root re-clicked with empty stack
+      if (
+        state.expandedId === String(item.id) &&
+        !state.expandStack.length &&
+        state.expandRoute === route
+      ) {
+        clearExpand();
+        $('statusLine').textContent = 'Catalog · click a card to expand API results';
+        renderCatalog();
+        return;
+      }
+      state.mode = 'catalog';
+      state.expandedId = String(item.id);
+      state.expandStack = [];
+      state.expandItems = [];
+      state.expandError = '';
+      $('backBtn').style.display = 'none';
+      writeHash();
+      await loadIntoExpand(route, item.name || item.title, { parent: item });
+      // Keep hash for deep-link style
+      if (route.indexOf('/api/') === 0) {
+        const h = '#r=' + encodeURIComponent(route) +
+          '&t=' + encodeURIComponent(item.name || item.title || '') +
+          '&tab=' + encodeURIComponent(state.tab);
+        if (location.hash !== h) history.replaceState(null, '', h);
+      }
+    }
+
+    async function onChildActivate(child) {
+      if (!child) return;
+      // Children with children → always links that render next API result in card
+      if (hasChildren(child)) {
+        const route = resolveRoute(child);
+        if (route && (route.indexOf('/api/') === 0 || route.indexOf('local://') === 0)) {
+          if (state.expandRoute) {
+            state.expandStack.push({
+              id: state.expandedId || 'parent',
+              name: state.expandTitle || 'Parent',
+              path: state.expandRoute,
+              icon: '📂',
+            });
+          }
+          await loadIntoExpand(route, child.name || child.title, { parent: child });
+          if (route.indexOf('/api/') === 0) {
+            const h = '#r=' + encodeURIComponent(route) +
+              '&t=' + encodeURIComponent(child.name || child.title || '') +
+              '&tab=' + encodeURIComponent(state.tab);
+            history.pushState(null, '', h);
+          }
+          return;
+        }
+        if (child.resources && child.resources.length) {
+          if (state.expandRoute) {
+            state.expandStack.push({
+              id: state.expandedId || 'parent',
+              name: state.expandTitle || 'Parent',
+              path: state.expandRoute,
+              icon: '📂',
+            });
+          }
+          await loadIntoExpand('local://' + child.id, child.name || child.title, { parent: child });
+          return;
+        }
+      }
+      openLeaf(child);
+    }
+
+    async function expandGoBack() {
+      const prev = state.expandStack.pop();
+      if (!prev) {
+        clearExpand();
+        renderCatalog();
+        return;
+      }
+      await loadIntoExpand(prev.path, prev.name, {});
+    }
+
+    function renderCatalog() {
+      state.mode = 'catalog';
+      if (!state.expandedId) {
+        state.route = '';
+        $('backBtn').style.display = 'none';
+      }
+      if (!state.expandedId) writeHash();
+      const items = catalogList();
+      if (!items.length) {
+        $('gridBody').innerHTML = '<div class="empty">No cards. Try Refresh.</div>';
+        return;
+      }
+      $('gridBody').innerHTML = '<div class="grid">' + items.map(function (item, idx) {
+        const isOpen = state.expandedId && String(item.id) === String(state.expandedId);
+        const cta = isOpen
+          ? (state.expandLoading ? 'Loading API…' : 'Collapse card')
+          : (hasChildren(item) ? 'Expand · load API children →' : 'Open details →');
+        let card =
+          '<div class="card' + (isOpen ? ' expanded' : '') + '" data-idx="' + idx + '">' +
+            '<button type="button" class="card-head-btn" data-expand-head="' + idx + '">' +
+              '<div class="card-top">' +
+                '<div class="ico">' + escapeHtml(item.icon) + '</div>' +
+                '<div style="flex:1">' +
+                  '<h3>' + escapeHtml(item.name) + '</h3>' +
+                  (item.phase ? '<span class="badge">' + escapeHtml(item.phase) + '</span> ' : '') +
+                  (item.type ? '<span class="badge">' + escapeHtml(item.type) + '</span> ' : '') +
+                  (hasChildren(item) ? '<span class="badge route">Has children</span> ' : '') +
+                  (hasApiRoute(item) ? '<span class="badge route" title="' + escapeHtml(item.path) + '">API</span>' : '') +
+                '</div>' +
+              '</div>' +
+              '<p>' + escapeHtml((item.description || '').slice(0, 180)) +
+                ((item.description || '').length > 180 ? '…' : '') + '</p>' +
+              (hasApiRoute(item)
+                ? '<div style="font-size:.72rem;color:var(--muted)"><code>' + escapeHtml(item.path) + '</code></div>'
+                : '') +
+              '<div class="more">' + cta + '</div>' +
+            '</button>';
+        if (isOpen) card += renderExpandPanelHtml();
+        card += '</div>';
+        return card;
+      }).join('') + '</div>';
+
+      $('gridBody').querySelectorAll('[data-expand-head]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          const item = catalogList()[Number(btn.getAttribute('data-expand-head'))];
+          expandCard(item);
+        });
+      });
+      if (state.expandedId) {
+        const openCard = $('gridBody').querySelector('.card.expanded');
+        bindExpandPanel(openCard);
+        if (openCard) openCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    }
+
+    function onItemClick(item, fromCatalog) {
+      if (!item) return;
+      // Catalog / parents: expand card and render API children inside
+      if (fromCatalog || hasChildren(item)) {
+        expandCard(item);
+        return;
+      }
+      openLeaf(item);
+    }
+
+    function showSyntheticResults(parent) {
+      if (state.mode === 'results' && state.route) {
+        state.history.push({ route: state.route, title: state.title });
+      } else if (state.mode === 'catalog') {
+        state.history.push({ route: '', title: 'catalog', tab: state.tab });
+      }
+      state.mode = 'results';
+      state.route = 'local://' + parent.id;
+      state.title = parent.name;
+      state.parent = parent;
+      state.facet = 'all';
+      state.allItems = parent.resources.map(function (r, i) {
+        if (typeof r === 'string') return normalize({ name: r, description: r }, i, '📄');
+        return normalize(r, i, '📄');
+      }).filter(Boolean);
+      state.items = state.allItems.slice();
+      state.topic = {
+        title: parent.name,
+        description: parent.description,
+        icon: parent.icon,
+        sections: [
+          { title: 'Overview', body: parent.description || '' },
+          { title: 'Assigned options', body: state.allItems.length + ' curated resources for this topic.', count: state.allItems.length },
+          { title: 'Next step', body: 'Open any option for official guidance or a nested API route.' },
+        ],
+      };
+      state.digestion = {
+        pipeline: [
+          { label: 'Resolve topic', detail: parent.id },
+          { label: 'Load assigned', detail: state.allItems.length + ' items' },
+          { label: 'Ready', detail: 'render' },
+        ],
+        facets: buildFacets(state.allItems),
+      };
+      $('backBtn').style.display = 'inline-flex';
+      $('statusLine').textContent = state.items.length + ' assigned options · ' + parent.name;
+      renderResultsPage();
+    }
+
+    function buildFacets(items) {
+      const counts = {};
+      items.forEach(function (it) {
+        const t = it.type || 'content';
+        counts[t] = (counts[t] || 0) + 1;
+      });
+      const facets = [{ id: 'all', label: 'All', count: items.length }];
+      Object.keys(counts).sort().forEach(function (t) {
+        facets.push({ id: t, label: t.replace(/_/g, ' '), count: counts[t] });
+      });
+      return facets;
+    }
+
+    async function openRoute(route, title, opts) {
+      opts = opts || {};
+      if (!route || route.indexOf('/api/') !== 0) {
+        showAlert('No API route for this item', true);
+        return;
+      }
+      if (opts.pushHistory) {
+        if (state.mode === 'results' && state.route) {
+          state.history.push({ route: state.route, title: state.title });
+        } else if (state.mode === 'catalog') {
+          state.history.push({ route: '', title: 'catalog', tab: state.tab });
+        }
+      }
+
+      state.mode = 'results';
+      state.route = route;
+      state.title = title || route;
+      state.parent = opts.parent || null;
+      state.facet = 'all';
+      $('backBtn').style.display = 'inline-flex';
+      writeHash();
+
+      $('gridBody').innerHTML =
+        '<div class="loading"><div class="spinner"></div>Digesting ' + escapeHtml(route) + '…</div>';
+      $('statusLine').textContent = 'Digesting ' + route + '…';
+      showAlert('');
+
+      try {
+        const data = await apiGet(route);
+        let items = extractItems(data, '📄', route);
+        if (!items.length && data.stage && Array.isArray(data.stage.resources)) {
+          items = data.stage.resources.map(function (r, i) { return normalize(r, i, '📄', route); }).filter(Boolean);
+        }
+        if (!items.length && Array.isArray(data.resources)) {
+          items = data.resources.map(function (r, i) { return normalize(r, i, '📄', route); }).filter(Boolean);
+        }
+        state.allItems = items;
+        state.items = items.slice();
+        state.topic = data.topic || {
+          title: title,
+          description: (opts.parent && opts.parent.description) || data.description || data.message || '',
+          icon: (opts.parent && opts.parent.icon) || data.icon || '📂',
+          official_url: (opts.parent && opts.parent.url) || data.url,
+          phase: (opts.parent && opts.parent.phase) || data.phase,
+          sections: [
+            { title: 'Overview', body: data.description || data.message || '' },
+            { title: 'Resources', body: items.length + ' items returned by this route.', count: items.length },
+            { title: 'How to use', body: 'Click API-badged cards to open nested routes. Use Official for sba.gov.' },
+          ],
+        };
+        state.digestion = data.digestion || {
+          pipeline: [
+            { label: 'Resolve route', detail: route },
+            { label: 'Fetch API', detail: data.source || 'api' },
+            { label: 'Normalize', detail: items.length + ' items' },
+            { label: 'Topic ready', detail: 'render' },
+          ],
+          facets: buildFacets(items),
+          stats: { items: items.length },
+        };
+        if (!state.digestion.facets) state.digestion.facets = buildFacets(items);
+        $('statusLine').textContent = items.length + ' results · ' + route;
+        document.title = (state.topic.title || title) + ' · PocketPro SBA';
+        renderResultsPage();
+      } catch (e) {
+        $('gridBody').innerHTML = '<div class="empty">Failed to load route.</div>';
+        showAlert('Failed ' + route + ': ' + (e.message || e), true);
+        $('statusLine').textContent = 'Error loading route';
+      }
+    }
+
+    function renderResultsPage() {
+      const t = state.topic || { title: state.title, description: '', sections: [] };
+      const d = state.digestion || { pipeline: [], facets: [] };
+      // facet filter
+      if (state.facet && state.facet !== 'all') {
+        state.items = state.allItems.filter(function (it) { return String(it.type || 'content') === state.facet; });
+      } else {
+        state.items = state.allItems.slice();
+      }
+
+      let html = '';
+      html += '<div class="hero">';
+      html += '<button type="button" class="btn btn-ghost" id="heroBack">← Back</button>';
+      html += '<h2><span>' + escapeHtml(t.icon || (state.parent && state.parent.icon) || '📂') + '</span><span>' +
+        escapeHtml(t.title || state.title) + '</span></h2>';
+      html += '<div class="meta-row">';
+      if (state.route.indexOf('/api/') === 0) html += '<span class="badge route">' + escapeHtml(state.route) + '</span>';
+      html += '<span class="badge">' + state.allItems.length + ' resources</span>';
+      if (t.phase) html += '<span class="badge">' + escapeHtml(t.phase) + '</span>';
+      html += '</div>';
+      html += '<p class="lead-text">' + escapeHtml(t.description || t.summary || '') + '</p>';
+      html += '<div class="actions">';
+      if (t.official_url || (state.parent && state.parent.url)) {
+        html += '<a class="btn btn-primary" href="' + escapeHtml(t.official_url || state.parent.url) +
+          '" target="_blank" rel="noopener">Official SBA page</a>';
+      }
+      if (state.route.indexOf('/api/') === 0) {
+        html += '<a class="btn btn-ghost" href="/browse#r=' + encodeURIComponent(state.route) +
+          '&t=' + encodeURIComponent(state.title) + '">Open full topic browser</a>';
+        html += '<button type="button" class="btn btn-ghost" id="heroRefresh">Re-digest</button>';
+      }
+      html += '</div>';
+      if (t.sections && t.sections.length) {
+        html += '<div class="sections">';
+        t.sections.slice(0, 3).forEach(function (sec) {
+          html += '<div class="section-card"><h4>' + escapeHtml(sec.title || 'Section') +
+            (sec.count != null ? ' · ' + sec.count : '') + '</h4><p>' + escapeHtml(sec.body || '') + '</p></div>';
+        });
+        html += '</div>';
+      }
+      html += '</div>';
+
+      html += '<div class="digest"><strong style="font-size:.9rem">API digestion</strong><div class="pipeline">';
+      (d.pipeline || []).forEach(function (step) {
+        html += '<span class="step" title="' + escapeHtml(step.detail || '') + '">' +
+          escapeHtml(step.label || step.id) +
+          (step.detail ? ' · ' + escapeHtml(String(step.detail).slice(0, 36)) : '') + '</span>';
+      });
+      html += '</div></div>';
+
+      html += '<div class="facets">';
+      (d.facets || buildFacets(state.allItems)).forEach(function (f) {
+        html += '<button type="button" class="facet' + (state.facet === f.id ? ' active' : '') +
+          '" data-facet="' + escapeHtml(f.id) + '">' + escapeHtml(f.label) + ' ' + f.count + '</button>';
+      });
+      html += '</div>';
+
+      if (!state.items.length) {
+        html += '<div class="empty">No results for this filter.</div>';
+      } else {
+        html += '<div class="grid">' + state.items.map(function (item, idx) {
+          const linkable = hasChildren(item);
+          const cta = linkable
+            ? 'Link · render children →'
+            : 'Open detail →';
+          return (
+            '<button type="button" class="card" data-idx="' + idx + '">' +
+              '<div class="card-top">' +
+                '<div class="ico">' + escapeHtml(item.icon || '📄') + '</div>' +
+                '<div style="flex:1">' +
+                  '<h3>' + escapeHtml(item.name || item.title) + '</h3>' +
+                  (item.type ? '<span class="badge">' + escapeHtml(item.type) + '</span> ' : '') +
+                  (linkable ? '<span class="badge route">Has children</span> ' : '') +
+                  (hasApiRoute(item) ? '<span class="badge route">API</span>' : '') +
+                '</div>' +
+              '</div>' +
+              '<p>' + escapeHtml(String(item.description || '').slice(0, 170)) + '</p>' +
+              (hasApiRoute(item) ? '<div style="font-size:.72rem;color:var(--muted)"><code>' + escapeHtml(item.path) + '</code></div>' : '') +
+              '<div class="more">' + cta + '</div>' +
+            '</button>'
+          );
+        }).join('') + '</div>';
+      }
+
+      $('gridBody').innerHTML = html;
+      $('heroBack').addEventListener('click', goBack);
+      if ($('heroRefresh')) {
+        $('heroRefresh').addEventListener('click', function () {
+          openRoute(state.route, state.title, { parent: state.parent });
+        });
+      }
+      document.querySelectorAll('.facet').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          state.facet = btn.getAttribute('data-facet') || 'all';
+          renderResultsPage();
+        });
+      });
+      document.querySelectorAll('.card[data-idx]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          onItemClick(state.items[Number(btn.getAttribute('data-idx'))], false);
+        });
+      });
+    }
+
+    function goBack() {
+      const prev = state.history.pop();
+      if (!prev) {
+        state.mode = 'catalog';
+        state.route = '';
+        $('backBtn').style.display = 'none';
+        writeHash();
+        renderCatalog();
+        return;
+      }
+      if (!prev.route || prev.route === '' || prev.title === 'catalog') {
+        if (prev.tab) state.tab = prev.tab;
+        document.querySelectorAll('.tab').forEach(function (t) {
+          t.classList.toggle('active', t.getAttribute('data-tab') === state.tab);
+        });
+        state.mode = 'catalog';
+        state.route = '';
+        $('backBtn').style.display = 'none';
+        writeHash();
+        renderCatalog();
+        return;
+      }
+      openRoute(prev.route, prev.title, { fromHash: true });
+    }
+
+    function openLeaf(item) {
+      $('modalTitle').textContent = item.name || item.title || 'Details';
+      let html = '<p style="color:var(--muted);white-space:pre-wrap;line-height:1.55">' +
+        escapeHtml(item.description || '') + '</p>';
+      html += '<dl class="meta">';
+      html += '<dt>ID</dt><dd>' + escapeHtml(item.id) + '</dd>';
+      if (item.type) html += '<dt>Type</dt><dd>' + escapeHtml(item.type) + '</dd>';
+      if (item.path) html += '<dt>Route</dt><dd><code>' + escapeHtml(item.path) + '</code></dd>';
+      if (item.url) html += '<dt>URL</dt><dd><a href="' + escapeHtml(item.url) + '" target="_blank" rel="noopener">' + escapeHtml(item.url) + '</a></dd>';
+      html += '</dl>';
+      $('modalBody').innerHTML = html;
+      const link = $('modalLink');
+      if (item.url) { link.href = item.url; link.style.display = 'inline-flex'; }
+      else link.style.display = 'none';
+      const orb = $('openRouteBtn');
+      if (hasApiRoute(item)) {
+        orb.style.display = 'inline-flex';
+        orb.onclick = function () {
+          closeModal();
+          openRoute(item.path, item.name, { pushHistory: true });
+        };
+      } else {
+        orb.style.display = 'none';
+      }
+      $('overlay').classList.add('open');
+    }
+
+    function closeModal() { $('overlay').classList.remove('open'); }
+
+    document.querySelectorAll('.tab').forEach(function (tab) {
+      tab.addEventListener('click', function () {
+        document.querySelectorAll('.tab').forEach(function (t) { t.classList.remove('active'); });
+        tab.classList.add('active');
+        state.tab = tab.getAttribute('data-tab');
+        state.history = [];
+        clearExpand();
+        state.mode = 'catalog';
+        state.route = '';
+        $('backBtn').style.display = 'none';
+        writeHash();
+        renderCatalog();
+      });
+    });
+
+    $('backBtn').addEventListener('click', goBack);
+    $('refreshBtn').addEventListener('click', function () {
+      if (state.expandedId && state.expandRoute && state.expandRoute.indexOf('/api/') === 0) {
+        loadIntoExpand(state.expandRoute, state.expandTitle, {});
+      } else if (state.mode === 'results' && state.route && state.route.indexOf('/api/') === 0) {
+        openRoute(state.route, state.title, {});
+      } else {
+        clearExpand();
+        loadCatalogs();
+      }
+    });
+    $('closeModal').addEventListener('click', closeModal);
+    $('closeModal2').addEventListener('click', closeModal);
+    $('overlay').addEventListener('click', function (e) { if (e.target === $('overlay')) closeModal(); });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') {
+        if ($('overlay').classList.contains('open')) closeModal();
+        else if (state.mode === 'results') goBack();
+      }
+    });
+    window.addEventListener('hashchange', function () {
+      const hash = readHash();
+      if (hash.r && hash.r.indexOf('/api/') === 0 && hash.r !== state.route) {
+        if (hash.tab) state.tab = hash.tab;
+        openRoute(hash.r, hash.t || hash.r, { fromHash: true });
+      }
+    });
+
+    loadCatalogs();
+  </script>
+</body>
+</html>

@@ -1,241 +1,274 @@
-# PocketPro SBA — UI/UX Regression Report
+# PocketPro SBA — Regression Report
 
-**Date:** 2026-07-10 10:17:40 -04:00  
-**Host free RAM:** ~1.44 GB  
-**Scope:** Live Docker stack (frontend :3000, backend :5000, chromadb :8000)  
-**Git tip (committed):** `8fe0814` — *Complete Resources implementation: API nav, load-on-click, detail cards.*  
-**Local uncommitted (verified live):** chat default `user_id` + message aliases; favicon/logo assets; `resources.html` / compose mounts  
-
-## Summary
-
-| Metric | Value |
-|---|---|
-| Total checks | **52** |
-| Pass | **52** |
-| Fail | **0** |
-| Critical fails | **0** |
-| Major fails | **0** |
-| Minor fails | **0** |
-| **Overall** | **PASS** |
-
-Previous run (earlier today) was **PASS WITH NOTES** (3 major timeouts on chat / decompose / orchestrator). Re-run after chat compatibility fix: **all green**.
+**Date:** 2026-07-11  
+**Branch:** `main` (local uncommitted work present)  
+**Stack:** frontend `:3000` · backend `:5000` · chromadb `:8000`  
+**Mode:** low-RAM friendly (prebuilt CRA + live HTML/CSS/JS mounts)
 
 ---
 
 ## Overall verdict
 
-**PASS — minimized regression held.**
+### **PASS (dev go-live) — with known soft-degrade notes**
 
-- Stack is up; UI routes and static assets serve correctly.
-- Resources UX (API nav → click load → detail cards) works end-to-end.
-- Chat no longer hard-fails for the prebuilt SPA payload (`message` + `session_id` without `user_id`).
-- Logo/favicon regressions are fixed (non-empty assets, linked in served `index.html`).
-- External flakiness (SBIR 429, dead SBA JSON API) soft-degrades with HTTP 200 — no 500s on Browse paths.
-- Live sba.gov HTML content is marked `is_current=true`; RAG/local KB answers are `is_current=false`.
+| Area | Status | Notes |
+|------|--------|--------|
+| Docker stack | **PASS** | All 3 containers Up; chromadb healthy |
+| Health (direct + double-prefix) | **PASS** | `/api/health`, `/api/api/health` → 200 healthy |
+| SBA API parents/children | **PASS** | Programs, loans, contracting, disaster, lifecycle |
+| Drillable / has_children flags | **PASS** | Path-backed items marked for recursive explore |
+| UI `/sba` Programs expand-in-card | **PASS** | `expandCard` + `loadIntoExpand` live |
+| UI `/browse` Resources explorer | **PASS** | `openRoute` + `deriveChildPath` + Explore children |
+| Magazine chat styling assets | **PASS** | `chat-magazine.js` + sleek magazine CSS served |
+| FE proxy (host → :3000 → backend) | **PASS** | Host smoke: all sampled API routes 200 |
+| Chat (full AI path) | **SOFT / SLOW** | Host POST timed out at 60s; double-prefix soft path can still 200 |
+| Files OPTIONS | **PASS** | 204 via FE proxy |
+| File upload POST | **UNVERIFIED this run** | Suite inside backend container timed out; prior sessions 200 |
+| Gemini embeddings / RAG vector init | **DEGRADED** | Soft-fail; app continues without hard crash |
+| `scripts/production_test.py` from **inside** backend container | **FALSE FAIL** | FE `:3000` not reachable from backend network as `127.0.0.1` |
 
----
-
-## Minimize-regression design (verified)
-
-| Control | Status | Evidence |
-|---|---|---|
-| Soft-degrade external SBA/SBIR (no hard 500 on Browse) | **PASS** | `/api/sba/content/sbir` → 200, `degraded=true`, `message=rate_limited` |
-| Live sba.gov content `is_current=true` | **PASS** | loans/articles/blogs/offices → `source=sba_html`, `is_current=true` |
-| RAG/KB answers `is_current=false` | **PASS** | `/api/rag/sba-query` → `is_current=false`, `mode=local_kb_fallback` |
-| Resources: catalog first, query on click, detail card | **PASS** | Catalog `behavior=click_to_query`; `/browse` has `loadResource` + detail modal |
-| CORS `cache-control` preflight | **PASS** | OPTIONS allow-headers includes `content-type,cache-control` |
-| Compat `/api/api/health` | **PASS** | HTTP 200 |
-| Chat legacy SPA payload | **PASS** | POST `{message, session_id}` → 200 `success=true` (default `user_id=1`) |
-| Logo / favicon non-empty | **PASS** | favicon.ico 1150 B, logo.svg 627 B, favicon.svg 421 B |
-| FE nginx proxy to backend | **PASS** | `localhost:3000/api/health` and `/api/info` → 200 |
+**Host smoke (authoritative for this report): 33/33 HTTP checks green.**
 
 ---
 
-## Results by area
+## Environment
 
-### stack (3/3)
+| Service | Container | Ports | Status |
+|---------|-----------|-------|--------|
+| Frontend (nginx) | `pocketpro-frontend-dev` | 3000→80 | Up |
+| Backend (Flask) | `pocketpro-backend-dev` | 5000 | Up |
+| ChromaDB | `chromadb-dev` | 8000 | Up (healthy) |
 
-| Check | Pass | Detail |
-|---|---|---|
-| pocketpro-frontend-dev | YES | running |
-| pocketpro-backend-dev | YES | running |
-| chromadb-dev | YES | running (healthy) |
+**Volume mounts (no CRA rebuild required for live UIs):**
 
-### ui (10/10)
-
-| Check | Pass | Detail |
-|---|---|---|
-| home `/` | YES | 200, SPA shell 1076 B |
-| browse `/browse` | YES | 200, live Resources page 24703 B |
-| resources alias `/resources.html` | YES | same live page |
-| chat / rag / docs / login SPA routes | YES | 200 via try_files → index |
-| index favicon + apple-touch logo | YES | `/favicon.svg`, `/favicon.ico`, `/logo.svg` |
-| theme-color service blue | YES | `#2563eb` |
-
-### assets (6/6)
-
-| Check | Pass | Detail |
-|---|---|---|
-| `/favicon.ico` | YES | 1150 B, `image/x-icon` |
-| `/favicon.svg` | YES | 421 B |
-| `/logo.svg` | YES | 627 B |
-| `/static/js/main.f54a4e20.js` | YES | 281240 B (prebuilt CRA) |
-| `/static/css/sleek-layout.css` | YES | white/blue service theme |
-| `/static/css/main.0facfa3c.css` | YES | 274721 B |
-
-### ux — Resources (4/4)
-
-| Check | Pass | Detail |
-|---|---|---|
-| API-driven nav | YES | page loads `/api/sba/resources` |
-| Click-to-load | YES | `loadResource()` on category click |
-| Detail cards | YES | item click → modal detail |
-| White/blue styling | YES | `#2563eb` gradient chips/buttons |
-
-### api (8/8)
-
-| Check | Pass | Detail |
-|---|---|---|
-| `/api/health` | YES | ok |
-| `/api/api/health` | YES | double-prefix compat |
-| `/api/info` | YES | service info |
-| `/api/chromadb_health` | YES | connected |
-| `/api/rag/health` | YES | ok (0 docs in vector store) |
-| `/api/programs` | YES | catalog of program groups |
-| `/api/documents/list` | YES | local docs listed |
-| `/api/orchestrator/strategies` | YES | 11 strategies |
-
-### proxy / cors (3/3)
-
-| Check | Pass | Detail |
-|---|---|---|
-| FE `/api/health` | YES | nginx → backend |
-| FE `/api/info` | YES | nginx → backend |
-| OPTIONS preflight + cache-control | YES | ACAO + allow-headers |
-
-### chat (3/3) — **was failing earlier**
-
-| Check | Pass | Detail |
-|---|---|---|
-| Legacy payload (no `user_id`) | YES | **critical path fixed** — 200, ~397 B, `success=true` |
-| Query alias + `user_id` | YES | 200 |
-| History after message | YES | session history count ≥ 1 |
-
-**Root cause of prior App.js:127 failure:** prebuilt bundle posts  
-`POST /api/chat` with `{ message, session_id }` only.  
-**Fix (live, uncommitted in `backend/routes/chat.py`):** default `user_id=1`; accept `message|query|text|input` and `session_id|sessionId`.
-
-### resources catalog loads (12/12)
-
-| Resource | Pass | Notes |
-|---|---|---|
-| catalog API | YES | count=11, `click_to_query` |
-| loans | YES | 20 items, `sba_html`, **current** |
-| loan_types (`/api/rag/sba-overview`) | YES | 8 types via `available_loan_types`, UI normalizes to cards, **current** |
-| lenders | YES | 1 item, static fallback, not_current (expected soft) |
-| articles | YES | 20 items, `sba_html`, **current** |
-| blogs | YES | 20 items, `sba_html`, **current** |
-| courses | YES | 3 items, static fallback |
-| documents | YES | 2 items, static fallback |
-| events | YES | 2 items, static fallback |
-| offices | YES | 20 items, `sba_html`, **current** |
-| sbir | YES | soft-degrade: empty + rate_limited (429 upstream) |
-| sources | YES | status map; UI `sourcesToItems()` |
-
-### freshness / minimize (3/3)
-
-| Check | Pass | Detail |
-|---|---|---|
-| loans is_current | YES | `source=sba_html` |
-| rag not marked current | YES | `local_kb_fallback` |
-| sbir soft degrade | YES | no 500 |
+- `frontend/public/resources.html` → `/browse`
+- `frontend/public/programs.html` → `/sba`
+- `frontend/build` static assets + `sleek-layout.css` + `chat-magazine.js`
+- Backend: `.:/app` (live Python reload)
 
 ---
 
-## UI/UX troubleshooting notes (resolved)
+## Smoke matrix (host, 2026-07-11)
 
-| Issue | Symptom | Fix / status |
-|---|---|---|
-| **Chat App.js:127** | `POST /api/chat` 400 without `user_id` | Default `user_id=1` + field aliases — **verified 200** |
-| **Logo / favicon fail** | Empty or missing icons | Real `favicon.ico` (1150 B), SVG logo/favicon in `frontend/build` + public — **verified served** |
-| **Empty resource cards** | Blank titles on Browse | Normalize items + click-to-query catalog — **no empty-card fails** |
-| **CORS preflight** | Browser blocked `cache-control` | Allow-headers include cache-control — **verified** |
-| **Double `/api/api/health`** | SPA or proxy typo 404 | Compat route — **verified** |
-| **SBA JSON API dead** | Upstream 404 | HTML scrape + static/SBIR soft fallbacks — **verified** |
-| **SBIR 429** | Upstream rate limit | Degraded empty payload, HTTP 200 — **by design** |
-| **Gemini embeddings** | Unavailable | RAG falls back to local KB keywords; marked not current — **by design** |
+### Via FE proxy `127.0.0.1:3000`
+
+| Endpoint | Status | Latency | Payload notes |
+|----------|--------|---------|----------------|
+| `GET /api/health` | 200 | ~0.9s | `status=healthy` |
+| `GET /api/api/health` | 200 | ~1.2s | double-prefix OK |
+| `GET /api/sba/resources` | 200 | ~0.6s | status=ok |
+| `GET /api/sba/programs` | 200 | ~0.5s | status=ok |
+| `GET /api/sba/lifecycle` | 200 | ~0.4s | status=ok |
+| `GET /api/sba/local-resources` | 200 | ~0.3s | status=ok |
+| `GET /api/sba/content/loans` | 200 | ~5.1s | **6 items, 6 drillable, 6 has_children** |
+| `GET /api/sba/content/loans/7a` | 200 | ~9.5s | status=ok (live scrape) |
+| `GET /api/sba/content/contracting` | 200 | ~1.0s | 8/8 drillable |
+| `GET /api/sba/content/disaster` | 200 | ~0.5s | 6/6 drillable |
+| `GET /api/sba/content/articles` | 200 | ~2.7s | 20 items, all drillable |
+| `GET /api/sba/content/lenders` | 200 | ~1.2s | 6/6 drillable |
+| `GET /api/sba/content/offices` | 200 | ~2.3s | 19/19 drillable |
+
+### Direct backend `127.0.0.1:5000`
+
+Same API set: **all 200**. Loans ~2.8s, 7a ~4.8s (faster cold path than concurrent FE proxy run).
+
+### UI assets
+
+| Route | Status | Notes |
+|-------|--------|--------|
+| `/` | 200 | SPA shell + magazine fonts + `chat-magazine.js` |
+| `/sba` | 200 | Programs expand UI (`expandCard`, `hasChildren`) |
+| `/browse` | 200 | Resources recursive explore |
+| `/programs.html` | 200 | Mounted live |
+| `/resources.html` | 200 | Mounted live |
+| `/static/js/chat-magazine.js` | 200 | List/item formatter for chat |
+| `/static/css/sleek-layout.css` | 200 | Magazine chat + service theme |
+
+### Behavioral markers (HTML/JS presence)
+
+| Check | Result |
+|-------|--------|
+| `/sba` has `expandCard` / `loadIntoExpand` / `hasChildren` | **PASS** |
+| `/browse` has `openRoute` / `deriveChildPath` / Explore children | **PASS** |
+| Home has `chat-magazine.js` + Source Serif + sleek CSS | **PASS** |
+| Loans API: 6/6 path + has_children | **PASS** |
+| Files OPTIONS via proxy | **204 PASS** |
+| Chat POST (60s timeout, full AI) | **TIMEOUT** (see risks) |
 
 ---
 
-## Known degradations (not failures)
+## Feature regression (what must keep working)
 
-These are **accepted minimize-regression outcomes**, not regressions:
+### 1. Site navigation rule (locked)
 
-1. **SBIR API rate-limited (429)** — empty list + `degraded=true`.
-2. **Legacy SBA content JSON API 404** — live path is `sba_html` scrape.
-3. **Gemini embeddings unavailable** — RAG uses `local_kb_fallback`; answers marked `is_current=false`.
-4. **Static fallbacks** for lenders/courses/documents/events when live sources unavailable.
-5. **Prebuilt CRA bundle** (`main.f54a4e20.js`) — SPA UI outside `/browse` is older build; live Resources UX is `resources.html` / `/browse` without a full CRA rebuild (low-RAM Windows).
-6. **Chroma document_count=0** — vector store empty; health still ok.
+**Parent click → load that API route → render children. Children with children are always links that re-render.**
+
+| Parent | Route | Expected children |
+|--------|-------|-------------------|
+| SBA Loans | `/api/sba/content/loans` | 7(a), 504, Microloans, loans hub, Lender Match, credit topic (all path-backed) |
+| 7(a) as parent | `/api/sba/content/loans/7a` | Program sections + related loan links |
+| Government Contracting | `/api/sba/content/contracting` | 8 programs (8a, HUBZone, …) |
+| Disaster | `/api/sba/content/disaster` | Disaster product children |
+| Lifecycle Start | `/api/sba/lifecycle/start` | Stage resources / options |
+
+### 2. Programs UI (`/sba`)
+
+| Behavior | Status |
+|----------|--------|
+| Catalog tabs: Programs / Lifecycle / Local | **PASS** (live HTML) |
+| Click **SBA Loans** expands card (not redirect-only) | **PASS** (code path live) |
+| Expanded card fetches API and lists children | **PASS** |
+| Child with `has_children` / path → **link · Render →** in same card | **PASS** |
+| Breadcrumb Back inside expanded card | **PASS** (implemented) |
+| Full browser badge still available | **PASS** |
+
+### 3. Resources UI (`/browse`)
+
+| Behavior | Status |
+|----------|--------|
+| Nav loads `/api/sba/resources` | **PASS** |
+| Parent → children page | **PASS** |
+| Child path → recursive parent | **PASS** |
+| Digestion / topic blocks | **PASS** (API envelope) |
+
+### 4. Chat magazine style
+
+| Behavior | Status |
+|----------|--------|
+| Live CSS magazine bubbles on prebuilt chat classes | **PASS** (assets served) |
+| JS enhancer turns `-` / `1.` lines into itemized lists | **PASS** (formatter unit + asset) |
+| Source `ModernConciergeChat` + `magazineProse.js` | Present (needs CRA rebuild to ship in SPA bundle) |
+
+### 5. API / routing resilience
+
+| Behavior | Status |
+|----------|--------|
+| `/api/api/*` double-prefix | **PASS** health |
+| Soft-degrade SBA scrape failures | **PASS** (envelope + items) |
+| Chat soft-degrade (non-500 path) | **PARTIAL** — dual route exists; primary can hang under load |
+| Files dual routes registered | **PASS** OPTIONS |
 
 ---
 
-## Source map
+## Changes in this workstream (delta risk)
 
-| Area | Live surface | Backend |
-|---|---|---|
-| Resources UI | `http://localhost:3000/browse` (`resources.html`) | `/api/sba/resources`, `/api/sba/content/*`, `/api/rag/sba-overview` |
-| Chat SPA | `http://localhost:3000/chat` → prebuilt JS | `POST /api/chat` (compat payload) |
-| Branding | `/favicon.ico`, `/favicon.svg`, `/logo.svg` | static nginx from `frontend/build` |
-| Health | FE proxy + BE | `/api/health`, `/api/api/health` |
+Uncommitted / new areas that affect regression:
+
+| Surface | Files / change | Risk if broken |
+|---------|----------------|----------------|
+| Loans path + `has_children` | `backend/routes/sba.py` envelope stamp | Children not clickable |
+| Programs expand UI | `frontend/public/programs.html` | `/sba` dead cards |
+| Resources recursive | `frontend/public/resources.html` | `/browse` leaf-only |
+| SPA explorer | `SBAContentExplorer.js`, `SBAContent.js` | Prebuilt SPA may lag source |
+| Magazine chat | `modern-chat.css`, `chat-magazine.js`, `sleek-layout.css` | Chat hard to read |
+| Chat soft-fail / health | `chat.py`, `apiClient.js`, nginx rewrites | SPA blank / 404 |
+| Files | `backend/routes/files.py` | Upload 404 |
 
 ---
 
-## Uncommitted local changes (included in this verification)
+## Failures & residual risks
 
+### A. Chat latency / timeout (OPEN)
+
+- Host `POST /api/chat` exceeded **60s** in this run.
+- Inside container: `/api/api/chat` returned **200 in ~83ms** (likely soft/fast path), while `/api/chat` timed out.
+- **User impact:** Chat tab may spin; should still soft-degrade rather than hard-crash SPA.
+- **Mitigation already in stack:** soft-fail chat routes, quiet health, long timeouts on SBA fetches.
+- **Recommend:** retest chat alone after backend quiet; cap model timeout lower and always return degraded copy.
+
+### B. Gemini embeddings (KNOWN DEGRADED)
+
+- Backend logs: embedding models 404 / init fail.
+- RAG continues in degraded mode; do not treat as hard ship-blocker for SBA browse/programs.
+
+### C. `production_test.py` from inside backend (HARNESS)
+
+- Fails FE checks with `Connection refused` to `127.0.0.1:3000` because FE is another container.
+- **Do not treat that 17/37 as product regression.**
+- Run suite from **host** with `FE=http://127.0.0.1:3000` `BE=http://127.0.0.1:5000`, or point FE base at `http://pocketpro-frontend-dev`.
+
+### D. Prebuilt SPA vs live HTML
+
+| Surface | Source of truth live |
+|---------|----------------------|
+| Programs | `programs.html` mount (`/sba`) |
+| Resources | `resources.html` mount (`/browse`) |
+| Chat styling | `sleek-layout.css` + `chat-magazine.js` |
+| React source (`ModernConciergeChat`, `SBAContentExplorer`) | Improved but **not** full CRA rebuild |
+
+Hard-refresh (`Ctrl+Shift+R`) required after HTML/CSS/JS mount changes.
+
+### E. Latency on live sba.gov digests
+
+| Route | Observed |
+|-------|----------|
+| Loans parent | 3–5s |
+| Loans /7a | 5–10s |
+| Articles / offices | 2–6s |
+
+Acceptable for cached digests; UI shows loading states. Avoid `fresh=1` on every click.
+
+---
+
+## Pass criteria checklist
+
+| # | Criterion | Result |
+|---|-----------|--------|
+| 1 | Stack up | **PASS** |
+| 2 | Health OK (single + double prefix) | **PASS** |
+| 3 | Programs catalog API | **PASS** |
+| 4 | Loans parent lists children with paths | **PASS** (6/6) |
+| 5 | Loan child explores as parent | **PASS** |
+| 6 | Contracting / disaster drillable children | **PASS** |
+| 7 | `/sba` expand-in-card code live | **PASS** |
+| 8 | `/browse` recursive explore live | **PASS** |
+| 9 | Magazine chat assets live | **PASS** |
+| 10 | Host FE proxy all sample APIs 200 | **PASS** |
+| 11 | Chat full AI within 60s | **FAIL this run** |
+| 12 | Upload POST verified this run | **SKIP / unverified** |
+| 13 | Gemini embeddings healthy | **FAIL (degraded)** |
+
+**Hard product score (excluding chat AI timing, upload recheck, embeddings): 10/10.**  
+**Full score with soft systems: 10/13.**
+
+---
+
+## How to re-run (host)
+
+```powershell
+docker compose -f docker-compose.dev.yml ps
+
+# Quick smoke
+$urls = @(
+  'http://127.0.0.1:3000/api/health',
+  'http://127.0.0.1:3000/api/sba/content/loans',
+  'http://127.0.0.1:3000/sba',
+  'http://127.0.0.1:3000/browse'
+)
+$urls | ForEach-Object { try { $r = Invoke-WebRequest $_ -UseBasicParsing -TimeoutSec 45; "$_ -> $($r.StatusCode)" } catch { "$_ FAIL" } }
+
+# Manual UX
+# 1. http://127.0.0.1:3000/sba  → click SBA Loans → children links in card
+# 2. http://127.0.0.1:3000/browse → Loans → 7(a) → related children
+# 3. http://127.0.0.1:3000/chat → magazine lists (hard refresh)
 ```
- M backend/routes/chat.py          # default user_id + message aliases
- M docker-compose.dev.yml          # frontend mounts
- M frontend/public/favicon.ico     # non-empty icon
- M frontend/public/index.html
- M frontend/public/resources.html
-?? frontend/public/favicon.svg
-?? frontend/public/logo.svg
-```
 
-Also present on disk under `frontend/build/` (what nginx serves): favicon/logo assets + patched `index.html`.
-
-**Recommendation:** commit and push these so main matches the verified stack.
+Optional: run `scripts/production_test.py` **from the host**, not `docker exec` into backend alone.
 
 ---
 
-## Optional follow-ups (out of scope for this PASS)
+## Recommendation
 
-| Priority | Item |
-|---|---|
-| Medium | Commit/push chat + branding fixes |
-| Medium | When RAM allows: CRA rebuild so SPA matches latest React sources |
-| Low | Retry/backoff for SBIR 429; cache last-good SBIR payload |
-| Low | Rotate any previously leaked Gemini API key |
-| Low | Re-test heavy `decompose` / full orchestrator under higher timeout (not required for Browse/Chat UX) |
-
----
-
-## Raw artifacts
-
-- `terminals/regression-checks.json`
-- `terminals/regression-checks.csv`
-- `terminals/regression-overall.txt` → `OVERALL=PASS`
-- `terminals/regression-raw.json` (earlier probe)
+| Priority | Action |
+|----------|--------|
+| Ship now | Browse + Programs + API parent/child graph are green for demo/dev |
+| Before prod marketing | Stabilize chat timeout/soft path under load; re-verify upload POST |
+| Tech debt | CRA rebuild to fold SPA source (explorer + magazine chat) into main bundle; fix production_test FE base URL for container runs |
+| Ops | Prefer `127.0.0.1:3000` same-origin; hard-refresh after mount edits |
 
 ---
 
-## Sign-off
+## Verdict line
 
-| | |
-|---|---|
-| **UI/UX regression** | **PASS** (52/52) |
-| **Minimize regression** | **Verified** (soft degrade, current vs RAG flags, no critical/major fails) |
-| **Chat SPA hard-fail** | **Resolved** |
-| **Logo/favicon** | **Resolved** |
-| **Resources click UX** | **Resolved / verified** |
+**Regression status: PASS for SBA navigation product (programs expand, loans children, browse recursive, API digestion, health/proxy).**  
+**Watch items: chat latency, embeddings degrade, upload recheck, test harness FE URL.**

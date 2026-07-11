@@ -1,0 +1,358 @@
+# Combined SBA API digest for /api/sba/content/documents
+Retrieved children: 20
+Chunks: 21
+
+# Documents
+Source: SBA API endpoint response
+API route: /api/sba/content/documents
+
+Document cards from official SBA forms/program pages. This topic currently surfaces 20 resources. Highlights include: SBA forms library; 7(a) loan program documentation; 504 loan program documentation; Microloan program documentation.
+
+## Overview
+Document cards from official SBA forms/program pages. This topic currently surfaces 20 resources. Highlights include: SBA forms library; 7(a) loan program documentation; 504 loan program documentation; Microloan program documentation.
+
+## Resources
+20 curated / live resources for this topic.
+
+## How to use this page
+Click any card with an API badge to open that route’s results. Use type filters to focus. Open official links for full SBA.gov detail. Use Back to return to the previous topic.
+
+---
+
+# SBA forms library
+Type: document
+API path: /api/sba/content/documents/forms
+Parent path: /api/sba/content/documents
+ID: forms
+
+Browse current SBA forms and instructions.
+
+Official URL: https://www.sba.gov/document
+File / form URL: https://www.sba.gov/document
+Action: Explore children -> /api/sba/content/documents/forms
+Action: Open form / document -> https://www.sba.gov/document
+Action: Official source -> https://www.sba.gov/document
+Location: Online / see official page
+
+---
+
+# 7(a) loan program documentation
+Type: document
+API path: /api/sba/content/documents/7a-docs
+Parent path: /api/sba/content/documents
+ID: 7a-docs
+
+Eligibility, uses of proceeds, and lender guidance for 7(a).
+
+Official URL: https://www.sba.gov/funding-programs/loans/7a-loans
+File / form URL: https://www.sba.gov/funding-programs/loans/7a-loans
+Action: Explore children -> /api/sba/content/documents/7a-docs
+Action: Open form / document -> https://www.sba.gov/funding-programs/loans/7a-loans
+Action: Official source -> https://www.sba.gov/funding-programs/loans/7a-loans
+Location: Online / see official page
+
+---
+
+# 504 loan program documentation
+Type: document
+API path: /api/sba/content/documents/504-docs
+Parent path: /api/sba/content/documents
+ID: 504-docs
+
+CDC/504 fixed-asset financing requirements and structure.
+
+Official URL: https://www.sba.gov/funding-programs/loans/504-loans
+File / form URL: https://www.sba.gov/funding-programs/loans/504-loans
+Action: Explore children -> /api/sba/content/documents/504-docs
+Action: Open form / document -> https://www.sba.gov/funding-programs/loans/504-loans
+Action: Official source -> https://www.sba.gov/funding-programs/loans/504-loans
+Location: Online / see official page
+
+---
+
+# Microloan program documentation
+Type: document
+API path: /api/sba/content/documents/microloan-docs
+Parent path: /api/sba/content/documents
+ID: microloan-docs
+
+Intermediary microloan rules and borrower guidance.
+
+Official URL: https://www.sba.gov/funding-programs/loans/microloans
+File / form URL: https://www.sba.gov/funding-programs/loans/microloans
+Action: Explore children -> /api/sba/content/documents/microloan-docs
+Action: Open form / document -> https://www.sba.gov/funding-programs/loans/microloans
+Action: Official source -> https://www.sba.gov/funding-programs/loans/microloans
+Location: Online / see official page
+
+---
+
+# Size standards documentation
+Type: document
+API path: /api/sba/content/documents/size-standards
+Parent path: /api/sba/content/documents
+ID: size-standards
+
+How SBA defines a small business by industry.
+
+Official URL: https://www.sba.gov/size-standards
+File / form URL: https://www.sba.gov/size-standards
+Action: Explore children -> /api/sba/content/documents/size-standards
+Action: Open form / document -> https://www.sba.gov/size-standards
+Action: Official source -> https://www.sba.gov/size-standards
+Location: Online / see official page
+
+---
+
+# Disaster assistance forms & guides
+Type: document
+API path: /api/sba/content/documents/disaster-docs
+Parent path: /api/sba/content/documents
+ID: disaster-docs
+
+Documents for disaster loan applicants and survivors.
+
+Official URL: https://www.sba.gov/funding-programs/disaster-assistance
+File / form URL: https://www.sba.gov/funding-programs/disaster-assistance
+Action: Explore children -> /api/sba/content/documents/disaster-docs
+Action: Open form / document -> https://www.sba.gov/funding-programs/disaster-assistance
+Action: Official source -> https://www.sba.gov/funding-programs/disaster-assistance
+Location: Online / see official page
+
+---
+
+# Contracting certification guides
+Type: document
+API path: /api/sba/content/documents/contracting-docs
+Parent path: /api/sba/content/documents
+ID: contracting-docs
+
+8(a), HUBZone, WOSB, and SDVOSB program documentation.
+
+Official URL: https://www.sba.gov/federal-contracting
+File / form URL: https://www.sba.gov/federal-contracting
+Action: Explore children -> /api/sba/content/documents/contracting-docs
+Action: Open form / document -> https://www.sba.gov/federal-contracting
+Action: Official source -> https://www.sba.gov/federal-contracting
+Location: Online / see official page
+
+---
+
+# 10 steps to start your business
+Type: document
+API path: /api/sba/content/documents/5708083263
+Parent path: /api/sba/content/documents
+ID: 5708083263
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/10-steps-start-your-business
+File / form URL: https://www.sba.gov/business-guide/10-steps-start-your-business
+Action: Explore children -> /api/sba/content/documents/5708083263
+Action: Open form / document -> https://www.sba.gov/business-guide/10-steps-start-your-business
+Action: Official source -> https://www.sba.gov/business-guide/10-steps-start-your-business
+Location: Online / see official page
+
+---
+
+# Plan your business
+Type: document
+API path: /api/sba/content/documents/6108298546
+Parent path: /api/sba/content/documents
+ID: 6108298546
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/plan-your-business
+File / form URL: https://www.sba.gov/business-guide/plan-your-business
+Action: Explore children -> /api/sba/content/documents/6108298546
+Action: Open form / document -> https://www.sba.gov/business-guide/plan-your-business
+Action: Official source -> https://www.sba.gov/business-guide/plan-your-business
+Location: Online / see official page
+
+---
+
+# Market research and competitive analysis
+Type: document
+API path: /api/sba/content/documents/6638053259
+Parent path: /api/sba/content/documents
+ID: 6638053259
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/plan-your-business/market-research-competitive-analysis
+File / form URL: https://www.sba.gov/business-guide/plan-your-business/market-research-competitive-analysis
+Action: Explore children -> /api/sba/content/documents/6638053259
+Action: Open form / document -> https://www.sba.gov/business-guide/plan-your-business/market-research-competitive-analysis
+Action: Official source -> https://www.sba.gov/business-guide/plan-your-business/market-research-competitive-analysis
+Location: Online / see official page
+
+---
+
+# Write your business plan
+Type: document
+API path: /api/sba/content/documents/9015749578
+Parent path: /api/sba/content/documents
+ID: 9015749578
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/plan-your-business/write-your-business-plan
+File / form URL: https://www.sba.gov/business-guide/plan-your-business/write-your-business-plan
+Action: Explore children -> /api/sba/content/documents/9015749578
+Action: Open form / document -> https://www.sba.gov/business-guide/plan-your-business/write-your-business-plan
+Action: Official source -> https://www.sba.gov/business-guide/plan-your-business/write-your-business-plan
+Location: Online / see official page
+
+---
+
+# Calculate your startup costs
+Type: document
+API path: /api/sba/content/documents/22280226
+Parent path: /api/sba/content/documents
+ID: 22280226
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/plan-your-business/calculate-your-startup-costs
+File / form URL: https://www.sba.gov/business-guide/plan-your-business/calculate-your-startup-costs
+Action: Explore children -> /api/sba/content/documents/22280226
+Action: Open form / document -> https://www.sba.gov/business-guide/plan-your-business/calculate-your-startup-costs
+Action: Official source -> https://www.sba.gov/business-guide/plan-your-business/calculate-your-startup-costs
+Location: Online / see official page
+
+---
+
+# Establish business credit
+Type: document
+API path: /api/sba/content/documents/956887656
+Parent path: /api/sba/content/documents
+ID: 956887656
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/plan-your-business/establish-business-credit
+File / form URL: https://www.sba.gov/business-guide/plan-your-business/establish-business-credit
+Action: Explore children -> /api/sba/content/documents/956887656
+Action: Open form / document -> https://www.sba.gov/business-guide/plan-your-business/establish-business-credit
+Action: Official source -> https://www.sba.gov/business-guide/plan-your-business/establish-business-credit
+Location: Online / see official page
+
+---
+
+# Fund your business
+Type: document
+API path: /api/sba/content/documents/597498504
+Parent path: /api/sba/content/documents
+ID: 597498504
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/plan-your-business/fund-your-business
+File / form URL: https://www.sba.gov/business-guide/plan-your-business/fund-your-business
+Action: Explore children -> /api/sba/content/documents/597498504
+Action: Open form / document -> https://www.sba.gov/business-guide/plan-your-business/fund-your-business
+Action: Official source -> https://www.sba.gov/business-guide/plan-your-business/fund-your-business
+Location: Online / see official page
+
+---
+
+# Buy an existing business or franchise
+Type: document
+API path: /api/sba/content/documents/7149959350
+Parent path: /api/sba/content/documents
+ID: 7149959350
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/plan-your-business/buy-existing-business-or-franchise
+File / form URL: https://www.sba.gov/business-guide/plan-your-business/buy-existing-business-or-franchise
+Action: Explore children -> /api/sba/content/documents/7149959350
+Action: Open form / document -> https://www.sba.gov/business-guide/plan-your-business/buy-existing-business-or-franchise
+Action: Official source -> https://www.sba.gov/business-guide/plan-your-business/buy-existing-business-or-franchise
+Location: Online / see official page
+
+---
+
+# Launch your business
+Type: document
+API path: /api/sba/content/documents/9726984762
+Parent path: /api/sba/content/documents
+ID: 9726984762
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/launch-your-business
+File / form URL: https://www.sba.gov/business-guide/launch-your-business
+Action: Explore children -> /api/sba/content/documents/9726984762
+Action: Open form / document -> https://www.sba.gov/business-guide/launch-your-business
+Action: Official source -> https://www.sba.gov/business-guide/launch-your-business
+Location: Online / see official page
+
+---
+
+# Pick your business location
+Type: document
+API path: /api/sba/content/documents/1240216906
+Parent path: /api/sba/content/documents
+ID: 1240216906
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/launch-your-business/pick-your-business-location
+File / form URL: https://www.sba.gov/business-guide/launch-your-business/pick-your-business-location
+Action: Explore children -> /api/sba/content/documents/1240216906
+Action: Open form / document -> https://www.sba.gov/business-guide/launch-your-business/pick-your-business-location
+Action: Official source -> https://www.sba.gov/business-guide/launch-your-business/pick-your-business-location
+Location: Online / see official page
+
+---
+
+# Choose a business structure
+Type: document
+API path: /api/sba/content/documents/9309107765
+Parent path: /api/sba/content/documents
+ID: 9309107765
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/launch-your-business/choose-business-structure
+File / form URL: https://www.sba.gov/business-guide/launch-your-business/choose-business-structure
+Action: Explore children -> /api/sba/content/documents/9309107765
+Action: Open form / document -> https://www.sba.gov/business-guide/launch-your-business/choose-business-structure
+Action: Official source -> https://www.sba.gov/business-guide/launch-your-business/choose-business-structure
+Location: Online / see official page
+
+---
+
+# Choose your business name
+Type: document
+API path: /api/sba/content/documents/640820822
+Parent path: /api/sba/content/documents
+ID: 640820822
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/launch-your-business/choose-your-business-name
+File / form URL: https://www.sba.gov/business-guide/launch-your-business/choose-your-business-name
+Action: Explore children -> /api/sba/content/documents/640820822
+Action: Open form / document -> https://www.sba.gov/business-guide/launch-your-business/choose-your-business-name
+Action: Official source -> https://www.sba.gov/business-guide/launch-your-business/choose-your-business-name
+Location: Online / see official page
+
+---
+
+# Register your business
+Type: document
+API path: /api/sba/content/documents/9904802663
+Parent path: /api/sba/content/documents
+ID: 9904802663
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/launch-your-business/register-your-business
+File / form URL: https://www.sba.gov/business-guide/launch-your-business/register-your-business
+Action: Explore children -> /api/sba/content/documents/9904802663
+Action: Open form / document -> https://www.sba.gov/business-guide/launch-your-business/register-your-business
+Action: Official source -> https://www.sba.gov/business-guide/launch-your-business/register-your-business
+Location: Online / see official page

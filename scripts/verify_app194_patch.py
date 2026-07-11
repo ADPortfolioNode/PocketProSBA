@@ -1,0 +1,13 @@
+from pathlib import Path
+t = Path("frontend/build/static/js/main.f54a4e20.js").read_text(encoding="utf-8", errors="ignore")
+print("hard throw present:", 'throw new Error("Backend service is not available")' in t)
+print("soft health warn present:", "Backend health soft-fail" in t or "Backend health probe failed" in t)
+print("concat /health:", t.count('concat(Qs,"/health")'))
+print("concat /api/health:", t.count('concat(Qs,"/api/health")'))
+print("concat /files:", t.count('concat(Qs,"/files")'))
+print("concat /api/files:", t.count('concat(Qs,"/api/files")'))
+print("concat /chat:", t.count('concat(Qs,"/chat")'))
+print("concat /api/chat:", t.count('concat(Qs,"/api/chat")'))
+i = t.find("onUpload:async")
+print("--- onUpload snippet ---")
+print(t[i : i + 520] if i >= 0 else "missing")
