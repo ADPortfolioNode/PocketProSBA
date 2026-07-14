@@ -1,0 +1,14 @@
+# Lenders
+Source: SBA API endpoint response
+API route: /api/sba/content/lenders
+
+Lenders API unavailable; showing Lender Match and financing partner cards. This topic currently surfaces 6 resources across 2 types. Highlights include: Lender Match; 7(a) participating lenders; 504 Certified Development Companies; Microloan intermediaries.
+
+## Overview
+Lenders API unavailable; showing Lender Match and financing partner cards. This topic currently surfaces 6 resources across 2 types. Highlights include: Lender Match; 7(a) participating lenders; 504 Certified Development Companies; Microloan intermediaries.
+
+## Resources
+6 curated / live resources for this topic.
+
+## How to use this page
+Click any card with an API badge to open that route’s results. Use type filters to focus. Open official links for full SBA.gov detail. Use Back to return to the previous topic.

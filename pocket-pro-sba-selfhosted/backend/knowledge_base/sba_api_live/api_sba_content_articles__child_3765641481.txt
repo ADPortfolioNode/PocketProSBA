@@ -1,0 +1,10 @@
+# Market research and competitive analysis
+Type: article
+API path: /api/sba/content/articles/3765641481
+Parent path: /api/sba/content/articles
+ID: 3765641481
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/plan-your-business/market-research-competitive-analysis
+Location: Online / see official page

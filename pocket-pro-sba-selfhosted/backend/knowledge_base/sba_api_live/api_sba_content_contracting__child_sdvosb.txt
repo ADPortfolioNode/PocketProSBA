@@ -1,0 +1,11 @@
+# Service-Disabled Veteran-Owned (SDVOSB)
+Type: contract_program
+API path: /api/sba/content/contracting/sdvosb
+Parent path: /api/sba/content/contracting
+ID: sdvosb
+
+Contracting opportunities for service-disabled veteran-owned small businesses.
+
+Official URL: https://www.sba.gov/federal-contracting/contracting-assistance-programs/service-disabled-veteran-owned-small-businesses-program
+Action: Explore children -> /api/sba/content/contracting/sdvosb
+Action: Official source -> https://www.sba.gov/federal-contracting/contracting-assistance-programs/service-disabled-veteran-owned-small-businesses-program

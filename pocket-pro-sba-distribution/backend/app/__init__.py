@@ -1,0 +1,401 @@
+import os
+import logging
+from flask import Flask, jsonify, request
+from flask_cors import CORS
+from backend.config import get_config
+from backend.models.chat import db
+
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
+
+class CompatPathRewriteMiddleware:
+    """Rewrite legacy / prebuilt SPA URL shapes onto current Flask routes.
+
+    1) /api/api/* → /api/*
+       Baked chat baseURL is http://localhost:5000/api + path /api/chat.
+    2) /api/sba-content/* → /api/sba/content/*
+       Baked SBAContentExplorer uses /api/sba-content/{type}?query=&page=
+       while live routes live under /api/sba/content/*.
+    """
+
+    def __init__(self, wsgi_app):
+        self.wsgi_app = wsgi_app
+
+    def __call__(self, environ, start_response):
+        path = environ.get('PATH_INFO', '') or ''
+        original = path
+
+        # Double /api prefix first (may wrap sba-content too)
+        if path == '/api/api' or path.startswith('/api/api/'):
+            path = '/api' + path[len('/api/api'):]
+            if not path:
+                path = '/api'
+
+        # Prebuilt SBAContentExplorer.js often omits /api entirely:
+        #   http://host:5000/sba-content/events  → /api/sba/content/events
+        if path == '/sba-content' or path.startswith('/sba-content/'):
+            path = '/api/sba/content' + path[len('/sba-content'):]
+            if path == '/api/sba/content':
+                path = '/api/sba/resources'
+
+        # Accidental over-strip variant: /sba/content/* → /api/sba/content/*
+        if path == '/sba/content' or path.startswith('/sba/content/'):
+            path = '/api' + path
+            if path == '/api/sba/content':
+                path = '/api/sba/resources'
+
+        # Prebuilt SBA content explorer: /api/sba-content/events → /api/sba/content/events
+        if path == '/api/sba-content' or path.startswith('/api/sba-content/'):
+            path = '/api/sba/content' + path[len('/api/sba-content'):]
+            if path == '/api/sba/content':
+                # bare collection → resources catalog
+                path = '/api/sba/resources'
+
+        if path != original:
+            environ['PATH_INFO'] = path
+            for key in ('REQUEST_URI', 'RAW_URI'):
+                if key in environ and isinstance(environ[key], str):
+                    environ[key] = environ[key].replace(original, path, 1)
+            logger.debug('Compat path rewrite: %s → %s', original, path)
+
+        return self.wsgi_app(environ, start_response)
+
+
+# Back-compat alias if anything imported the old name
+StripDoubleApiPrefixMiddleware = CompatPathRewriteMiddleware
+
+
+def create_app(config_name=None):
+    """Application factory pattern"""
+    config_class = get_config(config_name)
+    app = Flask(__name__)
+    app.config.from_object(config_class)
+    # Must wrap after app exists; applied so all blueprints see rewritten paths
+    app.wsgi_app = CompatPathRewriteMiddleware(app.wsgi_app)
+
+    # Log database configuration
+    logger.info(f"Database URI: {app.config['SQLALCHEMY_DATABASE_URI']}")
+
+    # Initialize database
+    db.init_app(app)
+
+    # Create database tables (import models so metadata is complete)
+    with app.app_context():
+        try:
+            try:
+                from backend.models.user import User  # noqa: F401
+            except Exception as model_err:
+                logger.warning("User model import deferred: %s", model_err)
+            db.create_all()
+            logger.info("Database tables created successfully")
+        except Exception as e:
+            logger.error(f"Failed to create database tables: {e}")
+            raise
+
+    # Configure CORS - allow local dev and Docker service origins
+    allowed_origins = [
+        'http://localhost',
+        'http://localhost:3000',
+        'http://127.0.0.1',
+        'http://127.0.0.1:3000',
+        'http://frontend:80',
+    ]
+    cors_origins = app.config.get('FRONTEND_URL')
+    if cors_origins and cors_origins not in allowed_origins:
+        allowed_origins.append(cors_origins)
+
+    # Prebuilt frontend (main.*.js) sends Cache-Control on health fetches.
+    # Use broad allow_headers so preflight never fails on browser-added headers.
+    CORS(app, resources={
+        r"/*": {
+            "origins": allowed_origins,
+            "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH", "HEAD"],
+            "allow_headers": "*",
+            "supports_credentials": False,
+            "expose_headers": ["Access-Control-Allow-Origin"],
+            "max_age": 86400,
+        }
+    })
+
+    # Register blueprints
+    from backend.routes.api import api_bp
+    from backend.routes.chat import chat_bp
+    from backend.routes.sba import sba_bp
+    from backend.routes.rag import rag_bp
+    from backend.routes.orchestrator import orchestrator_bp
+    from backend.routes.auth import auth_bp
+    try:
+        from backend.routes.documents import documents_bp
+    except Exception as docs_import_err:
+        documents_bp = None
+        logger.warning("Documents blueprint unavailable: %s", docs_import_err)
+    try:
+        from backend.routes.assistants import assistants_bp
+    except Exception as asst_err:
+        assistants_bp = None
+        logger.warning("Assistants blueprint unavailable: %s", asst_err)
+
+    app.register_blueprint(api_bp, url_prefix='/api')
+    # Auth under /api/auth/* (canonical)
+    app.register_blueprint(auth_bp, url_prefix='/api/auth')
+    app.register_blueprint(chat_bp, url_prefix='/api/chat')
+    app.register_blueprint(sba_bp, url_prefix='/api/sba')
+    app.register_blueprint(rag_bp, url_prefix='/api/rag')
+    app.register_blueprint(orchestrator_bp, url_prefix='/api/orchestrator')
+    if documents_bp is not None:
+        app.register_blueprint(documents_bp, url_prefix='/api/documents')
+    # Prebuilt RAG upload: POST /api/files (and /api/api/files via middleware rewrite)
+    try:
+        from backend.routes.files import files_bp, process_upload as files_process_upload
+        app.register_blueprint(files_bp, url_prefix='/api/files')
+        logger.info("Files upload blueprint registered at /api/files")
+    except Exception as files_err:
+        files_process_upload = None
+        logger.warning("Files blueprint unavailable: %s", files_err)
+    if assistants_bp is not None:
+        app.register_blueprint(assistants_bp, url_prefix='/api/assistants')
+
+    def _handle_file_upload():
+        """Shared handler for all file upload URL shapes the prebuilt SPA uses."""
+        if request.method == 'OPTIONS':
+            return '', 204
+        try:
+            if files_process_upload is not None:
+                body, code = files_process_upload()
+                return jsonify(body), code
+            # Last-resort inline save if blueprint import failed
+            from werkzeug.utils import secure_filename
+            import os as _os
+            f = request.files.get('file') or next(iter(request.files.values()), None)
+            if not f or not f.filename:
+                return jsonify({'error': 'No file part', 'success': False}), 400
+            _os.makedirs('uploads', exist_ok=True)
+            name = secure_filename(f.filename)
+            path = _os.path.join('uploads', name)
+            f.save(path)
+            doc = {
+                'id': name,
+                'filename': name,
+                'name': name,
+                'size': _os.path.getsize(path),
+                'pages': 'Unknown',
+                'chunks': 1,
+                'uploadTime': __import__('datetime').datetime.utcnow().isoformat() + 'Z',
+                'rag_status': 'save_only',
+            }
+            return jsonify({
+                'success': True,
+                'message': 'File uploaded successfully',
+                'filename': name,
+                'document': doc,
+                'file': doc,
+                'result': doc,
+                'rag_status': 'save_only',
+            }), 200
+        except Exception as e:
+            logger.exception('File upload handler failed')
+            return jsonify({'error': str(e), 'success': False}), 500
+
+    # Explicit routes — do not rely only on middleware + empty blueprint rules
+    # Prebuilt: POST http://localhost:5000/api/api/files
+    @app.route('/api/api/files', methods=['POST', 'OPTIONS'])
+    @app.route('/api/api/files/', methods=['POST', 'OPTIONS'])
+    def upload_double_api_files():
+        return _handle_file_upload()
+
+    @app.route('/api/files', methods=['POST', 'OPTIONS'])
+    @app.route('/api/files/', methods=['POST', 'OPTIONS'])
+    def upload_api_files_direct():
+        return _handle_file_upload()
+
+    @app.route('/api/api/documents/upload', methods=['POST', 'OPTIONS'])
+    @app.route('/api/api/documents/upload_and_ingest_document', methods=['POST', 'OPTIONS'])
+    def upload_double_api_documents():
+        return _handle_file_upload()
+
+    # Compat for /api/api/* is also handled by CompatPathRewriteMiddleware
+    # Explicit health/info shims for ConnectionStatusIndicator (prebuilt)
+    @app.route('/api/api/health', methods=['GET', 'OPTIONS', 'HEAD'])
+    def health_double_api_prefix():
+        if request.method == 'OPTIONS':
+            return '', 204
+        return jsonify({
+            'status': 'healthy',
+            'server': {'self': request.host_url.rstrip('/')},
+            'compat': 'api_double_prefix',
+        }), 200
+
+    @app.route('/api/api/info', methods=['GET', 'OPTIONS', 'HEAD'])
+    def info_double_api_prefix():
+        if request.method == 'OPTIONS':
+            return '', 204
+        return jsonify({
+            'service': 'PocketPro SBA',
+            'version': '1.0.0',
+            'status': 'operational',
+            'compat': 'api_double_prefix',
+        }), 200
+
+    # Prebuilt chat baseURL often hits /api/api/chat — explicit alias (middleware also rewrites)
+    @app.route('/api/api/chat', methods=['POST', 'OPTIONS'])
+    @app.route('/api/api/chat/', methods=['POST', 'OPTIONS'])
+    def chat_double_api_prefix():
+        if request.method == 'OPTIONS':
+            return '', 204
+        from backend.routes.chat import post_message
+        return post_message()
+
+    # Explicit legacy SBAContentExplorer paths (prebuilt fetch /sba-content/{type})
+    # Middleware also rewrites these; explicit routes survive if PATH_INFO rewrite is skipped.
+    @app.route('/sba-content/<path:rest>', methods=['GET', 'OPTIONS', 'HEAD'])
+    @app.route('/sba/content/<path:rest>', methods=['GET', 'OPTIONS', 'HEAD'])
+    @app.route('/api/sba-content/<path:rest>', methods=['GET', 'OPTIONS', 'HEAD'])
+    def legacy_sba_content_proxy(rest):
+        if request.method == 'OPTIONS':
+            return '', 204
+        parts = [p for p in (rest or '').split('/') if p]
+        head = (parts[0] if parts else '').lower()
+        target = f'/api/sba/content/{rest}'
+        try:
+            from backend.routes import sba as sba_routes
+            mapping = {
+                'articles': getattr(sba_routes, 'search_articles', None),
+                'blogs': getattr(sba_routes, 'search_blogs', None),
+                'courses': getattr(sba_routes, 'search_courses', None),
+                'documents': getattr(sba_routes, 'search_documents', None),
+                'events': getattr(sba_routes, 'search_events', None),
+                'offices': getattr(sba_routes, 'search_offices', None),
+                'loans': getattr(sba_routes, 'search_loans', None),
+                'lenders': getattr(sba_routes, 'search_lenders', None),
+                'sbir': getattr(sba_routes, 'search_sbir', None),
+                'contracting': getattr(sba_routes, 'list_contracting', None),
+                'disaster': getattr(sba_routes, 'list_disaster', None),
+            }
+            if len(parts) == 1 and mapping.get(head):
+                return mapping[head]()
+            if head == 'loans' and len(parts) >= 2 and hasattr(sba_routes, 'get_loan_program'):
+                return sba_routes.get_loan_program(parts[1])
+            if head == 'contracting' and len(parts) >= 2 and hasattr(sba_routes, 'explore_contracting_child'):
+                return sba_routes.explore_contracting_child(parts[1])
+            if head == 'disaster' and len(parts) >= 2 and hasattr(sba_routes, 'explore_disaster_child'):
+                return sba_routes.explore_disaster_child(parts[1])
+            if head in ('articles', 'blogs', 'courses', 'documents', 'events', 'offices') and len(parts) >= 2:
+                if hasattr(sba_routes, 'get_content_item_detail'):
+                    return sba_routes.get_content_item_detail(head, '/'.join(parts[1:]))
+        except Exception as e:
+            logger.exception('legacy sba-content handler failed: %s', e)
+            return jsonify({'error': str(e), 'items': [], 'path': target, 'success': True}), 200
+        return jsonify({
+            'error': f'Unknown legacy sba-content path: {rest}',
+            'items': [],
+            'hint': f'Try {target}',
+            'success': True,
+        }), 200
+
+    # Initialize Gemini RAG service
+    try:
+        from backend.enhanced_gemini_rag_service import enhanced_rag_service
+        with app.app_context():
+            success = enhanced_rag_service.initialize_full_service()
+            if success:
+                logger.info("Enhanced Gemini RAG service initialized successfully")
+            else:
+                logger.warning("Failed to initialize Enhanced Gemini RAG service")
+    except Exception as e:
+        logger.error(f"Error initializing Gemini RAG service: {str(e)}")
+
+    # Root route
+    @app.route('/')
+    def index():
+        return jsonify({
+            'service': 'PocketPro SBA',
+            'version': '1.0.0',
+            'status': 'running'
+        })
+
+    @app.route('/health', methods=['GET'])
+    def health():
+        return jsonify({
+            'status': 'healthy',
+            'service': 'PocketPro SBA',
+            'version': '1.0.0'
+        }), 200
+
+    # Test CORS route
+    @app.route('/test-cors')
+    def test_cors():
+        return jsonify({'message': 'CORS test successful'})
+
+    def _cors_origin_allowed(origin: str) -> bool:
+        if not origin:
+            return False
+        if origin in allowed_origins:
+            return True
+        # Dev convenience: any localhost / 127.0.0.1 port
+        return origin.startswith('http://localhost:') or origin.startswith('http://127.0.0.1:')
+
+    @app.before_request
+    def log_request_info():
+        logger.info('Request: %s %s', request.method, request.path)
+        # Fast-path OPTIONS so preflight never depends on blueprint 404s
+        if request.method == 'OPTIONS':
+            resp = app.make_default_options_response()
+            origin = request.headers.get('Origin')
+            if _cors_origin_allowed(origin):
+                resp.headers['Access-Control-Allow-Origin'] = origin
+                resp.headers['Access-Control-Allow-Methods'] = (
+                    'GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD'
+                )
+                req_hdrs = request.headers.get('Access-Control-Request-Headers')
+                resp.headers['Access-Control-Allow-Headers'] = (
+                    req_hdrs
+                    or 'Content-Type, Authorization, Cache-Control, Pragma, Expires, Accept, Origin, X-Requested-With'
+                )
+                resp.headers['Access-Control-Max-Age'] = '86400'
+                resp.headers['Vary'] = 'Origin'
+            return resp
+
+    @app.after_request
+    def log_response_info(response):
+        logger.info('Response: %s', response.status)
+        # Belt-and-suspenders CORS for all responses (including 404 error handlers)
+        origin = request.headers.get('Origin')
+        if _cors_origin_allowed(origin):
+            response.headers['Access-Control-Allow-Origin'] = origin
+            req_hdrs = request.headers.get('Access-Control-Request-Headers')
+            if req_hdrs:
+                response.headers['Access-Control-Allow-Headers'] = req_hdrs
+            else:
+                response.headers.setdefault(
+                    'Access-Control-Allow-Headers',
+                    'Content-Type, Authorization, Cache-Control, Pragma, Expires, Accept, Origin, X-Requested-With',
+                )
+            response.headers.setdefault(
+                'Access-Control-Allow-Methods',
+                'GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD',
+            )
+            response.headers.setdefault('Vary', 'Origin')
+        return response
+
+    @app.errorhandler(400)
+    def bad_request(error):
+        logger.error('Bad Request: %s', error)
+        return jsonify({"error": "Bad Request"}), 400
+
+    @app.errorhandler(404)
+    def not_found(error):
+        logger.error('Not Found: %s', request.path)
+        return jsonify({"error": "Not Found"}), 404
+
+    @app.errorhandler(500)
+    def internal_server_error(error):
+        logger.exception('Internal Server Error: %s', error)
+        return jsonify({"error": "Internal Server Error"}), 500
+
+    return app

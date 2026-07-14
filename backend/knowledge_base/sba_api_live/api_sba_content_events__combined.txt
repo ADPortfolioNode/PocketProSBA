@@ -1,0 +1,358 @@
+# Combined SBA API digest for /api/sba/content/events
+Retrieved children: 20
+Chunks: 21
+
+# Events
+Source: SBA API endpoint response
+API route: /api/sba/content/events
+
+Event cards from official SBA events and partner training pages. This topic currently surfaces 20 resources. Highlights include: SBA events calendar; Local counseling & training events; Financing readiness webinars; Government contracting events.
+
+## Overview
+Event cards from official SBA events and partner training pages. This topic currently surfaces 20 resources. Highlights include: SBA events calendar; Local counseling & training events; Financing readiness webinars; Government contracting events.
+
+## Resources
+20 curated / live resources for this topic.
+
+## How to use this page
+Click any card with an API badge to open that route’s results. Use type filters to focus. Open official links for full SBA.gov detail. Use Back to return to the previous topic.
+
+---
+
+# SBA events calendar
+Type: event
+API path: /api/sba/content/events/events-hub
+Parent path: /api/sba/content/events
+ID: events-hub
+
+Browse upcoming SBA-hosted and partner events, filter by topic, and register online.
+
+Official URL: https://www.sba.gov/events
+Registration URL: https://www.sba.gov/events
+Action: Explore children -> /api/sba/content/events/events-hub
+Action: Register / RSVP -> https://www.sba.gov/events
+Action: Official source -> https://www.sba.gov/events
+Location: Online & local
+
+---
+
+# Local counseling & training events
+Type: event
+API path: /api/sba/content/events/local-assistance-events
+Parent path: /api/sba/content/events
+ID: local-assistance-events
+
+Use the local assistance finder to discover partner-hosted classes and events.
+
+Official URL: https://www.sba.gov/local-assistance/find
+Registration URL: https://www.sba.gov/local-assistance/find
+Action: Explore children -> /api/sba/content/events/local-assistance-events
+Action: Register / RSVP -> https://www.sba.gov/local-assistance/find
+Action: Official source -> https://www.sba.gov/local-assistance/find
+Location: Local partners
+
+---
+
+# Financing readiness webinars
+Type: event
+API path: /api/sba/content/events/lender-match-webinars
+Parent path: /api/sba/content/events
+ID: lender-match-webinars
+
+Sessions that help owners prepare for Lender Match and SBA loans.
+
+Official URL: https://www.sba.gov/funding-programs/loans/lender-match
+Registration URL: https://www.sba.gov/funding-programs/loans/lender-match
+Action: Explore children -> /api/sba/content/events/lender-match-webinars
+Action: Register / RSVP -> https://www.sba.gov/funding-programs/loans/lender-match
+Action: Official source -> https://www.sba.gov/funding-programs/loans/lender-match
+Location: Online
+
+---
+
+# Government contracting events
+Type: event
+API path: /api/sba/content/events/contracting-events
+Parent path: /api/sba/content/events
+ID: contracting-events
+
+Matchmaking and training for federal contractors.
+
+Official URL: https://www.sba.gov/federal-contracting
+Registration URL: https://www.sba.gov/federal-contracting
+Action: Explore children -> /api/sba/content/events/contracting-events
+Action: Register / RSVP -> https://www.sba.gov/federal-contracting
+Action: Official source -> https://www.sba.gov/federal-contracting
+Location: Online & regional
+
+---
+
+# Export & trade workshops
+Type: event
+API path: /api/sba/content/events/export-events
+Parent path: /api/sba/content/events
+ID: export-events
+
+International trade counseling events and webinars.
+
+Official URL: https://www.sba.gov/business-guide/grow-your-business/export-products
+Registration URL: https://www.sba.gov/business-guide/grow-your-business/export-products
+Action: Explore children -> /api/sba/content/events/export-events
+Action: Register / RSVP -> https://www.sba.gov/business-guide/grow-your-business/export-products
+Action: Official source -> https://www.sba.gov/business-guide/grow-your-business/export-products
+Location: Online
+
+---
+
+# Disaster recovery briefings
+Type: event
+API path: /api/sba/content/events/disaster-briefings
+Parent path: /api/sba/content/events
+ID: disaster-briefings
+
+Community briefings after declared disasters.
+
+Official URL: https://www.sba.gov/funding-programs/disaster-assistance
+Registration URL: https://www.sba.gov/funding-programs/disaster-assistance
+Action: Explore children -> /api/sba/content/events/disaster-briefings
+Action: Register / RSVP -> https://www.sba.gov/funding-programs/disaster-assistance
+Action: Official source -> https://www.sba.gov/funding-programs/disaster-assistance
+Location: Affected regions
+
+---
+
+# SBA newsroom announcements
+Type: event
+API path: /api/sba/content/events/newsroom-events
+Parent path: /api/sba/content/events
+ID: newsroom-events
+
+Press events and program rollout announcements.
+
+Official URL: https://www.sba.gov/about-sba/sba-newsroom
+Registration URL: https://www.sba.gov/about-sba/sba-newsroom
+Action: Explore children -> /api/sba/content/events/newsroom-events
+Action: Register / RSVP -> https://www.sba.gov/about-sba/sba-newsroom
+Action: Official source -> https://www.sba.gov/about-sba/sba-newsroom
+Location: Online
+
+---
+
+# 10 steps to start your business
+Type: event
+API path: /api/sba/content/events/5708083263
+Parent path: /api/sba/content/events
+ID: 5708083263
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/10-steps-start-your-business
+Registration URL: https://www.sba.gov/business-guide/10-steps-start-your-business
+Action: Explore children -> /api/sba/content/events/5708083263
+Action: Register / RSVP -> https://www.sba.gov/business-guide/10-steps-start-your-business
+Action: Official source -> https://www.sba.gov/business-guide/10-steps-start-your-business
+Location: Online / see official page
+
+---
+
+# Plan your business
+Type: event
+API path: /api/sba/content/events/6108298546
+Parent path: /api/sba/content/events
+ID: 6108298546
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/plan-your-business
+Registration URL: https://www.sba.gov/business-guide/plan-your-business
+Action: Explore children -> /api/sba/content/events/6108298546
+Action: Register / RSVP -> https://www.sba.gov/business-guide/plan-your-business
+Action: Official source -> https://www.sba.gov/business-guide/plan-your-business
+Location: Online / see official page
+
+---
+
+# Market research and competitive analysis
+Type: event
+API path: /api/sba/content/events/6638053259
+Parent path: /api/sba/content/events
+ID: 6638053259
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/plan-your-business/market-research-competitive-analysis
+Registration URL: https://www.sba.gov/business-guide/plan-your-business/market-research-competitive-analysis
+Action: Explore children -> /api/sba/content/events/6638053259
+Action: Register / RSVP -> https://www.sba.gov/business-guide/plan-your-business/market-research-competitive-analysis
+Action: Official source -> https://www.sba.gov/business-guide/plan-your-business/market-research-competitive-analysis
+Location: Online / see official page
+
+---
+
+# Write your business plan
+Type: event
+API path: /api/sba/content/events/9015749578
+Parent path: /api/sba/content/events
+ID: 9015749578
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/plan-your-business/write-your-business-plan
+Registration URL: https://www.sba.gov/business-guide/plan-your-business/write-your-business-plan
+Action: Explore children -> /api/sba/content/events/9015749578
+Action: Register / RSVP -> https://www.sba.gov/business-guide/plan-your-business/write-your-business-plan
+Action: Official source -> https://www.sba.gov/business-guide/plan-your-business/write-your-business-plan
+Location: Online / see official page
+
+---
+
+# Calculate your startup costs
+Type: event
+API path: /api/sba/content/events/22280226
+Parent path: /api/sba/content/events
+ID: 22280226
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/plan-your-business/calculate-your-startup-costs
+Registration URL: https://www.sba.gov/business-guide/plan-your-business/calculate-your-startup-costs
+Action: Explore children -> /api/sba/content/events/22280226
+Action: Register / RSVP -> https://www.sba.gov/business-guide/plan-your-business/calculate-your-startup-costs
+Action: Official source -> https://www.sba.gov/business-guide/plan-your-business/calculate-your-startup-costs
+Location: Online / see official page
+
+---
+
+# Establish business credit
+Type: event
+API path: /api/sba/content/events/956887656
+Parent path: /api/sba/content/events
+ID: 956887656
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/plan-your-business/establish-business-credit
+Registration URL: https://www.sba.gov/business-guide/plan-your-business/establish-business-credit
+Action: Explore children -> /api/sba/content/events/956887656
+Action: Register / RSVP -> https://www.sba.gov/business-guide/plan-your-business/establish-business-credit
+Action: Official source -> https://www.sba.gov/business-guide/plan-your-business/establish-business-credit
+Location: Online / see official page
+
+---
+
+# Fund your business
+Type: event
+API path: /api/sba/content/events/597498504
+Parent path: /api/sba/content/events
+ID: 597498504
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/plan-your-business/fund-your-business
+Registration URL: https://www.sba.gov/business-guide/plan-your-business/fund-your-business
+Action: Explore children -> /api/sba/content/events/597498504
+Action: Register / RSVP -> https://www.sba.gov/business-guide/plan-your-business/fund-your-business
+Action: Official source -> https://www.sba.gov/business-guide/plan-your-business/fund-your-business
+Location: Online / see official page
+
+---
+
+# Buy an existing business or franchise
+Type: event
+API path: /api/sba/content/events/7149959350
+Parent path: /api/sba/content/events
+ID: 7149959350
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/plan-your-business/buy-existing-business-or-franchise
+Registration URL: https://www.sba.gov/business-guide/plan-your-business/buy-existing-business-or-franchise
+Action: Explore children -> /api/sba/content/events/7149959350
+Action: Register / RSVP -> https://www.sba.gov/business-guide/plan-your-business/buy-existing-business-or-franchise
+Action: Official source -> https://www.sba.gov/business-guide/plan-your-business/buy-existing-business-or-franchise
+Location: Online / see official page
+
+---
+
+# Launch your business
+Type: event
+API path: /api/sba/content/events/9726984762
+Parent path: /api/sba/content/events
+ID: 9726984762
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/launch-your-business
+Registration URL: https://www.sba.gov/business-guide/launch-your-business
+Action: Explore children -> /api/sba/content/events/9726984762
+Action: Register / RSVP -> https://www.sba.gov/business-guide/launch-your-business
+Action: Official source -> https://www.sba.gov/business-guide/launch-your-business
+Location: Online / see official page
+
+---
+
+# Pick your business location
+Type: event
+API path: /api/sba/content/events/1240216906
+Parent path: /api/sba/content/events
+ID: 1240216906
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/launch-your-business/pick-your-business-location
+Registration URL: https://www.sba.gov/business-guide/launch-your-business/pick-your-business-location
+Action: Explore children -> /api/sba/content/events/1240216906
+Action: Register / RSVP -> https://www.sba.gov/business-guide/launch-your-business/pick-your-business-location
+Action: Official source -> https://www.sba.gov/business-guide/launch-your-business/pick-your-business-location
+Location: Online / see official page
+
+---
+
+# Choose a business structure
+Type: event
+API path: /api/sba/content/events/9309107765
+Parent path: /api/sba/content/events
+ID: 9309107765
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/launch-your-business/choose-business-structure
+Registration URL: https://www.sba.gov/business-guide/launch-your-business/choose-business-structure
+Action: Explore children -> /api/sba/content/events/9309107765
+Action: Register / RSVP -> https://www.sba.gov/business-guide/launch-your-business/choose-business-structure
+Action: Official source -> https://www.sba.gov/business-guide/launch-your-business/choose-business-structure
+Location: Online / see official page
+
+---
+
+# Choose your business name
+Type: event
+API path: /api/sba/content/events/640820822
+Parent path: /api/sba/content/events
+ID: 640820822
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/launch-your-business/choose-your-business-name
+Registration URL: https://www.sba.gov/business-guide/launch-your-business/choose-your-business-name
+Action: Explore children -> /api/sba/content/events/640820822
+Action: Register / RSVP -> https://www.sba.gov/business-guide/launch-your-business/choose-your-business-name
+Action: Official source -> https://www.sba.gov/business-guide/launch-your-business/choose-your-business-name
+Location: Online / see official page
+
+---
+
+# Register your business
+Type: event
+API path: /api/sba/content/events/9904802663
+Parent path: /api/sba/content/events
+ID: 9904802663
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/launch-your-business/register-your-business
+Registration URL: https://www.sba.gov/business-guide/launch-your-business/register-your-business
+Action: Explore children -> /api/sba/content/events/9904802663
+Action: Register / RSVP -> https://www.sba.gov/business-guide/launch-your-business/register-your-business
+Action: Official source -> https://www.sba.gov/business-guide/launch-your-business/register-your-business
+Location: Online / see official page

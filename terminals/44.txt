@@ -1,0 +1,376 @@
+---
+pid: 8552
+cwd: "E:\2024 RESET\PocketProSBA"
+command: "git -C \"E:\\2024 RESET\\PocketProSBA\" log --oneline -12; git -C \"E:\\2024 RESET\\PocketProSBA\" status --short; git -C \"E:\\2024 RESET\\PocketProSBA\" branch -vv"
+started_at: 2026-07-14T07:36:57.297Z
+running_for_ms: 2475006  
+---
+0e55e17 COMPLETE UI UX
+d7a306b stable sba return
+8fe0814 Complete Resources implementation: API nav, load-on-click, detail cards.
+dcedc29 Mount public resources.html into the dev frontend container.
+7057d78 Serve a live Resources page with API-driven nav and click detail cards.
+8c32292 Pin FastAPI under 0.100 when installing ChromaDB for pydantic v1.
+34faf3a Drive Resources page navigation from /api/sba/resources and open item detail cards.
+08bc92d Load SBA resources on click and render non-empty data cards.
+0b55a9f Style the app as a white-and-blue service experience with live photography.
+e82fc00 Serve current sba.gov content for rendered SBA UI; mark RAG as not current.
+a6f8b11 Consume public SBA data via multi-source client with live HTML fallback.
+0fc4d82 Close UI workflow gaps for programs, documents, and task decompose.
+ M README.md
+ M REGRESSION_REPORT.md
+ M backend/knowledge_base/sba_api_live/api_sba_content_articles__combined.txt
+ M backend/knowledge_base/sba_api_live/api_sba_content_articles__manifest.txt
+ M backend/knowledge_base/sba_api_live/api_sba_content_documents__manifest.txt
+ M backend/knowledge_base/sba_api_live/api_sba_content_loans_7a__child_504.txt
+ M backend/knowledge_base/sba_api_live/api_sba_content_loans_7a__child_7a_how.txt
+ M backend/knowledge_base/sba_api_live/api_sba_content_loans_7a__child_7a_next.txt
+ M backend/knowledge_base/sba_api_live/api_sba_content_loans_7a__child_7a_overview.txt
+ M backend/knowledge_base/sba_api_live/api_sba_content_loans_7a__child_7a_sec_0.txt
+ M backend/knowledge_base/sba_api_live/api_sba_content_loans_7a__child_7a_sec_4.txt
+ M backend/knowledge_base/sba_api_live/api_sba_content_loans_7a__child_7a_sec_6.txt
+ M backend/knowledge_base/sba_api_live/api_sba_content_loans_7a__child_7a_sec_7.txt
+ M backend/knowledge_base/sba_api_live/api_sba_content_loans_7a__child_lender_match.txt
+ M backend/knowledge_base/sba_api_live/api_sba_content_loans_7a__child_loans_hub.txt
+ M backend/knowledge_base/sba_api_live/api_sba_content_loans_7a__child_microloans.txt
+ M backend/knowledge_base/sba_api_live/api_sba_content_loans_7a__combined.txt
+ M backend/knowledge_base/sba_api_live/api_sba_content_loans_7a__manifest.txt
+ M backend/knowledge_base/sba_api_live/api_sba_content_loans__combined.txt
+ M backend/knowledge_base/sba_api_live/api_sba_content_loans__manifest.txt
+ M backend/routes/sba.py
+ M backend/services/actionable_content.py
+ M backend/services/link_enrichment.py
+ M docker-compose.dev.yml
+ M frontend/nginx.dev.conf
+ M frontend/public/index.html
+ M frontend/public/programs.html
+ M frontend/public/resources.html
+ M frontend/public/static/css/sleek-layout.css
+ M frontend/src/App.css
+ M frontend/src/components/Header.js
+ M frontend/src/components/SBAContent.js
+ M frontend/src/components/SBAContentExplorer.js
+ M terminals/.next-id
+?? AGENTS.md
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles__child_1120136493.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles__child_1958740143.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles__child_2799375047.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles__child_3061112058.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles__child_3307915421.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles__child_3665176103.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles__child_4670763421.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles__child_477002952.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles__child_4889663380.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles__child_5043020261.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles__child_7394118830.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles__child_7406261547.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles__child_8025730732.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles__child_9528503887.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles_guide_grow__child_1958740143.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles_guide_grow__child_3061112058.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles_guide_grow__child_3307915421.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles_guide_grow__child_4670763421.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles_guide_grow__child_4889663380.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles_guide_grow__child_7394118830.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles_guide_grow__child_9528503887.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles_guide_grow__child_guide_10.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles_guide_grow__child_guide_11.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles_guide_grow__child_guide_12.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles_guide_grow__child_guide_13.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles_guide_grow__child_guide_8.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles_guide_grow__child_guide_9.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles_guide_grow__child_guide_fund.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles_guide_grow__child_guide_grow_next.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles_guide_grow__child_guide_grow_official.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles_guide_grow__child_guide_grow_overview.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles_guide_grow__child_guide_launch.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles_guide_grow__child_guide_manage.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles_guide_grow__child_guide_plan.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles_guide_grow__child_guide_start.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles_guide_grow__combined.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles_guide_grow__manifest.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles_guide_grow__overview.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles_guide_plan__child_1120136493.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles_guide_plan__child_1958740143.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles_guide_plan__child_2799375047.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles_guide_plan__child_3061112058.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles_guide_plan__child_3307915421.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles_guide_plan__child_3665176103.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles_guide_plan__child_4670763421.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles_guide_plan__child_477002952.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles_guide_plan__child_4889663380.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles_guide_plan__child_5043020261.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles_guide_plan__child_7394118830.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles_guide_plan__child_7406261547.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles_guide_plan__child_8025730732.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles_guide_plan__child_9528503887.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles_guide_plan__child_guide_10.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles_guide_plan__child_guide_11.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles_guide_plan__child_guide_12.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles_guide_plan__child_guide_13.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles_guide_plan__child_guide_8.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles_guide_plan__child_guide_9.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles_guide_plan__child_guide_fund.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles_guide_plan__child_guide_grow.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles_guide_plan__child_guide_launch.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles_guide_plan__child_guide_manage.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles_guide_plan__child_guide_plan_next.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles_guide_plan__child_guide_plan_official.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles_guide_plan__child_guide_plan_overview.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles_guide_plan__child_guide_start.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles_guide_plan__combined.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles_guide_plan__manifest.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles_guide_plan__overview.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles_guide_start__child_1958740143.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles_guide_start__child_3061112058.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles_guide_start__child_3307915421.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles_guide_start__child_4670763421.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles_guide_start__child_4889663380.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles_guide_start__child_7394118830.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles_guide_start__child_9528503887.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles_guide_start__child_guide_10.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles_guide_start__child_guide_11.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles_guide_start__child_guide_12.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles_guide_start__child_guide_13.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles_guide_start__child_guide_8.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles_guide_start__child_guide_9.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles_guide_start__child_guide_fund.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles_guide_start__child_guide_grow.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles_guide_start__child_guide_launch.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles_guide_start__child_guide_manage.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles_guide_start__child_guide_plan.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles_guide_start__child_guide_start_next.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles_guide_start__child_guide_start_official.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles_guide_start__child_guide_start_overview.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles_guide_start__combined.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles_guide_start__manifest.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_articles_guide_start__overview.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_blogs__child_1120136493.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_blogs__child_1240216906.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_blogs__child_2026611826.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_blogs__child_22280226.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_blogs__child_2799375047.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_blogs__child_3665176103.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_blogs__child_4569729655.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_blogs__child_477002952.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_blogs__child_5043020261.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_blogs__child_5203542523.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_blogs__child_5708083263.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_blogs__child_597498504.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_blogs__child_6206697403.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_blogs__child_640820822.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_blogs__child_6638053259.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_blogs__child_6925463100.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_blogs__child_7149959350.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_blogs__child_7406261547.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_blogs__child_8025730732.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_blogs__child_8663283943.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_blogs__child_9015749578.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_blogs__child_9309107765.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_blogs__child_956887656.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_blogs__child_9904802663.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_blogs__child_blog_hub.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_blogs__child_funding_news.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_blogs__child_guide_grow.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_blogs__child_guide_launch.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_blogs__child_guide_manage.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_blogs__child_guide_plan.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_blogs__child_guide_start.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_blogs__child_newsroom.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_blogs__combined.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_blogs__manifest.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_blogs__overview.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_contracting__child_8a.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_contracting__child_contracting_guide.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_contracting__child_hubzone.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_contracting__child_sam.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_contracting__child_sdvosb.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_contracting__child_size_standards.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_contracting__child_subcontracting.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_contracting__child_wosb.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_contracting__combined.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_contracting__manifest.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_contracting__overview.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_courses__child_1120136493.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_courses__child_1240216906.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_courses__child_1958740143.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_courses__child_2026611826.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_courses__child_22280226.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_courses__child_2799375047.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_courses__child_3061112058.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_courses__child_3307915421.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_courses__child_3403994094.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_courses__child_347718606.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_courses__child_3665176103.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_courses__child_4403852690.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_courses__child_4569729655.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_courses__child_4602987073.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_courses__child_4670763421.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_courses__child_477002952.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_courses__child_4889663380.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_courses__child_5043020261.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_courses__child_5203542523.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_courses__child_5708083263.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_courses__child_597498504.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_courses__child_6206697403.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_courses__child_640820822.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_courses__child_6638053259.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_courses__child_6925463100.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_courses__child_7149959350.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_courses__child_7394118830.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_courses__child_7406261547.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_courses__child_750790882.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_courses__child_8025730732.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_courses__child_8314009974.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_courses__child_8343007217.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_courses__child_8663283943.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_courses__child_9015749578.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_courses__child_9309107765.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_courses__child_9528503887.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_courses__child_956887656.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_courses__child_9904802663.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_courses__child_9906077011.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_courses__child_contracting_course.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_courses__child_fund_course.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_courses__child_launch_course.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_courses__child_learning_center.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_courses__child_manage_course.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_courses__child_plan_course.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_courses__child_score_mentoring.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_courses__combined.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_courses__manifest.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_courses__overview.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_courses_fund_course__child_fund_course.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_courses_fund_course__combined.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_courses_fund_course__manifest.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_courses_fund_course__overview.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_courses_launch_course__child_launch_course.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_courses_launch_course__combined.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_courses_launch_course__manifest.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_courses_launch_course__overview.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_courses_learning_center__child_learning_center.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_courses_learning_center__combined.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_courses_learning_center__manifest.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_courses_learning_center__overview.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_disaster__child_apply.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_disaster__child_business_physical.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_disaster__child_declarations.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_disaster__child_disaster_loans.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_disaster__child_eidl.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_disaster__child_homeowners.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_disaster__combined.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_disaster__manifest.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_disaster__overview.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_events__child_1240216906.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_events__child_22280226.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_events__child_5708083263.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_events__child_597498504.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_events__child_6108298546.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_events__child_640820822.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_events__child_6638053259.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_events__child_7149959350.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_events__child_9015749578.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_events__child_9309107765.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_events__child_956887656.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_events__child_9726984762.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_events__child_9904802663.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_events__child_contracting_events.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_events__child_disaster_briefings.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_events__child_events_hub.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_events__child_export_events.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_events__child_lender_match_webinars.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_events__child_local_assistance_events.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_events__child_newsroom_events.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_events__combined.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_events__manifest.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_events__overview.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_lenders__child_504_cdc.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_lenders__child_7a_lenders.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_lenders__child_community_advantage.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_lenders__child_export_lenders.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_lenders__child_lender_match.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_lenders__child_microloan_intermediaries.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_lenders__combined.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_lenders__manifest.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_lenders__overview.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_loans_7a__child_3665176103.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_loans_7a__child_4889663380.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_loans__child_3665176103.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_loans__child_4889663380.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_loans_lender_match__child_3665176103.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_loans_lender_match__child_504.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_loans_lender_match__child_7a.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_loans_lender_match__child_lender_match_how.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_loans_lender_match__child_lender_match_next.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_loans_lender_match__child_lender_match_overview.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_loans_lender_match__child_lender_match_sec_0.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_loans_lender_match__child_lender_match_sec_4.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_loans_lender_match__child_lender_match_sec_6.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_loans_lender_match__child_lender_match_sec_7.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_loans_lender_match__child_loans_hub.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_loans_lender_match__child_microloans.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_loans_lender_match__combined.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_loans_lender_match__manifest.txt
+?? backend/knowledge_base/sba_api_live/api_sba_content_loans_lender_match__overview.txt
+?? backend/knowledge_base/sba_api_live/api_sba_lifecycle_plan__child_1958740143.txt
+?? backend/knowledge_base/sba_api_live/api_sba_lifecycle_plan__child_4889663380.txt
+?? backend/knowledge_base/sba_api_live/api_sba_lifecycle_plan__child_7394118830.txt
+?? backend/knowledge_base/sba_api_live/api_sba_lifecycle_plan__child_9528503887.txt
+?? backend/knowledge_base/sba_api_live/api_sba_lifecycle_plan__child_buy_an_existing_business_or_franchise.txt
+?? backend/knowledge_base/sba_api_live/api_sba_lifecycle_plan__child_calculate_your_startup_costs.txt
+?? backend/knowledge_base/sba_api_live/api_sba_lifecycle_plan__child_guide_10.txt
+?? backend/knowledge_base/sba_api_live/api_sba_lifecycle_plan__child_guide_11.txt
+?? backend/knowledge_base/sba_api_live/api_sba_lifecycle_plan__child_guide_12.txt
+?? backend/knowledge_base/sba_api_live/api_sba_lifecycle_plan__child_guide_13.txt
+?? backend/knowledge_base/sba_api_live/api_sba_lifecycle_plan__child_guide_8.txt
+?? backend/knowledge_base/sba_api_live/api_sba_lifecycle_plan__child_guide_9.txt
+?? backend/knowledge_base/sba_api_live/api_sba_lifecycle_plan__child_guide_fund.txt
+?? backend/knowledge_base/sba_api_live/api_sba_lifecycle_plan__child_guide_grow.txt
+?? backend/knowledge_base/sba_api_live/api_sba_lifecycle_plan__child_guide_launch.txt
+?? backend/knowledge_base/sba_api_live/api_sba_lifecycle_plan__child_guide_manage.txt
+?? backend/knowledge_base/sba_api_live/api_sba_lifecycle_plan__child_guide_plan.txt
+?? backend/knowledge_base/sba_api_live/api_sba_lifecycle_plan__child_guide_start.txt
+?? backend/knowledge_base/sba_api_live/api_sba_lifecycle_plan__child_market_research_competitive_analysis.txt
+?? backend/knowledge_base/sba_api_live/api_sba_lifecycle_plan__child_pick_your_business_location.txt
+?? backend/knowledge_base/sba_api_live/api_sba_lifecycle_plan__child_write_a_business_plan.txt
+?? backend/knowledge_base/sba_api_live/api_sba_lifecycle_plan__combined.txt
+?? backend/knowledge_base/sba_api_live/api_sba_lifecycle_plan__manifest.txt
+?? backend/knowledge_base/sba_api_live/api_sba_lifecycle_plan__overview.txt
+?? backend/knowledge_base/sba_api_live/api_sba_lifecycle_start__child_1958740143.txt
+?? backend/knowledge_base/sba_api_live/api_sba_lifecycle_start__child_3061112058.txt
+?? backend/knowledge_base/sba_api_live/api_sba_lifecycle_start__child_3307915421.txt
+?? backend/knowledge_base/sba_api_live/api_sba_lifecycle_start__child_4670763421.txt
+?? backend/knowledge_base/sba_api_live/api_sba_lifecycle_start__child_4889663380.txt
+?? backend/knowledge_base/sba_api_live/api_sba_lifecycle_start__child_7394118830.txt
+?? backend/knowledge_base/sba_api_live/api_sba_lifecycle_start__child_9528503887.txt
+?? backend/knowledge_base/sba_api_live/api_sba_lifecycle_start__child_calculate_startup_costs.txt
+?? backend/knowledge_base/sba_api_live/api_sba_lifecycle_start__child_choose_a_business_structure.txt
+?? backend/knowledge_base/sba_api_live/api_sba_lifecycle_start__child_fund_your_startup.txt
+?? backend/knowledge_base/sba_api_live/api_sba_lifecycle_start__child_get_tax_id_numbers.txt
+?? backend/knowledge_base/sba_api_live/api_sba_lifecycle_start__child_guide_10.txt
+?? backend/knowledge_base/sba_api_live/api_sba_lifecycle_start__child_guide_11.txt
+?? backend/knowledge_base/sba_api_live/api_sba_lifecycle_start__child_guide_12.txt
+?? backend/knowledge_base/sba_api_live/api_sba_lifecycle_start__child_guide_13.txt
+?? backend/knowledge_base/sba_api_live/api_sba_lifecycle_start__child_guide_8.txt
+?? backend/knowledge_base/sba_api_live/api_sba_lifecycle_start__child_guide_9.txt
+?? backend/knowledge_base/sba_api_live/api_sba_lifecycle_start__child_guide_fund.txt
+?? backend/knowledge_base/sba_api_live/api_sba_lifecycle_start__child_guide_grow.txt
+?? backend/knowledge_base/sba_api_live/api_sba_lifecycle_start__child_guide_manage.txt
+?? backend/knowledge_base/sba_api_live/api_sba_lifecycle_start__child_guide_start.txt
+?? backend/knowledge_base/sba_api_live/api_sba_lifecycle_start__child_launch_your_business.txt
+?? backend/knowledge_base/sba_api_live/api_sba_lifecycle_start__child_plan_your_business.txt
+?? backend/knowledge_base/sba_api_live/api_sba_lifecycle_start__child_register_your_business.txt
+?? backend/knowledge_base/sba_api_live/api_sba_lifecycle_start__child_write_a_business_plan.txt
+?? backend/knowledge_base/sba_api_live/api_sba_lifecycle_start__combined.txt
+?? backend/knowledge_base/sba_api_live/api_sba_lifecycle_start__manifest.txt
+?? backend/knowledge_base/sba_api_live/api_sba_lifecycle_start__overview.txt
+?? backend/services/app_standard.py
+?? docs/APP_STANDARD_TEMPLATE.md
+?? frontend/public/favicon.gif
+?? pocket-pro-sba-distribution/
+?? pocket-pro-sba-selfhosted/
+  blackboxai/fix-conciergechat-messages-undefined 9bfe405 3 pdated layout, fixed loading errors
+  blackboxai/fix-cors-render-deployment           d4c537f Implement /api/chat endpoint with Gemini API integration and update API registry for Render deployment
+  blackboxai/render-build-preparation             a7a76c8 remove psudo
+* main                                            0e55e17 [origin/main] COMPLETE UI UX
+  temp-fix-head                                   0ea7122  remove psudo

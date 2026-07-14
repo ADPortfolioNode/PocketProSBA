@@ -1,0 +1,12 @@
+# Counseling & training
+Type: guide
+API path: /api/sba/content/articles/guide-13
+Parent path: /api/sba/content/articles
+ID: guide-13
+
+Free local counseling and training partners.
+
+Official URL: https://www.sba.gov/local-assistance
+Action: Explore children -> /api/sba/content/articles/guide-13
+Action: Official source -> https://www.sba.gov/local-assistance
+Location: Online / see official page

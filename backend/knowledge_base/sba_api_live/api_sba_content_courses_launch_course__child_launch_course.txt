@@ -1,0 +1,12 @@
+# Launch your business courses
+Type: course
+API path: /api/sba/content/courses/launch-course/launch-course
+Parent path: /api/sba/content/courses/launch-course
+ID: launch-course
+
+Registration, licenses, and first-customer readiness.
+
+Official URL: https://www.sba.gov/business-guide/launch-your-business
+Action: Explore children -> /api/sba/content/courses/launch-course/launch-course
+Action: Official source -> https://www.sba.gov/business-guide/launch-your-business
+Location: Online / see official page

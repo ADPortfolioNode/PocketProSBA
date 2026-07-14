@@ -1,0 +1,303 @@
+# Combined SBA API digest for /api/sba/content/offices
+Retrieved children: 19
+Chunks: 20
+
+# Offices
+Source: SBA API endpoint response
+API route: /api/sba/content/offices
+
+Office/local-help cards from official SBA location pages. This topic currently surfaces 19 resources across 4 types. Highlights include: SBA locations & district offices; Local assistance finder; Lender Match; 10 steps to start your business.
+
+## Overview
+Office/local-help cards from official SBA location pages. This topic currently surfaces 19 resources across 4 types. Highlights include: SBA locations & district offices; Local assistance finder; Lender Match; 10 steps to start your business.
+
+## Resources
+19 curated / live resources for this topic.
+
+## How to use this page
+Click any card with an API badge to open that route’s results. Use type filters to focus. Open official links for full SBA.gov detail. Use Back to return to the previous topic.
+
+---
+
+# SBA locations & district offices
+Type: office_directory
+API path: /api/sba/content/offices/sba-locations
+Parent path: /api/sba/content/offices
+ID: sba-locations
+
+Find SBA district offices and contact points across the U.S.
+
+Official URL: https://www.sba.gov/about-sba/sba-locations
+Action: Explore children -> /api/sba/content/offices/sba-locations
+Action: Official source -> https://www.sba.gov/about-sba/sba-locations
+Location: Online / see official page
+
+---
+
+# Local assistance finder
+Type: assistance
+API path: /api/sba/content/offices/local-assistance
+Parent path: /api/sba/content/offices
+ID: local-assistance
+
+Find SBDCs, SCORE, WBCs, VBOCs and other free counseling partners.
+
+Official URL: https://www.sba.gov/local-assistance/find
+Action: Explore children -> /api/sba/content/offices/local-assistance
+Action: Official source -> https://www.sba.gov/local-assistance/find
+Location: Online / see official page
+
+---
+
+# Lender Match
+Type: lender_tool
+API path: /api/sba/content/offices/lender-match
+Parent path: /api/sba/content/offices
+ID: lender-match
+
+Connect with SBA-approved lenders for financing options.
+
+Official URL: https://www.sba.gov/funding-programs/loans/lender-match
+Action: Explore children -> /api/sba/content/offices/lender-match
+Action: Official source -> https://www.sba.gov/funding-programs/loans/lender-match
+Location: Online / see official page
+
+---
+
+# 10 steps to start your business
+Type: office
+API path: /api/sba/content/offices/5708083263
+Parent path: /api/sba/content/offices
+ID: 5708083263
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/10-steps-start-your-business
+Action: Explore children -> /api/sba/content/offices/5708083263
+Action: Official source -> https://www.sba.gov/business-guide/10-steps-start-your-business
+Location: Online / see official page
+
+---
+
+# Plan your business
+Type: office
+API path: /api/sba/content/offices/6108298546
+Parent path: /api/sba/content/offices
+ID: 6108298546
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/plan-your-business
+Action: Explore children -> /api/sba/content/offices/6108298546
+Action: Official source -> https://www.sba.gov/business-guide/plan-your-business
+Location: Online / see official page
+
+---
+
+# Market research and competitive analysis
+Type: office
+API path: /api/sba/content/offices/6638053259
+Parent path: /api/sba/content/offices
+ID: 6638053259
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/plan-your-business/market-research-competitive-analysis
+Action: Explore children -> /api/sba/content/offices/6638053259
+Action: Official source -> https://www.sba.gov/business-guide/plan-your-business/market-research-competitive-analysis
+Location: Online / see official page
+
+---
+
+# Write your business plan
+Type: office
+API path: /api/sba/content/offices/9015749578
+Parent path: /api/sba/content/offices
+ID: 9015749578
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/plan-your-business/write-your-business-plan
+Action: Explore children -> /api/sba/content/offices/9015749578
+Action: Official source -> https://www.sba.gov/business-guide/plan-your-business/write-your-business-plan
+Location: Online / see official page
+
+---
+
+# Calculate your startup costs
+Type: office
+API path: /api/sba/content/offices/22280226
+Parent path: /api/sba/content/offices
+ID: 22280226
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/plan-your-business/calculate-your-startup-costs
+Action: Explore children -> /api/sba/content/offices/22280226
+Action: Official source -> https://www.sba.gov/business-guide/plan-your-business/calculate-your-startup-costs
+Location: Online / see official page
+
+---
+
+# Establish business credit
+Type: office
+API path: /api/sba/content/offices/956887656
+Parent path: /api/sba/content/offices
+ID: 956887656
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/plan-your-business/establish-business-credit
+Action: Explore children -> /api/sba/content/offices/956887656
+Action: Official source -> https://www.sba.gov/business-guide/plan-your-business/establish-business-credit
+Location: Online / see official page
+
+---
+
+# Fund your business
+Type: office
+API path: /api/sba/content/offices/597498504
+Parent path: /api/sba/content/offices
+ID: 597498504
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/plan-your-business/fund-your-business
+Action: Explore children -> /api/sba/content/offices/597498504
+Action: Official source -> https://www.sba.gov/business-guide/plan-your-business/fund-your-business
+Location: Online / see official page
+
+---
+
+# Buy an existing business or franchise
+Type: office
+API path: /api/sba/content/offices/7149959350
+Parent path: /api/sba/content/offices
+ID: 7149959350
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/plan-your-business/buy-existing-business-or-franchise
+Action: Explore children -> /api/sba/content/offices/7149959350
+Action: Official source -> https://www.sba.gov/business-guide/plan-your-business/buy-existing-business-or-franchise
+Location: Online / see official page
+
+---
+
+# Launch your business
+Type: office
+API path: /api/sba/content/offices/9726984762
+Parent path: /api/sba/content/offices
+ID: 9726984762
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/launch-your-business
+Action: Explore children -> /api/sba/content/offices/9726984762
+Action: Official source -> https://www.sba.gov/business-guide/launch-your-business
+Location: Online / see official page
+
+---
+
+# Pick your business location
+Type: office
+API path: /api/sba/content/offices/1240216906
+Parent path: /api/sba/content/offices
+ID: 1240216906
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/launch-your-business/pick-your-business-location
+Action: Explore children -> /api/sba/content/offices/1240216906
+Action: Official source -> https://www.sba.gov/business-guide/launch-your-business/pick-your-business-location
+Location: Online / see official page
+
+---
+
+# Choose a business structure
+Type: office
+API path: /api/sba/content/offices/9309107765
+Parent path: /api/sba/content/offices
+ID: 9309107765
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/launch-your-business/choose-business-structure
+Action: Explore children -> /api/sba/content/offices/9309107765
+Action: Official source -> https://www.sba.gov/business-guide/launch-your-business/choose-business-structure
+Location: Online / see official page
+
+---
+
+# Choose your business name
+Type: office
+API path: /api/sba/content/offices/640820822
+Parent path: /api/sba/content/offices
+ID: 640820822
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/launch-your-business/choose-your-business-name
+Action: Explore children -> /api/sba/content/offices/640820822
+Action: Official source -> https://www.sba.gov/business-guide/launch-your-business/choose-your-business-name
+Location: Online / see official page
+
+---
+
+# Register your business
+Type: office
+API path: /api/sba/content/offices/9904802663
+Parent path: /api/sba/content/offices
+ID: 9904802663
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/launch-your-business/register-your-business
+Action: Explore children -> /api/sba/content/offices/9904802663
+Action: Official source -> https://www.sba.gov/business-guide/launch-your-business/register-your-business
+Location: Online / see official page
+
+---
+
+# Get federal and state tax ID numbers
+Type: office
+API path: /api/sba/content/offices/4569729655
+Parent path: /api/sba/content/offices
+ID: 4569729655
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/launch-your-business/get-federal-state-tax-id-numbers
+Action: Explore children -> /api/sba/content/offices/4569729655
+Action: Official source -> https://www.sba.gov/business-guide/launch-your-business/get-federal-state-tax-id-numbers
+Location: Online / see official page
+
+---
+
+# Apply for licenses and permits
+Type: office
+API path: /api/sba/content/offices/347718606
+Parent path: /api/sba/content/offices
+ID: 347718606
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/launch-your-business/apply-licenses-permits
+Action: Explore children -> /api/sba/content/offices/347718606
+Action: Official source -> https://www.sba.gov/business-guide/launch-your-business/apply-licenses-permits
+Location: Online / see official page
+
+---
+
+# Open a business bank account
+Type: office
+API path: /api/sba/content/offices/8688661920
+Parent path: /api/sba/content/offices
+ID: 8688661920
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/launch-your-business/open-business-bank-account
+Action: Explore children -> /api/sba/content/offices/8688661920
+Action: Official source -> https://www.sba.gov/business-guide/launch-your-business/open-business-bank-account
+Location: Online / see official page

@@ -1,0 +1,12 @@
+# Start a business
+Type: guide
+API path: /api/sba/lifecycle/start
+Parent path: /api/sba/content/blogs
+ID: guide-start
+
+Plan and launch path — assigned guides for starting a small business.
+
+Official URL: https://www.sba.gov/business-guide
+Action: Explore children -> /api/sba/lifecycle/start
+Action: Official source -> https://www.sba.gov/business-guide
+Location: Online / see official page

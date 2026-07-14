@@ -1,0 +1,14 @@
+# Choose your business name
+Type: document
+API path: /api/sba/content/documents/640820822
+Parent path: /api/sba/content/documents
+ID: 640820822
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/launch-your-business/choose-your-business-name
+File / form URL: https://www.sba.gov/business-guide/launch-your-business/choose-your-business-name
+Action: Explore children -> /api/sba/content/documents/640820822
+Action: Open form / document -> https://www.sba.gov/business-guide/launch-your-business/choose-your-business-name
+Action: Official source -> https://www.sba.gov/business-guide/launch-your-business/choose-your-business-name
+Location: Online / see official page

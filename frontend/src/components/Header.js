@@ -1,12 +1,15 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
-/** Sitewide brand mark: yin-yang GIF */
-export const LOGO_SRC = `${process.env.PUBLIC_URL || ''}/logo.gif`;
-export const LOGO_FALLBACK = `${process.env.PUBLIC_URL || ''}/images/yinyang.gif`;
+/**
+ * Sitewide brand mark: original rotating yin-yang animation.
+ * Canonical file: /images/yinyang.gif (also served as /logo.gif)
+ */
+export const LOGO_SRC = `${process.env.PUBLIC_URL || ''}/images/yinyang.gif`;
+export const LOGO_FALLBACK = `${process.env.PUBLIC_URL || ''}/logo.gif`;
 
 /**
- * Slim brand strip — yin-yang logo + wordmark.
+ * Slim brand strip — animated yin-yang logo + wordmark.
  * Primary nav lives in SBANavigation.
  */
 function Header() {
@@ -15,14 +18,14 @@ function Header() {
       <div className="pp-shell pp-brand-inner">
         <Link to="/" className="pp-logo" aria-label="PocketPro SBA home">
           <img
-            className="pp-logo-img"
+            className="pp-logo-img pp-logo-animated"
             src={LOGO_SRC}
             width="36"
             height="36"
             alt="PocketPro SBA"
             decoding="async"
             onError={(e) => {
-              if (e.currentTarget.src.indexOf('yinyang.gif') === -1) {
+              if (e.currentTarget.src.indexOf('logo.gif') === -1) {
                 e.currentTarget.src = LOGO_FALLBACK;
               }
             }}

@@ -1,0 +1,14 @@
+# Write your business plan
+Type: document
+API path: /api/sba/content/documents/9015749578
+Parent path: /api/sba/content/documents
+ID: 9015749578
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/plan-your-business/write-your-business-plan
+File / form URL: https://www.sba.gov/business-guide/plan-your-business/write-your-business-plan
+Action: Explore children -> /api/sba/content/documents/9015749578
+Action: Open form / document -> https://www.sba.gov/business-guide/plan-your-business/write-your-business-plan
+Action: Official source -> https://www.sba.gov/business-guide/plan-your-business/write-your-business-plan
+Location: Online / see official page

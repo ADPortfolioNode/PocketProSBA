@@ -1,0 +1,11 @@
+# Subcontracting
+Type: guide
+API path: /api/sba/content/contracting/subcontracting
+Parent path: /api/sba/content/contracting
+ID: subcontracting
+
+Find subcontracting opportunities with prime contractors.
+
+Official URL: https://www.sba.gov/federal-contracting/contracting-guide/basic-requirements
+Action: Explore children -> /api/sba/content/contracting/subcontracting
+Action: Official source -> https://www.sba.gov/federal-contracting/contracting-guide/basic-requirements

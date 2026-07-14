@@ -1,0 +1,14 @@
+# Blogs
+Source: SBA API endpoint response
+API route: /api/sba/content/blogs
+
+Blog/news cards from official SBA newsroom and blog pages. This topic currently surfaces 20 resources across 2 types. Highlights include: SBA blog; SBA newsroom; Funding program updates; Start a business.
+
+## Overview
+Blog/news cards from official SBA newsroom and blog pages. This topic currently surfaces 20 resources across 2 types. Highlights include: SBA blog; SBA newsroom; Funding program updates; Start a business.
+
+## Resources
+20 curated / live resources for this topic.
+
+## How to use this page
+Click any card with an API badge to open that route’s results. Use type filters to focus. Open official links for full SBA.gov detail. Use Back to return to the previous topic.

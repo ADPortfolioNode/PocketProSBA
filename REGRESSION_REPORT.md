@@ -3,7 +3,9 @@
 **Date:** 2026-07-11  
 **Branch:** `main` (local uncommitted work present)  
 **Stack:** frontend `:3000` · backend `:5000` · chromadb `:8000`  
-**Mode:** low-RAM friendly (prebuilt CRA + live HTML/CSS/JS mounts)
+**Mode:** low-RAM friendly (prebuilt CRA + live HTML/CSS/JS mounts)  
+
+**Standard template (CURRENT locked):** [`docs/APP_STANDARD_TEMPLATE.md`](docs/APP_STANDARD_TEMPLATE.md) · `GET /api/sba/standard`
 
 ---
 

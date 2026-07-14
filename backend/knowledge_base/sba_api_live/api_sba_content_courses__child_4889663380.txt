@@ -1,0 +1,12 @@
+# Establish business credit
+Type: course
+API path: /api/sba/content/courses/4889663380
+Parent path: /api/sba/content/courses
+ID: 4889663380
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/plan-your-business/establish-business-credit
+Action: Explore children -> /api/sba/content/courses/4889663380
+Action: Official source -> https://www.sba.gov/business-guide/plan-your-business/establish-business-credit
+Location: Online / see official page

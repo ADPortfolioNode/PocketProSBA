@@ -1,0 +1,11 @@
+# Write a business plan
+Type: guide
+API path: /api/sba/lifecycle/plan/write-a-business-plan
+Parent path: /api/sba/lifecycle/plan
+ID: write-a-business-plan
+
+Build a plan that covers market, operations, and finances.
+
+Official URL: https://www.sba.gov/business-guide/plan-your-business/write-your-business-plan
+Action: Explore children -> /api/sba/lifecycle/plan/write-a-business-plan
+Action: Official source -> https://www.sba.gov/business-guide/plan-your-business/write-your-business-plan

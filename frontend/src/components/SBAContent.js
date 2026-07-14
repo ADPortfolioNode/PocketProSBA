@@ -127,71 +127,35 @@ const SBAContent = ({ onProgramSelect, onResourceSelect }) => {
     return ['loan_program', 'loan', 'related_loan', 'tool', 'program', 'lifecycle'].includes(t);
   };
 
-  const openDetail = async (card, kind) => {
-    setSelected({ ...card, _kind: kind });
-    setRelated([]);
-    // Optional parent hooks (chat prefill, etc.)
-    if (kind === 'program' && onProgramSelect) onProgramSelect(card.id);
-    if (kind !== 'program' && onResourceSelect) onResourceSelect(`${card.id} ${kind}`);
-
-    if (card.path && String(card.path).startsWith('/api/')) {
-      setRelatedLoading(true);
-      try {
-        const res = await apiClient.get(
-          card.path,
-          { params: { page: 1 }, timeout: 60000 },
-          { quiet: true }
-        );
-        const data = res?.data || res || {};
-        const list = data.items || data.results || data.available_loan_types || [];
-        const parentPath = card.path;
-        setRelated(
-          (Array.isArray(list) ? list : []).map((row, i) => {
-            let path = String(row.path || '').trim();
-            const id = row.id != null ? String(row.id) : String(i);
-            if (!path.startsWith('/api/') && parentPath.startsWith('/api/') && id && !String(id).startsWith('item-')) {
-              const leaf = ['overview', 'link', 'notice', 'loan_section'].includes(
-                String(row.type || '').toLowerCase()
-              );
-              if (!leaf) path = `${parentPath.replace(/\/$/, '')}/${encodeURIComponent(id)}`;
-            }
-            return {
-              id: row.id || i,
-              title: row.title || row.name || row.type || 'Item',
-              description: row.description || row.summary || '',
-              url: row.url || row.link || '',
-              path,
-              type: row.type || 'content',
-              has_children: childHasChildren({ ...row, path }),
-              drillable: path.startsWith('/api/'),
-            };
-          })
-        );
-      } catch (_) {
-        setRelated([]);
-      } finally {
-        setRelatedLoading(false);
-      }
-    }
+  /** Always open SBA API resources on the Resources page (/browse). */
+  const goToResourcesPage = (route, title) => {
+    if (!route || !String(route).startsWith('/api/')) return false;
+    const url =
+      `/browse#r=${encodeURIComponent(route)}&t=${encodeURIComponent(title || route)}`;
+    window.location.href = url;
+    return true;
   };
 
-  /** Child with children → load its API path into the same expanded card/modal */
+  const openDetail = async (card, kind) => {
+    // Standard: API-backed cards open on Resources page (not modal-only)
+    if (card?.path && String(card.path).startsWith('/api/')) {
+      if (kind === 'program' && onProgramSelect) onProgramSelect(card.id);
+      if (kind !== 'program' && onResourceSelect) onResourceSelect(`${card.id} ${kind}`);
+      goToResourcesPage(card.path, card.name || card.title);
+      return;
+    }
+
+    setSelected({ ...card, _kind: kind });
+    setRelated([]);
+    if (kind === 'program' && onProgramSelect) onProgramSelect(card.id);
+    if (kind !== 'program' && onResourceSelect) onResourceSelect(`${card.id} ${kind}`);
+  };
+
+  /** Child with API path → Resources page; else official URL */
   const openRelatedChild = async (row) => {
     if (!row) return;
-    if (childHasChildren(row) && row.path && String(row.path).startsWith('/api/')) {
-      await openDetail(
-        {
-          id: row.id,
-          name: row.title,
-          title: row.title,
-          description: row.description,
-          path: row.path,
-          url: row.url,
-          icon: '📂',
-          resources: [],
-        },
-        selected?._kind || 'program'
-      );
+    if (row.path && String(row.path).startsWith('/api/')) {
+      goToResourcesPage(row.path, row.title || row.name);
       return;
     }
     if (row.url) window.open(row.url, '_blank', 'noopener,noreferrer');
@@ -249,7 +213,7 @@ const SBAContent = ({ onProgramSelect, onResourceSelect }) => {
                   <div className="small font-monospace text-muted mb-1 text-break">{card.path}</div>
                 )}
                 <div className="mt-auto pt-2 text-primary small fw-semibold">
-                  {card.path ? 'Expand card · load API children →' : 'View details →'}
+                  {card.path ? 'Open on Resources page →' : 'View details →'}
                 </div>
               </Card.Body>
             </Card>
@@ -268,18 +232,15 @@ const SBAContent = ({ onProgramSelect, onResourceSelect }) => {
             {programs.length || lifecycle.length || local.length
               ? ` · ${programs.length} programs · ${lifecycle.length} lifecycle · ${local.length} local`
               : ''}
-            . <strong>Click a card</strong> to expand and load that API endpoint&apos;s children.
-            Children with children are links that render the next result.
+            . <strong>Click a card</strong> to open it on the{' '}
+            <a href="/browse">Resources page</a> (API parent → children).
           </span>
           <div className="d-flex gap-2">
             <Button size="sm" variant="outline-primary" onClick={loadAll} disabled={loading}>
               {loading ? 'Loading…' : 'Refresh'}
             </Button>
-            <a href="/sba" className="btn btn-sm btn-outline-secondary">
-              Programs expand UI
-            </a>
             <a href="/browse" className="btn btn-sm btn-primary">
-              Full Resources browser →
+              Resources page →
             </a>
           </div>
         </div>
@@ -466,9 +427,14 @@ const SBAContent = ({ onProgramSelect, onResourceSelect }) => {
           <Button variant="outline-secondary" onClick={() => setSelected(null)}>
             Close
           </Button>
-          {selected?.path?.includes('/api/sba/content') && (
-            <Button variant="outline-primary" href="/browse">
-              Open Resources browser
+          {selected?.path?.startsWith('/api/') && (
+            <Button
+              variant="primary"
+              onClick={() =>
+                goToResourcesPage(selected.path, selected.name || selected.title)
+              }
+            >
+              Open on Resources page
             </Button>
           )}
           {selected?.url && (

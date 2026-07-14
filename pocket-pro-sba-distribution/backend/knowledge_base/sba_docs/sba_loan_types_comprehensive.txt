@@ -1,0 +1,26 @@
+SBA LOAN TYPES - COMPREHENSIVE GUIDE
+
+SBA 7(A) LOANS - GENERAL BUSINESS FINANCING:
+Maximum Amount: $5 million
+Interest Rates: Prime + 2.25% to 4.75% (variable)
+Terms: Up to 25 years for real estate, 10 years for equipment, 7 years for working capital
+Use Cases: Working capital, equipment purchases, real estate acquisition, debt refinancing, business acquisition
+Down Payment: As low as 10%
+Processing Time: 5-10 business days for Express, 30-90 days for standard
+
+SBA 504 LOANS - MAJOR FIXED ASSETS:
+Maximum Amount: $5.5 million per project ($16.5 million aggregate)
+Interest Rates: Fixed rates, typically below market
+Terms: 10, 20, or 25 years
+Use Cases: Real estate purchase, construction, major equipment
+Structure: 50% bank loan, 40% SBA debenture, 10% borrower equity
+Benefits: Below-market fixed rates, long-term financing
+
+SBA MICROLOANS - SMALL BUSINESS FUNDING:
+Maximum Amount: $50,000
+Average Loan: $13,000
+Interest Rates: 8-13% (varies by intermediary)
+Terms: Up to 6 years
+Use Cases: Working capital, inventory, supplies, equipment, furniture
+Providers: Nonprofit intermediary lenders
+Target: Startups and small businesses

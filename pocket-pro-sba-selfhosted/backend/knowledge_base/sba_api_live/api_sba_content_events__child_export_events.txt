@@ -1,0 +1,14 @@
+# Export & trade workshops
+Type: event
+API path: /api/sba/content/events/export-events
+Parent path: /api/sba/content/events
+ID: export-events
+
+International trade counseling events and webinars.
+
+Official URL: https://www.sba.gov/business-guide/grow-your-business/export-products
+Registration URL: https://www.sba.gov/business-guide/grow-your-business/export-products
+Action: Explore children -> /api/sba/content/events/export-events
+Action: Register / RSVP -> https://www.sba.gov/business-guide/grow-your-business/export-products
+Action: Official source -> https://www.sba.gov/business-guide/grow-your-business/export-products
+Location: Online

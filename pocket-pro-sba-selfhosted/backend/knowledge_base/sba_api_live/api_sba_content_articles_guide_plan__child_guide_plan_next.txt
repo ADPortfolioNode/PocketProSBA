@@ -1,0 +1,11 @@
+# Next steps
+Type: guidance
+API path: /api/sba/content/offices
+Parent path: /api/sba/content/articles/guide-plan
+ID: guide-plan-next
+
+Review eligibility, gather documents, then contact a local SBA resource partner or use Lender Match for financing paths.
+
+Official URL: https://www.sba.gov/business-guide/plan-your-business
+Action: Explore children -> /api/sba/content/offices
+Action: Official source -> https://www.sba.gov/business-guide/plan-your-business

@@ -1,0 +1,12 @@
+route=/api/sba/content/lenders
+chunks=8
+files=8
+updated=2026-07-11T12:41:16Z
+/app/backend/knowledge_base/sba_api_live/api_sba_content_lenders__combined.txt
+/app/backend/knowledge_base/sba_api_live/api_sba_content_lenders__overview.txt
+/app/backend/knowledge_base/sba_api_live/api_sba_content_lenders__child_lender_match.txt
+/app/backend/knowledge_base/sba_api_live/api_sba_content_lenders__child_7a_lenders.txt
+/app/backend/knowledge_base/sba_api_live/api_sba_content_lenders__child_504_cdc.txt
+/app/backend/knowledge_base/sba_api_live/api_sba_content_lenders__child_microloan_intermediaries.txt
+/app/backend/knowledge_base/sba_api_live/api_sba_content_lenders__child_community_advantage.txt
+/app/backend/knowledge_base/sba_api_live/api_sba_content_lenders__child_export_lenders.txt

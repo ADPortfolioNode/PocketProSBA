@@ -1,0 +1,14 @@
+# Offices
+Source: SBA API endpoint response
+API route: /api/sba/content/offices
+
+Office/local-help cards from official SBA location pages. This topic currently surfaces 19 resources across 4 types. Highlights include: SBA locations & district offices; Local assistance finder; Lender Match; 10 steps to start your business.
+
+## Overview
+Office/local-help cards from official SBA location pages. This topic currently surfaces 19 resources across 4 types. Highlights include: SBA locations & district offices; Local assistance finder; Lender Match; 10 steps to start your business.
+
+## Resources
+19 curated / live resources for this topic.
+
+## How to use this page
+Click any card with an API badge to open that route’s results. Use type filters to focus. Open official links for full SBA.gov detail. Use Back to return to the previous topic.

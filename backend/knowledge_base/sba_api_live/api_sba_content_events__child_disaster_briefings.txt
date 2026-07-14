@@ -1,0 +1,14 @@
+# Disaster recovery briefings
+Type: event
+API path: /api/sba/content/events/disaster-briefings
+Parent path: /api/sba/content/events
+ID: disaster-briefings
+
+Community briefings after declared disasters.
+
+Official URL: https://www.sba.gov/funding-programs/disaster-assistance
+Registration URL: https://www.sba.gov/funding-programs/disaster-assistance
+Action: Explore children -> /api/sba/content/events/disaster-briefings
+Action: Register / RSVP -> https://www.sba.gov/funding-programs/disaster-assistance
+Action: Official source -> https://www.sba.gov/funding-programs/disaster-assistance
+Location: Affected regions

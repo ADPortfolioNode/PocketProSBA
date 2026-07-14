@@ -1,0 +1,9 @@
+# Lender Match
+Type: loan_program
+Parent path: /api/sba/content/loans/lender-match
+ID: lender-match-overview
+
+Before you start talking to lenders, have a look at the abbreviated checklist below to see if you're ready for a traditional SBA loan. We will prepare a summary of all the interested lenders two business days after you submit a Lender Match request. From there, you can start talking to lenders and/or complete the application they provide. Some will reach out to you, and you’re welcome to contact them as well. No, using Lender Match doesn't guarantee that you'll get matched…
+
+Official URL: https://www.sba.gov/funding-programs/loans/lender-match
+Action: Official source -> https://www.sba.gov/funding-programs/loans/lender-match

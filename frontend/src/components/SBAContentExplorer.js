@@ -415,6 +415,15 @@ const SBAContentExplorer = () => {
   }, [loadingCatalog, resources, activeResource, queryResource]);
 
   const handleNavClick = (resource) => {
+    // Always open SBA API resources on the canonical Resources page
+    if (resource?.path && String(resource.path).startsWith('/api/')) {
+      const url =
+        `/browse#r=${encodeURIComponent(resource.path)}&t=${encodeURIComponent(
+          resource.name || resource.id || resource.path
+        )}`;
+      window.location.href = url;
+      return;
+    }
     setSearchQuery('');
     setTrail([]);
     queryResource(resource, 1, '');
@@ -429,7 +438,7 @@ const SBAContentExplorer = () => {
     queryResource(activeResource, 1, searchQuery.trim());
   };
 
-  /** Child with path/resources → next parent; leaf → detail modal */
+  /** Child with path → Resources page; resources[] → local; leaf → detail modal */
   const activateResult = (item) => {
     if (!item) return;
     const nextPath =
@@ -437,30 +446,11 @@ const SBAContentExplorer = () => {
       deriveChildPath(item, activeResource?.path || '');
 
     if (nextPath && String(nextPath).startsWith('/api/')) {
-      if (activeResource) {
-        setTrail((prev) => [
-          ...prev,
-          {
-            id: activeResource.id,
-            name: activeResource.name,
-            path: activeResource.path,
-            icon: activeResource.icon,
-          },
-        ]);
-      }
-      queryResource(
-        {
-          id: String(item.id),
-          name: item.title || item.name || String(item.id),
-          description: item.description || `Children of ${item.title || item.id}`,
-          path: nextPath,
-          group: activeResource?.group || 'Resources',
-          icon: '📂',
-          queryable: true,
-        },
-        1,
-        ''
-      );
+      const url =
+        `/browse#r=${encodeURIComponent(nextPath)}&t=${encodeURIComponent(
+          item.title || item.name || nextPath
+        )}`;
+      window.location.href = url;
       return;
     }
 

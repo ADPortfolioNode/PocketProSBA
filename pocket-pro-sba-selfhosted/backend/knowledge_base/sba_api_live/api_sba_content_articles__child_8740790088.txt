@@ -1,0 +1,10 @@
+# Buy an existing business or franchise
+Type: article
+API path: /api/sba/content/articles/8740790088
+Parent path: /api/sba/content/articles
+ID: 8740790088
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/plan-your-business/buy-existing-business-or-franchise
+Location: Online / see official page

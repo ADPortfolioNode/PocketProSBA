@@ -1,0 +1,35 @@
+# Combined SBA API digest for /api/sba/content/courses/launch-course
+Retrieved children: 1
+Chunks: 2
+
+# Launch your business courses
+Source: SBA API endpoint response
+API route: /api/sba/content/courses/launch-course
+
+Registration, licenses, and first-customer readiness. This topic currently surfaces 1 resource. Highlights include: Launch your business courses.
+
+Official URL: https://www.sba.gov/business-guide/launch-your-business
+
+## Overview
+Registration, licenses, and first-customer readiness. This topic currently surfaces 1 resource. Highlights include: Launch your business courses.
+
+## Resources
+1 curated / live resources for this topic.
+
+## How to use this page
+Click any card with an API badge to open that route’s results. Use type filters to focus. Open official links for full SBA.gov detail. Use Back to return to the previous topic.
+
+---
+
+# Launch your business courses
+Type: course
+API path: /api/sba/content/courses/launch-course/launch-course
+Parent path: /api/sba/content/courses/launch-course
+ID: launch-course
+
+Registration, licenses, and first-customer readiness.
+
+Official URL: https://www.sba.gov/business-guide/launch-your-business
+Action: Explore children -> /api/sba/content/courses/launch-course/launch-course
+Action: Official source -> https://www.sba.gov/business-guide/launch-your-business
+Location: Online / see official page

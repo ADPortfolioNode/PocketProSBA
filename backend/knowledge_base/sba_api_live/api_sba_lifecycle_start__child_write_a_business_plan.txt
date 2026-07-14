@@ -1,0 +1,11 @@
+# Write a business plan
+Type: guide
+API path: /api/sba/lifecycle/start/write-a-business-plan
+Parent path: /api/sba/lifecycle/start
+ID: write-a-business-plan
+
+Step-by-step guide to writing a plan lenders and partners understand.
+
+Official URL: https://www.sba.gov/business-guide/plan-your-business/write-your-business-plan
+Action: Explore children -> /api/sba/lifecycle/start/write-a-business-plan
+Action: Official source -> https://www.sba.gov/business-guide/plan-your-business/write-your-business-plan

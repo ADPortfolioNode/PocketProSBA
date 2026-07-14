@@ -1,0 +1,16 @@
+# Start a Business
+Source: SBA API endpoint response
+API route: /api/sba/lifecycle/start
+
+Plan and launch path: research, structure, registration, and first funding options. This topic currently surfaces 26 resources across 3 types. Highlights include: Plan your business; Launch your business; Write a business plan; Choose a business structure.
+
+Official URL: https://www.sba.gov/business-guide
+
+## Overview
+Plan and launch path: research, structure, registration, and first funding options. This topic currently surfaces 26 resources across 3 types. Highlights include: Plan your business; Launch your business; Write a business plan; Choose a business structure.
+
+## Resources
+26 curated / live resources for this topic.
+
+## How to use this page
+Click any card with an API badge to open that route’s results. Use type filters to focus. Open official links for full SBA.gov detail. Use Back to return to the previous topic.

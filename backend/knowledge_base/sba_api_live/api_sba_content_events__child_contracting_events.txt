@@ -1,0 +1,14 @@
+# Government contracting events
+Type: event
+API path: /api/sba/content/events/contracting-events
+Parent path: /api/sba/content/events
+ID: contracting-events
+
+Matchmaking and training for federal contractors.
+
+Official URL: https://www.sba.gov/federal-contracting
+Registration URL: https://www.sba.gov/federal-contracting
+Action: Explore children -> /api/sba/content/events/contracting-events
+Action: Register / RSVP -> https://www.sba.gov/federal-contracting
+Action: Official source -> https://www.sba.gov/federal-contracting
+Location: Online & regional

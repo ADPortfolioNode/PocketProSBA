@@ -1,0 +1,11 @@
+# HUBZone program
+Type: contract_program
+API path: /api/sba/content/contracting/hubzone
+Parent path: /api/sba/content/contracting
+ID: hubzone
+
+Contracting preference for small businesses in Historically Underutilized Business Zones.
+
+Official URL: https://www.sba.gov/federal-contracting/contracting-assistance-programs/hubzone-program
+Action: Explore children -> /api/sba/content/contracting/hubzone
+Action: Official source -> https://www.sba.gov/federal-contracting/contracting-assistance-programs/hubzone-program

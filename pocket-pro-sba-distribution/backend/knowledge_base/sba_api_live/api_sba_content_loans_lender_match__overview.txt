@@ -1,0 +1,16 @@
+# Lender Match
+Source: SBA API endpoint response
+API route: /api/sba/content/loans/lender-match
+
+Before you start talking to lenders, have a look at the abbreviated checklist below to see if you're ready for a traditional SBA loan. We will prepare a summary of all the interested lenders two business days after you submit a Lender Match request. From there, you can start talking to lenders and/or complete the application they provide. Some will reach out to you, and you’re welcome to contact them as well. No, using Lender Match doesn't guarantee that you'll get matched… This topic currently surfaces 16 resources across 5 types. Highlights include: Lender Match; How this program is used; Next steps; Freedom 250 Small Business Pledge.
+
+Official URL: https://www.sba.gov/funding-programs/loans/lender-match
+
+## Overview
+Before you start talking to lenders, have a look at the abbreviated checklist below to see if you're ready for a traditional SBA loan. We will prepare a summary of all the interested lenders two business days after you submit a Lender Match request. From there, you can start talking to lenders and/or complete the application they provide. Some will reach out to you, and you’re welcome to contact them as well. No, using Lender Match doesn't guarantee that you'll get matched… This topic currently surfaces 16 resources across 5 types. Highlights include: Lender Match; How this program is used; Next steps; Freedom 250 Small Business Pledge.
+
+## Resources
+16 curated / live resources for this topic.
+
+## How to use this page
+Click any card with an API badge to open that route’s results. Use type filters to focus. Open official links for full SBA.gov detail. Use Back to return to the previous topic.

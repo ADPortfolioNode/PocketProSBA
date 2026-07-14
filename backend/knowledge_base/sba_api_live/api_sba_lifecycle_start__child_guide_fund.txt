@@ -1,0 +1,11 @@
+# SBA loans overview
+Type: guide
+API path: /api/sba/lifecycle/fund
+Parent path: /api/sba/lifecycle/start
+ID: guide-fund
+
+Overview of SBA-backed loan programs.
+
+Official URL: https://www.sba.gov/funding-programs/loans
+Action: Explore children -> /api/sba/lifecycle/fund
+Action: Official source -> https://www.sba.gov/funding-programs/loans

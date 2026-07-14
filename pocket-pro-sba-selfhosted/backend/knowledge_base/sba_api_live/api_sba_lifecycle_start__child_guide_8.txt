@@ -1,0 +1,11 @@
+# 7(a) loans guide
+Type: guide
+API path: /api/sba/content/articles
+Parent path: /api/sba/lifecycle/start
+ID: guide-8
+
+Flexible SBA 7(a) loan program guide.
+
+Official URL: https://www.sba.gov/funding-programs/loans/7a-loans
+Action: Explore children -> /api/sba/content/articles
+Action: Official source -> https://www.sba.gov/funding-programs/loans/7a-loans

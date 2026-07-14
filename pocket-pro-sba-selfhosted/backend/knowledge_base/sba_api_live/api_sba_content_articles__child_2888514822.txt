@@ -1,0 +1,10 @@
+# Calculate your startup costs
+Type: article
+API path: /api/sba/content/articles/2888514822
+Parent path: /api/sba/content/articles
+ID: 2888514822
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/plan-your-business/calculate-your-startup-costs
+Location: Online / see official page

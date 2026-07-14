@@ -1,0 +1,11 @@
+# Buy an existing business or franchise
+Type: guide
+API path: /api/sba/lifecycle/plan/buy-an-existing-business-or-franchise
+Parent path: /api/sba/lifecycle/plan
+ID: buy-an-existing-business-or-franchise
+
+Evaluate buying vs starting from scratch.
+
+Official URL: https://www.sba.gov/business-guide/launch-your-business/buy-existing-business
+Action: Explore children -> /api/sba/lifecycle/plan/buy-an-existing-business-or-franchise
+Action: Official source -> https://www.sba.gov/business-guide/launch-your-business/buy-existing-business

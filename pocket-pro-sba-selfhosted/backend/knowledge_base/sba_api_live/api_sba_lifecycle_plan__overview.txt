@@ -1,0 +1,16 @@
+# Plan Your Business
+Source: SBA API endpoint response
+API route: /api/sba/lifecycle/plan
+
+Market research, business plans, and startup cost calculators. This topic currently surfaces 22 resources across 2 types. Highlights include: Write a business plan; Market research & competitive analysis; Calculate your startup costs; Pick your business location.
+
+Official URL: https://www.sba.gov/business-guide/plan-your-business
+
+## Overview
+Market research, business plans, and startup cost calculators. This topic currently surfaces 22 resources across 2 types. Highlights include: Write a business plan; Market research & competitive analysis; Calculate your startup costs; Pick your business location.
+
+## Resources
+22 curated / live resources for this topic.
+
+## How to use this page
+Click any card with an API badge to open that route’s results. Use type filters to focus. Open official links for full SBA.gov detail. Use Back to return to the previous topic.

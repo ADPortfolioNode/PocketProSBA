@@ -1,0 +1,318 @@
+# Combined SBA API digest for /api/sba/content/blogs
+Retrieved children: 20
+Chunks: 21
+
+# Blogs
+Source: SBA API endpoint response
+API route: /api/sba/content/blogs
+
+Blog/news cards from official SBA newsroom and blog pages. This topic currently surfaces 20 resources across 2 types. Highlights include: SBA blog; SBA newsroom; Funding program updates; Start a business.
+
+## Overview
+Blog/news cards from official SBA newsroom and blog pages. This topic currently surfaces 20 resources across 2 types. Highlights include: SBA blog; SBA newsroom; Funding program updates; Start a business.
+
+## Resources
+20 curated / live resources for this topic.
+
+## How to use this page
+Click any card with an API badge to open that route’s results. Use type filters to focus. Open official links for full SBA.gov detail. Use Back to return to the previous topic.
+
+---
+
+# SBA blog
+Type: blog
+API path: /api/sba/content/blogs/blog-hub
+Parent path: /api/sba/content/blogs
+ID: blog-hub
+
+Official SBA blog posts and small-business stories.
+
+Official URL: https://www.sba.gov/blog
+Action: Explore children -> /api/sba/content/blogs/blog-hub
+Action: Official source -> https://www.sba.gov/blog
+Location: Online / see official page
+
+---
+
+# SBA newsroom
+Type: blog
+API path: /api/sba/content/blogs/newsroom
+Parent path: /api/sba/content/blogs
+ID: newsroom
+
+Press releases and media advisories from the SBA.
+
+Official URL: https://www.sba.gov/about-sba/sba-newsroom/press-releases-media-advisories
+Action: Explore children -> /api/sba/content/blogs/newsroom
+Action: Official source -> https://www.sba.gov/about-sba/sba-newsroom/press-releases-media-advisories
+Location: Online / see official page
+
+---
+
+# Funding program updates
+Type: blog
+API path: /api/sba/content/blogs/funding-news
+Parent path: /api/sba/content/blogs
+ID: funding-news
+
+Current financing program information for small businesses.
+
+Official URL: https://www.sba.gov/funding-programs/loans
+Action: Explore children -> /api/sba/content/blogs/funding-news
+Action: Official source -> https://www.sba.gov/funding-programs/loans
+Location: Online / see official page
+
+---
+
+# Start a business
+Type: guide
+API path: /api/sba/lifecycle/start
+Parent path: /api/sba/content/blogs
+ID: guide-start
+
+Plan and launch path — assigned guides for starting a small business.
+
+Official URL: https://www.sba.gov/business-guide
+Action: Explore children -> /api/sba/lifecycle/start
+Action: Official source -> https://www.sba.gov/business-guide
+Location: Online / see official page
+
+---
+
+# Plan your business
+Type: guide
+API path: /api/sba/lifecycle/plan
+Parent path: /api/sba/content/blogs
+ID: guide-plan
+
+Market research, business plans, and startup cost calculators.
+
+Official URL: https://www.sba.gov/business-guide/plan-your-business
+Action: Explore children -> /api/sba/lifecycle/plan
+Action: Official source -> https://www.sba.gov/business-guide/plan-your-business
+Location: Online / see official page
+
+---
+
+# Launch your business
+Type: guide
+API path: /api/sba/lifecycle/launch
+Parent path: /api/sba/content/blogs
+ID: guide-launch
+
+Structure, registration, licenses, and tax IDs to open legally.
+
+Official URL: https://www.sba.gov/business-guide/launch-your-business
+Action: Explore children -> /api/sba/lifecycle/launch
+Action: Official source -> https://www.sba.gov/business-guide/launch-your-business
+Location: Online / see official page
+
+---
+
+# Manage your business
+Type: guide
+API path: /api/sba/lifecycle/manage
+Parent path: /api/sba/content/blogs
+ID: guide-manage
+
+Finances, employees, insurance, and operations.
+
+Official URL: https://www.sba.gov/business-guide/manage-your-business
+Action: Explore children -> /api/sba/lifecycle/manage
+Action: Official source -> https://www.sba.gov/business-guide/manage-your-business
+Location: Online / see official page
+
+---
+
+# Grow your business
+Type: guide
+API path: /api/sba/lifecycle/grow
+Parent path: /api/sba/content/blogs
+ID: guide-grow
+
+Funding, expansion, and growth strategies.
+
+Official URL: https://www.sba.gov/business-guide/grow-your-business
+Action: Explore children -> /api/sba/lifecycle/grow
+Action: Official source -> https://www.sba.gov/business-guide/grow-your-business
+Location: Online / see official page
+
+---
+
+# 10 steps to start your business
+Type: blog
+API path: /api/sba/content/blogs/477002952
+Parent path: /api/sba/content/blogs
+ID: 477002952
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/10-steps-start-your-business
+Action: Explore children -> /api/sba/content/blogs/477002952
+Action: Official source -> https://www.sba.gov/business-guide/10-steps-start-your-business
+Location: Online / see official page
+
+---
+
+# Market research and competitive analysis
+Type: blog
+API path: /api/sba/content/blogs/2799375047
+Parent path: /api/sba/content/blogs
+ID: 2799375047
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/plan-your-business/market-research-competitive-analysis
+Action: Explore children -> /api/sba/content/blogs/2799375047
+Action: Official source -> https://www.sba.gov/business-guide/plan-your-business/market-research-competitive-analysis
+Location: Online / see official page
+
+---
+
+# Write your business plan
+Type: blog
+API path: /api/sba/content/blogs/5043020261
+Parent path: /api/sba/content/blogs
+ID: 5043020261
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/plan-your-business/write-your-business-plan
+Action: Explore children -> /api/sba/content/blogs/5043020261
+Action: Official source -> https://www.sba.gov/business-guide/plan-your-business/write-your-business-plan
+Location: Online / see official page
+
+---
+
+# Calculate your startup costs
+Type: blog
+API path: /api/sba/content/blogs/7406261547
+Parent path: /api/sba/content/blogs
+ID: 7406261547
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/plan-your-business/calculate-your-startup-costs
+Action: Explore children -> /api/sba/content/blogs/7406261547
+Action: Official source -> https://www.sba.gov/business-guide/plan-your-business/calculate-your-startup-costs
+Location: Online / see official page
+
+---
+
+# Establish business credit
+Type: blog
+API path: /api/sba/content/blogs/3665176103
+Parent path: /api/sba/content/blogs
+ID: 3665176103
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/plan-your-business/establish-business-credit
+Action: Explore children -> /api/sba/content/blogs/3665176103
+Action: Official source -> https://www.sba.gov/business-guide/plan-your-business/establish-business-credit
+Location: Online / see official page
+
+---
+
+# Fund your business
+Type: blog
+API path: /api/sba/content/blogs/6206697403
+Parent path: /api/sba/content/blogs
+ID: 6206697403
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/plan-your-business/fund-your-business
+Action: Explore children -> /api/sba/content/blogs/6206697403
+Action: Official source -> https://www.sba.gov/business-guide/plan-your-business/fund-your-business
+Location: Online / see official page
+
+---
+
+# Buy an existing business or franchise
+Type: blog
+API path: /api/sba/content/blogs/1120136493
+Parent path: /api/sba/content/blogs
+ID: 1120136493
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/plan-your-business/buy-existing-business-or-franchise
+Action: Explore children -> /api/sba/content/blogs/1120136493
+Action: Official source -> https://www.sba.gov/business-guide/plan-your-business/buy-existing-business-or-franchise
+Location: Online / see official page
+
+---
+
+# Pick your business location
+Type: blog
+API path: /api/sba/content/blogs/8025730732
+Parent path: /api/sba/content/blogs
+ID: 8025730732
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/launch-your-business/pick-your-business-location
+Action: Explore children -> /api/sba/content/blogs/8025730732
+Action: Official source -> https://www.sba.gov/business-guide/launch-your-business/pick-your-business-location
+Location: Online / see official page
+
+---
+
+# Choose a business structure
+Type: blog
+API path: /api/sba/content/blogs/8663283943
+Parent path: /api/sba/content/blogs
+ID: 8663283943
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/launch-your-business/choose-business-structure
+Action: Explore children -> /api/sba/content/blogs/8663283943
+Action: Official source -> https://www.sba.gov/business-guide/launch-your-business/choose-business-structure
+Location: Online / see official page
+
+---
+
+# Choose your business name
+Type: blog
+API path: /api/sba/content/blogs/5203542523
+Parent path: /api/sba/content/blogs
+ID: 5203542523
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/launch-your-business/choose-your-business-name
+Action: Explore children -> /api/sba/content/blogs/5203542523
+Action: Official source -> https://www.sba.gov/business-guide/launch-your-business/choose-your-business-name
+Location: Online / see official page
+
+---
+
+# Register your business
+Type: blog
+API path: /api/sba/content/blogs/6925463100
+Parent path: /api/sba/content/blogs
+ID: 6925463100
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/launch-your-business/register-your-business
+Action: Explore children -> /api/sba/content/blogs/6925463100
+Action: Official source -> https://www.sba.gov/business-guide/launch-your-business/register-your-business
+Location: Online / see official page
+
+---
+
+# Get federal and state tax ID numbers
+Type: blog
+API path: /api/sba/content/blogs/2026611826
+Parent path: /api/sba/content/blogs
+ID: 2026611826
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/launch-your-business/get-federal-state-tax-id-numbers
+Action: Explore children -> /api/sba/content/blogs/2026611826
+Action: Official source -> https://www.sba.gov/business-guide/launch-your-business/get-federal-state-tax-id-numbers
+Location: Online / see official page

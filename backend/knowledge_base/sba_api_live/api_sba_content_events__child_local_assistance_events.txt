@@ -1,0 +1,14 @@
+# Local counseling & training events
+Type: event
+API path: /api/sba/content/events/local-assistance-events
+Parent path: /api/sba/content/events
+ID: local-assistance-events
+
+Use the local assistance finder to discover partner-hosted classes and events.
+
+Official URL: https://www.sba.gov/local-assistance/find
+Registration URL: https://www.sba.gov/local-assistance/find
+Action: Explore children -> /api/sba/content/events/local-assistance-events
+Action: Register / RSVP -> https://www.sba.gov/local-assistance/find
+Action: Official source -> https://www.sba.gov/local-assistance/find
+Location: Local partners

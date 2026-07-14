@@ -1,0 +1,12 @@
+# SCORE mentoring & workshops
+Type: course
+API path: /api/sba/content/courses/score-mentoring
+Parent path: /api/sba/content/courses
+ID: score-mentoring
+
+Free mentoring and workshops through SCORE partners.
+
+Official URL: https://www.sba.gov/local-assistance/find
+Action: Explore children -> /api/sba/content/courses/score-mentoring
+Action: Official source -> https://www.sba.gov/local-assistance/find
+Location: Online / see official page

@@ -62,7 +62,9 @@ services:
       - ./frontend/public/favicon.ico:/usr/share/nginx/html/favicon.ico:ro
       - ./frontend/public/favicon.svg:/usr/share/nginx/html/favicon.svg:ro
       - ./frontend/public/logo.svg:/usr/share/nginx/html/logo.svg:ro
-      - ./frontend/public/logo.gif:/usr/share/nginx/html/logo.gif:ro
+      # Animated rotating yin-yang (canonical brand mark)
+      - ./frontend/public/images/yinyang.gif:/usr/share/nginx/html/logo.gif:ro
+      - ./frontend/public/images/yinyang.gif:/usr/share/nginx/html/images/yinyang.gif:ro
       - ./frontend/nginx.dev.conf:/etc/nginx/conf.d/default.conf:ro
     extra_hosts:
       - "host.docker.internal:host-gateway"

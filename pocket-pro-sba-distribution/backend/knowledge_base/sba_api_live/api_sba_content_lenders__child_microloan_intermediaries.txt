@@ -1,0 +1,12 @@
+# Microloan intermediaries
+Type: lender
+API path: /api/sba/content/lenders/microloan-intermediaries
+Parent path: /api/sba/content/lenders
+ID: microloan-intermediaries
+
+Nonprofit lenders offering microloans up to $50,000 plus technical assistance.
+
+Official URL: https://www.sba.gov/funding-programs/loans/microloans
+Action: Explore children -> /api/sba/content/lenders/microloan-intermediaries
+Action: Official source -> https://www.sba.gov/funding-programs/loans/microloans
+Location: Online / see official page

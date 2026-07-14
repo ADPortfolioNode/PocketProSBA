@@ -1,0 +1,14 @@
+# Financing readiness webinars
+Type: event
+API path: /api/sba/content/events/lender-match-webinars
+Parent path: /api/sba/content/events
+ID: lender-match-webinars
+
+Sessions that help owners prepare for Lender Match and SBA loans.
+
+Official URL: https://www.sba.gov/funding-programs/loans/lender-match
+Registration URL: https://www.sba.gov/funding-programs/loans/lender-match
+Action: Explore children -> /api/sba/content/events/lender-match-webinars
+Action: Register / RSVP -> https://www.sba.gov/funding-programs/loans/lender-match
+Action: Official source -> https://www.sba.gov/funding-programs/loans/lender-match
+Location: Online

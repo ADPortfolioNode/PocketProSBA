@@ -1,0 +1,12 @@
+# Manage your business courses
+Type: course
+API path: /api/sba/content/courses/manage-course
+Parent path: /api/sba/content/courses
+ID: manage-course
+
+Employees, taxes, insurance, and day-to-day operations.
+
+Official URL: https://www.sba.gov/business-guide/manage-your-business
+Action: Explore children -> /api/sba/content/courses/manage-course
+Action: Official source -> https://www.sba.gov/business-guide/manage-your-business
+Location: Online / see official page

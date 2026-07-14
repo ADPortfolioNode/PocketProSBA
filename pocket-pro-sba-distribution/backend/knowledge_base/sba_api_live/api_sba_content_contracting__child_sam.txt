@@ -1,0 +1,11 @@
+# Register in SAM.gov
+Type: tool
+API path: /api/sba/content/contracting/sam
+Parent path: /api/sba/content/contracting
+ID: sam
+
+Required registration to bid on federal contracts.
+
+Official URL: https://sam.gov/
+Action: Explore children -> /api/sba/content/contracting/sam
+Action: Official source -> https://sam.gov/

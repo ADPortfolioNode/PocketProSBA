@@ -1,0 +1,12 @@
+# Market research and competitive analysis
+Type: course
+API path: /api/sba/content/courses/6638053259
+Parent path: /api/sba/content/courses
+ID: 6638053259
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/plan-your-business/market-research-competitive-analysis
+Action: Explore children -> /api/sba/content/courses/6638053259
+Action: Official source -> https://www.sba.gov/business-guide/plan-your-business/market-research-competitive-analysis
+Location: Online / see official page

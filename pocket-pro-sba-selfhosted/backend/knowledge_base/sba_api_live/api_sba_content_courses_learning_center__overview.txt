@@ -1,0 +1,16 @@
+# SBA Learning Platform
+Source: SBA API endpoint response
+API route: /api/sba/content/courses/learning-center
+
+Access free online courses covering business planning, funding, marketing, and more. This topic currently surfaces 1 resource. Highlights include: SBA Learning Platform.
+
+Official URL: https://www.sba.gov/sba-learning-platform
+
+## Overview
+Access free online courses covering business planning, funding, marketing, and more. This topic currently surfaces 1 resource. Highlights include: SBA Learning Platform.
+
+## Resources
+1 curated / live resources for this topic.
+
+## How to use this page
+Click any card with an API badge to open that route’s results. Use type filters to focus. Open official links for full SBA.gov detail. Use Back to return to the previous topic.

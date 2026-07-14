@@ -1,0 +1,55 @@
+SBA LOAN CALCULATOR GUIDE - HOW TO ESTIMATE PAYMENTS
+
+LOAN PAYMENT CALCULATION FACTORS:
+- Loan Amount: Principal borrowed
+- Interest Rate: Annual percentage rate
+- Loan Term: Years to repay
+- Payment Frequency: Monthly standard
+
+SAMPLE CALCULATIONS:
+
+$100,000 LOAN EXAMPLES:
+- 7% interest, 10 years = $1,161/month
+- 8% interest, 7 years = $1,559/month
+- 9% interest, 5 years = $2,076/month
+
+$500,000 LOAN EXAMPLES:
+- 7% interest, 25 years = $3,534/month
+- 8% interest, 20 years = $4,182/month
+- 9% interest, 15 years = $5,071/month
+
+$1,000,000 LOAN EXAMPLES:
+- 7% interest, 25 years = $7,068/month
+- 8% interest, 20 years = $8,364/month
+- 9% interest, 15 years = $10,142/month
+
+DEBT SERVICE COVERAGE RATIO:
+- Formula: Net Operating Income / Annual Debt Service
+- SBA Requirement: 1.15x minimum
+- Example: $150,000 NOI / $130,435 debt service = 1.15x
+
+LOAN-TO-VALUE RATIOS:
+- Real Estate: Up to 90% LTV
+- Equipment: Up to 80% LTV
+- Business Acquisition: Up to 80% LTV
+- Working Capital: No specific LTV
+
+DOWN PAYMENT CALCULATOR:
+- 7(a) Loans: 10% minimum
+- 504 Loans: 10% borrower contribution
+- Example: $500,000 purchase = $50,000 down payment
+
+WORKING CAPITAL CALCULATION:
+- Formula: Current Assets - Current Liabilities
+- SBA considers working capital needs in loan sizing
+- Include 3-6 months operating expenses
+
+EQUIPMENT FINANCING:
+- Use equipment as collateral
+- Terms match equipment life (3-10 years)
+- Include soft costs (installation, training)
+
+REAL ESTATE FINANCING:
+- 25-year maximum term
+- Property must be 51% owner-occupied
+- Appraisal required for loans over $250,000

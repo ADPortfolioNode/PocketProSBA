@@ -1,0 +1,237 @@
+# Combined SBA API digest for /api/sba/content/loans/lender-match
+Retrieved children: 16
+Chunks: 17
+
+# Lender Match
+Source: SBA API endpoint response
+API route: /api/sba/content/loans/lender-match
+
+Before you start talking to lenders, have a look at the abbreviated checklist below to see if you're ready for a traditional SBA loan. We will prepare a summary of all the interested lenders two business days after you submit a Lender Match request. From there, you can start talking to lenders and/or complete the application they provide. Some will reach out to you, and you’re welcome to contact them as well. No, using Lender Match doesn't guarantee that you'll get matched… This topic currently surfaces 16 resources across 5 types. Highlights include: Lender Match; How this program is used; Next steps; Freedom 250 Small Business Pledge.
+
+Official URL: https://www.sba.gov/funding-programs/loans/lender-match
+
+## Overview
+Before you start talking to lenders, have a look at the abbreviated checklist below to see if you're ready for a traditional SBA loan. We will prepare a summary of all the interested lenders two business days after you submit a Lender Match request. From there, you can start talking to lenders and/or complete the application they provide. Some will reach out to you, and you’re welcome to contact them as well. No, using Lender Match doesn't guarantee that you'll get matched… This topic currently surfaces 16 resources across 5 types. Highlights include: Lender Match; How this program is used; Next steps; Freedom 250 Small Business Pledge.
+
+## Resources
+16 curated / live resources for this topic.
+
+## How to use this page
+Click any card with an API badge to open that route’s results. Use type filters to focus. Open official links for full SBA.gov detail. Use Back to return to the previous topic.
+
+---
+
+# Lender Match
+Type: loan_program
+Parent path: /api/sba/content/loans/lender-match
+ID: lender-match-overview
+
+Before you start talking to lenders, have a look at the abbreviated checklist below to see if you're ready for a traditional SBA loan. We will prepare a summary of all the interested lenders two business days after you submit a Lender Match request. From there, you can start talking to lenders and/or complete the application they provide. Some will reach out to you, and you’re welcome to contact them as well. No, using Lender Match doesn't guarantee that you'll get matched…
+
+Official URL: https://www.sba.gov/funding-programs/loans/lender-match
+Action: Official source -> https://www.sba.gov/funding-programs/loans/lender-match
+
+---
+
+# How this program is used
+Type: guidance
+Parent path: /api/sba/content/loans/lender-match
+ID: lender-match-how
+
+Use this program when the financing need matches the official use cases on sba.gov. Compare with sibling programs below, then use Lender Match or a local lender.
+
+Official URL: https://www.sba.gov/funding-programs/loans/lender-match
+Action: Official source -> https://www.sba.gov/funding-programs/loans/lender-match
+
+---
+
+# Next steps
+Type: guidance
+API path: /api/sba/content/lenders
+Parent path: /api/sba/content/loans/lender-match
+ID: lender-match-next
+
+1) Read the official program page. 2) Check eligibility themes. 3) Prepare financials. 4) Connect via Lender Match or an SBA lender.
+
+Official URL: https://www.sba.gov/funding-programs/loans/lender-match
+Action: Explore children -> /api/sba/content/lenders
+Action: Official source -> https://www.sba.gov/funding-programs/loans/lender-match
+
+---
+
+# Freedom 250 Small Business Pledge
+Type: loan_section
+Parent path: /api/sba/content/loans/lender-match
+ID: lender-match-sec-0
+
+Topic section from official page: Freedom 250 Small Business Pledge
+
+Official URL: https://www.sba.gov/funding-programs/loans/lender-match
+Action: Official source -> https://www.sba.gov/funding-programs/loans/lender-match
+
+---
+
+# Lender Match connects you to lenders
+Type: loan_section
+Parent path: /api/sba/content/loans/lender-match
+ID: lender-match-sec-4
+
+Topic section from official page: Lender Match connects you to lenders
+
+Official URL: https://www.sba.gov/funding-programs/loans/lender-match
+Action: Official source -> https://www.sba.gov/funding-programs/loans/lender-match
+
+---
+
+# How it works
+Type: loan_section
+Parent path: /api/sba/content/loans/lender-match
+ID: lender-match-sec-6
+
+Topic section from official page: How it works
+
+Official URL: https://www.sba.gov/funding-programs/loans/lender-match
+Action: Official source -> https://www.sba.gov/funding-programs/loans/lender-match
+
+---
+
+# 1. Describe your needs
+Type: loan_section
+Parent path: /api/sba/content/loans/lender-match
+ID: lender-match-sec-7
+
+Topic section from official page: 1. Describe your needs
+
+Official URL: https://www.sba.gov/funding-programs/loans/lender-match
+Action: Official source -> https://www.sba.gov/funding-programs/loans/lender-match
+
+---
+
+# SBA 7(a) loans
+Type: related_loan
+API path: /api/sba/content/loans/7a
+Parent path: /api/sba/content/loans/lender-match
+ID: 7a
+
+Related loan resource: SBA 7(a) loans
+
+Official URL: https://www.sba.gov/funding-programs/loans/7a-loans
+Action: Explore children -> /api/sba/content/loans/7a
+Action: Official source -> https://www.sba.gov/funding-programs/loans/7a-loans
+
+---
+
+# SBA 504 loans
+Type: related_loan
+API path: /api/sba/content/loans/504
+Parent path: /api/sba/content/loans/lender-match
+ID: 504
+
+Related loan resource: SBA 504 loans
+
+Official URL: https://www.sba.gov/funding-programs/loans/504-loans
+Action: Explore children -> /api/sba/content/loans/504
+Action: Official source -> https://www.sba.gov/funding-programs/loans/504-loans
+
+---
+
+# SBA Microloans
+Type: related_loan
+API path: /api/sba/content/loans/microloans
+Parent path: /api/sba/content/loans/lender-match
+ID: microloans
+
+Related loan resource: SBA Microloans
+
+Official URL: https://www.sba.gov/funding-programs/loans/microloans
+Action: Explore children -> /api/sba/content/loans/microloans
+Action: Official source -> https://www.sba.gov/funding-programs/loans/microloans
+
+---
+
+# All SBA loans
+Type: related_loan
+API path: /api/sba/content/loans/loans_hub
+Parent path: /api/sba/content/loans/lender-match
+ID: loans_hub
+
+Related loan resource: All SBA loans
+
+Official URL: https://www.sba.gov/funding-programs/loans
+Action: Explore children -> /api/sba/content/loans/loans_hub
+Action: Official source -> https://www.sba.gov/funding-programs/loans
+
+---
+
+# SBA 7(a) loans
+Type: loan_program
+API path: /api/sba/content/loans/7a
+Parent path: /api/sba/content/loans
+ID: 7a
+
+The 7(a) Loan Program, SBA’s primary business loan program, provides loan guaranties to lenders that allow them to provide financial help for small businesses with special requirements. The maximum loan amount for a 7(a) loan is $5 million. Key eligibility factors are based on what the business does to receive its income, its credit history, and where the business operates. Your lender will help you figure out which type of loan is best suited for your needs. This also…
+
+Official URL: https://www.sba.gov/funding-programs/loans/7a-loans
+Action: Explore children -> /api/sba/content/loans/7a
+Action: Official source -> https://www.sba.gov/funding-programs/loans/7a-loans
+Location: Online / see official page
+
+---
+
+# SBA 504 loans
+Type: loan_program
+API path: /api/sba/content/loans/504
+Parent path: /api/sba/content/loans
+ID: 504
+
+The 504 loan program provides long-term, fixed rate financing for major fixed assets that promote business growth and job creation. 504 loans are available through Certified Development Companies (CDCs), SBA's community-based nonprofit partners who promote economic development within their communities. CDCs are certified and regulated by SBA. The maximum loan amount for a 504 loan is $5.5 million. To be eligible for a 504 loan, your business must: Share sensitive…
+
+Official URL: https://www.sba.gov/funding-programs/loans/504-loans
+Action: Explore children -> /api/sba/content/loans/504
+Action: Official source -> https://www.sba.gov/funding-programs/loans/504-loans
+Location: Online / see official page
+
+---
+
+# SBA Microloans
+Type: loan_program
+API path: /api/sba/content/loans/microloans
+Parent path: /api/sba/content/loans
+ID: microloans
+
+The microloan program provides loans up to $50,000 to help small businesses and certain not-for-profit childcare centers start up and expand. SBA provides funds to specially designated intermediary lenders, which are nonprofit community-based organizations with experience in lending as well as management and technical assistance. These intermediaries administer the Microloan program for eligible borrowers. Each intermediary lender has its own lending and credit…
+
+Official URL: https://www.sba.gov/funding-programs/loans/microloans
+Action: Explore children -> /api/sba/content/loans/microloans
+Action: Official source -> https://www.sba.gov/funding-programs/loans/microloans
+Location: Online / see official page
+
+---
+
+# SBA-backed loans overview
+Type: loan_program
+API path: /api/sba/content/loans/loans_hub
+Parent path: /api/sba/content/loans
+ID: loans_hub
+
+Find out which SBA-guaranteed loan program is best for your business, then use Lender Match to be matched to lenders. Small Business Administration (SBA) helps small businesses get funding by setting guidelines for loans and reducing lender risk. These SBA-backed loans make it easier for small businesses to get the funding they need. Share sensitive information only on official, secure websites. SBA only makes direct loans in the case of businesses and homeowners recovering…
+
+Official URL: https://www.sba.gov/funding-programs/loans
+Action: Explore children -> /api/sba/content/loans/loans_hub
+Action: Official source -> https://www.sba.gov/funding-programs/loans
+Location: Online / see official page
+
+---
+
+# Establish business credit
+Type: loan
+API path: /api/sba/content/loans/3665176103
+Parent path: /api/sba/content/loans
+ID: 3665176103
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/plan-your-business/establish-business-credit
+Action: Explore children -> /api/sba/content/loans/3665176103
+Action: Official source -> https://www.sba.gov/business-guide/plan-your-business/establish-business-credit
+Location: Online / see official page

@@ -1,0 +1,11 @@
+# Market research & competitive analysis
+Type: guide
+API path: /api/sba/lifecycle/plan/market-research-&-competitive-analysis
+Parent path: /api/sba/lifecycle/plan
+ID: market-research-&-competitive-analysis
+
+Validate demand and competitors before you invest.
+
+Official URL: https://www.sba.gov/business-guide/plan-your-business/market-research-competitive-analysis
+Action: Explore children -> /api/sba/lifecycle/plan/market-research-&-competitive-analysis
+Action: Official source -> https://www.sba.gov/business-guide/plan-your-business/market-research-competitive-analysis

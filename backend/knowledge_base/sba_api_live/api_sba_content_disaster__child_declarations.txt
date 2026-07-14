@@ -1,0 +1,11 @@
+# Current disaster declarations
+Type: tool
+API path: /api/sba/content/disaster/declarations
+Parent path: /api/sba/content/disaster
+ID: declarations
+
+Check if your area has an active SBA disaster declaration.
+
+Official URL: https://www.sba.gov/funding-programs/disaster-assistance
+Action: Explore children -> /api/sba/content/disaster/declarations
+Action: Official source -> https://www.sba.gov/funding-programs/disaster-assistance

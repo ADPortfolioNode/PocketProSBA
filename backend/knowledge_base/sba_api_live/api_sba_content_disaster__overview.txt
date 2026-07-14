@@ -1,0 +1,16 @@
+# Disaster Assistance
+Source: SBA API endpoint response
+API route: /api/sba/content/disaster
+
+SBA disaster loan types and recovery resources. Click a child to explore it as the next parent. This topic currently surfaces 6 resources across 3 types. Highlights include: SBA disaster loans; Business physical disaster loans; Economic Injury Disaster Loans (EIDL); Home and personal property loans.
+
+Official URL: https://www.sba.gov/funding-programs/disaster-assistance
+
+## Overview
+SBA disaster loan types and recovery resources. Click a child to explore it as the next parent. This topic currently surfaces 6 resources across 3 types. Highlights include: SBA disaster loans; Business physical disaster loans; Economic Injury Disaster Loans (EIDL); Home and personal property loans.
+
+## Resources
+6 curated / live resources for this topic.
+
+## How to use this page
+Click any card with an API badge to open that route’s results. Use type filters to focus. Open official links for full SBA.gov detail. Use Back to return to the previous topic.

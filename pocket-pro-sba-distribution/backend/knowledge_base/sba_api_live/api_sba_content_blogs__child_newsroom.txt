@@ -1,0 +1,12 @@
+# SBA newsroom
+Type: blog
+API path: /api/sba/content/blogs/newsroom
+Parent path: /api/sba/content/blogs
+ID: newsroom
+
+Press releases and media advisories from the SBA.
+
+Official URL: https://www.sba.gov/about-sba/sba-newsroom/press-releases-media-advisories
+Action: Explore children -> /api/sba/content/blogs/newsroom
+Action: Official source -> https://www.sba.gov/about-sba/sba-newsroom/press-releases-media-advisories
+Location: Online / see official page

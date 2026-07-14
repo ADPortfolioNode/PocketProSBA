@@ -1,0 +1,318 @@
+# Combined SBA API digest for /api/sba/content/courses
+Retrieved children: 20
+Chunks: 21
+
+# Courses
+Source: SBA API endpoint response
+API route: /api/sba/content/courses
+
+Course cards from official SBA learning resources plus live sba.gov links. This topic currently surfaces 20 resources. Highlights include: SBA Learning Platform; Plan your business courses; Fund your business courses; Launch your business courses.
+
+## Overview
+Course cards from official SBA learning resources plus live sba.gov links. This topic currently surfaces 20 resources. Highlights include: SBA Learning Platform; Plan your business courses; Fund your business courses; Launch your business courses.
+
+## Resources
+20 curated / live resources for this topic.
+
+## How to use this page
+Click any card with an API badge to open that route’s results. Use type filters to focus. Open official links for full SBA.gov detail. Use Back to return to the previous topic.
+
+---
+
+# SBA Learning Platform
+Type: course
+API path: /api/sba/content/courses/learning-center
+Parent path: /api/sba/content/courses
+ID: learning-center
+
+Access free online courses covering business planning, funding, marketing, and more.
+
+Official URL: https://www.sba.gov/sba-learning-platform
+Action: Explore children -> /api/sba/content/courses/learning-center
+Action: Official source -> https://www.sba.gov/sba-learning-platform
+Location: Online / see official page
+
+---
+
+# Plan your business courses
+Type: course
+API path: /api/sba/content/courses/plan-course
+Parent path: /api/sba/content/courses
+ID: plan-course
+
+Official SBA business-guide learning path for planning a venture.
+
+Official URL: https://www.sba.gov/business-guide/plan-your-business
+Action: Explore children -> /api/sba/content/courses/plan-course
+Action: Official source -> https://www.sba.gov/business-guide/plan-your-business
+Location: Online / see official page
+
+---
+
+# Fund your business courses
+Type: course
+API path: /api/sba/content/courses/fund-course
+Parent path: /api/sba/content/courses
+ID: fund-course
+
+Learning content tied to SBA funding programs and Lender Match.
+
+Official URL: https://www.sba.gov/business-guide/grow-your-business/fund-your-business
+Action: Explore children -> /api/sba/content/courses/fund-course
+Action: Official source -> https://www.sba.gov/business-guide/grow-your-business/fund-your-business
+Location: Online / see official page
+
+---
+
+# Launch your business courses
+Type: course
+API path: /api/sba/content/courses/launch-course
+Parent path: /api/sba/content/courses
+ID: launch-course
+
+Registration, licenses, and first-customer readiness.
+
+Official URL: https://www.sba.gov/business-guide/launch-your-business
+Action: Explore children -> /api/sba/content/courses/launch-course
+Action: Official source -> https://www.sba.gov/business-guide/launch-your-business
+Location: Online / see official page
+
+---
+
+# Manage your business courses
+Type: course
+API path: /api/sba/content/courses/manage-course
+Parent path: /api/sba/content/courses
+ID: manage-course
+
+Employees, taxes, insurance, and day-to-day operations.
+
+Official URL: https://www.sba.gov/business-guide/manage-your-business
+Action: Explore children -> /api/sba/content/courses/manage-course
+Action: Official source -> https://www.sba.gov/business-guide/manage-your-business
+Location: Online / see official page
+
+---
+
+# Federal contracting basics
+Type: course
+API path: /api/sba/content/courses/contracting-course
+Parent path: /api/sba/content/courses
+ID: contracting-course
+
+Learn how small businesses sell to the government.
+
+Official URL: https://www.sba.gov/federal-contracting
+Action: Explore children -> /api/sba/content/courses/contracting-course
+Action: Official source -> https://www.sba.gov/federal-contracting
+Location: Online / see official page
+
+---
+
+# SCORE mentoring & workshops
+Type: course
+API path: /api/sba/content/courses/score-mentoring
+Parent path: /api/sba/content/courses
+ID: score-mentoring
+
+Free mentoring and workshops through SCORE partners.
+
+Official URL: https://www.sba.gov/local-assistance/find
+Action: Explore children -> /api/sba/content/courses/score-mentoring
+Action: Official source -> https://www.sba.gov/local-assistance/find
+Location: Online / see official page
+
+---
+
+# 10 steps to start your business
+Type: course
+API path: /api/sba/content/courses/9528503887
+Parent path: /api/sba/content/courses
+ID: 9528503887
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/10-steps-start-your-business
+Action: Explore children -> /api/sba/content/courses/9528503887
+Action: Official source -> https://www.sba.gov/business-guide/10-steps-start-your-business
+Location: Online / see official page
+
+---
+
+# Market research and competitive analysis
+Type: course
+API path: /api/sba/content/courses/7394118830
+Parent path: /api/sba/content/courses
+ID: 7394118830
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/plan-your-business/market-research-competitive-analysis
+Action: Explore children -> /api/sba/content/courses/7394118830
+Action: Official source -> https://www.sba.gov/business-guide/plan-your-business/market-research-competitive-analysis
+Location: Online / see official page
+
+---
+
+# Write your business plan
+Type: course
+API path: /api/sba/content/courses/1958740143
+Parent path: /api/sba/content/courses
+ID: 1958740143
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/plan-your-business/write-your-business-plan
+Action: Explore children -> /api/sba/content/courses/1958740143
+Action: Official source -> https://www.sba.gov/business-guide/plan-your-business/write-your-business-plan
+Location: Online / see official page
+
+---
+
+# Calculate your startup costs
+Type: course
+API path: /api/sba/content/courses/3307915421
+Parent path: /api/sba/content/courses
+ID: 3307915421
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/plan-your-business/calculate-your-startup-costs
+Action: Explore children -> /api/sba/content/courses/3307915421
+Action: Official source -> https://www.sba.gov/business-guide/plan-your-business/calculate-your-startup-costs
+Location: Online / see official page
+
+---
+
+# Establish business credit
+Type: course
+API path: /api/sba/content/courses/4889663380
+Parent path: /api/sba/content/courses
+ID: 4889663380
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/plan-your-business/establish-business-credit
+Action: Explore children -> /api/sba/content/courses/4889663380
+Action: Official source -> https://www.sba.gov/business-guide/plan-your-business/establish-business-credit
+Location: Online / see official page
+
+---
+
+# Fund your business
+Type: course
+API path: /api/sba/content/courses/4403852690
+Parent path: /api/sba/content/courses
+ID: 4403852690
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/plan-your-business/fund-your-business
+Action: Explore children -> /api/sba/content/courses/4403852690
+Action: Official source -> https://www.sba.gov/business-guide/plan-your-business/fund-your-business
+Location: Online / see official page
+
+---
+
+# Buy an existing business or franchise
+Type: course
+API path: /api/sba/content/courses/4670763421
+Parent path: /api/sba/content/courses
+ID: 4670763421
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/plan-your-business/buy-existing-business-or-franchise
+Action: Explore children -> /api/sba/content/courses/4670763421
+Action: Official source -> https://www.sba.gov/business-guide/plan-your-business/buy-existing-business-or-franchise
+Location: Online / see official page
+
+---
+
+# Pick your business location
+Type: course
+API path: /api/sba/content/courses/3061112058
+Parent path: /api/sba/content/courses
+ID: 3061112058
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/launch-your-business/pick-your-business-location
+Action: Explore children -> /api/sba/content/courses/3061112058
+Action: Official source -> https://www.sba.gov/business-guide/launch-your-business/pick-your-business-location
+Location: Online / see official page
+
+---
+
+# Choose a business structure
+Type: course
+API path: /api/sba/content/courses/8314009974
+Parent path: /api/sba/content/courses
+ID: 8314009974
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/launch-your-business/choose-business-structure
+Action: Explore children -> /api/sba/content/courses/8314009974
+Action: Official source -> https://www.sba.gov/business-guide/launch-your-business/choose-business-structure
+Location: Online / see official page
+
+---
+
+# Choose your business name
+Type: course
+API path: /api/sba/content/courses/9906077011
+Parent path: /api/sba/content/courses
+ID: 9906077011
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/launch-your-business/choose-your-business-name
+Action: Explore children -> /api/sba/content/courses/9906077011
+Action: Official source -> https://www.sba.gov/business-guide/launch-your-business/choose-your-business-name
+Location: Online / see official page
+
+---
+
+# Register your business
+Type: course
+API path: /api/sba/content/courses/750790882
+Parent path: /api/sba/content/courses
+ID: 750790882
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/launch-your-business/register-your-business
+Action: Explore children -> /api/sba/content/courses/750790882
+Action: Official source -> https://www.sba.gov/business-guide/launch-your-business/register-your-business
+Location: Online / see official page
+
+---
+
+# Get federal and state tax ID numbers
+Type: course
+API path: /api/sba/content/courses/3403994094
+Parent path: /api/sba/content/courses
+ID: 3403994094
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/launch-your-business/get-federal-state-tax-id-numbers
+Action: Explore children -> /api/sba/content/courses/3403994094
+Action: Official source -> https://www.sba.gov/business-guide/launch-your-business/get-federal-state-tax-id-numbers
+Location: Online / see official page
+
+---
+
+# Apply for licenses and permits
+Type: course
+API path: /api/sba/content/courses/8343007217
+Parent path: /api/sba/content/courses
+ID: 8343007217
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/launch-your-business/apply-licenses-permits
+Action: Explore children -> /api/sba/content/courses/8343007217
+Action: Official source -> https://www.sba.gov/business-guide/launch-your-business/apply-licenses-permits
+Location: Online / see official page

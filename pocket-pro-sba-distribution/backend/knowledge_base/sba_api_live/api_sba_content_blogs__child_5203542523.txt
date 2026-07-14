@@ -1,0 +1,12 @@
+# Choose your business name
+Type: blog
+API path: /api/sba/content/blogs/5203542523
+Parent path: /api/sba/content/blogs
+ID: 5203542523
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/launch-your-business/choose-your-business-name
+Action: Explore children -> /api/sba/content/blogs/5203542523
+Action: Official source -> https://www.sba.gov/business-guide/launch-your-business/choose-your-business-name
+Location: Online / see official page

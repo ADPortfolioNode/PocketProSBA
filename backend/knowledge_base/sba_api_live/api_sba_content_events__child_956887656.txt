@@ -1,0 +1,14 @@
+# Establish business credit
+Type: event
+API path: /api/sba/content/events/956887656
+Parent path: /api/sba/content/events
+ID: 956887656
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/plan-your-business/establish-business-credit
+Registration URL: https://www.sba.gov/business-guide/plan-your-business/establish-business-credit
+Action: Explore children -> /api/sba/content/events/956887656
+Action: Register / RSVP -> https://www.sba.gov/business-guide/plan-your-business/establish-business-credit
+Action: Official source -> https://www.sba.gov/business-guide/plan-your-business/establish-business-credit
+Location: Online / see official page

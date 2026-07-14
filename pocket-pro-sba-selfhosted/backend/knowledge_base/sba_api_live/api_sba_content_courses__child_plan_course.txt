@@ -1,0 +1,12 @@
+# Plan your business courses
+Type: course
+API path: /api/sba/content/courses/plan-course
+Parent path: /api/sba/content/courses
+ID: plan-course
+
+Official SBA business-guide learning path for planning a venture.
+
+Official URL: https://www.sba.gov/business-guide/plan-your-business
+Action: Explore children -> /api/sba/content/courses/plan-course
+Action: Official source -> https://www.sba.gov/business-guide/plan-your-business
+Location: Online / see official page

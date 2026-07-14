@@ -1,0 +1,12 @@
+# Fund your business
+Type: blog
+API path: /api/sba/content/blogs/597498504
+Parent path: /api/sba/content/blogs
+ID: 597498504
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/plan-your-business/fund-your-business
+Action: Explore children -> /api/sba/content/blogs/597498504
+Action: Official source -> https://www.sba.gov/business-guide/plan-your-business/fund-your-business
+Location: Online / see official page

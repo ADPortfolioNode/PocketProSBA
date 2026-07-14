@@ -1,0 +1,9 @@
+# About Start a business
+Type: overview
+Parent path: /api/sba/content/articles/guide-start
+ID: guide-start-overview
+
+Plan and launch path — assigned guides for starting a small business.
+
+Official URL: https://www.sba.gov/business-guide
+Action: Official source -> https://www.sba.gov/business-guide

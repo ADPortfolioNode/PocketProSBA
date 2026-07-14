@@ -1,0 +1,12 @@
+# SBA Learning Platform
+Type: course
+API path: /api/sba/content/courses/learning-center/learning-center
+Parent path: /api/sba/content/courses/learning-center
+ID: learning-center
+
+Access free online courses covering business planning, funding, marketing, and more.
+
+Official URL: https://www.sba.gov/sba-learning-platform
+Action: Explore children -> /api/sba/content/courses/learning-center/learning-center
+Action: Official source -> https://www.sba.gov/sba-learning-platform
+Location: Online / see official page

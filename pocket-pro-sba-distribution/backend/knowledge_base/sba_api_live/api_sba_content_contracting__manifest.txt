@@ -1,0 +1,14 @@
+route=/api/sba/content/contracting
+chunks=10
+files=10
+updated=2026-07-12T15:43:13Z
+/app/backend/knowledge_base/sba_api_live/api_sba_content_contracting__combined.txt
+/app/backend/knowledge_base/sba_api_live/api_sba_content_contracting__overview.txt
+/app/backend/knowledge_base/sba_api_live/api_sba_content_contracting__child_8a.txt
+/app/backend/knowledge_base/sba_api_live/api_sba_content_contracting__child_hubzone.txt
+/app/backend/knowledge_base/sba_api_live/api_sba_content_contracting__child_wosb.txt
+/app/backend/knowledge_base/sba_api_live/api_sba_content_contracting__child_sdvosb.txt
+/app/backend/knowledge_base/sba_api_live/api_sba_content_contracting__child_size_standards.txt
+/app/backend/knowledge_base/sba_api_live/api_sba_content_contracting__child_contracting_guide.txt
+/app/backend/knowledge_base/sba_api_live/api_sba_content_contracting__child_sam.txt
+/app/backend/knowledge_base/sba_api_live/api_sba_content_contracting__child_subcontracting.txt

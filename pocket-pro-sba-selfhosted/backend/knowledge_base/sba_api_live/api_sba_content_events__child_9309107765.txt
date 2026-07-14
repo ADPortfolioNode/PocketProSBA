@@ -1,0 +1,14 @@
+# Choose a business structure
+Type: event
+API path: /api/sba/content/events/9309107765
+Parent path: /api/sba/content/events
+ID: 9309107765
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/launch-your-business/choose-business-structure
+Registration URL: https://www.sba.gov/business-guide/launch-your-business/choose-business-structure
+Action: Explore children -> /api/sba/content/events/9309107765
+Action: Register / RSVP -> https://www.sba.gov/business-guide/launch-your-business/choose-business-structure
+Action: Official source -> https://www.sba.gov/business-guide/launch-your-business/choose-business-structure
+Location: Online / see official page

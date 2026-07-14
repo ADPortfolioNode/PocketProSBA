@@ -1,0 +1,14 @@
+# Plan your business
+Type: event
+API path: /api/sba/content/events/6108298546
+Parent path: /api/sba/content/events
+ID: 6108298546
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/plan-your-business
+Registration URL: https://www.sba.gov/business-guide/plan-your-business
+Action: Explore children -> /api/sba/content/events/6108298546
+Action: Register / RSVP -> https://www.sba.gov/business-guide/plan-your-business
+Action: Official source -> https://www.sba.gov/business-guide/plan-your-business
+Location: Online / see official page

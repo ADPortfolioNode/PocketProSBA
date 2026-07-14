@@ -1,0 +1,12 @@
+# 10 steps to start your business
+Type: article
+API path: /api/sba/content/articles/9528503887
+Parent path: /api/sba/content/articles
+ID: 9528503887
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/10-steps-start-your-business
+Action: Explore children -> /api/sba/content/articles/9528503887
+Action: Official source -> https://www.sba.gov/business-guide/10-steps-start-your-business
+Location: Online / see official page

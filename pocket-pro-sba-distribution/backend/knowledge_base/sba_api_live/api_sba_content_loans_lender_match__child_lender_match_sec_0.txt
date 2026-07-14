@@ -1,0 +1,9 @@
+# Freedom 250 Small Business Pledge
+Type: loan_section
+Parent path: /api/sba/content/loans/lender-match
+ID: lender-match-sec-0
+
+Topic section from official page: Freedom 250 Small Business Pledge
+
+Official URL: https://www.sba.gov/funding-programs/loans/lender-match
+Action: Official source -> https://www.sba.gov/funding-programs/loans/lender-match

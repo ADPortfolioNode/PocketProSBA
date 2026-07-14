@@ -1,0 +1,11 @@
+# How to apply
+Type: guide
+API path: /api/sba/content/disaster/apply
+Parent path: /api/sba/content/disaster
+ID: apply
+
+Steps and documents needed to apply for SBA disaster assistance.
+
+Official URL: https://www.sba.gov/funding-programs/disaster-assistance
+Action: Explore children -> /api/sba/content/disaster/apply
+Action: Official source -> https://www.sba.gov/funding-programs/disaster-assistance

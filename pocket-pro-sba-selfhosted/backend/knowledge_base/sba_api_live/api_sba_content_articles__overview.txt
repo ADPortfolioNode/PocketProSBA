@@ -1,0 +1,14 @@
+# Articles
+Source: SBA API endpoint response
+API route: /api/sba/content/articles
+
+Article/guide cards from official SBA business-guide pages. This topic currently surfaces 20 resources across 2 types. Highlights include: Start a business; Plan your business; Launch your business; Manage your business.
+
+## Overview
+Article/guide cards from official SBA business-guide pages. This topic currently surfaces 20 resources across 2 types. Highlights include: Start a business; Plan your business; Launch your business; Manage your business.
+
+## Resources
+20 curated / live resources for this topic.
+
+## How to use this page
+Click any card with an API badge to open that route’s results. Use type filters to focus. Open official links for full SBA.gov detail. Use Back to return to the previous topic.

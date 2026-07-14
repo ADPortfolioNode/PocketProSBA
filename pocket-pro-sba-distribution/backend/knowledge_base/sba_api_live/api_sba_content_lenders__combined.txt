@@ -1,0 +1,108 @@
+# Combined SBA API digest for /api/sba/content/lenders
+Retrieved children: 6
+Chunks: 7
+
+# Lenders
+Source: SBA API endpoint response
+API route: /api/sba/content/lenders
+
+Lenders API unavailable; showing Lender Match and financing partner cards. This topic currently surfaces 6 resources across 2 types. Highlights include: Lender Match; 7(a) participating lenders; 504 Certified Development Companies; Microloan intermediaries.
+
+## Overview
+Lenders API unavailable; showing Lender Match and financing partner cards. This topic currently surfaces 6 resources across 2 types. Highlights include: Lender Match; 7(a) participating lenders; 504 Certified Development Companies; Microloan intermediaries.
+
+## Resources
+6 curated / live resources for this topic.
+
+## How to use this page
+Click any card with an API badge to open that route’s results. Use type filters to focus. Open official links for full SBA.gov detail. Use Back to return to the previous topic.
+
+---
+
+# Lender Match
+Type: lender_tool
+API path: /api/sba/content/lenders/lender-match
+Parent path: /api/sba/content/lenders
+ID: lender-match
+
+Answer a short questionnaire and get connected with SBA lenders interested in your request.
+
+Official URL: https://www.sba.gov/funding-programs/loans/lender-match
+Action: Explore children -> /api/sba/content/lenders/lender-match
+Action: Official source -> https://www.sba.gov/funding-programs/loans/lender-match
+Location: Online / see official page
+
+---
+
+# 7(a) participating lenders
+Type: lender
+API path: /api/sba/content/lenders/7a-lenders
+Parent path: /api/sba/content/lenders
+ID: 7a-lenders
+
+Community banks and CDFIs that deliver SBA 7(a) loans.
+
+Official URL: https://www.sba.gov/funding-programs/loans/7a-loans
+Action: Explore children -> /api/sba/content/lenders/7a-lenders
+Action: Official source -> https://www.sba.gov/funding-programs/loans/7a-loans
+Location: Online / see official page
+
+---
+
+# 504 Certified Development Companies
+Type: lender
+API path: /api/sba/content/lenders/504-cdc
+Parent path: /api/sba/content/lenders
+ID: 504-cdc
+
+CDCs partner with banks on fixed-asset 504 projects.
+
+Official URL: https://www.sba.gov/funding-programs/loans/504-loans
+Action: Explore children -> /api/sba/content/lenders/504-cdc
+Action: Official source -> https://www.sba.gov/funding-programs/loans/504-loans
+Location: Online / see official page
+
+---
+
+# Microloan intermediaries
+Type: lender
+API path: /api/sba/content/lenders/microloan-intermediaries
+Parent path: /api/sba/content/lenders
+ID: microloan-intermediaries
+
+Nonprofit lenders offering microloans up to $50,000 plus technical assistance.
+
+Official URL: https://www.sba.gov/funding-programs/loans/microloans
+Action: Explore children -> /api/sba/content/lenders/microloan-intermediaries
+Action: Official source -> https://www.sba.gov/funding-programs/loans/microloans
+Location: Online / see official page
+
+---
+
+# Mission-oriented lenders
+Type: lender
+API path: /api/sba/content/lenders/community-advantage
+Parent path: /api/sba/content/lenders
+ID: community-advantage
+
+Lenders focused on underserved markets and smaller loan sizes.
+
+Official URL: https://www.sba.gov/funding-programs/loans
+Action: Explore children -> /api/sba/content/lenders/community-advantage
+Action: Official source -> https://www.sba.gov/funding-programs/loans
+Location: Online / see official page
+
+---
+
+# Export financing lenders
+Type: lender
+API path: /api/sba/content/lenders/export-lenders
+Parent path: /api/sba/content/lenders
+ID: export-lenders
+
+SBA export working capital and international trade loan specialists.
+
+Official URL: https://www.sba.gov/funding-programs/loans
+Action: Explore children -> /api/sba/content/lenders/export-lenders
+Action: Official source -> https://www.sba.gov/funding-programs/loans
+Location: Online / see official page

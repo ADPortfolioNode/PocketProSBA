@@ -1,0 +1,12 @@
+# 7(a) participating lenders
+Type: lender
+API path: /api/sba/content/lenders/7a-lenders
+Parent path: /api/sba/content/lenders
+ID: 7a-lenders
+
+Community banks and CDFIs that deliver SBA 7(a) loans.
+
+Official URL: https://www.sba.gov/funding-programs/loans/7a-loans
+Action: Explore children -> /api/sba/content/lenders/7a-lenders
+Action: Official source -> https://www.sba.gov/funding-programs/loans/7a-loans
+Location: Online / see official page

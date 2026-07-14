@@ -1,0 +1,12 @@
+# SBA blog
+Type: blog
+API path: /api/sba/content/blogs/blog-hub
+Parent path: /api/sba/content/blogs
+ID: blog-hub
+
+Official SBA blog posts and small-business stories.
+
+Official URL: https://www.sba.gov/blog
+Action: Explore children -> /api/sba/content/blogs/blog-hub
+Action: Official source -> https://www.sba.gov/blog
+Location: Online / see official page

@@ -1,0 +1,11 @@
+# Calculate startup costs
+Type: guide
+API path: /api/sba/lifecycle/start/calculate-startup-costs
+Parent path: /api/sba/lifecycle/start
+ID: calculate-startup-costs
+
+Estimate one-time and monthly costs before you open.
+
+Official URL: https://www.sba.gov/business-guide/plan-your-business/calculate-your-startup-costs
+Action: Explore children -> /api/sba/lifecycle/start/calculate-startup-costs
+Action: Official source -> https://www.sba.gov/business-guide/plan-your-business/calculate-your-startup-costs

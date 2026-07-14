@@ -103,7 +103,7 @@ a:hover {
   flex-shrink: 0;
   box-shadow: 0 0 0 3px var(--pp-blue-soft);
   background: #ffffff;
-  object-fit: cover;
+  object-fit: contain; /* yin-yang full disk; CSS spin provides rotation */
 }
 
 /* Fallback mark when image fails */
@@ -746,4 +746,20 @@ footer.app-footer {
     padding-top: 0.35rem;
     padding-bottom: 0.35rem;
   }
+}
+
+/* Rotating yin-yang brand (matches original animated logo) */
+@keyframes pp-yinyang-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.pp-logo-img,
+.pp-logo-animated {
+  animation: pp-yinyang-spin 6s linear infinite;
+  transform-origin: 50% 50%;
+  object-fit: contain;
+  border-radius: 50%;
+}
+@media (prefers-reduced-motion: reduce) {
+  .pp-logo-img, .pp-logo-animated { animation: none; }
 }

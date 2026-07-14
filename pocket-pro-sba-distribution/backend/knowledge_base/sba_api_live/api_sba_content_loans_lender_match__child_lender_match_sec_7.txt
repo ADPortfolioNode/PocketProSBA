@@ -1,0 +1,9 @@
+# 1. Describe your needs
+Type: loan_section
+Parent path: /api/sba/content/loans/lender-match
+ID: lender-match-sec-7
+
+Topic section from official page: 1. Describe your needs
+
+Official URL: https://www.sba.gov/funding-programs/loans/lender-match
+Action: Official source -> https://www.sba.gov/funding-programs/loans/lender-match

@@ -1,0 +1,12 @@
+# Fund your business courses
+Type: course
+API path: /api/sba/content/courses/fund-course/fund-course
+Parent path: /api/sba/content/courses/fund-course
+ID: fund-course
+
+Learning content tied to SBA funding programs and Lender Match.
+
+Official URL: https://www.sba.gov/business-guide/grow-your-business/fund-your-business
+Action: Explore children -> /api/sba/content/courses/fund-course/fund-course
+Action: Official source -> https://www.sba.gov/business-guide/grow-your-business/fund-your-business
+Location: Online / see official page

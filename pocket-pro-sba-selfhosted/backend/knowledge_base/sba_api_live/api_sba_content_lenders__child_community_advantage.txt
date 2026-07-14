@@ -1,0 +1,12 @@
+# Mission-oriented lenders
+Type: lender
+API path: /api/sba/content/lenders/community-advantage
+Parent path: /api/sba/content/lenders
+ID: community-advantage
+
+Lenders focused on underserved markets and smaller loan sizes.
+
+Official URL: https://www.sba.gov/funding-programs/loans
+Action: Explore children -> /api/sba/content/lenders/community-advantage
+Action: Official source -> https://www.sba.gov/funding-programs/loans
+Location: Online / see official page

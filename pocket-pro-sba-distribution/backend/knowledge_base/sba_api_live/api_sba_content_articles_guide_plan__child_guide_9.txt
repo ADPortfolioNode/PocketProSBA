@@ -1,0 +1,12 @@
+# 504 loans guide
+Type: guide
+API path: /api/sba/content/articles/guide-9
+Parent path: /api/sba/content/articles
+ID: guide-9
+
+SBA 504 fixed-asset financing guide.
+
+Official URL: https://www.sba.gov/funding-programs/loans/504-loans
+Action: Explore children -> /api/sba/content/articles/guide-9
+Action: Official source -> https://www.sba.gov/funding-programs/loans/504-loans
+Location: Online / see official page

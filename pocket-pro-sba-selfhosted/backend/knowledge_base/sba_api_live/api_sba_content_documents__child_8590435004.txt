@@ -1,0 +1,10 @@
+# Pick your business location
+Type: document
+API path: /api/sba/content/documents/8590435004
+Parent path: /api/sba/content/documents
+ID: 8590435004
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/launch-your-business/pick-your-business-location
+Location: Online / see official page

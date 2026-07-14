@@ -1,0 +1,14 @@
+# Events
+Source: SBA API endpoint response
+API route: /api/sba/content/events
+
+Event cards from official SBA events and partner training pages. This topic currently surfaces 20 resources. Highlights include: SBA events calendar; Local counseling & training events; Financing readiness webinars; Government contracting events.
+
+## Overview
+Event cards from official SBA events and partner training pages. This topic currently surfaces 20 resources. Highlights include: SBA events calendar; Local counseling & training events; Financing readiness webinars; Government contracting events.
+
+## Resources
+20 curated / live resources for this topic.
+
+## How to use this page
+Click any card with an API badge to open that route’s results. Use type filters to focus. Open official links for full SBA.gov detail. Use Back to return to the previous topic.

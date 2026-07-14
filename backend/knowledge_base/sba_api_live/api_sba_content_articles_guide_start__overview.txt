@@ -1,0 +1,16 @@
+# Start a business
+Source: SBA API endpoint response
+API route: /api/sba/content/articles/guide-start
+
+Plan and launch path — assigned guides for starting a small business. This topic currently surfaces 22 resources across 5 types. Highlights include: About Start a business; Official SBA source; Next steps; Plan your business.
+
+Official URL: https://www.sba.gov/business-guide
+
+## Overview
+Plan and launch path — assigned guides for starting a small business. This topic currently surfaces 22 resources across 5 types. Highlights include: About Start a business; Official SBA source; Next steps; Plan your business.
+
+## Resources
+22 curated / live resources for this topic.
+
+## How to use this page
+Click any card with an API badge to open that route’s results. Use type filters to focus. Open official links for full SBA.gov detail. Use Back to return to the previous topic.

@@ -1,0 +1,12 @@
+# Apply for licenses and permits
+Type: course
+API path: /api/sba/content/courses/347718606
+Parent path: /api/sba/content/courses
+ID: 347718606
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/launch-your-business/apply-licenses-permits
+Action: Explore children -> /api/sba/content/courses/347718606
+Action: Official source -> https://www.sba.gov/business-guide/launch-your-business/apply-licenses-permits
+Location: Online / see official page

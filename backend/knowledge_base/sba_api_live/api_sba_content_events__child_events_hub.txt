@@ -1,0 +1,14 @@
+# SBA events calendar
+Type: event
+API path: /api/sba/content/events/events-hub
+Parent path: /api/sba/content/events
+ID: events-hub
+
+Browse upcoming SBA-hosted and partner events, filter by topic, and register online.
+
+Official URL: https://www.sba.gov/events
+Registration URL: https://www.sba.gov/events
+Action: Explore children -> /api/sba/content/events/events-hub
+Action: Register / RSVP -> https://www.sba.gov/events
+Action: Official source -> https://www.sba.gov/events
+Location: Online & local

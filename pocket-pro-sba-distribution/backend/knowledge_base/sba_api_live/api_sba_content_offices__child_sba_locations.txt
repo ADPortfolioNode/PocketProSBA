@@ -1,0 +1,12 @@
+# SBA locations & district offices
+Type: office_directory
+API path: /api/sba/content/offices/sba-locations
+Parent path: /api/sba/content/offices
+ID: sba-locations
+
+Find SBA district offices and contact points across the U.S.
+
+Official URL: https://www.sba.gov/about-sba/sba-locations
+Action: Explore children -> /api/sba/content/offices/sba-locations
+Action: Official source -> https://www.sba.gov/about-sba/sba-locations
+Location: Online / see official page

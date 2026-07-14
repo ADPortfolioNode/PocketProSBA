@@ -1,0 +1,104 @@
+# Combined SBA API digest for /api/sba/content/disaster
+Retrieved children: 6
+Chunks: 7
+
+# Disaster Assistance
+Source: SBA API endpoint response
+API route: /api/sba/content/disaster
+
+SBA disaster loan types and recovery resources. Click a child to explore it as the next parent. This topic currently surfaces 6 resources across 3 types. Highlights include: SBA disaster loans; Business physical disaster loans; Economic Injury Disaster Loans (EIDL); Home and personal property loans.
+
+Official URL: https://www.sba.gov/funding-programs/disaster-assistance
+
+## Overview
+SBA disaster loan types and recovery resources. Click a child to explore it as the next parent. This topic currently surfaces 6 resources across 3 types. Highlights include: SBA disaster loans; Business physical disaster loans; Economic Injury Disaster Loans (EIDL); Home and personal property loans.
+
+## Resources
+6 curated / live resources for this topic.
+
+## How to use this page
+Click any card with an API badge to open that route’s results. Use type filters to focus. Open official links for full SBA.gov detail. Use Back to return to the previous topic.
+
+---
+
+# SBA disaster loans
+Type: loan_program
+API path: /api/sba/content/disaster/disaster-loans
+Parent path: /api/sba/content/disaster
+ID: disaster-loans
+
+Low-interest disaster loans for businesses, nonprofits, homeowners, and renters.
+
+Official URL: https://www.sba.gov/funding-programs/disaster-assistance
+Action: Explore children -> /api/sba/content/disaster/disaster-loans
+Action: Official source -> https://www.sba.gov/funding-programs/disaster-assistance
+
+---
+
+# Business physical disaster loans
+Type: loan_program
+API path: /api/sba/content/disaster/business-physical
+Parent path: /api/sba/content/disaster
+ID: business-physical
+
+Repair or replace disaster-damaged business property.
+
+Official URL: https://www.sba.gov/funding-programs/disaster-assistance
+Action: Explore children -> /api/sba/content/disaster/business-physical
+Action: Official source -> https://www.sba.gov/funding-programs/disaster-assistance
+
+---
+
+# Economic Injury Disaster Loans (EIDL)
+Type: loan_program
+API path: /api/sba/content/disaster/eidl
+Parent path: /api/sba/content/disaster
+ID: eidl
+
+Working capital after a declared disaster causes economic injury.
+
+Official URL: https://www.sba.gov/funding-programs/disaster-assistance
+Action: Explore children -> /api/sba/content/disaster/eidl
+Action: Official source -> https://www.sba.gov/funding-programs/disaster-assistance
+
+---
+
+# Home and personal property loans
+Type: loan_program
+API path: /api/sba/content/disaster/homeowners
+Parent path: /api/sba/content/disaster
+ID: homeowners
+
+Disaster loans for homeowners and renters.
+
+Official URL: https://www.sba.gov/funding-programs/disaster-assistance
+Action: Explore children -> /api/sba/content/disaster/homeowners
+Action: Official source -> https://www.sba.gov/funding-programs/disaster-assistance
+
+---
+
+# How to apply
+Type: guide
+API path: /api/sba/content/disaster/apply
+Parent path: /api/sba/content/disaster
+ID: apply
+
+Steps and documents needed to apply for SBA disaster assistance.
+
+Official URL: https://www.sba.gov/funding-programs/disaster-assistance
+Action: Explore children -> /api/sba/content/disaster/apply
+Action: Official source -> https://www.sba.gov/funding-programs/disaster-assistance
+
+---
+
+# Current disaster declarations
+Type: tool
+API path: /api/sba/content/disaster/declarations
+Parent path: /api/sba/content/disaster
+ID: declarations
+
+Check if your area has an active SBA disaster declaration.
+
+Official URL: https://www.sba.gov/funding-programs/disaster-assistance
+Action: Explore children -> /api/sba/content/disaster/declarations
+Action: Official source -> https://www.sba.gov/funding-programs/disaster-assistance

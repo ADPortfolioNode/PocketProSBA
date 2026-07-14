@@ -1,0 +1,384 @@
+# Combined SBA API digest for /api/sba/lifecycle/start
+Retrieved children: 26
+Chunks: 27
+
+# Start a Business
+Source: SBA API endpoint response
+API route: /api/sba/lifecycle/start
+
+Plan and launch path: research, structure, registration, and first funding options. This topic currently surfaces 26 resources across 3 types. Highlights include: Plan your business; Launch your business; Write a business plan; Choose a business structure.
+
+Official URL: https://www.sba.gov/business-guide
+
+## Overview
+Plan and launch path: research, structure, registration, and first funding options. This topic currently surfaces 26 resources across 3 types. Highlights include: Plan your business; Launch your business; Write a business plan; Choose a business structure.
+
+## Resources
+26 curated / live resources for this topic.
+
+## How to use this page
+Click any card with an API badge to open that route’s results. Use type filters to focus. Open official links for full SBA.gov detail. Use Back to return to the previous topic.
+
+---
+
+# Plan your business
+Type: guide
+API path: /api/sba/lifecycle/plan
+Parent path: /api/sba/lifecycle/start
+ID: plan-your-business
+
+Market research, business plans, and startup cost calculators.
+
+Official URL: https://www.sba.gov/business-guide/plan-your-business
+Action: Explore children -> /api/sba/lifecycle/plan
+Action: Official source -> https://www.sba.gov/business-guide/plan-your-business
+
+---
+
+# Launch your business
+Type: guide
+API path: /api/sba/lifecycle/launch
+Parent path: /api/sba/lifecycle/start
+ID: launch-your-business
+
+Structure, registration, licenses, and tax IDs to open legally.
+
+Official URL: https://www.sba.gov/business-guide/launch-your-business
+Action: Explore children -> /api/sba/lifecycle/launch
+Action: Official source -> https://www.sba.gov/business-guide/launch-your-business
+
+---
+
+# Write a business plan
+Type: guide
+API path: /api/sba/lifecycle/start/write-a-business-plan
+Parent path: /api/sba/lifecycle/start
+ID: write-a-business-plan
+
+Step-by-step guide to writing a plan lenders and partners understand.
+
+Official URL: https://www.sba.gov/business-guide/plan-your-business/write-your-business-plan
+Action: Explore children -> /api/sba/lifecycle/start/write-a-business-plan
+Action: Official source -> https://www.sba.gov/business-guide/plan-your-business/write-your-business-plan
+
+---
+
+# Choose a business structure
+Type: guide
+API path: /api/sba/lifecycle/start/choose-a-business-structure
+Parent path: /api/sba/lifecycle/start
+ID: choose-a-business-structure
+
+Sole prop, LLC, corporation, and other legal structures.
+
+Official URL: https://www.sba.gov/business-guide/launch-your-business/choose-business-structure
+Action: Explore children -> /api/sba/lifecycle/start/choose-a-business-structure
+Action: Official source -> https://www.sba.gov/business-guide/launch-your-business/choose-business-structure
+
+---
+
+# Register your business
+Type: guide
+API path: /api/sba/lifecycle/start/register-your-business
+Parent path: /api/sba/lifecycle/start
+ID: register-your-business
+
+State and local registration requirements to operate legally.
+
+Official URL: https://www.sba.gov/business-guide/launch-your-business/register-your-business
+Action: Explore children -> /api/sba/lifecycle/start/register-your-business
+Action: Official source -> https://www.sba.gov/business-guide/launch-your-business/register-your-business
+
+---
+
+# Get tax ID numbers
+Type: guide
+API path: /api/sba/lifecycle/start/get-tax-id-numbers
+Parent path: /api/sba/lifecycle/start
+ID: get-tax-id-numbers
+
+Federal EIN and state tax IDs for payroll and filings.
+
+Official URL: https://www.sba.gov/business-guide/launch-your-business/get-federal-state-tax-id-numbers
+Action: Explore children -> /api/sba/lifecycle/start/get-tax-id-numbers
+Action: Official source -> https://www.sba.gov/business-guide/launch-your-business/get-federal-state-tax-id-numbers
+
+---
+
+# Calculate startup costs
+Type: guide
+API path: /api/sba/lifecycle/start/calculate-startup-costs
+Parent path: /api/sba/lifecycle/start
+ID: calculate-startup-costs
+
+Estimate one-time and monthly costs before you open.
+
+Official URL: https://www.sba.gov/business-guide/plan-your-business/calculate-your-startup-costs
+Action: Explore children -> /api/sba/lifecycle/start/calculate-startup-costs
+Action: Official source -> https://www.sba.gov/business-guide/plan-your-business/calculate-your-startup-costs
+
+---
+
+# Fund your startup
+Type: funding
+API path: /api/sba/content/loans
+Parent path: /api/sba/lifecycle/start
+ID: fund-your-startup
+
+SBA-backed loans and Lender Match for capital.
+
+Official URL: https://www.sba.gov/funding-programs/loans
+Action: Explore children -> /api/sba/content/loans
+Action: Official source -> https://www.sba.gov/funding-programs/loans
+
+---
+
+# Start a business
+Type: guide
+API path: /api/sba/lifecycle/start
+Parent path: /api/sba/lifecycle/start
+ID: guide-start
+
+Plan and launch path — assigned guides for starting a small business.
+
+Official URL: https://www.sba.gov/business-guide
+Action: Explore children -> /api/sba/lifecycle/start
+Action: Official source -> https://www.sba.gov/business-guide
+
+---
+
+# Manage your business
+Type: guide
+API path: /api/sba/lifecycle/manage
+Parent path: /api/sba/lifecycle/start
+ID: guide-manage
+
+Finances, employees, insurance, and operations.
+
+Official URL: https://www.sba.gov/business-guide/manage-your-business
+Action: Explore children -> /api/sba/lifecycle/manage
+Action: Official source -> https://www.sba.gov/business-guide/manage-your-business
+
+---
+
+# Grow your business
+Type: guide
+API path: /api/sba/lifecycle/grow
+Parent path: /api/sba/lifecycle/start
+ID: guide-grow
+
+Funding, expansion, and growth strategies.
+
+Official URL: https://www.sba.gov/business-guide/grow-your-business
+Action: Explore children -> /api/sba/lifecycle/grow
+Action: Official source -> https://www.sba.gov/business-guide/grow-your-business
+
+---
+
+# Fund your business
+Type: guide
+API path: /api/sba/lifecycle/fund
+Parent path: /api/sba/lifecycle/start
+ID: guide-fund
+
+SBA loan programs and capital options.
+
+Official URL: https://www.sba.gov/business-guide/grow-your-business/fund-your-business
+Action: Explore children -> /api/sba/lifecycle/fund
+Action: Official source -> https://www.sba.gov/business-guide/grow-your-business/fund-your-business
+
+---
+
+# SBA loans overview
+Type: guide
+API path: /api/sba/lifecycle/fund
+Parent path: /api/sba/lifecycle/start
+ID: guide-fund
+
+Overview of SBA-backed loan programs.
+
+Official URL: https://www.sba.gov/funding-programs/loans
+Action: Explore children -> /api/sba/lifecycle/fund
+Action: Official source -> https://www.sba.gov/funding-programs/loans
+
+---
+
+# 7(a) loans guide
+Type: guide
+API path: /api/sba/content/articles
+Parent path: /api/sba/lifecycle/start
+ID: guide-8
+
+Flexible SBA 7(a) loan program guide.
+
+Official URL: https://www.sba.gov/funding-programs/loans/7a-loans
+Action: Explore children -> /api/sba/content/articles
+Action: Official source -> https://www.sba.gov/funding-programs/loans/7a-loans
+
+---
+
+# 504 loans guide
+Type: guide
+API path: /api/sba/content/articles
+Parent path: /api/sba/lifecycle/start
+ID: guide-9
+
+SBA 504 fixed-asset financing guide.
+
+Official URL: https://www.sba.gov/funding-programs/loans/504-loans
+Action: Explore children -> /api/sba/content/articles
+Action: Official source -> https://www.sba.gov/funding-programs/loans/504-loans
+
+---
+
+# Microloans guide
+Type: guide
+API path: /api/sba/content/articles
+Parent path: /api/sba/lifecycle/start
+ID: guide-10
+
+Smaller SBA microloan options.
+
+Official URL: https://www.sba.gov/funding-programs/loans/microloans
+Action: Explore children -> /api/sba/content/articles
+Action: Official source -> https://www.sba.gov/funding-programs/loans/microloans
+
+---
+
+# Federal contracting
+Type: guide
+API path: /api/sba/content/articles
+Parent path: /api/sba/lifecycle/start
+ID: guide-11
+
+Sell products and services to the government.
+
+Official URL: https://www.sba.gov/federal-contracting
+Action: Explore children -> /api/sba/content/articles
+Action: Official source -> https://www.sba.gov/federal-contracting
+
+---
+
+# Disaster assistance
+Type: guide
+API path: /api/sba/content/articles
+Parent path: /api/sba/lifecycle/start
+ID: guide-12
+
+Recovery loans and disaster support.
+
+Official URL: https://www.sba.gov/funding-programs/disaster-assistance
+Action: Explore children -> /api/sba/content/articles
+Action: Official source -> https://www.sba.gov/funding-programs/disaster-assistance
+
+---
+
+# Counseling & training
+Type: guide
+API path: /api/sba/content/articles
+Parent path: /api/sba/lifecycle/start
+ID: guide-13
+
+Free local counseling and training partners.
+
+Official URL: https://www.sba.gov/local-assistance
+Action: Explore children -> /api/sba/content/articles
+Action: Official source -> https://www.sba.gov/local-assistance
+
+---
+
+# 10 steps to start your business
+Type: article
+API path: /api/sba/content/articles
+Parent path: /api/sba/lifecycle/start
+ID: 9528503887
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/10-steps-start-your-business
+Action: Explore children -> /api/sba/content/articles
+Action: Official source -> https://www.sba.gov/business-guide/10-steps-start-your-business
+
+---
+
+# Market research and competitive analysis
+Type: article
+API path: /api/sba/content/articles
+Parent path: /api/sba/lifecycle/start
+ID: 7394118830
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/plan-your-business/market-research-competitive-analysis
+Action: Explore children -> /api/sba/content/articles
+Action: Official source -> https://www.sba.gov/business-guide/plan-your-business/market-research-competitive-analysis
+
+---
+
+# Write your business plan
+Type: article
+API path: /api/sba/content/articles
+Parent path: /api/sba/lifecycle/start
+ID: 1958740143
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/plan-your-business/write-your-business-plan
+Action: Explore children -> /api/sba/content/articles
+Action: Official source -> https://www.sba.gov/business-guide/plan-your-business/write-your-business-plan
+
+---
+
+# Calculate your startup costs
+Type: article
+API path: /api/sba/content/articles
+Parent path: /api/sba/lifecycle/start
+ID: 3307915421
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/plan-your-business/calculate-your-startup-costs
+Action: Explore children -> /api/sba/content/articles
+Action: Official source -> https://www.sba.gov/business-guide/plan-your-business/calculate-your-startup-costs
+
+---
+
+# Establish business credit
+Type: article
+API path: /api/sba/content/articles
+Parent path: /api/sba/lifecycle/start
+ID: 4889663380
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/plan-your-business/establish-business-credit
+Action: Explore children -> /api/sba/content/articles
+Action: Official source -> https://www.sba.gov/business-guide/plan-your-business/establish-business-credit
+
+---
+
+# Buy an existing business or franchise
+Type: article
+API path: /api/sba/content/articles
+Parent path: /api/sba/lifecycle/start
+ID: 4670763421
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/plan-your-business/buy-existing-business-or-franchise
+Action: Explore children -> /api/sba/content/articles
+Action: Official source -> https://www.sba.gov/business-guide/plan-your-business/buy-existing-business-or-franchise
+
+---
+
+# Pick your business location
+Type: article
+API path: /api/sba/content/articles
+Parent path: /api/sba/lifecycle/start
+ID: 3061112058
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/launch-your-business/pick-your-business-location
+Action: Explore children -> /api/sba/content/articles
+Action: Official source -> https://www.sba.gov/business-guide/launch-your-business/pick-your-business-location

@@ -1,0 +1,7 @@
+route=/api/sba/content/courses/launch-course
+chunks=3
+files=3
+updated=2026-07-12T15:43:55Z
+/app/backend/knowledge_base/sba_api_live/api_sba_content_courses_launch_course__combined.txt
+/app/backend/knowledge_base/sba_api_live/api_sba_content_courses_launch_course__overview.txt
+/app/backend/knowledge_base/sba_api_live/api_sba_content_courses_launch_course__child_launch_course.txt

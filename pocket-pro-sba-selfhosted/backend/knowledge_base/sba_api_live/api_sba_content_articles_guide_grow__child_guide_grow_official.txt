@@ -1,0 +1,9 @@
+# Official SBA source
+Type: link
+Parent path: /api/sba/content/articles/guide-grow
+ID: guide-grow-official
+
+Open the official page for full requirements and current terms.
+
+Official URL: https://www.sba.gov/business-guide/grow-your-business
+Action: Official source -> https://www.sba.gov/business-guide/grow-your-business
