@@ -1,0 +1,22 @@
+---
+pid: 1212
+cwd: "E:\2024 RESET\PocketProSBA"
+command: "python -m pytest \"E:\\2024 RESET\\PocketProSBA\\backend\\tests\" -q --tb=line 2>&1 | Select-Object -Last 15"
+started_at: 2026-07-16T05:20:30.750Z
+running_for_ms: 4755006  
+---
+FAILED backend/tests/test_agentic_workflows.py::TestAgenticWorkflows::test_decompose_task_service_success
+FAILED backend/tests/test_agentic_workflows.py::TestAgenticWorkflows::test_decompose_task_service_error_handling
+FAILED backend/tests/test_agentic_workflows.py::TestAgenticWorkflows::test_validate_step_service_pass
+FAILED backend/tests/test_chat_service.py::TestChatProcessingFunctions::test_process_chat_message_success
+FAILED backend/tests/test_chat_service_fixed.py::TestChatProcessingFunctions::test_process_chat_message_success
+FAILED backend/tests/test_sba_routes.py::TestSBARoutes::test_search_articles_error
+FAILED backend/tests/test_sba_service.py::TestSBAContentAPI::test_search_articles_success
+FAILED backend/tests/test_sba_service.py::TestSBAContentAPI::test_search_articles_request_error
+FAILED backend/tests/test_sba_service.py::TestSBAContentAPI::test_get_article_success
+FAILED backend/tests/test_sba_service.py::TestSBAContentAPI::test_search_courses_success
+FAILED backend/tests/test_sba_service.py::TestSBAContentAPI::test_search_offices_success
+FAILED backend/tests/test_sba_service.py::TestSBAContentAPI::test_get_node_success
+FAILED backend/tests/test_sba_service.py::TestSBAContentAPI::test_request_timeout
+FAILED backend/tests/test_sba_service.py::TestSBAContentAPI::test_http_error
+14 failed, 89 passed, 10 skipped, 7 warnings in 119.86s (0:01:59)

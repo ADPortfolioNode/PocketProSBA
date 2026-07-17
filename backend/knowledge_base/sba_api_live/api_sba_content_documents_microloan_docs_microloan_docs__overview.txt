@@ -1,0 +1,16 @@
+# SBA documents resource
+Source: SBA API endpoint response
+API route: /api/sba/content/documents/microloan-docs/microloan-docs
+
+Details for documents item microloan-docs/microloan-docs. Open sba.gov for the latest official information. This topic currently surfaces 1 resource. Highlights include: SBA documents resource.
+
+Official URL: https://www.sba.gov/
+
+## Overview
+Details for documents item microloan-docs/microloan-docs. Open sba.gov for the latest official information. This topic currently surfaces 1 resource. Highlights include: SBA documents resource.
+
+## Resources
+1 curated / live resources for this topic.
+
+## How to use this page
+Click any card with an API badge to open that route’s results. Use type filters to focus. Open official links for full SBA.gov detail. Use Back to return to the previous topic.

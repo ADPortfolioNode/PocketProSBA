@@ -1,0 +1,11 @@
+# Women-Owned Businesses
+Type: program
+API path: /api/sba/content/offices
+Parent path: /api/sba/programs
+ID: women
+
+WBC network support and WOSB federal contracting opportunities.
+
+Official URL: https://www.sba.gov/business-guide/grow-your-business/women-owned-businesses
+Action: Explore children -> /api/sba/content/offices
+Action: Official source -> https://www.sba.gov/business-guide/grow-your-business/women-owned-businesses

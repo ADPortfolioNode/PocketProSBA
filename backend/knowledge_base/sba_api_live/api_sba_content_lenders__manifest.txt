@@ -1,7 +1,7 @@
 route=/api/sba/content/lenders
 chunks=8
 files=8
-updated=2026-07-11T12:41:16Z
+updated=2026-07-16T07:58:13Z
 /app/backend/knowledge_base/sba_api_live/api_sba_content_lenders__combined.txt
 /app/backend/knowledge_base/sba_api_live/api_sba_content_lenders__overview.txt
 /app/backend/knowledge_base/sba_api_live/api_sba_content_lenders__child_lender_match.txt

@@ -1,7 +1,7 @@
 route=/api/sba/content/contracting
 chunks=10
 files=10
-updated=2026-07-12T15:43:13Z
+updated=2026-07-16T08:12:50Z
 /app/backend/knowledge_base/sba_api_live/api_sba_content_contracting__combined.txt
 /app/backend/knowledge_base/sba_api_live/api_sba_content_contracting__overview.txt
 /app/backend/knowledge_base/sba_api_live/api_sba_content_contracting__child_8a.txt

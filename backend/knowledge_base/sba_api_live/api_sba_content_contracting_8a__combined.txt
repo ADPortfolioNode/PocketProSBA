@@ -1,0 +1,156 @@
+# Combined SBA API digest for /api/sba/content/contracting/8a
+Retrieved children: 10
+Chunks: 11
+
+# 8(a) Business Development
+Source: SBA API endpoint response
+API route: /api/sba/content/contracting/8a
+
+Program helping small disadvantaged businesses compete for federal contracts. This topic currently surfaces 10 resources across 6 types. Highlights include: About 8(a) Business Development; Official SBA source; Next steps; HUBZone program.
+
+Official URL: https://www.sba.gov/federal-contracting/contracting-assistance-programs/8a-business-development-program
+
+## Overview
+Program helping small disadvantaged businesses compete for federal contracts. This topic currently surfaces 10 resources across 6 types. Highlights include: About 8(a) Business Development; Official SBA source; Next steps; HUBZone program.
+
+## Resources
+10 curated / live resources for this topic.
+
+## How to use this page
+Click any card with an API badge to open that route’s results. Use type filters to focus. Open official links for full SBA.gov detail. Use Back to return to the previous topic.
+
+---
+
+# About 8(a) Business Development
+Type: overview
+Parent path: /api/sba/content/contracting/8a
+ID: 8a-overview
+
+Program helping small disadvantaged businesses compete for federal contracts.
+
+Official URL: https://www.sba.gov/federal-contracting/contracting-assistance-programs/8a-business-development-program
+Action: Official source -> https://www.sba.gov/federal-contracting/contracting-assistance-programs/8a-business-development-program
+
+---
+
+# Official SBA source
+Type: link
+Parent path: /api/sba/content/contracting/8a
+ID: 8a-official
+
+Open the official page for full requirements and current terms.
+
+Official URL: https://www.sba.gov/federal-contracting/contracting-assistance-programs/8a-business-development-program
+Action: Official source -> https://www.sba.gov/federal-contracting/contracting-assistance-programs/8a-business-development-program
+
+---
+
+# Next steps
+Type: guidance
+API path: /api/sba/content/offices
+Parent path: /api/sba/content/contracting/8a
+ID: 8a-next
+
+Review eligibility, gather documents, then contact a local SBA resource partner or use Lender Match for financing paths.
+
+Official URL: https://www.sba.gov/federal-contracting/contracting-assistance-programs/8a-business-development-program
+Action: Explore children -> /api/sba/content/offices
+Action: Official source -> https://www.sba.gov/federal-contracting/contracting-assistance-programs/8a-business-development-program
+
+---
+
+# HUBZone program
+Type: contract_program
+API path: /api/sba/content/contracting/hubzone
+Parent path: /api/sba/content/contracting
+ID: hubzone
+
+Contracting preference for small businesses in Historically Underutilized Business Zones.
+
+Official URL: https://www.sba.gov/federal-contracting/contracting-assistance-programs/hubzone-program
+Action: Explore children -> /api/sba/content/contracting/hubzone
+Action: Official source -> https://www.sba.gov/federal-contracting/contracting-assistance-programs/hubzone-program
+
+---
+
+# Women-Owned Small Business (WOSB)
+Type: contract_program
+API path: /api/sba/content/contracting/wosb
+Parent path: /api/sba/content/contracting
+ID: wosb
+
+Federal contracting program for women-owned small businesses.
+
+Official URL: https://www.sba.gov/federal-contracting/contracting-assistance-programs/women-owned-small-business-federal-contracting-program
+Action: Explore children -> /api/sba/content/contracting/wosb
+Action: Official source -> https://www.sba.gov/federal-contracting/contracting-assistance-programs/women-owned-small-business-federal-contracting-program
+
+---
+
+# Service-Disabled Veteran-Owned (SDVOSB)
+Type: contract_program
+API path: /api/sba/content/contracting/sdvosb
+Parent path: /api/sba/content/contracting
+ID: sdvosb
+
+Contracting opportunities for service-disabled veteran-owned small businesses.
+
+Official URL: https://www.sba.gov/federal-contracting/contracting-assistance-programs/service-disabled-veteran-owned-small-businesses-program
+Action: Explore children -> /api/sba/content/contracting/sdvosb
+Action: Official source -> https://www.sba.gov/federal-contracting/contracting-assistance-programs/service-disabled-veteran-owned-small-businesses-program
+
+---
+
+# Size standards
+Type: guide
+API path: /api/sba/content/contracting/size-standards
+Parent path: /api/sba/content/contracting
+ID: size-standards
+
+Determine if your business qualifies as small for federal contracting.
+
+Official URL: https://www.sba.gov/federal-contracting/contracting-guide/size-standards
+Action: Explore children -> /api/sba/content/contracting/size-standards
+Action: Official source -> https://www.sba.gov/federal-contracting/contracting-guide/size-standards
+
+---
+
+# Contracting guide
+Type: guide
+API path: /api/sba/content/contracting/contracting-guide
+Parent path: /api/sba/content/contracting
+ID: contracting-guide
+
+How to get started selling to the federal government.
+
+Official URL: https://www.sba.gov/federal-contracting/contracting-guide
+Action: Explore children -> /api/sba/content/contracting/contracting-guide
+Action: Official source -> https://www.sba.gov/federal-contracting/contracting-guide
+
+---
+
+# Register in SAM.gov
+Type: tool
+API path: /api/sba/content/contracting/sam
+Parent path: /api/sba/content/contracting
+ID: sam
+
+Required registration to bid on federal contracts.
+
+Official URL: https://sam.gov/
+Action: Explore children -> /api/sba/content/contracting/sam
+Action: Official source -> https://sam.gov/
+
+---
+
+# Subcontracting
+Type: guide
+API path: /api/sba/content/contracting/subcontracting
+Parent path: /api/sba/content/contracting
+ID: subcontracting
+
+Find subcontracting opportunities with prime contractors.
+
+Official URL: https://www.sba.gov/federal-contracting/contracting-guide/basic-requirements
+Action: Explore children -> /api/sba/content/contracting/subcontracting
+Action: Official source -> https://www.sba.gov/federal-contracting/contracting-guide/basic-requirements

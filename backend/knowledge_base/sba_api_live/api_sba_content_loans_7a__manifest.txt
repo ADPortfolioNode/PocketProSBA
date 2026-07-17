@@ -1,7 +1,7 @@
 route=/api/sba/content/loans/7a
 chunks=18
 files=18
-updated=2026-07-12T15:48:17Z
+updated=2026-07-16T08:12:50Z
 /app/backend/knowledge_base/sba_api_live/api_sba_content_loans_7a__combined.txt
 /app/backend/knowledge_base/sba_api_live/api_sba_content_loans_7a__overview.txt
 /app/backend/knowledge_base/sba_api_live/api_sba_content_loans_7a__child_7a_overview.txt
@@ -19,4 +19,4 @@ updated=2026-07-12T15:48:17Z
 /app/backend/knowledge_base/sba_api_live/api_sba_content_loans_7a__child_microloans.txt
 /app/backend/knowledge_base/sba_api_live/api_sba_content_loans_7a__child_loans_hub.txt
 /app/backend/knowledge_base/sba_api_live/api_sba_content_loans_7a__child_lender_match.txt
-/app/backend/knowledge_base/sba_api_live/api_sba_content_loans_7a__child_4889663380.txt
+/app/backend/knowledge_base/sba_api_live/api_sba_content_loans_7a__child_4784403714.txt

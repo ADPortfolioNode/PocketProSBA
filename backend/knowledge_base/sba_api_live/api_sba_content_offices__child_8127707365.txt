@@ -1,0 +1,12 @@
+# Get federal and state tax ID numbers
+Type: office
+API path: /api/sba/content/offices/8127707365
+Parent path: /api/sba/content/offices
+ID: 8127707365
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/launch-your-business/get-federal-state-tax-id-numbers
+Action: Explore children -> /api/sba/content/offices/8127707365
+Action: Official source -> https://www.sba.gov/business-guide/launch-your-business/get-federal-state-tax-id-numbers
+Location: Online / see official page

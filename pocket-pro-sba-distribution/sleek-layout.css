@@ -1,0 +1,13 @@
+/* Adds a professional background image to the chat interface */
+.chat-container, .chat-interface-module {
+    background-image: url('../media/human-actors.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+/* Adds a semi-transparent overlay to ensure text is readable */
+.chat-history {
+    background-color: rgba(255, 255, 255, 0.85);
+    border-radius: 8px;
+}

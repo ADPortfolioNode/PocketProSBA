@@ -1,0 +1,368 @@
+---
+pid: 4364
+cwd: "E:\2024 RESET\PocketProSBA"
+command: "cmd /c \"set FLASK_ENV=development&& set PYTHONPATH=E:\\2024 RESET\\PocketProSBA;E:\\2024 RESET\\PocketProSBA\\backend&& cd /d E:\\2024 RESET\\PocketProSBA&& python run.py\""
+started_at: 2026-07-16T05:19:50.137Z
+running_for_ms: 4810009  
+---
+🔄 Importing PocketPro:SBA application...
+2026-07-16 01:19:54,441 - backend.app - INFO - Database URI: sqlite:///app.db
+2026-07-16 01:19:54,611 - backend.app - INFO - Database tables created successfully
+2026-07-16 01:20:00,410 - backend.assistants.concierge - INFO - Self-optimizing components imported successfully
+C:\Users\deois\AppData\Roaming\Python\Python311\site-packages\langchain\document_loaders\__init__.py:36: LangChainDeprecationWarning: Importing document loaders from langchain is deprecated. Importing from langchain will no longer be supported as of langchain==0.2.0. Please import from langchain-community instead:
+
+`from langchain_community.document_loaders import DirectoryLoader`.
+
+To install langchain-community run `pip install -U langchain-community`.
+  warnings.warn(
+C:\Users\deois\AppData\Roaming\Python\Python311\site-packages\langchain\document_loaders\__init__.py:36: LangChainDeprecationWarning: Importing document loaders from langchain is deprecated. Importing from langchain will no longer be supported as of langchain==0.2.0. Please import from langchain-community instead:
+
+`from langchain_community.document_loaders import TextLoader`.
+
+To install langchain-community run `pip install -U langchain-community`.
+  warnings.warn(
+2026-07-16 01:20:17,079 - backend.app - INFO - Files upload blueprint registered at /api/files
+2026-07-16 01:20:17,088 - backend.enhanced_gemini_rag_service - INFO - Initializing Enhanced Gemini RAG Service...
+2026-07-16 01:20:17,394 - backend.enhanced_gemini_rag_service - WARNING - Embedding model models/text-embedding-004 failed: Error embedding content: 404 models/text-embedding-004 is not found for API version v1beta, or is not supported for embedContent. Call ModelService.ListModels to see the list of available models and their supported methods.
+✅ Application imported successfully2026-07-16 01:20:17,696 - backend.enhanced_gemini_rag_service - WARNING - Embedding model models/embedding-001 failed: Error embedding content: 404 models/embedding-001 is not found for API version v1beta, or is not supported for embedContent. Call ModelService.ListModels to see the list of available models and their supported methods.
+2026-07-16 01:20:17,697 - backend.enhanced_gemini_rag_service - WARNING - Embedding model text-embedding-004 failed: Error embedding content: Model names should start with `models/` or `tunedModels/`, got: {name}
+2026-07-16 01:20:17,697 - backend.enhanced_gemini_rag_service - ERROR - Failed to initialize vector store: No working Gemini embedding model found (last error: Error embedding content: Model names should start with `models/` or `tunedModels/`, got: {name})
+2026-07-16 01:20:17,697 - backend.app - WARNING - Failed to initialize Enhanced Gemini RAG service
+
+ * Serving Flask app 'backend.app'
+ * Debug mode: on
+2026-07-16 01:20:17,746 - __main__ - INFO - 🚀 Starting PocketPro SBA via run.py on port 5000
+2026-07-16 01:20:17,767 - werkzeug - INFO - WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.1.152:5000
+2026-07-16 01:20:17,767 - werkzeug - INFO - Press CTRL+C to quit
+2026-07-16 01:20:17,768 - werkzeug - INFO -  * Restarting with stat
+🔄 Importing PocketPro:SBA application...
+2026-07-16 01:20:20,070 - backend.app - INFO - Database URI: sqlite:///app.db
+2026-07-16 01:20:20,131 - backend.app - INFO - Database tables created successfully
+2026-07-16 01:20:21,517 - backend.assistants.concierge - INFO - Self-optimizing components imported successfully
+C:\Users\deois\AppData\Roaming\Python\Python311\site-packages\langchain\document_loaders\__init__.py:36: LangChainDeprecationWarning: Importing document loaders from langchain is deprecated. Importing from langchain will no longer be supported as of langchain==0.2.0. Please import from langchain-community instead:
+
+`from langchain_community.document_loaders import DirectoryLoader`.
+
+To install langchain-community run `pip install -U langchain-community`.
+  warnings.warn(
+C:\Users\deois\AppData\Roaming\Python\Python311\site-packages\langchain\document_loaders\__init__.py:36: LangChainDeprecationWarning: Importing document loaders from langchain is deprecated. Importing from langchain will no longer be supported as of langchain==0.2.0. Please import from langchain-community instead:
+
+`from langchain_community.document_loaders import TextLoader`.
+
+To install langchain-community run `pip install -U langchain-community`.
+  warnings.warn(
+2026-07-16 01:20:25,475 - backend.app - INFO - Files upload blueprint registered at /api/files
+2026-07-16 01:20:25,496 - backend.enhanced_gemini_rag_service - INFO - Initializing Enhanced Gemini RAG Service...
+2026-07-16 01:20:25,798 - backend.enhanced_gemini_rag_service - WARNING - Embedding model models/text-embedding-004 failed: Error embedding content: 404 models/text-embedding-004 is not found for API version v1beta, or is not supported for embedContent. Call ModelService.ListModels to see the list of available models and their supported methods.
+✅ Application imported successfully
+2026-07-16 01:20:26,237 - backend.enhanced_gemini_rag_service - WARNING - Embedding model models/embedding-001 failed: Error embedding content: 404 models/embedding-001 is not found for API version v1beta, or is not supported for embedContent. Call ModelService.ListModels to see the list of available models and their supported methods.
+2026-07-16 01:20:26,237 - backend.enhanced_gemini_rag_service - WARNING - Embedding model text-embedding-004 failed: Error embedding content: Model names should start with `models/` or `tunedModels/`, got: {name}
+2026-07-16 01:20:26,237 - backend.enhanced_gemini_rag_service - ERROR - Failed to initialize vector store: No working Gemini embedding model found (last error: Error embedding content: Model names should start with `models/` or `tunedModels/`, got: {name})
+2026-07-16 01:20:26,237 - backend.app - WARNING - Failed to initialize Enhanced Gemini RAG service
+2026-07-16 01:20:26,258 - __main__ - INFO - 🚀 Starting PocketPro SBA via run.py on port 5000
+2026-07-16 01:20:26,263 - werkzeug - WARNING -  * Debugger is active!
+2026-07-16 01:20:26,275 - werkzeug - INFO -  * Debugger PIN: 853-510-256
+2026-07-16 01:20:41,125 - backend.app - INFO - Request: GET /
+2026-07-16 01:20:41,126 - backend.app - INFO - Response: 200 OK
+2026-07-16 01:20:41,127 - werkzeug - INFO - 127.0.0.1 - - [16/Jul/2026 01:20:41] "GET / HTTP/1.1" 200 -
+2026-07-16 01:20:41,134 - backend.app - INFO - Request: GET /health
+2026-07-16 01:20:41,134 - backend.app - INFO - Response: 200 OK
+2026-07-16 01:20:41,135 - werkzeug - INFO - 127.0.0.1 - - [16/Jul/2026 01:20:41] "GET /health HTTP/1.1" 200 -
+2026-07-16 01:20:41,143 - backend.app - INFO - Request: GET /api/health
+2026-07-16 01:20:41,145 - backend.app - INFO - Response: 200 OK
+2026-07-16 01:20:41,146 - werkzeug - INFO - 127.0.0.1 - - [16/Jul/2026 01:20:41] "GET /api/health HTTP/1.1" 200 -
+2026-07-16 01:20:41,161 - backend.app - INFO - Request: GET /api/info
+2026-07-16 01:20:42,716 - backend.services.rag - INFO - Connecting to ChromaDB at localhost:8000
+2026-07-16 01:20:42,887 - chromadb.telemetry.product.posthog - INFO - Anonymized telemetry enabled. See                     https://docs.trychroma.com/telemetry for more information.
+2026-07-16 01:20:43,046 - chromadb.telemetry.product.posthog - INFO - Anonymized telemetry enabled. See                     https://docs.trychroma.com/telemetry for more information.
+2026-07-16 01:20:47,662 - backend.services.chroma_fixed - ERROR - ChromaDB initialization failed: Could not connect to a Chroma server. Are you sure it is running?
+2026-07-16 01:20:47,662 - backend.services.rag - ERROR - ChromaDB service is not available
+2026-07-16 01:20:47,662 - backend.services.rag - WARNING - ChromaDB RAG manager is not available yet; retrying on next request.
+2026-07-16 01:20:47,662 - backend.app - INFO - Response: 200 OK
+2026-07-16 01:20:47,663 - werkzeug - INFO - 127.0.0.1 - - [16/Jul/2026 01:20:47] "GET /api/info HTTP/1.1" 200 -
+2026-07-16 01:20:47,671 - backend.app - INFO - Request: GET /api/diagnostics
+2026-07-16 01:20:47,671 - backend.app - INFO - Response: 200 OK
+2026-07-16 01:20:47,672 - werkzeug - INFO - 127.0.0.1 - - [16/Jul/2026 01:20:47] "GET /api/diagnostics HTTP/1.1" 200 -
+2026-07-16 01:20:47,679 - backend.app - INFO - Request: GET /api/chromadb_health
+2026-07-16 01:20:47,680 - backend.services.rag - INFO - Connecting to ChromaDB at localhost:8000
+2026-07-16 01:20:47,689 - chromadb.telemetry.product.posthog - INFO - Anonymized telemetry enabled. See                     https://docs.trychroma.com/telemetry for more information.
+2026-07-16 01:20:47,690 - chromadb.telemetry.product.posthog - INFO - Anonymized telemetry enabled. See                     https://docs.trychroma.com/telemetry for more information.
+2026-07-16 01:20:52,120 - backend.services.chroma_fixed - ERROR - ChromaDB initialization failed: Could not connect to a Chroma server. Are you sure it is running?
+2026-07-16 01:20:52,120 - backend.services.rag - ERROR - ChromaDB service is not available
+2026-07-16 01:20:52,120 - backend.services.rag - WARNING - ChromaDB RAG manager is not available yet; retrying on next request.
+2026-07-16 01:20:52,121 - backend.app - INFO - Response: 200 OK
+2026-07-16 01:20:52,121 - werkzeug - INFO - 127.0.0.1 - - [16/Jul/2026 01:20:52] "GET /api/chromadb_health HTTP/1.1" 200 -
+2026-07-16 01:20:52,128 - backend.app - INFO - Request: GET /api/rag/health
+2026-07-16 01:20:52,128 - backend.services.rag - INFO - Connecting to ChromaDB at localhost:8000
+2026-07-16 01:20:52,138 - chromadb.telemetry.product.posthog - INFO - Anonymized telemetry enabled. See                     https://docs.trychroma.com/telemetry for more information.
+2026-07-16 01:20:52,139 - chromadb.telemetry.product.posthog - INFO - Anonymized telemetry enabled. See                     https://docs.trychroma.com/telemetry for more information.
+Importing chroma_service2026-07-16 01:20:56,199 - backend.services.chroma_fixed - ERROR - ChromaDB initialization failed: Could not connect to a Chroma server. Are you sure it is running?
+
+ChromaDB imports completed
+2026-07-16 01:20:56,199 - backend.services.rag - ERROR - ChromaDB service is not available
+2026-07-16 01:20:56,199 - backend.services.rag - WARNING - ChromaDB RAG manager is not available yet; retrying on next request.
+2026-07-16 01:20:56,200 - backend.app - INFO - Response: 503 SERVICE UNAVAILABLE
+2026-07-16 01:20:56,200 - werkzeug - INFO - 127.0.0.1 - - [16/Jul/2026 01:20:56] "GET /api/rag/health HTTP/1.1" 503 -
+2026-07-16 01:20:56,207 - backend.app - INFO - Request: GET /api/orchestrator/health
+2026-07-16 01:20:56,251 - backend.services.memory_repository - WARNING - ChromaDB service not available for memory storage
+2026-07-16 01:20:56,251 - backend.app - INFO - Response: 200 OK
+2026-07-16 01:20:56,251 - werkzeug - INFO - 127.0.0.1 - - [16/Jul/2026 01:20:56] "GET /api/orchestrator/health HTTP/1.1" 200 -
+2026-07-16 01:20:56,256 - backend.app - INFO - Request: POST /api/decompose
+2026-07-16 01:20:56,256 - backend.assistants.search_module - WARNING - Search module disabled: GOOGLE_API_KEY and GOOGLE_CSE_ID must be set in environment variables.
+2026-07-16 01:20:56,257 - backend.assistants.base - WARNING - Search module is not available (missing API keys)
+2026-07-16 01:20:56,257 - backend.services.rag - INFO - Connecting to ChromaDB at localhost:8000
+2026-07-16 01:20:56,264 - chromadb.telemetry.product.posthog - INFO - Anonymized telemetry enabled. See                     https://docs.trychroma.com/telemetry for more information.
+2026-07-16 01:20:56,267 - chromadb.telemetry.product.posthog - INFO - Anonymized telemetry enabled. See                     https://docs.trychroma.com/telemetry for more information.
+2026-07-16 01:21:00,316 - backend.services.chroma_fixed - ERROR - ChromaDB initialization failed: Could not connect to a Chroma server. Are you sure it is running?
+2026-07-16 01:21:00,316 - backend.services.rag - ERROR - ChromaDB service is not available
+2026-07-16 01:21:00,316 - backend.services.rag - WARNING - ChromaDB RAG manager is not available yet; retrying on next request.
+2026-07-16 01:21:00,368 - backend.app - INFO - Database URI: sqlite:///app.db
+2026-07-16 01:21:00,373 - backend.app - INFO - Database tables created successfully
+2026-07-16 01:21:00,497 - backend.app - INFO - Files upload blueprint registered at /api/files
+2026-07-16 01:21:00,536 - backend.enhanced_gemini_rag_service - INFO - Initializing Enhanced Gemini RAG Service...
+2026-07-16 01:21:00,855 - backend.enhanced_gemini_rag_service - WARNING - Embedding model models/text-embedding-004 failed: Error embedding content: 404 models/text-embedding-004 is not found for API version v1beta, or is not supported for embedContent. Call ModelService.ListModels to see the list of available models and their supported methods.
+2026-07-16 01:21:01,072 - backend.enhanced_gemini_rag_service - WARNING - Embedding model models/embedding-001 failed: Error embedding content: 404 models/embedding-001 is not found for API version v1beta, or is not supported for embedContent. Call ModelService.ListModels to see the list of available models and their supported methods.
+2026-07-16 01:21:01,073 - backend.enhanced_gemini_rag_service - WARNING - Embedding model text-embedding-004 failed: Error embedding content: Model names should start with `models/` or `tunedModels/`, got: {name}
+2026-07-16 01:21:01,073 - backend.enhanced_gemini_rag_service - ERROR - Failed to initialize vector store: No working Gemini embedding model found (last error: Error embedding content: Model names should start with `models/` or `tunedModels/`, got: {name})
+2026-07-16 01:21:01,073 - backend.app - WARNING - Failed to initialize Enhanced Gemini RAG service
+2026-07-16 01:21:01,075 - backend.assistants.concierge - INFO - Message classified as: task_request
+C:\Users\deois\AppData\Roaming\Python\Python311\site-packages\langchain\vectorstores\__init__.py:35: LangChainDeprecationWarning: Importing vector stores from langchain is deprecated. Importing from langchain will no longer be supported as of langchain==0.2.0. Please import from langchain-community instead:
+
+`from langchain_community.vectorstores import Chroma`.
+
+To install langchain-community run `pip install -U langchain-community`.
+  warnings.warn(
+C:\Users\deois\AppData\Roaming\Python\Python311\site-packages\langchain\document_loaders\__init__.py:36: LangChainDeprecationWarning: Importing document loaders from langchain is deprecated. Importing from langchain will no longer be supported as of langchain==0.2.0. Please import from langchain-community instead:
+
+`from langchain_community.document_loaders import DirectoryLoader`.
+
+To install langchain-community run `pip install -U langchain-community`.
+  warnings.warn(
+C:\Users\deois\AppData\Roaming\Python\Python311\site-packages\langchain\document_loaders\__init__.py:36: LangChainDeprecationWarning: Importing document loaders from langchain is deprecated. Importing from langchain will no longer be supported as of langchain==0.2.0. Please import from langchain-community instead:
+
+`from langchain_community.document_loaders import TextLoader`.
+
+To install langchain-community run `pip install -U langchain-community`.
+  warnings.warn(
+2026-07-16 01:21:01,132 - backend.assistants.concierge - INFO - Gemini RAG service imported successfully
+2026-07-16 01:21:01,144 - chromadb.telemetry.product.posthog - INFO - Anonymized telemetry enabled. See                     https://docs.trychroma.com/telemetry for more information.
+2026-07-16 01:21:02,191 - chromadb.telemetry.product.posthog - ERROR - Failed to send telemetry event ClientStartEvent: capture() takes 1 positional argument but 3 were given
+2026-07-16 01:21:02,199 - chromadb.telemetry.product.posthog - ERROR - Failed to send telemetry event ClientCreateCollectionEvent: capture() takes 1 positional argument but 3 were given
+2026-07-16 01:21:02,515 - backend.gemini_rag_service - ERROR - Failed to initialize vector store: Error embedding content: 404 models/embedding-001 is not found for API version v1beta, or is not supported for embedContent. Call ModelService.ListModels to see the list of available models and their supported methods.
+2026-07-16 01:21:02,516 - backend.assistants.concierge - INFO - Dialogue quality metrics: {'session_id': 'smoke-1', 'timestamp': '2026-07-16T01:21:02.516029', 'user_message_length': 65, 'assistant_response_length': 282, 'intent': 'task_request', 'response_quality': 'good', 'has_sources': True}
+2026-07-16 01:21:02,516 - backend.app - INFO - Response: 200 OK
+2026-07-16 01:21:02,517 - werkzeug - INFO - 127.0.0.1 - - [16/Jul/2026 01:21:02] "POST /api/decompose HTTP/1.1" 200 -
+2026-07-16 01:21:02,524 - backend.app - INFO - Request: POST /api/chat
+2026-07-16 01:21:02,524 - backend.assistants.search_module - WARNING - Search module disabled: GOOGLE_API_KEY and GOOGLE_CSE_ID must be set in environment variables.
+2026-07-16 01:21:02,524 - backend.assistants.base - WARNING - Search module is not available (missing API keys)
+2026-07-16 01:21:02,524 - backend.services.rag - INFO - Connecting to ChromaDB at localhost:8000
+2026-07-16 01:21:02,537 - chromadb.telemetry.product.posthog - INFO - Anonymized telemetry enabled. See                     https://docs.trychroma.com/telemetry for more information.
+2026-07-16 01:21:02,538 - chromadb.telemetry.product.posthog - INFO - Anonymized telemetry enabled. See                     https://docs.trychroma.com/telemetry for more information.
+2026-07-16 01:21:06,593 - backend.services.chroma_fixed - ERROR - ChromaDB initialization failed: Could not connect to a Chroma server. Are you sure it is running?
+2026-07-16 01:21:06,593 - backend.services.rag - ERROR - ChromaDB service is not available
+2026-07-16 01:21:06,593 - backend.services.rag - WARNING - ChromaDB RAG manager is not available yet; retrying on next request.
+2026-07-16 01:21:06,594 - backend.services.chat_processing_service - INFO - Concierge assistant initialized successfully
+2026-07-16 01:21:06,594 - backend.assistants.concierge - INFO - Message classified as: simple_query
+2026-07-16 01:21:06,594 - backend.assistants.concierge - INFO - Dialogue quality metrics: {'session_id': 'smoke-chat', 'timestamp': '2026-07-16T01:21:06.594285', 'user_message_length': 21, 'assistant_response_length': 235, 'intent': 'simple_query', 'response_quality': 'generic', 'has_sources': True}
+2026-07-16 01:21:12,146 - backend.services.chat_processing_service - INFO - Processed message for session smoke-chat: 21 chars -> 4397 chars response
+2026-07-16 01:21:12,150 - backend.app - INFO - Response: 200 OK
+2026-07-16 01:21:12,150 - werkzeug - INFO - 127.0.0.1 - - [16/Jul/2026 01:21:12] "POST /api/chat HTTP/1.1" 200 -
+2026-07-16 01:21:12,171 - backend.app - INFO - Request: POST /api/validate
+2026-07-16 01:21:12,172 - backend.app - INFO - Response: 200 OK
+2026-07-16 01:21:12,176 - werkzeug - INFO - 127.0.0.1 - - [16/Jul/2026 01:21:12] "POST /api/validate HTTP/1.1" 200 -
+2026-07-16 01:21:12,185 - backend.app - INFO - Request: POST /api/chat
+2026-07-16 01:21:12,185 - backend.assistants.concierge - INFO - Message classified as: greeting
+2026-07-16 01:21:12,185 - backend.assistants.concierge - INFO - Dialogue quality metrics: {'session_id': 'x', 'timestamp': '2026-07-16T01:21:12.185107', 'user_message_length': 2, 'assistant_response_length': 154, 'intent': 'greeting', 'response_quality': 'good', 'has_sources': True}
+2026-07-16 01:21:13,738 - backend.services.chat_processing_service - INFO - Processed message for session x: 2 chars -> 3960 chars response
+2026-07-16 01:21:13,740 - backend.app - INFO - Response: 200 OK
+2026-07-16 01:21:13,740 - werkzeug - INFO - 127.0.0.1 - - [16/Jul/2026 01:21:13] "POST /api/chat HTTP/1.1" 200 -
+2026-07-16 01:41:43,810 - backend.app - INFO - Request: GET /api/health
+2026-07-16 01:41:43,820 - backend.app - INFO - Response: 200 OK
+2026-07-16 01:41:43,829 - werkzeug - INFO - 127.0.0.1 - - [16/Jul/2026 01:41:43] "GET /api/health HTTP/1.1" 200 -
+2026-07-16 01:41:43,834 - backend.app - INFO - Request: GET /api/sba/resources
+2026-07-16 01:41:43,858 - backend.app - INFO - Response: 200 OK
+2026-07-16 01:41:43,860 - backend.app - INFO - Request: GET /api/sba/content/articles
+2026-07-16 01:41:43,860 - werkzeug - INFO - 127.0.0.1 - - [16/Jul/2026 01:41:43] "GET /api/sba/resources HTTP/1.1" 200 -
+2026-07-16 01:41:43,882 - backend.app - INFO - Request: GET /api/health
+2026-07-16 01:41:43,888 - backend.app - INFO - Response: 200 OK
+2026-07-16 01:41:43,890 - werkzeug - INFO - 127.0.0.1 - - [16/Jul/2026 01:41:43] "GET /api/health HTTP/1.1" 200 -
+2026-07-16 01:41:48,793 - backend.app - INFO - Response: 200 OK
+2026-07-16 01:41:48,794 - werkzeug - INFO - 127.0.0.1 - - [16/Jul/2026 01:41:48] "GET /api/sba/content/articles?query=&page=1 HTTP/1.1" 200 -
+2026-07-16 01:41:52,052 - backend.services.rag - INFO - Connecting to ChromaDB at localhost:8000
+2026-07-16 01:41:52,275 - chromadb.telemetry.product.posthog - INFO - Anonymized telemetry enabled. See                     https://docs.trychroma.com/telemetry for more information.
+2026-07-16 01:41:52,278 - chromadb.telemetry.product.posthog - INFO - Anonymized telemetry enabled. See                     https://docs.trychroma.com/telemetry for more information.
+2026-07-16 01:41:52,291 - backend.services.chroma_fixed - ERROR - ChromaDB initialization failed: Could not connect to a Chroma server. Are you sure it is running?
+2026-07-16 01:41:52,291 - backend.services.rag - ERROR - ChromaDB service is not available
+2026-07-16 01:41:52,291 - backend.services.rag - WARNING - ChromaDB RAG manager is not available yet; retrying on next request.
+2026-07-16 01:41:52,292 - backend.services.sba_rag_ingest - INFO - SBA→RAG ingest route=/api/sba/content/articles docs=22 kb_files=23 chroma_added=0
+2026-07-16 01:42:14,231 - backend.app - INFO - Request: GET /api/health
+2026-07-16 01:42:14,233 - backend.app - INFO - Response: 200 OK
+2026-07-16 01:42:14,234 - werkzeug - INFO - 127.0.0.1 - - [16/Jul/2026 01:42:14] "GET /api/health HTTP/1.1" 200 -
+2026-07-16 01:42:17,240 - backend.app - INFO - Request: GET /api/health
+2026-07-16 01:42:17,241 - backend.app - INFO - Response: 200 OK
+2026-07-16 01:42:17,243 - werkzeug - INFO - 127.0.0.1 - - [16/Jul/2026 01:42:17] "GET /api/health HTTP/1.1" 200 -
+2026-07-16 01:42:44,229 - backend.app - INFO - Request: GET /api/health
+2026-07-16 01:42:44,231 - backend.app - INFO - Response: 200 OK
+2026-07-16 01:42:44,232 - werkzeug - INFO - 127.0.0.1 - - [16/Jul/2026 01:42:44] "GET /api/health HTTP/1.1" 200 -
+2026-07-16 01:42:47,301 - backend.app - INFO - Request: GET /api/health
+2026-07-16 01:42:47,302 - backend.app - INFO - Response: 200 OK
+2026-07-16 01:42:47,302 - werkzeug - INFO - 127.0.0.1 - - [16/Jul/2026 01:42:47] "GET /api/health HTTP/1.1" 200 -
+2026-07-16 01:43:14,228 - backend.app - INFO - Request: GET /api/health
+2026-07-16 01:43:14,228 - backend.app - INFO - Response: 200 OK
+2026-07-16 01:43:14,229 - werkzeug - INFO - 127.0.0.1 - - [16/Jul/2026 01:43:14] "GET /api/health HTTP/1.1" 200 -
+2026-07-16 01:43:17,256 - backend.app - INFO - Request: GET /api/health
+2026-07-16 01:43:17,257 - backend.app - INFO - Response: 200 OK
+2026-07-16 01:43:17,258 - werkzeug - INFO - 127.0.0.1 - - [16/Jul/2026 01:43:17] "GET /api/health HTTP/1.1" 200 -
+2026-07-16 01:43:44,303 - backend.app - INFO - Request: GET /api/health
+2026-07-16 01:43:44,304 - backend.app - INFO - Response: 200 OK
+2026-07-16 01:43:44,305 - werkzeug - INFO - 127.0.0.1 - - [16/Jul/2026 01:43:44] "GET /api/health HTTP/1.1" 200 -
+2026-07-16 01:43:49,211 - backend.app - INFO - Request: GET /api/health
+2026-07-16 01:43:49,212 - backend.app - INFO - Response: 200 OK
+2026-07-16 01:43:49,213 - werkzeug - INFO - 127.0.0.1 - - [16/Jul/2026 01:43:49] "GET /api/health HTTP/1.1" 200 -
+2026-07-16 01:44:14,248 - backend.app - INFO - Request: GET /api/health
+2026-07-16 01:44:14,250 - backend.app - INFO - Response: 200 OK
+2026-07-16 01:44:14,252 - werkzeug - INFO - 127.0.0.1 - - [16/Jul/2026 01:44:14] "GET /api/health HTTP/1.1" 200 -
+2026-07-16 01:44:17,254 - backend.app - INFO - Request: GET /api/health
+2026-07-16 01:44:17,255 - backend.app - INFO - Response: 200 OK
+2026-07-16 01:44:17,255 - werkzeug - INFO - 127.0.0.1 - - [16/Jul/2026 01:44:17] "GET /api/health HTTP/1.1" 200 -
+2026-07-16 01:44:44,245 - backend.app - INFO - Request: GET /api/health
+2026-07-16 01:44:44,246 - backend.app - INFO - Response: 200 OK
+2026-07-16 01:44:44,246 - werkzeug - INFO - 127.0.0.1 - - [16/Jul/2026 01:44:44] "GET /api/health HTTP/1.1" 200 -
+2026-07-16 01:44:47,326 - backend.app - INFO - Request: GET /api/health
+2026-07-16 01:44:47,334 - backend.app - INFO - Response: 200 OK
+2026-07-16 01:44:47,334 - werkzeug - INFO - 127.0.0.1 - - [16/Jul/2026 01:44:47] "GET /api/health HTTP/1.1" 200 -
+2026-07-16 01:46:09,294 - backend.app - INFO - Request: GET /api/health
+2026-07-16 01:46:09,295 - backend.app - INFO - Response: 200 OK
+2026-07-16 01:46:09,296 - werkzeug - INFO - 127.0.0.1 - - [16/Jul/2026 01:46:09] "GET /api/health HTTP/1.1" 200 -
+2026-07-16 01:46:09,355 - backend.app - INFO - Request: GET /api/health
+2026-07-16 01:46:09,356 - backend.app - INFO - Response: 200 OK
+2026-07-16 01:46:09,358 - werkzeug - INFO - 127.0.0.1 - - [16/Jul/2026 01:46:09] "GET /api/health HTTP/1.1" 200 -
+2026-07-16 01:47:09,300 - backend.app - INFO - Request: GET /api/health
+2026-07-16 01:47:09,300 - backend.app - INFO - Response: 200 OK
+2026-07-16 01:47:09,300 - werkzeug - INFO - 127.0.0.1 - - [16/Jul/2026 01:47:09] "GET /api/health HTTP/1.1" 200 -
+2026-07-16 01:47:09,354 - backend.app - INFO - Request: GET /api/health
+2026-07-16 01:47:09,354 - backend.app - INFO - Response: 200 OK
+2026-07-16 01:47:09,354 - werkzeug - INFO - 127.0.0.1 - - [16/Jul/2026 01:47:09] "GET /api/health HTTP/1.1" 200 -
+2026-07-16 01:48:09,275 - backend.app - INFO - Request: GET /api/health
+2026-07-16 01:48:09,276 - backend.app - INFO - Response: 200 OK
+2026-07-16 01:48:09,276 - werkzeug - INFO - 127.0.0.1 - - [16/Jul/2026 01:48:09] "GET /api/health HTTP/1.1" 200 -
+2026-07-16 01:48:09,342 - backend.app - INFO - Request: GET /api/health
+2026-07-16 01:48:09,342 - backend.app - INFO - Response: 200 OK
+2026-07-16 01:48:09,349 - werkzeug - INFO - 127.0.0.1 - - [16/Jul/2026 01:48:09] "GET /api/health HTTP/1.1" 200 -
+2026-07-16 01:49:09,280 - backend.app - INFO - Request: GET /api/health
+2026-07-16 01:49:09,280 - backend.app - INFO - Response: 200 OK
+2026-07-16 01:49:09,281 - werkzeug - INFO - 127.0.0.1 - - [16/Jul/2026 01:49:09] "GET /api/health HTTP/1.1" 200 -
+2026-07-16 01:49:10,030 - backend.app - INFO - Request: GET /api/health
+2026-07-16 01:49:10,030 - backend.app - INFO - Response: 200 OK
+2026-07-16 01:49:10,030 - werkzeug - INFO - 127.0.0.1 - - [16/Jul/2026 01:49:10] "GET /api/health HTTP/1.1" 200 -
+2026-07-16 01:50:09,337 - backend.app - INFO - Request: GET /api/health
+2026-07-16 01:50:09,338 - backend.app - INFO - Response: 200 OK
+2026-07-16 01:50:09,339 - werkzeug - INFO - 127.0.0.1 - - [16/Jul/2026 01:50:09] "GET /api/health HTTP/1.1" 200 -
+2026-07-16 01:50:09,397 - backend.app - INFO - Request: GET /api/health
+2026-07-16 01:50:09,397 - backend.app - INFO - Response: 200 OK
+2026-07-16 01:50:09,397 - werkzeug - INFO - 127.0.0.1 - - [16/Jul/2026 01:50:09] "GET /api/health HTTP/1.1" 200 -
+2026-07-16 01:51:09,300 - backend.app - INFO - Request: GET /api/health
+2026-07-16 01:51:09,302 - backend.app - INFO - Response: 200 OK
+2026-07-16 01:51:09,302 - werkzeug - INFO - 127.0.0.1 - - [16/Jul/2026 01:51:09] "GET /api/health HTTP/1.1" 200 -
+2026-07-16 01:51:09,395 - backend.app - INFO - Request: GET /api/health
+2026-07-16 01:51:09,395 - backend.app - INFO - Response: 200 OK
+2026-07-16 01:51:09,395 - werkzeug - INFO - 127.0.0.1 - - [16/Jul/2026 01:51:09] "GET /api/health HTTP/1.1" 200 -
+2026-07-16 01:52:09,274 - backend.app - INFO - Request: GET /api/health
+2026-07-16 01:52:09,275 - backend.app - INFO - Response: 200 OK
+2026-07-16 01:52:09,275 - werkzeug - INFO - 127.0.0.1 - - [16/Jul/2026 01:52:09] "GET /api/health HTTP/1.1" 200 -
+2026-07-16 01:52:09,442 - backend.app - INFO - Request: GET /api/health
+2026-07-16 01:52:09,443 - backend.app - INFO - Response: 200 OK
+2026-07-16 01:52:09,444 - werkzeug - INFO - 127.0.0.1 - - [16/Jul/2026 01:52:09] "GET /api/health HTTP/1.1" 200 -
+2026-07-16 01:53:09,296 - backend.app - INFO - Request: GET /api/health
+2026-07-16 01:53:09,296 - backend.app - INFO - Response: 200 OK
+2026-07-16 01:53:09,296 - werkzeug - INFO - 127.0.0.1 - - [16/Jul/2026 01:53:09] "GET /api/health HTTP/1.1" 200 -
+2026-07-16 01:53:09,344 - backend.app - INFO - Request: GET /api/health
+2026-07-16 01:53:09,344 - backend.app - INFO - Response: 200 OK
+2026-07-16 01:53:09,346 - werkzeug - INFO - 127.0.0.1 - - [16/Jul/2026 01:53:09] "GET /api/health HTTP/1.1" 200 -
+2026-07-16 01:54:09,272 - backend.app - INFO - Request: GET /api/health
+2026-07-16 01:54:09,273 - backend.app - INFO - Response: 200 OK
+2026-07-16 01:54:09,274 - werkzeug - INFO - 127.0.0.1 - - [16/Jul/2026 01:54:09] "GET /api/health HTTP/1.1" 200 -
+2026-07-16 01:54:09,299 - backend.app - INFO - Request: GET /api/health
+2026-07-16 01:54:09,304 - backend.app - INFO - Response: 200 OK
+2026-07-16 01:54:09,304 - werkzeug - INFO - 127.0.0.1 - - [16/Jul/2026 01:54:09] "GET /api/health HTTP/1.1" 200 -
+2026-07-16 01:55:09,289 - backend.app - INFO - Request: GET /api/health
+2026-07-16 01:55:09,289 - backend.app - INFO - Response: 200 OK
+2026-07-16 01:55:09,289 - werkzeug - INFO - 127.0.0.1 - - [16/Jul/2026 01:55:09] "GET /api/health HTTP/1.1" 200 -
+2026-07-16 01:55:09,380 - backend.app - INFO - Request: GET /api/health
+2026-07-16 01:55:09,381 - backend.app - INFO - Response: 200 OK
+2026-07-16 01:55:09,382 - werkzeug - INFO - 127.0.0.1 - - [16/Jul/2026 01:55:09] "GET /api/health HTTP/1.1" 200 -
+2026-07-16 01:56:09,332 - backend.app - INFO - Request: GET /api/health
+2026-07-16 01:56:09,333 - backend.app - INFO - Response: 200 OK
+2026-07-16 01:56:09,335 - werkzeug - INFO - 127.0.0.1 - - [16/Jul/2026 01:56:09] "GET /api/health HTTP/1.1" 200 -
+2026-07-16 01:56:09,378 - backend.app - INFO - Request: GET /api/health
+2026-07-16 01:56:09,378 - backend.app - INFO - Response: 200 OK
+2026-07-16 01:56:09,380 - werkzeug - INFO - 127.0.0.1 - - [16/Jul/2026 01:56:09] "GET /api/health HTTP/1.1" 200 -
+2026-07-16 01:57:09,307 - backend.app - INFO - Request: GET /api/health
+2026-07-16 01:57:09,307 - backend.app - INFO - Response: 200 OK
+2026-07-16 01:57:09,308 - werkzeug - INFO - 127.0.0.1 - - [16/Jul/2026 01:57:09] "GET /api/health HTTP/1.1" 200 -
+2026-07-16 01:57:09,368 - backend.app - INFO - Request: GET /api/health
+2026-07-16 01:57:09,368 - backend.app - INFO - Response: 200 OK
+2026-07-16 01:57:09,368 - werkzeug - INFO - 127.0.0.1 - - [16/Jul/2026 01:57:09] "GET /api/health HTTP/1.1" 200 -
+2026-07-16 01:58:09,270 - backend.app - INFO - Request: GET /api/health
+2026-07-16 01:58:09,270 - backend.app - INFO - Response: 200 OK
+2026-07-16 01:58:09,273 - werkzeug - INFO - 127.0.0.1 - - [16/Jul/2026 01:58:09] "GET /api/health HTTP/1.1" 200 -
+2026-07-16 01:58:09,561 - backend.app - INFO - Request: GET /api/health
+2026-07-16 01:58:09,561 - backend.app - INFO - Response: 200 OK
+2026-07-16 01:58:09,561 - werkzeug - INFO - 127.0.0.1 - - [16/Jul/2026 01:58:09] "GET /api/health HTTP/1.1" 200 -
+2026-07-16 01:59:09,305 - backend.app - INFO - Request: GET /api/health
+2026-07-16 01:59:09,305 - backend.app - INFO - Response: 200 OK
+2026-07-16 01:59:09,305 - werkzeug - INFO - 127.0.0.1 - - [16/Jul/2026 01:59:09] "GET /api/health HTTP/1.1" 200 -
+2026-07-16 01:59:09,366 - backend.app - INFO - Request: GET /api/health
+2026-07-16 01:59:09,366 - backend.app - INFO - Response: 200 OK
+2026-07-16 01:59:09,367 - werkzeug - INFO - 127.0.0.1 - - [16/Jul/2026 01:59:09] "GET /api/health HTTP/1.1" 200 -
+2026-07-16 02:00:09,313 - backend.app - INFO - Request: GET /api/health
+2026-07-16 02:00:09,315 - backend.app - INFO - Response: 200 OK
+2026-07-16 02:00:09,315 - werkzeug - INFO - 127.0.0.1 - - [16/Jul/2026 02:00:09] "GET /api/health HTTP/1.1" 200 -
+2026-07-16 02:00:09,366 - backend.app - INFO - Request: GET /api/health
+2026-07-16 02:00:09,366 - backend.app - INFO - Response: 200 OK
+2026-07-16 02:00:09,368 - werkzeug - INFO - 127.0.0.1 - - [16/Jul/2026 02:00:09] "GET /api/health HTTP/1.1" 200 -
+2026-07-16 02:01:09,321 - backend.app - INFO - Request: GET /api/health
+2026-07-16 02:01:09,321 - backend.app - INFO - Response: 200 OK
+2026-07-16 02:01:09,325 - werkzeug - INFO - 127.0.0.1 - - [16/Jul/2026 02:01:09] "GET /api/health HTTP/1.1" 200 -
+2026-07-16 02:01:09,400 - backend.app - INFO - Request: GET /api/health
+2026-07-16 02:01:09,400 - backend.app - INFO - Response: 200 OK
+2026-07-16 02:01:09,400 - werkzeug - INFO - 127.0.0.1 - - [16/Jul/2026 02:01:09] "GET /api/health HTTP/1.1" 200 -
+2026-07-16 02:02:09,271 - backend.app - INFO - Request: GET /api/health
+2026-07-16 02:02:09,272 - backend.app - INFO - Response: 200 OK
+2026-07-16 02:02:09,273 - werkzeug - INFO - 127.0.0.1 - - [16/Jul/2026 02:02:09] "GET /api/health HTTP/1.1" 200 -
+2026-07-16 02:02:09,489 - backend.app - INFO - Request: GET /api/health
+2026-07-16 02:02:09,490 - backend.app - INFO - Response: 200 OK
+2026-07-16 02:02:09,494 - werkzeug - INFO - 127.0.0.1 - - [16/Jul/2026 02:02:09] "GET /api/health HTTP/1.1" 200 -
+2026-07-16 02:03:09,305 - backend.app - INFO - Request: GET /api/health
+2026-07-16 02:03:09,305 - backend.app - INFO - Response: 200 OK
+2026-07-16 02:03:09,306 - werkzeug - INFO - 127.0.0.1 - - [16/Jul/2026 02:03:09] "GET /api/health HTTP/1.1" 200 -
+2026-07-16 02:03:09,340 - backend.app - INFO - Request: GET /api/health
+2026-07-16 02:03:09,340 - backend.app - INFO - Response: 200 OK
+2026-07-16 02:03:09,340 - werkzeug - INFO - 127.0.0.1 - - [16/Jul/2026 02:03:09] "GET /api/health HTTP/1.1" 200 -
+2026-07-16 02:04:09,302 - backend.app - INFO - Request: GET /api/health
+2026-07-16 02:04:09,302 - backend.app - INFO - Response: 200 OK
+2026-07-16 02:04:09,302 - werkzeug - INFO - 127.0.0.1 - - [16/Jul/2026 02:04:09] "GET /api/health HTTP/1.1" 200 -
+2026-07-16 02:04:09,364 - backend.app - INFO - Request: GET /api/health
+2026-07-16 02:04:09,364 - backend.app - INFO - Response: 200 OK
+2026-07-16 02:04:09,364 - werkzeug - INFO - 127.0.0.1 - - [16/Jul/2026 02:04:09] "GET /api/health HTTP/1.1" 200 -
+2026-07-16 02:04:13,984 - backend.app - INFO - Request: GET /api/health
+2026-07-16 02:04:13,986 - backend.app - INFO - Response: 200 OK
+2026-07-16 02:04:13,986 - werkzeug - INFO - 127.0.0.1 - - [16/Jul/2026 02:04:13] "GET /api/health HTTP/1.1" 200 -
+2026-07-16 02:04:16,582 - backend.app - INFO - Request: GET /api/health
+2026-07-16 02:04:16,584 - backend.app - INFO - Response: 200 OK
+2026-07-16 02:04:16,585 - werkzeug - INFO - 127.0.0.1 - - [16/Jul/2026 02:04:16] "GET /api/health HTTP/1.1" 200 -
+2026-07-16 02:04:29,157 - backend.app - INFO - Request: POST /api/chat
+2026-07-16 02:04:29,184 - backend.assistants.concierge - INFO - Message classified as: greeting
+2026-07-16 02:04:29,186 - backend.assistants.concierge - INFO - Dialogue quality metrics: {'session_id': '92c8c146-a365-4e30-b3c2-27498b97c92d', 'timestamp': '2026-07-16T02:04:29.184680', 'user_message_length': 2, 'assistant_response_length': 154, 'intent': 'greeting', 'response_quality': 'good', 'has_sources': True}
+2026-07-16 02:04:35,365 - backend.services.chat_processing_service - INFO - Processed message for session 92c8c146-a365-4e30-b3c2-27498b97c92d: 2 chars -> 3960 chars response
+2026-07-16 02:04:35,365 - backend.app - INFO - Response: 200 OK
+2026-07-16 02:04:35,372 - werkzeug - INFO - 127.0.0.1 - - [16/Jul/2026 02:04:35] "POST /api/chat HTTP/1.1" 200 -
+2026-07-16 02:04:43,635 - backend.app - INFO - Request: GET /api/health
+2026-07-16 02:04:43,636 - backend.app - INFO - Response: 200 OK
+2026-07-16 02:04:43,640 - werkzeug - INFO - 127.0.0.1 - - [16/Jul/2026 02:04:43] "GET /api/health HTTP/1.1" 200 -
+2026-07-16 02:04:46,614 - backend.app - INFO - Request: GET /api/health
+2026-07-16 02:04:46,614 - backend.app - INFO - Response: 200 OK
+2026-07-16 02:04:46,617 - werkzeug - INFO - 127.0.0.1 - - [16/Jul/2026 02:04:46] "GET /api/health HTTP/1.1" 200 -

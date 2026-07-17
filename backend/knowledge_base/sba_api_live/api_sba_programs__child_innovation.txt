@@ -1,0 +1,11 @@
+# SBIR/STTR
+Type: program
+API path: /api/sba/content/sbir
+Parent path: /api/sba/programs
+ID: innovation
+
+R&D grants that encourage small businesses to engage in federal research.
+
+Official URL: https://www.sbir.gov/
+Action: Explore children -> /api/sba/content/sbir
+Action: Official source -> https://www.sbir.gov/

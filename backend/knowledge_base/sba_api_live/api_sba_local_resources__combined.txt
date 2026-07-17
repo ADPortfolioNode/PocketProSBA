@@ -1,0 +1,130 @@
+# Combined SBA API digest for /api/sba/local-resources
+Retrieved children: 8
+Chunks: 9
+
+# Local Resources
+Source: SBA API endpoint response
+API route: /api/sba/local-resources
+
+Local SBA partners and offices. Click a card to open its content route. This topic currently surfaces 8 resources. Highlights include: Small Business Development Centers; SCORE Business Mentors; Women's Business Centers; Veterans Business Outreach Centers.
+
+## Overview
+Local SBA partners and offices. Click a card to open its content route. This topic currently surfaces 8 resources. Highlights include: Small Business Development Centers; SCORE Business Mentors; Women's Business Centers; Veterans Business Outreach Centers.
+
+## Resources
+8 curated / live resources for this topic.
+
+## How to use this page
+Click any card with an API badge to open that route’s results. Use type filters to focus. Open official links for full SBA.gov detail. Use Back to return to the previous topic.
+
+---
+
+# Small Business Development Centers
+Type: content
+API path: /api/sba/content/offices
+Parent path: /api/sba/local-resources
+ID: sbdc
+
+Local centers providing free counseling and training to small business owners.
+
+Official URL: https://www.sba.gov/local-assistance/find/?type=Small%20Business%20Development%20Center&pageNumber=1
+Action: Explore children -> /api/sba/content/offices
+Action: Official source -> https://www.sba.gov/local-assistance/find/?type=Small%20Business%20Development%20Center&pageNumber=1
+
+---
+
+# SCORE Business Mentors
+Type: content
+API path: /api/sba/content/offices
+Parent path: /api/sba/local-resources
+ID: score
+
+Volunteer mentors offering free, confidential business advice.
+
+Official URL: https://www.score.org/find-mentor
+Action: Explore children -> /api/sba/content/offices
+Action: Official source -> https://www.score.org/find-mentor
+
+---
+
+# Women's Business Centers
+Type: content
+API path: /api/sba/content/offices
+Parent path: /api/sba/local-resources
+ID: wbc
+
+Training and counseling tailored for women entrepreneurs.
+
+Official URL: https://www.sba.gov/local-assistance/find/?type=Women%27s%20Business%20Center&pageNumber=1
+Action: Explore children -> /api/sba/content/offices
+Action: Official source -> https://www.sba.gov/local-assistance/find/?type=Women%27s%20Business%20Center&pageNumber=1
+
+---
+
+# Veterans Business Outreach Centers
+Type: content
+API path: /api/sba/content/offices
+Parent path: /api/sba/local-resources
+ID: vboc
+
+Business training and counseling for veteran entrepreneurs.
+
+Official URL: https://www.sba.gov/local-assistance/find/?type=Veterans%20Business%20Outreach%20Center&pageNumber=1
+Action: Explore children -> /api/sba/content/offices
+Action: Official source -> https://www.sba.gov/local-assistance/find/?type=Veterans%20Business%20Outreach%20Center&pageNumber=1
+
+---
+
+# SBA District Offices
+Type: content
+API path: /api/sba/content/offices
+Parent path: /api/sba/local-resources
+ID: district
+
+Local SBA offices that connect owners to programs and partners.
+
+Official URL: https://www.sba.gov/local-assistance/find/?type=SBA%20District%20Office&pageNumber=1
+Action: Explore children -> /api/sba/content/offices
+Action: Official source -> https://www.sba.gov/local-assistance/find/?type=SBA%20District%20Office&pageNumber=1
+
+---
+
+# Lender Match
+Type: content
+API path: /api/sba/content/lenders
+Parent path: /api/sba/local-resources
+ID: lender-match
+
+Get matched with SBA lenders in your market.
+
+Official URL: https://www.sba.gov/funding-programs/loans/lender-match
+Action: Explore children -> /api/sba/content/lenders
+Action: Official source -> https://www.sba.gov/funding-programs/loans/lender-match
+
+---
+
+# Local Events & Training
+Type: content
+API path: /api/sba/content/events
+Parent path: /api/sba/local-resources
+ID: events-local
+
+Webinars and workshops from SBA and resource partners near you.
+
+Official URL: https://www.sba.gov/events
+Action: Explore children -> /api/sba/content/events
+Action: Official source -> https://www.sba.gov/events
+
+---
+
+# SBA Locations Directory
+Type: content
+API path: /api/sba/content/offices
+Parent path: /api/sba/local-resources
+ID: locations
+
+Find headquarters, district offices, and disaster centers.
+
+Official URL: https://www.sba.gov/about-sba/sba-locations
+Action: Explore children -> /api/sba/content/offices
+Action: Official source -> https://www.sba.gov/about-sba/sba-locations

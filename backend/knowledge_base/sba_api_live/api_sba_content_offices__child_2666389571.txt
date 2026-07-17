@@ -1,0 +1,12 @@
+# Fund your business
+Type: office
+API path: /api/sba/content/offices/2666389571
+Parent path: /api/sba/content/offices
+ID: 2666389571
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/plan-your-business/fund-your-business
+Action: Explore children -> /api/sba/content/offices/2666389571
+Action: Official source -> https://www.sba.gov/business-guide/plan-your-business/fund-your-business
+Location: Online / see official page

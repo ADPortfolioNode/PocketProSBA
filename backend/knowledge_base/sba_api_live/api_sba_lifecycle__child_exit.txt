@@ -1,0 +1,11 @@
+# Exit / Transition
+Type: lifecycle
+API path: /api/sba/lifecycle/exit
+Parent path: /api/sba/lifecycle
+ID: exit
+
+Selling, succession, or closing a small business thoughtfully.
+
+Official URL: https://www.sba.gov/business-guide
+Action: Explore children -> /api/sba/lifecycle/exit
+Action: Official source -> https://www.sba.gov/business-guide

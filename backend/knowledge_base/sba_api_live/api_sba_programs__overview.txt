@@ -1,0 +1,14 @@
+# SBA Programs
+Source: SBA API endpoint response
+API route: /api/sba/programs
+
+Official SBA program categories. Click a card to open its API route results. This topic currently surfaces 9 resources across 2 types. Highlights include: SBA Loans; Government Contracting; Disaster Assistance; Counseling & Training.
+
+## Overview
+Official SBA program categories. Click a card to open its API route results. This topic currently surfaces 9 resources across 2 types. Highlights include: SBA Loans; Government Contracting; Disaster Assistance; Counseling & Training.
+
+## Resources
+9 curated / live resources for this topic.
+
+## How to use this page
+Click any card with an API badge to open that route’s results. Use type filters to focus. Open official links for full SBA.gov detail. Use Back to return to the previous topic.

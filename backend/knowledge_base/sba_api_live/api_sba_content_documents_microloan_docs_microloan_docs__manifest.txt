@@ -1,0 +1,7 @@
+route=/api/sba/content/documents/microloan-docs/microloan-docs
+chunks=3
+files=3
+updated=2026-07-16T07:04:44Z
+/app/backend/knowledge_base/sba_api_live/api_sba_content_documents_microloan_docs_microloan_docs__combined.txt
+/app/backend/knowledge_base/sba_api_live/api_sba_content_documents_microloan_docs_microloan_docs__overview.txt
+/app/backend/knowledge_base/sba_api_live/api_sba_content_documents_microloan_docs_microloan_docs__child_microloan_docs_microloan_docs.txt

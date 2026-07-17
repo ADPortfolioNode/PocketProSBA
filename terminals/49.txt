@@ -1,0 +1,25 @@
+---
+pid: 10200
+cwd: "E:\2024 RESET\PocketProSBA"
+command: "python \"E:\\2024 RESET\\PocketProSBA\\scripts\\smoke_test.py\""
+started_at: 2026-07-16T05:20:30.750Z
+running_for_ms: 4755006  
+---
+=== SMOKE TESTS ===
+Target: http://127.0.0.1:5000
+
+GET / -> 200 {   "service": "PocketPro SBA",   "status": "running",   "version": "1.0.0" } 
+GET /health -> 200 {   "service": "PocketPro SBA",   "status": "healthy",   "version": "1.0.0" } 
+GET /api/health -> 200 {   "server": {     "self": "http://127.0.0.1:5000"   },   "status": "healthy" } 
+GET /api/info -> 200 {   "document_count": 0,   "rag_status": "unavailable",   "server": {     "host": "127.0.0.1:5000",     "scheme": "http",     "self": "http:
+GET /api/diagnostics -> 200 {   "message": "All systems functional",   "status": "operational",   "timestamp": 1784179247.6714444 } 
+GET /api/chromadb_health -> 200 {   "document_count": 0,   "message": "ChromaDB is not available",   "server": {     "self": "http://127.0.0.1:5000"   },   "status": "error
+GET /api/rag/health -> 503 {   "message": "RAG system is not available",   "status": "error" } 
+GET /api/orchestrator/health -> 200 {   "active_tasks": 0,   "feedback_available": false,   "memory_available": true,   "metrics_available": false,   "service": "orchestrator",
+POST /api/decompose -> 200 {   "response": {     "sources": [],     "steps": [       {         "data": {           "instruction": "Research SBA loan information for: H
+POST /api/chat -> 200 success=True resp=Here’s a clear summary from live SBA resources about **What SBA loans exist?**:
+
+POST /api/validate -> 200 {'confidence': 0.75, 'feedback': 'Step result validated successfully', 'length': 66, 'status': 'PASS'}
+POST /api/chat (no user_id) -> 200
+
+=== RESULT: 12/12 checks passed ===

@@ -35,7 +35,19 @@ Before you begin, ensure you have the following installed:
 
 3. **Double-click** `Stop.bat` to stop the application
 
-### Linux/Mac Users
+### Mac Users
+
+1. **Double-click** `Start.command` to start the application
+2. The script will:
+   - Check if Docker is running
+   - Create `.env` file from `.env.example` if it doesn't exist
+   - Prompt you to add your GEMINI_API_KEY
+   - Build and start all containers
+   - Display access URLs
+
+3. **Double-click** `Stop.command` to stop the application
+
+### Linux Users
 
 1. Make the script executable (first time only):
    ```bash
@@ -161,9 +173,11 @@ pocket-pro-sba-distribution/
 ├── wsgi.py              # WSGI entry point
 ├── run.py               # Application entry point
 ├── Start.bat            # Windows startup script
-├── Start.sh             # Linux/Mac startup script
+├── Start.sh             # Linux startup script
+├── Start.command        # Mac startup script
 ├── Stop.bat             # Windows stop script
-├── Stop.sh              # Linux/Mac stop script
+├── Stop.sh              # Linux stop script
+├── Stop.command         # Mac stop script
 ├── LICENSE.txt          # MIT License
 └── README.md            # This file
 ```

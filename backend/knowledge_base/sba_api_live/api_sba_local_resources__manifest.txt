@@ -1,0 +1,14 @@
+route=/api/sba/local-resources
+chunks=10
+files=10
+updated=2026-07-16T08:12:54Z
+/app/backend/knowledge_base/sba_api_live/api_sba_local_resources__combined.txt
+/app/backend/knowledge_base/sba_api_live/api_sba_local_resources__overview.txt
+/app/backend/knowledge_base/sba_api_live/api_sba_local_resources__child_sbdc.txt
+/app/backend/knowledge_base/sba_api_live/api_sba_local_resources__child_score.txt
+/app/backend/knowledge_base/sba_api_live/api_sba_local_resources__child_wbc.txt
+/app/backend/knowledge_base/sba_api_live/api_sba_local_resources__child_vboc.txt
+/app/backend/knowledge_base/sba_api_live/api_sba_local_resources__child_district.txt
+/app/backend/knowledge_base/sba_api_live/api_sba_local_resources__child_lender_match.txt
+/app/backend/knowledge_base/sba_api_live/api_sba_local_resources__child_events_local.txt
+/app/backend/knowledge_base/sba_api_live/api_sba_local_resources__child_locations.txt

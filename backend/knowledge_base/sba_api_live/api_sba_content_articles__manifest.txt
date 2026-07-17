@@ -1,7 +1,7 @@
 route=/api/sba/content/articles
 chunks=22
 files=22
-updated=2026-07-12T22:05:20Z
+updated=2026-07-16T08:12:52Z
 /app/backend/knowledge_base/sba_api_live/api_sba_content_articles__combined.txt
 /app/backend/knowledge_base/sba_api_live/api_sba_content_articles__overview.txt
 /app/backend/knowledge_base/sba_api_live/api_sba_content_articles__child_guide_start.txt
@@ -17,10 +17,10 @@ updated=2026-07-12T22:05:20Z
 /app/backend/knowledge_base/sba_api_live/api_sba_content_articles__child_guide_11.txt
 /app/backend/knowledge_base/sba_api_live/api_sba_content_articles__child_guide_12.txt
 /app/backend/knowledge_base/sba_api_live/api_sba_content_articles__child_guide_13.txt
-/app/backend/knowledge_base/sba_api_live/api_sba_content_articles__child_9528503887.txt
-/app/backend/knowledge_base/sba_api_live/api_sba_content_articles__child_7394118830.txt
-/app/backend/knowledge_base/sba_api_live/api_sba_content_articles__child_1958740143.txt
-/app/backend/knowledge_base/sba_api_live/api_sba_content_articles__child_3307915421.txt
-/app/backend/knowledge_base/sba_api_live/api_sba_content_articles__child_4889663380.txt
-/app/backend/knowledge_base/sba_api_live/api_sba_content_articles__child_4670763421.txt
-/app/backend/knowledge_base/sba_api_live/api_sba_content_articles__child_3061112058.txt
+/app/backend/knowledge_base/sba_api_live/api_sba_content_articles__child_5031723874.txt
+/app/backend/knowledge_base/sba_api_live/api_sba_content_articles__child_3492897083.txt
+/app/backend/knowledge_base/sba_api_live/api_sba_content_articles__child_7324342959.txt
+/app/backend/knowledge_base/sba_api_live/api_sba_content_articles__child_7151792756.txt
+/app/backend/knowledge_base/sba_api_live/api_sba_content_articles__child_4784403714.txt
+/app/backend/knowledge_base/sba_api_live/api_sba_content_articles__child_9820797174.txt
+/app/backend/knowledge_base/sba_api_live/api_sba_content_articles__child_8322726490.txt

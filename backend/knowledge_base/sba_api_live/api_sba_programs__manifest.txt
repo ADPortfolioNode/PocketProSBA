@@ -1,0 +1,15 @@
+route=/api/sba/programs
+chunks=11
+files=11
+updated=2026-07-16T08:12:45Z
+/app/backend/knowledge_base/sba_api_live/api_sba_programs__combined.txt
+/app/backend/knowledge_base/sba_api_live/api_sba_programs__overview.txt
+/app/backend/knowledge_base/sba_api_live/api_sba_programs__child_loans.txt
+/app/backend/knowledge_base/sba_api_live/api_sba_programs__child_contracting.txt
+/app/backend/knowledge_base/sba_api_live/api_sba_programs__child_disaster.txt
+/app/backend/knowledge_base/sba_api_live/api_sba_programs__child_counseling.txt
+/app/backend/knowledge_base/sba_api_live/api_sba_programs__child_international.txt
+/app/backend/knowledge_base/sba_api_live/api_sba_programs__child_innovation.txt
+/app/backend/knowledge_base/sba_api_live/api_sba_programs__child_opportunities.txt
+/app/backend/knowledge_base/sba_api_live/api_sba_programs__child_women.txt
+/app/backend/knowledge_base/sba_api_live/api_sba_programs__child_lenders.txt

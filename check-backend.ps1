@@ -14,14 +14,14 @@ try {
 Write-Host ""
 
 # Check Docker-based backend (port 10000)
-Write-Host "Checking if the Docker backend API is running on port 10000..." -ForegroundColor Yellow
+Write-Host "Checking if the Docker backend API is running on port 3000 (via Nginx)..." -ForegroundColor Yellow
 try {
-    $response = Invoke-WebRequest -Uri "http://localhost:10000/health" -Method GET -TimeoutSec 5 -ErrorAction Stop
-    Write-Host "[√] Docker backend API is running at http://localhost:10000" -ForegroundColor Green
+    $response = Invoke-WebRequest -Uri "http://localhost:3000/api/health" -Method GET -TimeoutSec 5 -ErrorAction Stop
+    Write-Host "[√] Docker backend API is running at http://localhost:3000/api/health" -ForegroundColor Green
     Write-Host "    Status: $($response.StatusCode)" -ForegroundColor Green
 } catch {
-    Write-Host "[X] Docker backend API is NOT running or not accessible on port 10000" -ForegroundColor Red
-    Write-Host "    Make sure your Docker containers are running with 'docker-compose up'" -ForegroundColor Red
+    Write-Host "[X] Docker backend API is NOT running or not accessible on port 3000" -ForegroundColor Red
+    Write-Host "    Make sure your Docker containers are running with './start.sh --mode dev'" -ForegroundColor Red
     Write-Host "    Error: $_" -ForegroundColor Red
 }
 Write-Host ""
@@ -224,4 +224,4 @@ Write-Host "   - Check logs: docker-compose logs" -ForegroundColor White
 Write-Host ""
 Write-Host "3. Check your frontend .env files to ensure they point to the correct backend URL" -ForegroundColor White
 Write-Host "   - For local: REACT_APP_API_URL=http://localhost:5000" -ForegroundColor White
-Write-Host "   - For Docker: REACT_APP_API_URL=http://localhost:10000" -ForegroundColor White
+Write-Host "   - For Docker: REACT_APP_API_URL=http://localhost:3000" -ForegroundColor White

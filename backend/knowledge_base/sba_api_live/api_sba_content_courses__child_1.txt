@@ -1,0 +1,8 @@
+# Test Course
+Type: content
+API path: /api/sba/content/courses/1
+Parent path: /api/sba/content/courses
+ID: 1
+
+Official SBA resource: Test Course
+Action: Explore children -> /api/sba/content/courses/1

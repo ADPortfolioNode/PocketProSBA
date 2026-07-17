@@ -1,0 +1,11 @@
+# SBA Locations Directory
+Type: content
+API path: /api/sba/content/offices
+Parent path: /api/sba/local-resources
+ID: locations
+
+Find headquarters, district offices, and disaster centers.
+
+Official URL: https://www.sba.gov/about-sba/sba-locations
+Action: Explore children -> /api/sba/content/offices
+Action: Official source -> https://www.sba.gov/about-sba/sba-locations

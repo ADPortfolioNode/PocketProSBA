@@ -160,7 +160,7 @@ docker_prune() {
   fi
 }
 
-MODE=dev
+MODE=prod
 HOST=0.0.0.0
 PORT=""
 LOG_FILE=""
@@ -278,12 +278,21 @@ fi
 set -a
 source .env
 set +a
-
-if [[ -z "${GEMINI_API_KEY:-}" ]]; then
-  echo "Missing GEMINI_API_KEY in .env. Please set it before starting." >&2
+if [[ -z "${GEMINI_API_KEY:-}" ]] || [[ "${GEMINI_API_KEY}" == "your_api_key_here" ]]; then
+  echo "[ERROR] Missing GEMINI_API_KEY in .env. Please set it before starting." >&2
+  echo "        You can get a key from: https://makersuite.google.com/app/apikey" >&2
   exit 1
 fi
 
+if [[ -z "${REACT_APP_BACKEND_URL:-}" ]]; then
+  if [[ "$LOCAL" == true ]]; then
+    export REACT_APP_BACKEND_URL="http://localhost:${PORT}"
+    echo "[INFO] REACT_APP_BACKEND_URL not set. Defaulting to local backend: ${REACT_APP_BACKEND_URL}"
+  else
+    export REACT_APP_BACKEND_URL="http://localhost:3000"
+    echo "[INFO] REACT_APP_BACKEND_URL not set. Defaulting to Docker proxy: ${REACT_APP_BACKEND_URL}"
+  fi
+fi
 export HOST PORT
 export FLASK_ENV="${FLASK_ENV:-production}"
 export FLASK_APP="${FLASK_APP:-app.py}"
@@ -297,6 +306,12 @@ clear_service_ports
 
 if [[ "$LOCAL" == true ]]; then
   echo "Starting PocketProSBA locally in host mode..."
+  # Ensure backend/.env is sourced for local runs if it exists
+  if [[ -f backend/.env ]]; then
+    set -a
+    source backend/.env
+    set +a
+  fi
 else
   if ! wait_for_docker 30 2; then
     exit 1

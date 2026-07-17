@@ -1,0 +1,11 @@
+# Lender Match
+Type: program
+API path: /api/sba/content/lenders
+Parent path: /api/sba/programs
+ID: lenders
+
+Connect with SBA lenders interested in your financing needs.
+
+Official URL: https://www.sba.gov/funding-programs/loans/lender-match
+Action: Explore children -> /api/sba/content/lenders
+Action: Official source -> https://www.sba.gov/funding-programs/loans/lender-match

@@ -55,11 +55,17 @@ if %errorlevel% neq 0 (
 )
 echo.
 
+REM Determine which compose file to use for production
+set "COMPOSE_FILE=docker-compose.yml"
+if exist docker-compose.prod.yml (
+    set "COMPOSE_FILE=docker-compose.prod.yml"
+)
+
 REM Build and start containers
-echo Building and starting Docker containers...
+echo Building and starting Docker containers using %COMPOSE_FILE%...
 echo This may take several minutes on first run...
 echo.
-docker compose up --build -d
+docker compose -f %COMPOSE_FILE% up --build -d
 
 if %errorlevel% neq 0 (
     echo.

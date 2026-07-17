@@ -1,0 +1,11 @@
+# Government Contracting
+Type: program
+API path: /api/sba/content/contracting
+Parent path: /api/sba/programs
+ID: contracting
+
+Certifications and support to win federal contracts (8(a), HUBZone, WOSB, SDVOSB).
+
+Official URL: https://www.sba.gov/federal-contracting
+Action: Explore children -> /api/sba/content/contracting
+Action: Official source -> https://www.sba.gov/federal-contracting

@@ -1,0 +1,11 @@
+# SBA District Offices
+Type: content
+API path: /api/sba/content/offices
+Parent path: /api/sba/local-resources
+ID: district
+
+Local SBA offices that connect owners to programs and partners.
+
+Official URL: https://www.sba.gov/local-assistance/find/?type=SBA%20District%20Office&pageNumber=1
+Action: Explore children -> /api/sba/content/offices
+Action: Official source -> https://www.sba.gov/local-assistance/find/?type=SBA%20District%20Office&pageNumber=1

@@ -1,0 +1,11 @@
+# SCORE Business Mentors
+Type: content
+API path: /api/sba/content/offices
+Parent path: /api/sba/local-resources
+ID: score
+
+Volunteer mentors offering free, confidential business advice.
+
+Official URL: https://www.score.org/find-mentor
+Action: Explore children -> /api/sba/content/offices
+Action: Official source -> https://www.score.org/find-mentor

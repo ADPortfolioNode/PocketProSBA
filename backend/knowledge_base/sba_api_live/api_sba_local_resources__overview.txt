@@ -1,0 +1,14 @@
+# Local Resources
+Source: SBA API endpoint response
+API route: /api/sba/local-resources
+
+Local SBA partners and offices. Click a card to open its content route. This topic currently surfaces 8 resources. Highlights include: Small Business Development Centers; SCORE Business Mentors; Women's Business Centers; Veterans Business Outreach Centers.
+
+## Overview
+Local SBA partners and offices. Click a card to open its content route. This topic currently surfaces 8 resources. Highlights include: Small Business Development Centers; SCORE Business Mentors; Women's Business Centers; Veterans Business Outreach Centers.
+
+## Resources
+8 curated / live resources for this topic.
+
+## How to use this page
+Click any card with an API badge to open that route’s results. Use type filters to focus. Open official links for full SBA.gov detail. Use Back to return to the previous topic.

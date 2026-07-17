@@ -1,0 +1,8 @@
+# Test Office
+Type: content
+API path: /api/sba/content/offices/1
+Parent path: /api/sba/content/offices
+ID: 1
+
+Official SBA resource: Test Office
+Action: Explore children -> /api/sba/content/offices/1

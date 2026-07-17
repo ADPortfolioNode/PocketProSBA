@@ -1,0 +1,11 @@
+# Start a Business
+Type: lifecycle
+API path: /api/sba/lifecycle/start
+Parent path: /api/sba/lifecycle
+ID: start
+
+Plan and launch path: research, structure, registration, and first funding options.
+
+Official URL: https://www.sba.gov/business-guide
+Action: Explore children -> /api/sba/lifecycle/start
+Action: Official source -> https://www.sba.gov/business-guide

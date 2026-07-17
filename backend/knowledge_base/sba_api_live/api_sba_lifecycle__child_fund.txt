@@ -1,0 +1,11 @@
+# Fund Your Business
+Type: lifecycle
+API path: /api/sba/lifecycle/fund
+Parent path: /api/sba/lifecycle
+ID: fund
+
+SBA loan programs and Lender Match for capital needs.
+
+Official URL: https://www.sba.gov/funding-programs/loans
+Action: Explore children -> /api/sba/lifecycle/fund
+Action: Official source -> https://www.sba.gov/funding-programs/loans

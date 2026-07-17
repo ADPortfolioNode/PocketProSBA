@@ -1,0 +1,12 @@
+# Choose a business structure
+Type: office
+API path: /api/sba/content/offices/605999322
+Parent path: /api/sba/content/offices
+ID: 605999322
+
+Current link on sba.gov — open source for full official details.
+
+Official URL: https://www.sba.gov/business-guide/launch-your-business/choose-business-structure
+Action: Explore children -> /api/sba/content/offices/605999322
+Action: Official source -> https://www.sba.gov/business-guide/launch-your-business/choose-business-structure
+Location: Online / see official page

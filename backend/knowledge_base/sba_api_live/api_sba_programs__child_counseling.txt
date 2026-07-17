@@ -1,0 +1,11 @@
+# Counseling & Training
+Type: content
+API path: /api/sba/content/offices
+Parent path: /api/sba/programs
+ID: counseling
+
+Free mentoring via SBDC, SCORE, WBC, and VBOC resource partners.
+
+Official URL: https://www.sba.gov/local-assistance
+Action: Explore children -> /api/sba/content/offices
+Action: Official source -> https://www.sba.gov/local-assistance

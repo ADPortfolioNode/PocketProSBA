@@ -225,13 +225,13 @@ Location: Online / see official page
 
 # Establish business credit
 Type: loan
-API path: /api/sba/content/loans/4889663380
+API path: /api/sba/content/loans/4784403714
 Parent path: /api/sba/content/loans
-ID: 4889663380
+ID: 4784403714
 
 Current link on sba.gov — open source for full official details.
 
 Official URL: https://www.sba.gov/business-guide/plan-your-business/establish-business-credit
-Action: Explore children -> /api/sba/content/loans/4889663380
+Action: Explore children -> /api/sba/content/loans/4784403714
 Action: Official source -> https://www.sba.gov/business-guide/plan-your-business/establish-business-credit
 Location: Online / see official page

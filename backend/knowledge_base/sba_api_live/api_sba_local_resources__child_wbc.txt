@@ -1,0 +1,11 @@
+# Women's Business Centers
+Type: content
+API path: /api/sba/content/offices
+Parent path: /api/sba/local-resources
+ID: wbc
+
+Training and counseling tailored for women entrepreneurs.
+
+Official URL: https://www.sba.gov/local-assistance/find/?type=Women%27s%20Business%20Center&pageNumber=1
+Action: Explore children -> /api/sba/content/offices
+Action: Official source -> https://www.sba.gov/local-assistance/find/?type=Women%27s%20Business%20Center&pageNumber=1

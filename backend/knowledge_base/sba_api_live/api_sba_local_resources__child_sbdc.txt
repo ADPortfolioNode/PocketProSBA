@@ -1,0 +1,11 @@
+# Small Business Development Centers
+Type: content
+API path: /api/sba/content/offices
+Parent path: /api/sba/local-resources
+ID: sbdc
+
+Local centers providing free counseling and training to small business owners.
+
+Official URL: https://www.sba.gov/local-assistance/find/?type=Small%20Business%20Development%20Center&pageNumber=1
+Action: Explore children -> /api/sba/content/offices
+Action: Official source -> https://www.sba.gov/local-assistance/find/?type=Small%20Business%20Development%20Center&pageNumber=1

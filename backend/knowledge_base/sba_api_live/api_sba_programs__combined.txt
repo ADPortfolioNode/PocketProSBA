@@ -1,0 +1,144 @@
+# Combined SBA API digest for /api/sba/programs
+Retrieved children: 9
+Chunks: 10
+
+# SBA Programs
+Source: SBA API endpoint response
+API route: /api/sba/programs
+
+Official SBA program categories. Click a card to open its API route results. This topic currently surfaces 9 resources across 2 types. Highlights include: SBA Loans; Government Contracting; Disaster Assistance; Counseling & Training.
+
+## Overview
+Official SBA program categories. Click a card to open its API route results. This topic currently surfaces 9 resources across 2 types. Highlights include: SBA Loans; Government Contracting; Disaster Assistance; Counseling & Training.
+
+## Resources
+9 curated / live resources for this topic.
+
+## How to use this page
+Click any card with an API badge to open that route’s results. Use type filters to focus. Open official links for full SBA.gov detail. Use Back to return to the previous topic.
+
+---
+
+# SBA Loans
+Type: program
+API path: /api/sba/content/loans
+Parent path: /api/sba/programs
+ID: loans
+
+7(a), 504, Microloan, and Express financing options for small businesses. Click to open all loan children.
+
+Official URL: https://www.sba.gov/funding-programs/loans
+Action: Explore children -> /api/sba/content/loans
+Action: Official source -> https://www.sba.gov/funding-programs/loans
+
+---
+
+# Government Contracting
+Type: program
+API path: /api/sba/content/contracting
+Parent path: /api/sba/programs
+ID: contracting
+
+Certifications and support to win federal contracts (8(a), HUBZone, WOSB, SDVOSB).
+
+Official URL: https://www.sba.gov/federal-contracting
+Action: Explore children -> /api/sba/content/contracting
+Action: Official source -> https://www.sba.gov/federal-contracting
+
+---
+
+# Disaster Assistance
+Type: program
+API path: /api/sba/content/disaster
+Parent path: /api/sba/programs
+ID: disaster
+
+Low-interest disaster loans for businesses, nonprofits, homeowners, and renters.
+
+Official URL: https://www.sba.gov/funding-programs/disaster-assistance
+Action: Explore children -> /api/sba/content/disaster
+Action: Official source -> https://www.sba.gov/funding-programs/disaster-assistance
+
+---
+
+# Counseling & Training
+Type: content
+API path: /api/sba/content/offices
+Parent path: /api/sba/programs
+ID: counseling
+
+Free mentoring via SBDC, SCORE, WBC, and VBOC resource partners.
+
+Official URL: https://www.sba.gov/local-assistance
+Action: Explore children -> /api/sba/content/offices
+Action: Official source -> https://www.sba.gov/local-assistance
+
+---
+
+# International Trade
+Type: program
+API path: /api/sba/content/articles
+Parent path: /api/sba/programs
+ID: international
+
+Export financing and market expansion support for small businesses.
+
+Official URL: https://www.sba.gov/business-guide/grow-your-business/export-products
+Action: Explore children -> /api/sba/content/articles
+Action: Official source -> https://www.sba.gov/business-guide/grow-your-business/export-products
+
+---
+
+# SBIR/STTR
+Type: program
+API path: /api/sba/content/sbir
+Parent path: /api/sba/programs
+ID: innovation
+
+R&D grants that encourage small businesses to engage in federal research.
+
+Official URL: https://www.sbir.gov/
+Action: Explore children -> /api/sba/content/sbir
+Action: Official source -> https://www.sbir.gov/
+
+---
+
+# Opportunities for Veterans
+Type: program
+API path: /api/sba/content/articles
+Parent path: /api/sba/programs
+ID: opportunities
+
+Training, counseling, capital access, and contracting for veteran entrepreneurs.
+
+Official URL: https://www.sba.gov/business-guide/grow-your-business/veteran-owned-businesses
+Action: Explore children -> /api/sba/content/articles
+Action: Official source -> https://www.sba.gov/business-guide/grow-your-business/veteran-owned-businesses
+
+---
+
+# Women-Owned Businesses
+Type: program
+API path: /api/sba/content/offices
+Parent path: /api/sba/programs
+ID: women
+
+WBC network support and WOSB federal contracting opportunities.
+
+Official URL: https://www.sba.gov/business-guide/grow-your-business/women-owned-businesses
+Action: Explore children -> /api/sba/content/offices
+Action: Official source -> https://www.sba.gov/business-guide/grow-your-business/women-owned-businesses
+
+---
+
+# Lender Match
+Type: program
+API path: /api/sba/content/lenders
+Parent path: /api/sba/programs
+ID: lenders
+
+Connect with SBA lenders interested in your financing needs.
+
+Official URL: https://www.sba.gov/funding-programs/loans/lender-match
+Action: Explore children -> /api/sba/content/lenders
+Action: Official source -> https://www.sba.gov/funding-programs/loans/lender-match

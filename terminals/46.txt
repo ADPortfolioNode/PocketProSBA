@@ -1,0 +1,12 @@
+---
+pid: 7732
+cwd: "E:\2024 RESET\PocketProSBA"
+command: "python -m pytest \"E:\\2024 RESET\\PocketProSBA\\backend\\tests\" -q --tb=no 2>&1 | Select-Object -Last 5"
+started_at: 2026-07-16T03:54:33.239Z
+running_for_ms: 159992   
+---
+FAILED backend/tests/test_sba_service.py::TestSBAContentAPI::test_search_offices_success
+FAILED backend/tests/test_sba_service.py::TestSBAContentAPI::test_get_node_success
+FAILED backend/tests/test_sba_service.py::TestSBAContentAPI::test_request_timeout
+FAILED backend/tests/test_sba_service.py::TestSBAContentAPI::test_http_error
+14 failed, 89 passed, 10 skipped, 7 warnings in 124.03s (0:02:04)

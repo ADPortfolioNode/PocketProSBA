@@ -1,0 +1,14 @@
+# Business Lifecycle
+Source: SBA API endpoint response
+API route: /api/sba/lifecycle
+
+Business lifecycle stages from plan to exit. Each stage opens its assigned resource options. This topic currently surfaces 7 resources. Highlights include: Start a Business; Plan Your Business; Launch Your Business; Manage Your Business.
+
+## Overview
+Business lifecycle stages from plan to exit. Each stage opens its assigned resource options. This topic currently surfaces 7 resources. Highlights include: Start a Business; Plan Your Business; Launch Your Business; Manage Your Business.
+
+## Resources
+7 curated / live resources for this topic.
+
+## How to use this page
+Click any card with an API badge to open that route’s results. Use type filters to focus. Open official links for full SBA.gov detail. Use Back to return to the previous topic.

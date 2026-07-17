@@ -14,13 +14,13 @@ if %ERRORLEVEL% NEQ 0 (
 echo.
 
 REM Check Docker-based backend (port 10000)
-echo Checking if the Docker backend API is running on port 10000...
-curl -s -o nul -w "%%{http_code}" http://localhost:10000/health
+echo Checking if the Docker backend API is running on port 3000...
+curl -s -o nul -w "%%{http_code}" http://localhost:3000/api/health
 if %ERRORLEVEL% NEQ 0 (
-    echo [X] Docker backend API is NOT running or not accessible on port 10000
+    echo [X] Docker backend API is NOT running or not accessible on port 3000
     echo     Make sure your Docker containers are running with 'docker-compose up'
 ) else (
-    echo [√] Docker backend API is running at http://localhost:10000
+    echo [√] Docker backend API is running at http://localhost:3000/api/health
 )
 echo.
 
@@ -62,5 +62,5 @@ echo    - Check logs: docker-compose logs
 echo.
 echo 3. Check your frontend .env files to ensure they point to the correct backend URL
 echo    - For local: REACT_APP_BACKEND_URL=http://localhost:5000
-echo    - For Docker: REACT_APP_BACKEND_URL=http://localhost:10000
+echo    - For Docker: REACT_APP_BACKEND_URL=http://localhost:3000
 echo.

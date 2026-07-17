@@ -1,0 +1,16 @@
+# 8(a) Business Development
+Source: SBA API endpoint response
+API route: /api/sba/content/contracting/8a
+
+Program helping small disadvantaged businesses compete for federal contracts. This topic currently surfaces 10 resources across 6 types. Highlights include: About 8(a) Business Development; Official SBA source; Next steps; HUBZone program.
+
+Official URL: https://www.sba.gov/federal-contracting/contracting-assistance-programs/8a-business-development-program
+
+## Overview
+Program helping small disadvantaged businesses compete for federal contracts. This topic currently surfaces 10 resources across 6 types. Highlights include: About 8(a) Business Development; Official SBA source; Next steps; HUBZone program.
+
+## Resources
+10 curated / live resources for this topic.
+
+## How to use this page
+Click any card with an API badge to open that route’s results. Use type filters to focus. Open official links for full SBA.gov detail. Use Back to return to the previous topic.

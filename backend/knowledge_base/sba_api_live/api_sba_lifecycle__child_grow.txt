@@ -1,0 +1,11 @@
+# Grow Your Business
+Type: lifecycle
+API path: /api/sba/lifecycle/grow
+Parent path: /api/sba/lifecycle
+ID: grow
+
+Funding, marketing, new locations, and expansion strategies.
+
+Official URL: https://www.sba.gov/business-guide/grow-your-business
+Action: Explore children -> /api/sba/lifecycle/grow
+Action: Official source -> https://www.sba.gov/business-guide/grow-your-business

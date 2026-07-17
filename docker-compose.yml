@@ -21,7 +21,7 @@ services:
       - ./uploads:/app/uploads
       - ./chromadb_data:/app/chromadb_data
       - ./logs:/app/logs
-    restart: unless-stopped
+    restart: always
     depends_on:
       - chromadb
     healthcheck:
@@ -32,7 +32,7 @@ services:
       start_period: 30s
 
   chromadb:
-    image: chromadb/chroma:0.4.24
+    image: chromadb/chroma:0.5.3
     container_name: chromadb-production
     ports:
       - "8000:8000"
@@ -43,7 +43,13 @@ services:
       - CHROMA_SERVER_HTTP_PORT=8000
       - IS_PERSISTENT=TRUE
       - PERSIST_DIRECTORY=/chroma/chroma
-    restart: unless-stopped
+    restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/heartbeat"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
   frontend:
     build:
@@ -54,7 +60,13 @@ services:
       - "3000:80"
     depends_on:
       - backend
-    restart: unless-stopped
+    restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
 networks:
   default:

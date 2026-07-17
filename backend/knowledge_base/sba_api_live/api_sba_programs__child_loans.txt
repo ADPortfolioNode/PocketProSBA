@@ -1,0 +1,11 @@
+# SBA Loans
+Type: program
+API path: /api/sba/content/loans
+Parent path: /api/sba/programs
+ID: loans
+
+7(a), 504, Microloan, and Express financing options for small businesses. Click to open all loan children.
+
+Official URL: https://www.sba.gov/funding-programs/loans
+Action: Explore children -> /api/sba/content/loans
+Action: Official source -> https://www.sba.gov/funding-programs/loans

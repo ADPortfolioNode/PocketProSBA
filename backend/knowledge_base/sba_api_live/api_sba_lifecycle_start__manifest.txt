@@ -1,7 +1,7 @@
 route=/api/sba/lifecycle/start
 chunks=28
 files=28
-updated=2026-07-13T05:49:10Z
+updated=2026-07-16T08:12:50Z
 /app/backend/knowledge_base/sba_api_live/api_sba_lifecycle_start__combined.txt
 /app/backend/knowledge_base/sba_api_live/api_sba_lifecycle_start__overview.txt
 /app/backend/knowledge_base/sba_api_live/api_sba_lifecycle_start__child_plan_your_business.txt
@@ -23,10 +23,10 @@ updated=2026-07-13T05:49:10Z
 /app/backend/knowledge_base/sba_api_live/api_sba_lifecycle_start__child_guide_11.txt
 /app/backend/knowledge_base/sba_api_live/api_sba_lifecycle_start__child_guide_12.txt
 /app/backend/knowledge_base/sba_api_live/api_sba_lifecycle_start__child_guide_13.txt
-/app/backend/knowledge_base/sba_api_live/api_sba_lifecycle_start__child_9528503887.txt
-/app/backend/knowledge_base/sba_api_live/api_sba_lifecycle_start__child_7394118830.txt
-/app/backend/knowledge_base/sba_api_live/api_sba_lifecycle_start__child_1958740143.txt
-/app/backend/knowledge_base/sba_api_live/api_sba_lifecycle_start__child_3307915421.txt
-/app/backend/knowledge_base/sba_api_live/api_sba_lifecycle_start__child_4889663380.txt
-/app/backend/knowledge_base/sba_api_live/api_sba_lifecycle_start__child_4670763421.txt
-/app/backend/knowledge_base/sba_api_live/api_sba_lifecycle_start__child_3061112058.txt
+/app/backend/knowledge_base/sba_api_live/api_sba_lifecycle_start__child_5031723874.txt
+/app/backend/knowledge_base/sba_api_live/api_sba_lifecycle_start__child_3492897083.txt
+/app/backend/knowledge_base/sba_api_live/api_sba_lifecycle_start__child_7324342959.txt
+/app/backend/knowledge_base/sba_api_live/api_sba_lifecycle_start__child_7151792756.txt
+/app/backend/knowledge_base/sba_api_live/api_sba_lifecycle_start__child_4784403714.txt
+/app/backend/knowledge_base/sba_api_live/api_sba_lifecycle_start__child_9820797174.txt
+/app/backend/knowledge_base/sba_api_live/api_sba_lifecycle_start__child_8322726490.txt
