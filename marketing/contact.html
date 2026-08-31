@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Contact — PocketProSBA</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <div data-nav></div>
+  <main id="main" class="page">
+    <h1>Start a workspace conversation</h1>
+    <p class="lede">Tell us about the install. This form stays on the page — no third-party widget.</p>
+    <form class="form-grid" action="#" method="post" onsubmit="event.preventDefault(); this.querySelector('[data-note]').hidden=false;">
+      <label for="name">Name</label>
+      <input id="name" name="name" required />
+      <label for="email">Email</label>
+      <input id="email" name="email" type="email" required />
+      <label for="note">What do you want to stand up?</label>
+      <textarea id="note" name="note" rows="5" required></textarea>
+      <button class="btn btn-primary" type="submit">Send</button>
+      <p data-note hidden>Thanks — we have the note. For a live deploy, continue in the PocketProSBA repo.</p>
+    </form>
+  </main>
+  <div data-footer></div>
+  <script src="js/nav.js"></script>
+</body>
+</html>
