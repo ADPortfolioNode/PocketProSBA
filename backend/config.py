@@ -44,8 +44,6 @@ class ProductionConfig(Config):
     DEBUG = False
     # Ensure production uses secure settings
     SECRET_KEY = os.environ.get('SECRET_KEY')
-    if not SECRET_KEY:
-        raise ValueError("SECRET_KEY environment variable is required in production")
 
 class TestingConfig(Config):
     """Testing configuration"""
@@ -65,4 +63,8 @@ def get_config(config_name=None):
     """Get configuration class based on environment"""
     if config_name is None:
         config_name = os.environ.get('FLASK_ENV', 'development')
+    if config_name == 'production' and not os.environ.get('SECRET_KEY'):
+        # Enforce only when production is actually selected, so importing this
+        # module (tests, dev) does not crash.
+        raise ValueError("SECRET_KEY environment variable is required in production")
     return config.get(config_name, config['default'])
