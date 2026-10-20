@@ -33,14 +33,16 @@ class TestSBARoutes:
 
     @patch('routes.sba.sba_api')
     def test_search_articles_error(self, mock_sba_api, client):
+        # Upstream errors degrade gracefully: 200 with an empty, flagged envelope
         mock_sba_api.search_articles.return_value = {'error': 'API Error'}
 
         response = client.get('/api/sba/content/articles?query=test&page=1')
 
-        assert response.status_code == 500
+        assert response.status_code == 200
         data = response.get_json()
-        assert 'error' in data
-        assert data['error'] == 'API Error'
+        assert data['items'] == []
+        assert data['degraded'] is True
+        assert data['is_current'] is False
 
     @patch('routes.sba.sba_api')
     def test_get_article_details_success(self, mock_sba_api, client):

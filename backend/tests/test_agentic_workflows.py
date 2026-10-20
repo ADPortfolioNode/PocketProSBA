@@ -13,30 +13,44 @@ class TestAgenticWorkflows:
     """Test suite for agentic RAG workflows"""
 
     def test_decompose_task_service_success(self):
-        """Test successful task decomposition workflow"""
+        """Task decomposition returns a step plan plus a Concierge preview"""
         with patch('backend.services.api_service.Concierge') as mock_concierge_class:
             mock_concierge = MagicMock()
             mock_concierge.handle_message.return_value = {
                 'text': 'Task decomposed into steps',
                 'sources': ['source1', 'source2'],
-                'timestamp': '2024-01-01T00:00:00Z'
             }
             mock_concierge_class.return_value = mock_concierge
 
             result = decompose_task_service("Help me with SBA loans", "session123")
 
+            assert result['task_id'] == "session123"
+            assert result['steps'], "expected at least one planned step"
+            assert result['response']['steps'] == result['steps']
             assert result['response']['text'] == 'Task decomposed into steps'
             assert len(result['response']['sources']) == 2
-            assert result['response']['timestamp'] == '2024-01-01T00:00:00Z'
-            mock_concierge.handle_message.assert_called_once_with("Help me with SBA loans", "session123")
+            mock_concierge.handle_message.assert_called_once_with(
+                "Briefly outline how you would help with: Help me with SBA loans",
+                session_id="session123",
+            )
 
-    def test_decompose_task_service_error_handling(self):
-        """Test error handling in task decomposition"""
+    def test_decompose_task_service_preview_soft_fails(self):
+        """A Concierge failure must not break planning"""
         with patch('backend.services.api_service.Concierge') as mock_concierge_class:
             mock_concierge = MagicMock()
             mock_concierge.handle_message.side_effect = Exception("Agent error")
             mock_concierge_class.return_value = mock_concierge
 
+            result = decompose_task_service("Help me", "session123")
+
+            assert result['steps']
+            assert result['response']['text'].startswith("Planned ")
+            assert result['response']['sources'] == []
+
+    def test_decompose_task_service_error_handling(self):
+        """Planning errors surface as a clear exception"""
+        with patch('backend.services.api_service._build_decomposition_steps',
+                   side_effect=Exception("Agent error")):
             with pytest.raises(Exception, match="Failed to process message"):
                 decompose_task_service("Help me", "session123")
 
@@ -128,7 +142,8 @@ class TestAgenticWorkflows:
         validation = validate_step_service(result, task)
 
         assert validation['status'] == 'PASS'
-        assert validation['confidence'] == 0.9
+        # short (<=20 chars) results pass with modest confidence
+        assert validation['confidence'] == 0.45
         assert 'validated successfully' in validation['feedback']
 
     def test_validate_step_service_fail(self):
