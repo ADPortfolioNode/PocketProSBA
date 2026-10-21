@@ -23,40 +23,10 @@ required_dirs = ['uploads', 'logs', 'chromadb_data', 'static/js', 'templates']
 for dir_path in required_dirs:
     (project_root / dir_path).mkdir(parents=True, exist_ok=True)
 
-def create_fallback_app():
-    """Create a minimal Flask app if imports fail"""
-    from flask import Flask, jsonify
-    from flask_cors import CORS
-    
-    app = Flask(__name__)
-    CORS(app)
-    
-    @app.route('/health')
-    def health():
-        return jsonify({
-            "status": "healthy",
-            "service": "PocketPro:SBA Backend",
-            "version": "1.0.0",
-            "environment": os.environ.get('FLASK_ENV', 'production')
-        })
-    
-    @app.route('/')
-    def index():
-        return jsonify({
-            "name": "PocketPro:SBA Edition",
-            "description": "RAG-powered SBA business assistant",
-            "status": "running",
-            "version": "1.0.0",
-            "endpoints": {
-                "health": "/health",
-                "api": "/api/*"
-            }
-        })
-    
-    return app
-
 try:
-    # Try to import the main application
+    # Import the main application. There is deliberately no fallback app:
+    # if the real app cannot be built, startup must fail loudly instead of
+    # serving a stub whose /health says "healthy" while /api/* is missing.
     print("🔄 Importing PocketPro:SBA application...")
     from backend.app import create_app
     app = create_app()
@@ -66,16 +36,15 @@ try:
     # Wrap with WSGI for Gunicorn compatibility
     application = app
     
-except ImportError as e:
-    print(f"⚠️  Import warning: {e}")
-    print("Detailed error information:")
+except Exception:
+    import logging
     import traceback
-    traceback.print_exc()
-    print("🔄 Creating fallback application...")
-    application = create_fallback_app()
-    app = application
-    socketio = None
-    print("✅ Fallback application created")
+    logging.basicConfig(level=logging.INFO)
+    logging.getLogger(__name__).critical(
+        "PocketPro:SBA failed to start: the backend app could not be imported or created.\n%s",
+        traceback.format_exc(),
+    )
+    sys.exit(1)
 
 if __name__ == '__main__':
     import logging
