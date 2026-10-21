@@ -1,94 +1,87 @@
-import { renderHook, act } from "@testing-library/react";
+import { renderHook, act, waitFor } from "@testing-library/react";
 import { useApi } from "./useApi";
+import apiClient from "../api/apiClient";
+import { AppWrapper, healthyGet } from "../test-utils";
 
-// Mock fetch globally
-global.fetch = jest.fn();
+// useApi goes through apiClient (axios), not window.fetch, and needs AppProvider.
+// The old version of this file tested a fetch-based `apiCall` that no longer exists.
+jest.mock("../api/apiClient");
 
 describe("useApi Hook", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    apiClient.get.mockImplementation(healthyGet);
+    jest.spyOn(console, "error").mockImplementation(() => {});
   });
+  afterEach(() => console.error.mockRestore());
 
   test("handles successful API call", async () => {
     const mockData = { message: "Success" };
-    global.fetch.mockResolvedValueOnce({
-      ok: true,
-      json: () => Promise.resolve(mockData)
-    });
+    apiClient.get.mockImplementation((url) => (url === "/api/test" ? Promise.resolve({ data: mockData }) : healthyGet(url)));
 
-    const { result } = renderHook(() => useApi());
+    const { result } = renderHook(() => useApi(), { wrapper: AppWrapper });
 
     let response;
     await act(async () => {
-      response = await result.current.apiCall("/api/test", {
-        method: "GET"
-      });
+      response = await result.current.get("/api/test", { params: { q: "x" } });
     });
 
     expect(response).toEqual(mockData);
-    expect(global.fetch).toHaveBeenCalledWith("/api/test", {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json"
-      }
-    });
+    expect(apiClient.get).toHaveBeenCalledWith("/api/test", { params: { q: "x" } });
   });
 
   test("handles API error", async () => {
-    const errorMessage = "API Error";
-    global.fetch.mockResolvedValueOnce({
-      ok: false,
-      status: 500,
-      statusText: "Internal Server Error"
+    apiClient.get.mockImplementation((url) => (url === "/api/test"
+      ? Promise.reject({ message: "Request failed with status code 500", response: { status: 500, data: { error: "API Error" } } })
+      : healthyGet(url)));
+
+    const { result } = renderHook(() => useApi(), { wrapper: AppWrapper });
+
+    await act(async () => {
+      await expect(result.current.get("/api/test")).rejects.toBeDefined();
     });
-
-    const { result } = renderHook(() => useApi());
-
-    await expect(async () => {
-      await act(async () => {
-        await result.current.apiCall("/api/test");
-      });
-    }).rejects.toThrow("API Error: 500 Internal Server Error");
+    // Backend error body wins over the generic axios message
+    expect(result.current.error).toBe("API Error");
+    expect(result.current.loading).toBe(false);
   });
 
   test("handles network error", async () => {
-    global.fetch.mockRejectedValueOnce(new Error("Network Error"));
+    apiClient.get.mockImplementation((url) => (url === "/api/test" ? Promise.reject(new Error("Network Error")) : healthyGet(url)));
 
-    const { result } = renderHook(() => useApi());
+    const { result } = renderHook(() => useApi(), { wrapper: AppWrapper });
 
-    await expect(async () => {
-      await act(async () => {
-        await result.current.apiCall("/api/test");
-      });
-    }).rejects.toThrow("Network Error");
+    await act(async () => {
+      await expect(result.current.get("/api/test")).rejects.toThrow("Network Error");
+    });
+    expect(result.current.error).toBe("Network Error");
   });
 
   test("sends POST data correctly", async () => {
     const mockData = { result: "created" };
     const postData = { name: "test" };
-    
-    global.fetch.mockResolvedValueOnce({
-      ok: true,
-      json: () => Promise.resolve(mockData)
-    });
+    apiClient.post.mockResolvedValueOnce({ data: mockData });
 
-    const { result } = renderHook(() => useApi());
+    const { result } = renderHook(() => useApi(), { wrapper: AppWrapper });
 
     let response;
     await act(async () => {
-      response = await result.current.apiCall("/api/test", {
-        method: "POST",
-        body: postData
-      });
+      response = await result.current.post("/api/test", postData);
     });
 
     expect(response).toEqual(mockData);
-    expect(global.fetch).toHaveBeenCalledWith("/api/test", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(postData)
-    });
+    expect(apiClient.post).toHaveBeenCalledWith("/api/test", postData, {});
+  });
+
+  test("reports loading while a request is pending", async () => {
+    let resolve;
+    apiClient.put.mockReturnValueOnce(new Promise((r) => { resolve = r; }));
+    const { result } = renderHook(() => useApi(), { wrapper: AppWrapper });
+
+    let pending;
+    act(() => { pending = result.current.put("/api/thing", { a: 1 }); });
+    await waitFor(() => expect(result.current.loading).toBe(true));
+
+    await act(async () => { resolve({ data: { ok: true } }); await pending; });
+    expect(result.current.loading).toBe(false);
   });
 });

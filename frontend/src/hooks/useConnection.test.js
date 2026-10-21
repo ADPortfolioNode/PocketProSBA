@@ -1,29 +1,39 @@
 import { renderHook, act, waitFor } from '@testing-library/react';
-import { useConnection } from './useConnection';
-import apiClient from '../api/apiClient';
 import MockAdapter from 'axios-mock-adapter';
+import { useConnection } from './useConnection';
+import { axiosInstance } from '../api/apiClient';
 
 describe('useConnection', () => {
   let mock;
 
   beforeAll(() => {
-    mock = new MockAdapter(apiClient);
+    // Attach to the axios instance; apiClient's default export is a wrapper.
+    mock = new MockAdapter(axiosInstance);
+  });
+
+  beforeEach(() => {
+    jest.spyOn(console, 'log').mockImplementation(() => {});
+    jest.spyOn(console, 'error').mockImplementation(() => {});
   });
 
   afterEach(() => {
     mock.reset();
+    jest.restoreAllMocks();
   });
 
   afterAll(() => {
     mock.restore();
   });
 
-  it('should initialize with default values', () => {
+  it('should initialize with default values and start a health check', async () => {
+    mock.onGet('/api/info').reply(200, { status: 'operational' });
     const { result } = renderHook(() => useConnection());
     expect(result.current.serverConnected).toBe(false);
     expect(result.current.backendError).toBe(null);
-    expect(result.current.isCheckingHealth).toBe(false);
     expect(result.current.connectionInfo).toBe(null);
+    // The mount effect kicks off the first check right away
+    expect(result.current.isCheckingHealth).toBe(true);
+    await waitFor(() => expect(result.current.isCheckingHealth).toBe(false));
   });
 
   it('should set serverConnected to true on successful connection', async () => {
@@ -39,13 +49,14 @@ describe('useConnection', () => {
     mock.onGet('/api/info').networkError();
     const { result } = renderHook(() => useConnection());
 
-    await waitFor(() => expect(result.current.serverConnected).toBe(false));
-    expect(result.current.backendError).not.toBeNull();
+    await waitFor(() => expect(result.current.backendError).not.toBeNull());
+    expect(result.current.serverConnected).toBe(false);
     expect(result.current.connectionInfo).toBe(null);
   });
 
   it('should perform an API call successfully', async () => {
     const testData = { message: 'Hello' };
+    mock.onGet('/api/info').reply(200, { status: 'operational' });
     mock.onPost('/api/chat').reply(200, testData);
 
     const { result } = renderHook(() => useConnection());
@@ -56,9 +67,11 @@ describe('useConnection', () => {
     });
 
     expect(response).toEqual(testData);
+    expect(JSON.parse(mock.history.post[0].data)).toEqual({ text: 'hi' });
   });
 
   it('should handle API call errors', async () => {
+    mock.onGet('/api/info').reply(200, { status: 'operational' });
     mock.onGet('/api/error').reply(500);
 
     const { result } = renderHook(() => useConnection());
@@ -70,6 +83,7 @@ describe('useConnection', () => {
 
   it('should fetch diagnostics successfully', async () => {
     const diagnosticsData = { cpu: '50%' };
+    mock.onGet('/api/info').reply(200, { status: 'operational' });
     mock.onGet('/api/diagnostics').reply(200, diagnosticsData);
 
     const { result } = renderHook(() => useConnection());
@@ -83,6 +97,7 @@ describe('useConnection', () => {
   });
 
   it('should handle diagnostics fetch error', async () => {
+    mock.onGet('/api/info').reply(200, { status: 'operational' });
     mock.onGet('/api/diagnostics').networkError();
 
     const { result } = renderHook(() => useConnection());
@@ -100,7 +115,8 @@ describe('useConnection', () => {
 
     const { result } = renderHook(() => useConnection());
 
-    await waitFor(() => expect(result.current.serverConnected).toBe(false));
+    await waitFor(() => expect(result.current.backendError).not.toBeNull());
+    expect(result.current.serverConnected).toBe(false);
 
     await act(async () => {
       await result.current.resetConnection();

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import apiClient from '../api/apiClient';
 
 const AppContext = createContext();
@@ -20,7 +20,7 @@ export const AppProvider = ({ children }) => {
   });
 
   // Fetch system status
-  const fetchSystemStatus = async () => {
+  const fetchSystemStatus = useCallback(async () => {
     try {
       const [flaskResp, chromaResp] = await Promise.all([
         apiClient.get('/api/health', {}, { quiet: true }).catch(() => ({ data: { status: 'error', message: 'Flask server unreachable' } })),
@@ -29,38 +29,42 @@ export const AppProvider = ({ children }) => {
 
       setSystemStatus({
         flask: {
-          status: ['ok', 'healthy'].includes(flaskResp.data?.status) ? 'online' : 'error',
-          message: flaskResp.data?.message || ''
+          status: ['ok', 'healthy'].includes(flaskResp?.data?.status) ? 'online' : 'error',
+          message: flaskResp?.data?.message || ''
         },
         chromadb: {
-          status: chromaResp.data?.status === 'ok' ? 'online' : 'error',
-          message: chromaResp.data?.message || ''
+          status: chromaResp?.data?.status === 'ok' ? 'online' : 'error',
+          message: chromaResp?.data?.message || ''
         }
       });
     } catch (err) {
       console.error('Error fetching system status:', err);
     }
-  };
+  }, []);
+
+  // The helpers below are memoized so their identity is stable across renders.
+  // Before, a new function on every render re-fired any effect that depended on
+  // them (e.g. useEffect(() => handleError(...), [handleError]) loops after clearError).
 
   // Global error handler
-  const handleError = (error, context = '') => {
-    console.error(`Error in ${context}:`, error);
-    setError(error.message || 'An unexpected error occurred');
-  };
+  const handleError = useCallback((err, context = '') => {
+    console.error(`Error in ${context}:`, err);
+    setError(err?.message || 'An unexpected error occurred');
+  }, []);
 
   // Clear error
-  const clearError = () => setError(null);
+  const clearError = useCallback(() => setError(null), []);
 
   // Global loading state
-  const setGlobalLoading = (isLoading) => setLoading(isLoading);
+  const setGlobalLoading = useCallback((isLoading) => setLoading(isLoading), []);
 
   useEffect(() => {
     fetchSystemStatus();
     const intervalId = setInterval(fetchSystemStatus, 30000);
     return () => clearInterval(intervalId);
-  }, []);
+  }, [fetchSystemStatus]);
 
-  const value = {
+  const value = useMemo(() => ({
     loading,
     error,
     systemStatus,
@@ -68,7 +72,7 @@ export const AppProvider = ({ children }) => {
     handleError,
     clearError,
     fetchSystemStatus
-  };
+  }), [loading, error, systemStatus, setGlobalLoading, handleError, clearError, fetchSystemStatus]);
 
   return (
     <AppContext.Provider value={value}>

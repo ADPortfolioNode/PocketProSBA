@@ -3,25 +3,26 @@ import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import Footer from './Footer';
 
+// The footer is a slim brand strip (name + tagline). The old copyright/contact/
+// social-link assertions described a footer that no longer exists.
 describe('Footer', () => {
   test('renders footer content', () => {
     render(<Footer />);
     expect(screen.getByRole('contentinfo')).toBeInTheDocument();
   });
 
-  test('displays copyright information', () => {
+  test('displays the brand name', () => {
     render(<Footer />);
-    expect(screen.getByText(/©/i)).toBeInTheDocument();
-    expect(screen.getByText(/2024/i)).toBeInTheDocument();
+    expect(screen.getByText('PocketPro SBA')).toBeInTheDocument();
   });
 
-  test('shows contact information', () => {
+  test('shows the tagline', () => {
     render(<Footer />);
-    expect(screen.getByText(/contact/i)).toBeInTheDocument();
+    expect(screen.getByText(/Small business guidance/i)).toBeInTheDocument();
   });
 
-  test('displays social media links', () => {
+  test('has no links (purely informational)', () => {
     render(<Footer />);
-    expect(screen.getAllByRole('link')).toHaveLength(3); // Assuming 3 social links
+    expect(screen.queryAllByRole('link')).toHaveLength(0);
   });
 });

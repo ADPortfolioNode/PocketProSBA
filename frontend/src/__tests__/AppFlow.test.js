@@ -1,10 +1,11 @@
 import React from 'react';
 import '@testing-library/jest-dom';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
-import { AppProvider } from '../context/AppProvider';
+import { screen, fireEvent, waitFor } from '@testing-library/react';
 import Login from '../Login';
+import apiClient from '../api/apiClient';
+import { renderWithProviders, healthyGet, axiosResponse } from '../test-utils';
 
+jest.mock('../api/apiClient');
 jest.mock('../components/ModernConciergeChat', () => () => <div>Mocked ModernConciergeChat Component</div>);
 
 const mockUseConnection = () => ({
@@ -25,76 +26,66 @@ beforeAll(() => {
   window.alert = jest.fn();
 });
 
+beforeEach(() => {
+  jest.clearAllMocks();
+  apiClient.get.mockImplementation(healthyGet);
+});
+
 describe('Frontend Application Flow Tests', () => {
   test('Navigation tabs switch content correctly', async () => {
-    render(
-      <MemoryRouter>
-        <MainLayout useConnectionHook={mockUseConnection} />
-      </MemoryRouter>
-    );
+    // Tabs are routes now (SBANavigation links), active link gets .is-active + aria-current.
+    renderWithProviders(<MainLayout useConnectionHook={mockUseConnection} />, { route: '/chat' });
 
-    // Check initial tab is chat
-    const chatTabs = screen.getAllByText(/Chat/i);
-    expect(chatTabs[0]).toHaveClass('active');
-    expect(chatTabs[0]).toBeInTheDocument();
+    expect(screen.getByTestId('nav-chat')).toHaveClass('is-active');
+    expect(screen.getByTestId('nav-chat')).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByText(/Mocked ModernConciergeChat Component/i)).toBeInTheDocument();
 
-    // Click Browse Resources tab
-    fireEvent.click(screen.getByTestId('nav-browse'));
-    await waitFor(() => {
-      expect(screen.getByTestId('nav-browse')).toHaveClass('active');
-    });
-
-    // Click RAG tab
     fireEvent.click(screen.getByTestId('nav-rag'));
-    await waitFor(() => {
-      expect(screen.getByTestId('nav-rag')).toHaveClass('active');
-    });
+    await waitFor(() => expect(screen.getByTestId('nav-rag')).toHaveClass('is-active'));
+    expect(screen.getByTestId('nav-chat')).not.toHaveClass('is-active');
 
-    // Click Document Center tab
     fireEvent.click(screen.getByTestId('nav-documents'));
-    await waitFor(() => {
-      expect(screen.getByTestId('nav-documents')).toHaveClass('active');
-    });
+    await waitFor(() => expect(screen.getByTestId('nav-documents')).toHaveClass('is-active'));
 
-    // Click SBA Content tab
-    fireEvent.click(screen.getByText(/SBA Content/i));
-    await waitFor(() => {
-      expect(screen.getByText(/SBA Content/i)).toHaveClass('active');
-    });
+    fireEvent.click(screen.getByTestId('nav-orchestrator'));
+    await waitFor(() => expect(screen.getByTestId('nav-orchestrator')).toHaveClass('is-active'));
+    expect(screen.getByText(/Self-Optimizing Task Orchestrator/i)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('nav-home'));
+    await waitFor(() => expect(screen.getByTestId('nav-home')).toHaveClass('is-active'));
+
+    // Resources and Programs are full page loads (served by nginx), so they are plain anchors.
+    expect(screen.getByTestId('nav-browse')).toHaveAttribute('href', '/browse');
+    expect(screen.getByTestId('nav-sba')).toHaveAttribute('href', '/sba');
   });
 
   test('Login page renders and handles form submission', async () => {
-    render(
-      <AppProvider>
-        <MemoryRouter>
-          <Login />
-        </MemoryRouter>
-      </AppProvider>
-    );
+    apiClient.post
+      .mockRejectedValueOnce({ response: { status: 401, data: { error: 'Invalid credentials' } } })
+      .mockResolvedValueOnce(axiosResponse({ user: { email: 'validUser@example.com' }, token: 't' }));
+
+    renderWithProviders(<Login />, { route: '/login' });
 
     // Check login form elements
     expect(screen.getByLabelText(/Email address/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/Password/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Log In/i })).toBeInTheDocument();
 
-    // Simulate invalid login submission
-    fireEvent.change(screen.getByLabelText(/Email address/i), { target: { value: 'invalidUser' } });
+    // Invalid login: the backend's message is shown
+    fireEvent.change(screen.getByLabelText(/Email address/i), { target: { value: 'invalidUser@example.com' } });
     fireEvent.change(screen.getByLabelText(/Password/i), { target: { value: 'wrongPass' } });
     fireEvent.click(screen.getByRole('button', { name: /Log In/i }));
 
-    // Expect error message or validation (adjust based on actual implementation)
     await waitFor(() => {
       expect(screen.getByText(/Invalid credentials/i)).toBeInTheDocument();
     });
 
-    // Simulate valid login submission (adjust credentials as needed)
-    fireEvent.change(screen.getByLabelText(/Email address/i), { target: { value: 'validUser' } });
+    // Valid login clears the error
+    fireEvent.change(screen.getByLabelText(/Email address/i), { target: { value: 'validUser@example.com' } });
     fireEvent.change(screen.getByLabelText(/Password/i), { target: { value: 'correctPass' } });
     fireEvent.click(screen.getByRole('button', { name: /Log In/i }));
 
-    // Expect redirect or success message (adjust based on actual implementation)
-    await waitFor(() => {
-      expect(screen.queryByText(/Invalid credentials/i)).not.toBeInTheDocument();
-    });
+    await waitFor(() => expect(window.alert).toHaveBeenCalledWith('Login successful!'));
+    expect(screen.queryByText(/Invalid credentials/i)).not.toBeInTheDocument();
   });
 });

@@ -1,7 +1,22 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import ModernConciergeChat from './ModernConciergeChat';
+
+// The chat is controlled: MainLayout owns `messages` and passes `onSend`.
+// This harness plays MainLayout's part.
+const Harness = ({ reply = 'Hi there', delay = 0 }) => {
+  const [messages, setMessages] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const onSend = async (text) => {
+    setMessages((m) => [...m, { role: 'user', content: text }]);
+    setLoading(true);
+    await new Promise((r) => setTimeout(r, delay));
+    setMessages((m) => [...m, { role: 'assistant', content: reply }]);
+    setLoading(false);
+  };
+  return <ModernConciergeChat onSend={onSend} messages={messages} loading={loading} userName="User" />;
+};
 
 describe('ModernConciergeChat', () => {
   test('renders chat interface', () => {
@@ -16,26 +31,32 @@ describe('ModernConciergeChat', () => {
   });
 
   test('handles user input and sends message', async () => {
-    render(<ModernConciergeChat />);
+    render(<Harness reply="Here is how 7(a) works" />);
     const input = screen.getByRole('textbox');
-    const sendButton = screen.getByRole('button', { name: /send/i });
 
     fireEvent.change(input, { target: { value: 'Hello' } });
-    fireEvent.click(sendButton);
+    fireEvent.click(screen.getByRole('button', { name: /send/i }));
 
     await waitFor(() => {
       expect(screen.getByText('Hello')).toBeInTheDocument();
     });
+    expect(await screen.findByText(/Here is how 7\(a\) works/)).toBeInTheDocument();
+    await waitFor(() => expect(input).toHaveValue(''));
   });
 
   test('displays loading state while processing', async () => {
+    render(<Harness delay={50} />);
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Test message' } });
+    fireEvent.click(screen.getByRole('button', { name: /send/i }));
+
+    expect(await screen.findByLabelText(/thinking/i)).toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByLabelText(/thinking/i)).not.toBeInTheDocument());
+  });
+
+  test('shows an error when onSend is missing', () => {
     render(<ModernConciergeChat />);
-    const input = screen.getByRole('textbox');
-    const sendButton = screen.getByRole('button', { name: /send/i });
-
-    fireEvent.change(input, { target: { value: 'Test message' } });
-    fireEvent.click(sendButton);
-
-    expect(screen.getByText(/thinking/i)).toBeInTheDocument();
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'x' } });
+    fireEvent.click(screen.getByRole('button', { name: /send/i }));
+    expect(screen.getByRole('alert')).toHaveTextContent(/not properly configured/i);
   });
 });

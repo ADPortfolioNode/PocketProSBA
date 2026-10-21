@@ -1,15 +1,20 @@
 import React from 'react';
 import '@testing-library/jest-dom';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { screen, fireEvent, waitFor } from '@testing-library/react';
+import apiClient from '../api/apiClient';
+import { renderWithProviders, healthyGet } from '../test-utils';
 
+jest.mock('../api/apiClient');
+
+// CRA's Jest config sets resetMocks, so implementations are (re)applied in beforeEach.
+const mockApiCall = jest.fn();
 const mockUseConnection = () => ({
   serverConnected: true,
   backendError: null,
   isCheckingHealth: false,
   connectionInfo: {},
   checkConnection: jest.fn(),
-  apiCall: jest.fn().mockResolvedValue({ response: 'Mock response' }),
+  apiCall: mockApiCall,
   getDiagnostics: jest.fn(),
   resetConnection: jest.fn(),
 });
@@ -34,71 +39,43 @@ beforeAll(() => {
   window.alert = jest.fn();
 });
 
+beforeEach(() => {
+  jest.clearAllMocks();
+  apiClient.get.mockImplementation(healthyGet);
+  mockApiCall.mockResolvedValue({ response: 'Mock response' });
+});
+
+const renderAt = (route) => renderWithProviders(<MainLayout useConnectionHook={mockUseConnection} />, { route });
+
 describe('Additional  Frontend Application Flow Tests', () => {
   test('Chat tab message sending and response', async () => {
-    render(
-      <MemoryRouter>
-        <MainLayout useConnectionHook={mockUseConnection} />
-      </MemoryRouter>
-    );
+    renderAt('/chat');
 
-    // Wait for the initial connection health check to complete
-    await waitFor(() => {
-      expect(screen.getByText(/Mocked ModernConciergeChat Component/i)).toBeInTheDocument();
-    });
-
-    // Switch to chat tab if not default
-    fireEvent.click(screen.getByTestId('nav-chat'));
-
-    // Check mocked ModernConciergeChat component presence and send button
     expect(screen.getByText(/Mocked ModernConciergeChat Component/i)).toBeInTheDocument();
-    const sendButton = screen.getByRole('button', { name: /Send/i });
-    expect(sendButton).toBeInTheDocument();
+    expect(screen.getByText('0 messages')).toBeInTheDocument();
 
-    // Simulate sending a message - mock component handles this internally
-    fireEvent.click(sendButton);
+    fireEvent.click(screen.getByRole('button', { name: /Send/i }));
 
-    // Ensure the mock child component is still present after interaction
-    await waitFor(() => {
-      expect(screen.getByText(/Mocked ModernConciergeChat Component/i)).toBeInTheDocument();
-    });
+    // User message + assistant reply are appended by MainLayout.handleChatSend
+    await waitFor(() => expect(screen.getByText('2 messages')).toBeInTheDocument());
+    expect(mockApiCall).toHaveBeenCalledWith('/api/chat', expect.objectContaining({ method: 'POST' }));
   });
 
   test('RAG tab workflow interface loads and interacts', async () => {
-    render(
-      <MemoryRouter>
-        <MainLayout useConnectionHook={mockUseConnection} />
-      </MemoryRouter>
-    );
-
-    await waitFor(() => {
-      expect(screen.getByText(/Mocked ModernConciergeChat Component/i)).toBeInTheDocument();
-    });
-
+    renderAt('/chat');
     fireEvent.click(screen.getByTestId('nav-rag'));
 
-    // Check for presence of RAG workflow elements (adjust selectors)
-    expect(screen.getByText(/Upload Document/i)).toBeInTheDocument();
-
-    // Simulate workflow actions as applicable
-    // Example: clicking buttons, filling forms, etc.
+    expect(await screen.findByText(/Upload Document/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByText(/Start Task Without Upload/i));
+    expect(screen.getByText(/Describe your task/i)).toBeInTheDocument();
   });
 
   test('Document Center upload and management', async () => {
-    const { container } = render(
-      <MemoryRouter>
-        <MainLayout useConnectionHook={mockUseConnection} />
-      </MemoryRouter>
-    );
-
-    await waitFor(() => {
-      expect(screen.getByText(/Mocked ModernConciergeChat Component/i)).toBeInTheDocument();
-    });
-
+    const { container } = renderAt('/chat');
     fireEvent.click(screen.getByTestId('nav-documents'));
 
     // Check for upload button/input
-    expect(screen.getByText(/Upload Document/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Upload Document/i)).toBeInTheDocument();
     const uploadInput = container.querySelector('input[type="file"]');
     expect(uploadInput).toBeInTheDocument();
 
@@ -106,22 +83,11 @@ describe('Additional  Frontend Application Flow Tests', () => {
     expect(screen.getByText(/No files uploaded yet/i)).toBeInTheDocument();
   });
 
-  test('SBA Content tab interaction', async () => {
-    render(
-      <MemoryRouter>
-        <MainLayout useConnectionHook={mockUseConnection} />
-      </MemoryRouter>
-    );
-
-    await waitFor(() => {
-      expect(screen.getByText(/Mocked ModernConciergeChat Component/i)).toBeInTheDocument();
-    });
-
-    fireEvent.click(screen.getByTestId('nav-sba'));
-
-    // Check for SBA content explorer elements
-    expect(screen.getByText(/SBA Programs/i)).toBeInTheDocument();
-
-    // Simulate navigation or interaction within SBA content
+  test('SBA Content route renders the programs view', async () => {
+    // /sba is a full page load from the nav (programs.html via nginx); the SPA
+    // route still renders SBAContent when reached directly.
+    renderAt('/sba');
+    await waitFor(() => expect(apiClient.get).toHaveBeenCalledWith('/api/sba/resources', expect.anything(), { quiet: true }));
+    expect(screen.getByTestId('nav-sba')).toHaveClass('is-active');
   });
 });

@@ -118,4 +118,7 @@ const api = {
   endpoints: endpointRegistry
 };
 
+// Named exports for tests (e.g. axios-mock-adapter needs the axios instance).
+export { axiosInstance, BASE_URL, MAX_RETRIES };
+
 export default api;

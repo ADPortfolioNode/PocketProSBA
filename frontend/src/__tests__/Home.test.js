@@ -10,8 +10,19 @@ describe('Home Component', () => {
         <Home />
       </MemoryRouter>
     );
-    expect(screen.getByText(/simplified sba guidance for small business success/i)).toBeInTheDocument();
-    expect(screen.getByText(/current sba status/i)).toBeInTheDocument();
-    expect(screen.getByText(/use case suggestions/i)).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /Funding guidance built for small business/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /^Services$/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /Popular questions/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /Current SBA loan programs/i })).toBeInTheDocument();
+  });
+
+  test('links to chat and the live resources page', () => {
+    render(
+      <MemoryRouter>
+        <Home />
+      </MemoryRouter>
+    );
+    expect(screen.getByRole('link', { name: /Start chat/i })).toHaveAttribute('href', '/chat');
+    expect(screen.getByRole('link', { name: /Browse resources/i })).toHaveAttribute('href', '/browse');
   });
 });

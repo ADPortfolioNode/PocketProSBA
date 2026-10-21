@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Alert, Button, Spinner } from 'react-bootstrap';
-import apiClient from '../../api/apiClient';
+import apiClient from '../api/apiClient';
 
 const ServerStatusMonitor = ({ onStatusChange }) => {
   const [status, setStatus] = useState('checking');

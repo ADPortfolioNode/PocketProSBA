@@ -62,7 +62,7 @@ const TaskOrchestrator = () => {
       const res = await apiClient.post('/api/execute', { task: step });
       setStepResults(prev => {
         const updated = [...prev];
-        updated[idx] = res;
+        updated[idx] = res?.data ?? res; // axios response -> JSON body
         return updated;
       });
     } catch (err) {
@@ -77,7 +77,7 @@ const TaskOrchestrator = () => {
       const res = await apiClient.post('/api/validate', { result, task: step });
       setValidationResults(prev => {
         const updated = [...prev];
-        updated[idx] = res;
+        updated[idx] = res?.data ?? res; // axios response -> JSON body
         return updated;
       });
     } catch (err) {

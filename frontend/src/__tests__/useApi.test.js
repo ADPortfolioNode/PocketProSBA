@@ -9,6 +9,9 @@ const wrapper = ({ children }) => (
   <AppProvider>{children}</AppProvider>
 );
 
+// AppProvider polls /api/health + /api/chromadb_health on mount; tests that
+// mockResolvedValue(...) for their own GET also answer those, which is fine.
+
 describe('useApi', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -107,8 +110,9 @@ describe('useSBAContent', () => {
     });
 
     expect(response).toEqual(mockData);
+    // searchContent asks for fresh content by default (fresh=1)
     expect(apiClient.get).toHaveBeenCalledWith('/api/sba/content/articles', {
-      params: { query: 'test', page: 1 }
+      params: { query: 'test', page: 1, fresh: 1 }
     });
   });
 
@@ -124,7 +128,7 @@ describe('useSBAContent', () => {
     });
 
     expect(response).toEqual(mockData);
-    expect(apiClient.get).toHaveBeenCalledWith('/api/sba/content/articles/1');
+    expect(apiClient.get).toHaveBeenCalledWith('/api/sba/content/articles/1', {});
   });
 
   it('gets node details successfully', async () => {
@@ -139,6 +143,6 @@ describe('useSBAContent', () => {
     });
 
     expect(response).toEqual(mockData);
-    expect(apiClient.get).toHaveBeenCalledWith('/api/sba/content/node/1');
+    expect(apiClient.get).toHaveBeenCalledWith('/api/sba/content/node/1', {});
   });
 });

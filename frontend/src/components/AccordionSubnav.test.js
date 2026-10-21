@@ -3,30 +3,41 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import AccordionSubnav from './AccordionSubnav';
 
+// AccordionSubnav builds its sections from the active tab (the old test assumed
+// generic "Section 1/Content 1" fixtures that the component never had).
 describe('AccordionSubnav', () => {
   test('renders accordion navigation', () => {
-    render(<AccordionSubnav />);
-    expect(screen.getByRole('button')).toBeInTheDocument();
+    render(<AccordionSubnav activeTab="chat" />);
+    expect(screen.getByRole('button', { name: /Conversation History/i })).toBeInTheDocument();
   });
 
   test('displays accordion sections', () => {
-    render(<AccordionSubnav />);
-    expect(screen.getByText(/section 1/i)).toBeInTheDocument();
-    expect(screen.getByText(/section 2/i)).toBeInTheDocument();
+    render(<AccordionSubnav activeTab="chat" />);
+    expect(screen.getByText(/Conversation History/i)).toBeInTheDocument();
+    expect(screen.getByText(/Chat Settings/i)).toBeInTheDocument();
+    expect(screen.getByText(/SBA Resources/i)).toBeInTheDocument();
   });
 
   test('expands and collapses sections', () => {
-    render(<AccordionSubnav />);
-    const button = screen.getByRole('button');
-    fireEvent.click(button);
-    expect(screen.getByText(/content 1/i)).toBeVisible();
+    render(<AccordionSubnav activeTab="chat" />);
+    const header = screen.getByRole('button', { name: /Chat Settings/i });
+    expect(header).toHaveClass('collapsed');
+    fireEvent.click(header);
+    expect(header).not.toHaveClass('collapsed');
+    fireEvent.click(header);
+    expect(header).toHaveClass('collapsed');
   });
 
-  test('handles multiple section expansion', () => {
-    render(<AccordionSubnav />);
-    const buttons = screen.getAllByRole('button');
-    buttons.forEach(button => fireEvent.click(button));
-    expect(screen.getByText(/content 1/i)).toBeVisible();
-    expect(screen.getByText(/content 2/i)).toBeVisible();
+  test('calls onSectionChange with the section and item', () => {
+    const onSectionChange = jest.fn();
+    render(<AccordionSubnav activeTab="sba" onSectionChange={onSectionChange} />);
+    // First section is open by default
+    fireEvent.click(screen.getByRole('button', { name: /7\(a\) Loans/i }));
+    expect(onSectionChange).toHaveBeenCalledWith('SBA Programs', '7(a) Loans');
+  });
+
+  test('renders nothing for an unknown tab', () => {
+    const { container } = render(<AccordionSubnav activeTab="nope" />);
+    expect(container.querySelectorAll('.accordion-item')).toHaveLength(0);
   });
 });

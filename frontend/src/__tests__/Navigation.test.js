@@ -1,28 +1,45 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, screen, fireEvent } from '@testing-library/react';
 import App from '../App';
+import apiClient from '../api/apiClient';
+import { healthyGet } from '../test-utils';
+
+jest.mock('../api/apiClient');
+
+// App owns its BrowserRouter, so drive the URL through window.history.
+const renderAt = (path) => {
+  window.history.pushState({}, '', path);
+  return render(<App />);
+};
 
 describe('Main Navigation', () => {
-  test('navigates between pages', async () => {
-    render(<App />);
+  beforeEach(() => {
+    jest.clearAllMocks();
+    apiClient.get.mockImplementation(healthyGet);
+  });
 
-    // Verify Home page content
-    expect(screen.getByText(/Home/i)).toBeInTheDocument();
+  afterAll(() => window.history.pushState({}, '', '/'));
 
-    // Navigate to Login page
-    const loginLink = screen.getByText(/Login/i);
-    await userEvent.click(loginLink);
-    expect(screen.getByText(/Login/i)).toBeInTheDocument();
+  test('navigates between the auth pages', () => {
+    renderAt('/login');
+    expect(screen.getByRole('heading', { name: /^Login$/i })).toBeInTheDocument();
 
-    // Navigate to Register page
-    const registerLink = screen.getByText(/Register/i);
-    await userEvent.click(registerLink);
-    expect(screen.getByText(/Register/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('link', { name: /Register/i }));
+    expect(screen.getByRole('heading', { name: /^Register$/i })).toBeInTheDocument();
 
-    // Navigate to Forgot Password page
-    const forgotPasswordLink = screen.getByText(/Forgot Password/i);
-    await userEvent.click(forgotPasswordLink);
-    expect(screen.getByText(/Forgot Password/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('link', { name: /Log in/i }));
+    expect(screen.getByRole('heading', { name: /^Login$/i })).toBeInTheDocument();
+  });
+
+  test('serves the Forgot Password route', () => {
+    renderAt('/forgot-password');
+    expect(screen.getByRole('heading', { name: /Forgot Password/i })).toBeInTheDocument();
+  });
+
+  test('renders the Home shell at / with primary nav', async () => {
+    renderAt('/');
+    expect(await screen.findByRole('heading', { name: /Funding guidance built for small business/i })).toBeInTheDocument();
+    expect(screen.getByRole('navigation', { name: /Primary/i })).toBeInTheDocument();
+    expect(screen.getByTestId('nav-home')).toHaveClass('is-active');
   });
 });
