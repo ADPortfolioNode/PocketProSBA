@@ -7,6 +7,10 @@ PocketPro:SBA is a Retrieval-Augmented Generation (RAG) application that provide
 - `GEMINI_API_KEY` is required for LLM features — `start.sh` will abort if it is not set.
 - Production and development compose files live in the repo (`docker-compose.yml`, `docker-compose.dev.yml`).
 
+## Code from anywhere (GitHub Codespaces)
+
+Open the repo on GitHub → **Code → Codespaces → Create codespace on main**. The dev container installs Python 3.11, Node 22 and Docker, then the backend and frontend dependencies, and creates `.env` / `backend/.env` from the templates. Add `GEMINI_API_KEY` as a Codespaces secret first (GitHub → Settings → Codespaces → Secrets) and it is copied into the gitignored `.env` files on creation. Run `./start.sh --mode dev --build` and the frontend opens on port 3000 as a private preview link (backend API on 5000, ChromaDB on 8000). Works from any browser, including a tablet.
+
 ## Quick start (recommended)
 
 Prerequisites:
