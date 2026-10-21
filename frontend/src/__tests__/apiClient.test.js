@@ -1,16 +1,20 @@
-import axios from 'axios';
 import MockAdapter from 'axios-mock-adapter';
-import apiClient from '../api/apiClient';
+import apiClient, { axiosInstance } from '../api/apiClient';
 
+// apiClient's default export is a small wrapper object (get/post/put/delete),
+// so the mock adapter attaches to the underlying axios instance.
 describe('apiClient', () => {
   let mock;
 
   beforeEach(() => {
-    mock = new MockAdapter(apiClient);
+    mock = new MockAdapter(axiosInstance);
+    jest.spyOn(console, 'log').mockImplementation(() => {});
+    jest.spyOn(console, 'error').mockImplementation(() => {});
   });
 
   afterEach(() => {
     mock.restore();
+    jest.restoreAllMocks();
   });
 
   describe('GET requests', () => {
@@ -47,31 +51,35 @@ describe('apiClient', () => {
     });
   });
 
-  describe('Interceptors', () => {
-    it('should add request interceptor logging', async () => {
-      const consoleSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+  describe('Logging', () => {
+    it('should log each request', async () => {
       mock.onGet('/api/health').reply(200, { status: 'ok' });
 
       await apiClient.get('/api/health');
 
-      expect(consoleSpy).toHaveBeenCalledWith('Making request to:', expect.stringContaining('/api/health'));
-      consoleSpy.mockRestore();
+      expect(console.log).toHaveBeenCalledWith('Making request to:', expect.stringContaining('/api/health'));
     });
 
-    it('should handle response errors globally', async () => {
-      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    it('should log errors unless quiet', async () => {
       mock.onGet('/api/health').reply(500, { error: 'Server error' });
 
       await expect(apiClient.get('/api/health')).rejects.toThrow();
+      expect(console.error).toHaveBeenCalledWith('API Error:', expect.any(Object));
 
-      expect(consoleSpy).toHaveBeenCalledWith('API Error:', expect.any(Object));
-      consoleSpy.mockRestore();
+      console.error.mockClear();
+      await expect(apiClient.get('/api/health', {}, { quiet: true })).rejects.toThrow();
+      expect(console.error).not.toHaveBeenCalled();
     });
   });
 
   describe('Base URL configuration', () => {
     it('should use the configured base URL', () => {
-      expect(apiClient.defaults.baseURL).toBe(process.env.REACT_APP_API_URL || 'http://localhost:5000');
+      // No REACT_APP_API_URL in tests: same-origin, with localhost mapped to 127.0.0.1.
+      const { protocol, port } = window.location;
+      const expected = process.env.REACT_APP_API_URL
+        ? process.env.REACT_APP_API_URL.replace(/\/api\/?$/, '').replace(/\/+$/, '').replace('://localhost', '://127.0.0.1')
+        : `${protocol}//127.0.0.1${port ? `:${port}` : ''}`;
+      expect(axiosInstance.defaults.baseURL).toBe(expected);
     });
   });
 });

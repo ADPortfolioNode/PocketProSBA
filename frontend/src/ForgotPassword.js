@@ -23,7 +23,8 @@ function ForgotPassword() {
       await forgotPassword(email);
       setMessage('If this email is registered, you will receive password reset instructions.');
     } catch (err) {
-      setError(authError || 'An unexpected error occurred.');
+      // authError from useAuth is stale inside this closure; read the failed request instead.
+      setError(err?.response?.data?.error || authError || 'Password reset request failed');
     }
   };
 

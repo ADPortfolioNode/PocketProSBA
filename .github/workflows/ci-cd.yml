@@ -71,9 +71,8 @@ jobs:
         env:
           CI: "false"
 
-      # Non-blocking for now: 68/84 stale tests, fixed in plan step 4, make blocking then.
-      - name: Run frontend tests (non-blocking)
-        continue-on-error: true
+      # Blocking: the Jest suite was fixed in plan step 4.
+      - name: Run frontend tests
         run: npx react-scripts test --watchAll=false
         env:
           CI: "true"

@@ -13,7 +13,11 @@ export const useApi = () => {
     setGlobalLoading(true);
 
     try {
-      const response = await apiClient[method](url, data, config);
+      // apiClient.get/delete take (url, config); post/put take (url, data, config).
+      // Passing data first for GET dropped query params (e.g. ?page=&query=).
+      const response = method === 'get' || method === 'delete'
+        ? await apiClient[method](url, config)
+        : await apiClient[method](url, data, config);
       return response.data;
     } catch (err) {
       const errorMessage = err.response?.data?.error || err.message || 'Request failed';

@@ -1,12 +1,15 @@
 import axios from 'axios';
 import MockAdapter from 'axios-mock-adapter';
-import apiClient from './apiClient';
+import apiClient, { axiosInstance } from './apiClient';
 
 describe('apiClient', () => {
   let mock;
 
   beforeAll(() => {
-    mock = new MockAdapter(apiClient);
+    // Attach to the axios instance; the default export is a wrapper object.
+    mock = new MockAdapter(axiosInstance);
+    jest.spyOn(console, 'log').mockImplementation(() => {});
+    jest.spyOn(console, 'error').mockImplementation(() => {});
   });
 
   afterEach(() => {
@@ -15,6 +18,7 @@ describe('apiClient', () => {
 
   afterAll(() => {
     mock.restore();
+    jest.restoreAllMocks();
   });
 
   it('should set the correct base URL from environment variable', () => {

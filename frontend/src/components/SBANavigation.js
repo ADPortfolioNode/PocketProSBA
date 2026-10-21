@@ -38,7 +38,7 @@ const SBANavigation = ({ serverConnected, apiUrl }) => {
   return (
     <nav className="pp-nav" aria-label="Primary">
       <div className="pp-shell pp-nav-inner">
-        <div className="pp-nav-links" role="list">
+        <div className="pp-nav-links">
           {NAV_ITEMS.map((item) => {
             const active = item.exact
               ? currentPath === '/' || currentPath === ''
@@ -51,7 +51,6 @@ const SBANavigation = ({ serverConnected, apiUrl }) => {
             const common = {
               className,
               'data-testid': item.testId,
-              role: 'listitem',
               'aria-current': active ? 'page' : undefined,
             };
 

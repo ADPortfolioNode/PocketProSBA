@@ -29,7 +29,8 @@ function Register() {
       alert('Registration successful! Please log in.');
       navigate('/login');
     } catch (err) {
-      setError(authError || 'An unexpected error occurred.');
+      // authError from useAuth is stale inside this closure; read the failed request instead.
+      setError(err?.response?.data?.error || authError || 'Registration failed');
     }
   };
 

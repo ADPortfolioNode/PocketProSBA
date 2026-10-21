@@ -25,7 +25,8 @@ function Login() {
       navigate('/'); // Navigate to home page after login
     } catch (err) {
       // Error is already set by useAuth hook, but we can add more specific handling here if needed
-      setError(authError || 'An unexpected error occurred.');
+      // authError from useAuth is stale inside this closure; read the failed request instead.
+      setError(err?.response?.data?.error || authError || 'Login failed');
     }
   };
 

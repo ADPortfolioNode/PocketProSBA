@@ -84,7 +84,8 @@ describe('AppProvider', () => {
       expect(getByTestId('error-message').textContent).toBe('Network error');
     });
 
+    // user-event v13 dispatches outside React's act(), so wait for the re-render.
     userEvent.click(getByTestId('error-message').nextSibling);
-    expect(queryByTestId('error-message')).toBeNull();
+    await waitFor(() => expect(queryByTestId('error-message')).toBeNull());
   });
 });

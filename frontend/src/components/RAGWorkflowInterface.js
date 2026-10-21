@@ -3,6 +3,9 @@ import RAGWorkflowVisualization from './RAGWorkflowVisualization';
 import { Card, Row, Col, Button, Form, ListGroup, Badge, Accordion, Alert, ProgressBar } from 'react-bootstrap';
 import apiClient from '../api/apiClient';
 
+// apiClient resolves to an axios response; the JSON body lives in .data.
+const bodyOf = (res) => (res && res.data !== undefined ? res.data : res) || {};
+
 const RAGWorkflowInterface = ({ 
   onSearch, 
   onUpload, 
@@ -77,7 +80,8 @@ const RAGWorkflowInterface = ({
         message: taskText,
         session_id: 'session_' + Date.now()
       });
-      setDecomposedSteps(res.response?.steps || []);
+      const body = bodyOf(res);
+      setDecomposedSteps(body.response?.steps || body.steps || []);
       setCurrentStep('execute');
     } catch (err) {
       console.error('Decompose error:', err);
@@ -88,7 +92,7 @@ const RAGWorkflowInterface = ({
   const handleExecuteStep = async (step) => {
     try {
       const res = await apiClient.post('/api/execute', { task: step });
-      setStepResults(prev => [...prev, res]);
+      setStepResults(prev => [...prev, bodyOf(res)]);
     } catch (err) {
       console.error('Execute step error:', err);
     }
@@ -98,7 +102,7 @@ const RAGWorkflowInterface = ({
   const handleValidateStep = async (result, step) => {
     try {
       const res = await apiClient.post('/api/validate', { result, task: step });
-      setValidationResult(res);
+      setValidationResult(bodyOf(res));
     } catch (err) {
       console.error('Validate step error:', err);
     }
@@ -108,7 +112,7 @@ const RAGWorkflowInterface = ({
   const handleQueryDocuments = async (query) => {
     try {
       const res = await apiClient.post('/api/query', { query, top_k: 5 });
-      setQueryResults(res.results || []);
+      setQueryResults(bodyOf(res).results || []);
     } catch (err) {
       console.error('Query documents error:', err);
     }
