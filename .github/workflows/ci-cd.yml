@@ -1,0 +1,79 @@
+name: CI
+
+# Test and build only. No deploy or push steps, and no secrets are needed.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    name: Backend tests (pytest)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      # Dummy key: config only requires a real SECRET_KEY in production mode.
+      SECRET_KEY: ci-test-key
+      PYTHONUNBUFFERED: "1"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+
+      # backend/requirements.txt (Flask 3.0, chromadb 0.4.24, pydantic v1) is the
+      # set the app and tests are pinned against; the root requirements.txt is a
+      # stale Flask 2.3 / chromadb 0.5.3 list that conflicts with it.
+      - name: Install backend dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements.txt
+
+      # pytest.ini sets testpaths = backend/tests.
+      - name: Run backend tests
+        run: python -m pytest backend/tests
+
+  frontend:
+    name: Frontend build and tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      # Blocking. CI=false on purpose: with CI=true, react-scripts turns the
+      # current 20 ESLint warnings into errors. Plan step 9 clears the warnings
+      # and then removes this override.
+      - name: Build
+        run: npm run build
+        env:
+          CI: "false"
+
+      # Non-blocking for now: 68/84 stale tests, fixed in plan step 4, make blocking then.
+      - name: Run frontend tests (non-blocking)
+        continue-on-error: true
+        run: npx react-scripts test --watchAll=false
+        env:
+          CI: "true"

@@ -230,6 +230,7 @@ error.log
 
 # Model directories
 models/
+!backend/models/
 checkpoints/
 pretrained/
 

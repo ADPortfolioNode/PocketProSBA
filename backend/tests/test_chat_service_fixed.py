@@ -21,7 +21,8 @@ class TestChatProcessingFunctions:
             mock_concierge = Mock()
             mock_concierge.handle_message.return_value = {
                 'success': True,
-                'text': 'I can help you with SBA loans.',
+                # Already-formatted answers (with links) are kept; thin ones get live SBA enrichment
+                'text': 'I can help you with SBA loans. See [7(a) loans](https://www.sba.gov/funding-programs/loans/7a-loans).',
                 'sources': []
             }
             mock_concierge.rag_manager = object()  # Non-None to simulate availability
@@ -36,7 +37,8 @@ class TestChatProcessingFunctions:
             )
 
             assert result['success'] is True
-            assert result['response'] == 'I can help you with SBA loans.'
+            assert result['response'].startswith('I can help you with SBA loans.')
+            assert 'sba.gov/funding-programs/loans/7a-loans' in result['response']
             assert result['session_id'] == self.test_session_id
 
     def test_process_chat_message_missing_user_id(self):
