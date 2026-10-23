@@ -1,5 +1,7 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useSession } from '../hooks/useSession';
+import { clearSession } from '../utils/authStorage';
 
 /**
  * Sitewide brand mark: original rotating yin-yang animation.
@@ -13,6 +15,14 @@ export const LOGO_FALLBACK = `${process.env.PUBLIC_URL || ''}/logo.gif`;
  * Primary nav lives in SBANavigation.
  */
 function Header() {
+  const { authenticated, user } = useSession();
+  const navigate = useNavigate();
+  const handleLogout = () => {
+    clearSession();
+    navigate('/', { replace: true });
+  };
+  const who = user?.name || user?.email;
+
   return (
     <header className="pp-brand-bar svc-brand" role="banner">
       <div className="pp-shell pp-brand-inner">
@@ -34,7 +44,25 @@ function Header() {
             PocketPro <span className="pp-logo-muted">SBA</span>
           </span>
         </Link>
-        <span className="svc-brand-tag d-none d-md-inline">Small business funding service</span>
+        <div className="pp-header-actions">
+          <span className="svc-brand-tag d-none d-md-inline">Small business funding service</span>
+          {authenticated ? (
+            <>
+              {who && (
+                <span className="pp-header-user d-none d-sm-inline" title={user?.email || ''}>
+                  {who}
+                </span>
+              )}
+              <button type="button" className="btn btn-sm btn-outline-primary pp-header-auth" onClick={handleLogout}>
+                Log out
+              </button>
+            </>
+          ) : (
+            <Link to="/login" className="btn btn-sm btn-outline-primary pp-header-auth">
+              Log in
+            </Link>
+          )}
+        </div>
       </div>
     </header>
   );

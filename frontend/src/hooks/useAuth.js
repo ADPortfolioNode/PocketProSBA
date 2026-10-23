@@ -1,31 +1,17 @@
 import { useState, useCallback } from 'react';
 import apiClient from '../api/apiClient';
 import { useApp } from '../context/AppProvider';
-
-const TOKEN_KEY = 'pocketpro_auth_token';
-const USER_KEY = 'pocketpro_auth_user';
+import { clearSession, setSession } from '../utils/authStorage';
 
 export const useAuth = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const { setUser } = useApp();
 
-  const persistSession = (user, token) => {
-    if (user) {
-      try {
-        localStorage.setItem(USER_KEY, JSON.stringify(user));
-      } catch (_) {
-        /* ignore quota */
-      }
-      if (setUser) setUser(user);
-    }
-    if (token) {
-      try {
-        localStorage.setItem(TOKEN_KEY, token);
-      } catch (_) {
-        /* ignore */
-      }
-    }
+  // Token + user go to authStorage; apiClient sends the token as a Bearer header.
+  const persistSession = (user, token, expiresAt) => {
+    setSession({ token, user, expiresAt });
+    if (user && setUser) setUser(user);
   };
 
   const login = async (email, password) => {
@@ -35,7 +21,7 @@ export const useAuth = () => {
       const response = await apiClient.post('/api/login', { email, password });
       const user = response.data.user;
       const token = response.data.token;
-      persistSession(user, token);
+      persistSession(user, token, response.data.expires_at);
       return response.data;
     } catch (err) {
       const msg = err.response?.data?.error || 'Login failed';
@@ -99,12 +85,7 @@ export const useAuth = () => {
   };
 
   const logout = useCallback(() => {
-    try {
-      localStorage.removeItem(TOKEN_KEY);
-      localStorage.removeItem(USER_KEY);
-    } catch (_) {
-      /* ignore */
-    }
+    clearSession();
     if (setUser) setUser(null);
   }, [setUser]);
 

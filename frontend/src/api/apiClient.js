@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { clearSession, getToken, loginPathFor } from '../utils/authStorage';
 
 const getBackendHost = () => {
   const envHost = process.env.REACT_APP_API_URL || process.env.REACT_APP_BACKEND_URL;
@@ -75,6 +76,59 @@ const axiosInstance = axios.create({
     'Content-Type': 'application/json'
   }
 });
+
+// --- Authentication -------------------------------------------------------
+// Every request carries the stored access token as "Authorization: Bearer".
+// A 401 from a protected route means the token is missing, expired or no longer
+// valid: the session is cleared and the user is sent to /login with the page
+// they were on as ?next=, so they come straight back after signing in.
+
+// Auth endpoints answer 401 for a wrong password; that must not redirect.
+const AUTH_ENDPOINT_RE = /\/api\/(auth\/|login|register|forgot-password|reset-password)/;
+
+const defaultUnauthorizedHandler = (loginPath) => {
+  if (typeof window !== 'undefined' && window.location) window.location.assign(loginPath);
+};
+let unauthorizedHandler = defaultUnauthorizedHandler;
+
+/** App registers a router-aware handler (no full page reload); null restores the default. */
+const setUnauthorizedHandler = (fn) => {
+  unauthorizedHandler = typeof fn === 'function' ? fn : defaultUnauthorizedHandler;
+};
+
+const handleUnauthorized = (error) => {
+  const url = String(error?.config?.url || '');
+  if (error?.response?.status !== 401 || AUTH_ENDPOINT_RE.test(url)) return;
+  clearSession();
+  if (typeof window === 'undefined' || !window.location) return;
+  const { pathname = '/', search = '', hash = '' } = window.location;
+  if (/^\/login(\/|$)/i.test(pathname)) return;
+  unauthorizedHandler(loginPathFor(`${pathname}${search}${hash}`));
+};
+
+axiosInstance.interceptors.request.use((config) => {
+  const token = getToken();
+  if (token) {
+    config.headers = config.headers || {};
+    // An explicit Authorization passed by the caller wins.
+    const has = typeof config.headers.has === 'function'
+      ? config.headers.has('Authorization')
+      : !!(config.headers.Authorization || config.headers.authorization);
+    if (!has) {
+      if (typeof config.headers.set === 'function') config.headers.set('Authorization', `Bearer ${token}`);
+      else config.headers.Authorization = `Bearer ${token}`;
+    }
+  }
+  return config;
+});
+
+axiosInstance.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    handleUnauthorized(error);
+    return Promise.reject(error);
+  }
+);
 
 // Create the request handler
 // options: { quiet } suppresses logging; { retry: false } disables retries;
@@ -153,6 +207,14 @@ const api = {
 };
 
 // Named exports for tests (e.g. axios-mock-adapter needs the axios instance).
-export { axiosInstance, BASE_URL, MAX_RETRIES, RETRY_BUDGET_MS, isTransientError };
+export {
+  axiosInstance,
+  BASE_URL,
+  MAX_RETRIES,
+  RETRY_BUDGET_MS,
+  isTransientError,
+  setUnauthorizedHandler,
+  handleUnauthorized,
+};
 
 export default api;

@@ -3,6 +3,7 @@ import React from 'react';
 import { render } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { AppProvider } from './context/AppProvider';
+import { clearSession, setSession } from './utils/authStorage';
 
 /**
  * Render a component the way the app does: inside AppProvider and a router.
@@ -19,6 +20,16 @@ export function renderWithProviders(ui, { route = '/', withRouter = true, ...opt
   );
   return render(ui, { wrapper: Wrapper, ...options });
 }
+
+/**
+ * Store a signed-in session so guarded tabs (Chat, RAG/Tasks, Docs) render.
+ * Pair with signOutForTests() in afterEach: jsdom localStorage outlives a test.
+ */
+export const TEST_TOKEN = 'test-access-token';
+export function signInForTests(user = { id: 1, email: 'tester@example.com', name: 'Tester' }) {
+  setSession({ token: TEST_TOKEN, user, expiresAt: Math.floor(Date.now() / 1000) + 3600 });
+}
+export const signOutForTests = () => clearSession();
 
 /** Wrapper for renderHook(() => useSomething(), { wrapper: AppWrapper }). */
 export const AppWrapper = ({ children }) => <AppProvider>{children}</AppProvider>;

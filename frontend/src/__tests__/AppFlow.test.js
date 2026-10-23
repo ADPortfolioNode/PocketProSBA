@@ -3,7 +3,7 @@ import '@testing-library/jest-dom';
 import { screen, fireEvent, waitFor } from '@testing-library/react';
 import Login from '../Login';
 import apiClient from '../api/apiClient';
-import { renderWithProviders, healthyGet, axiosResponse } from '../test-utils';
+import { renderWithProviders, healthyGet, axiosResponse, signInForTests, signOutForTests } from '../test-utils';
 
 jest.mock('../api/apiClient');
 jest.mock('../components/ModernConciergeChat', () => () => <div>Mocked ModernConciergeChat Component</div>);
@@ -20,6 +20,10 @@ const mockUseConnection = () => ({
 });
 
 const MainLayout = require('../components/MainLayout').default;
+
+// Chat, RAG/Tasks and Docs are behind the sign-in guard.
+beforeEach(() => signInForTests());
+afterEach(() => signOutForTests());
 
 beforeAll(() => {
   // Mock window.alert to avoid not implemented error in tests

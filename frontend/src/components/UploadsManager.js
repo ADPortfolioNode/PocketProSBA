@@ -2,7 +2,8 @@ import React, { useState } from "react";
 import { Button, Form, ListGroup, Alert } from "react-bootstrap";
 import LoadingBar from "./LoadingBar";
 import { ErrorState } from "./AsyncState";
-import apiClient, { BASE_URL } from "../api/apiClient";
+import apiClient, { BASE_URL, handleUnauthorized } from "../api/apiClient";
+import { authHeaders } from "../utils/authStorage";
 import { useAsync } from "../hooks/useAsync";
 import { friendlyError } from "../utils/friendlyError";
 
@@ -58,10 +59,15 @@ const UploadsManagerComponent = ({ files: filesProp, onUpload, onRefresh: onRefr
       const uploadUrl = /^https?:\/\//i.test(uploadEndpoint)
         ? uploadEndpoint
         : `${(BASE_URL || "").replace(/\/+$/, "")}${uploadEndpoint}`;
+      // Raw fetch (multipart) bypasses apiClient: send the token ourselves.
       const res = await fetch(uploadUrl, {
         method: "POST",
+        headers: authHeaders(),
         body: formData,
       });
+      if (res.status === 401 && typeof handleUnauthorized === "function") {
+        handleUnauthorized({ response: { status: 401 }, config: { url: uploadUrl } });
+      }
       if (!res.ok) throw Object.assign(new Error("Upload failed"), { response: { status: res.status } });
       setSuccess("File uploaded successfully!");
       setSelectedFile(null);

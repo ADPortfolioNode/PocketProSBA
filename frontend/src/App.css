@@ -86,6 +86,32 @@ a:hover {
   letter-spacing: 0.02em;
 }
 
+/* Header sign-in state: user + Log out, or Log in */
+.pp-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.pp-header-user {
+  max-width: 14rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.85rem;
+  color: var(--pp-ink);
+}
+
+.pp-header-auth {
+  /* 44px tap target, same as the auth page links */
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  border-radius: var(--pp-radius-sm);
+  white-space: nowrap;
+}
+
 .pp-logo {
   display: inline-flex;
   align-items: center;

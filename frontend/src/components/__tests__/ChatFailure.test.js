@@ -2,7 +2,7 @@ import React from 'react';
 import '@testing-library/jest-dom';
 import { screen, fireEvent } from '@testing-library/react';
 import apiClient from '../../api/apiClient';
-import { renderWithProviders, healthyGet } from '../../test-utils';
+import { renderWithProviders, healthyGet, signInForTests, signOutForTests } from '../../test-utils';
 import MainLayout from '../MainLayout';
 
 jest.mock('../../api/apiClient');
@@ -19,6 +19,10 @@ const connection = (overrides = {}) => () => ({
   apiCall: jest.fn(),
   ...overrides,
 });
+
+// Chat, RAG/Tasks and Docs are behind the sign-in guard.
+beforeEach(() => signInForTests());
+afterEach(() => signOutForTests());
 
 describe('Chat failure handling', () => {
   beforeEach(() => {

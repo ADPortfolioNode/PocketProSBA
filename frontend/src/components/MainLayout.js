@@ -13,6 +13,7 @@ import TaskOrchestrator from './TaskOrchestrator';
 import Home from './Home';
 import LoadingBar from './LoadingBar';
 import ErrorBoundary from './ErrorBoundary';
+import RequireAuth, { PROTECTED_TABS } from './RequireAuth';
 import { ErrorState } from './AsyncState';
 import { useSlowFlag } from '../hooks/useAsync';
 import { useConnection } from '../hooks/useConnection'; // Import the new hook
@@ -149,6 +150,15 @@ function MainLayout({ useConnectionHook = useConnection }) {
   };
 
   const renderContent = () => {
+    // Chat, RAG/Tasks and Docs need a signed-in user (the API answers 401
+    // otherwise). Read the tab from the URL, not state, so there's no flash.
+    if (PROTECTED_TABS.has(resolveTabFromPath(location.pathname))) {
+      return <RequireAuth>{renderTab()}</RequireAuth>;
+    }
+    return renderTab();
+  };
+
+  const renderTab = () => {
     const connectionAlert = renderConnectionStatus();
     
     if (connectionAlert) {

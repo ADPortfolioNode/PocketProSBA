@@ -1,14 +1,19 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from './hooks/useAuth';
 import LoadingBar from './components/LoadingBar';
 import { friendlyError } from './utils/friendlyError';
+import { safeReturnPath } from './utils/authStorage';
 
 function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  // Set by the route guard / a 401: where to go back to after signing in.
+  const nextParam = searchParams.get('next');
+  const returnTo = safeReturnPath(nextParam || '/');
 
   const { login, loading, error: authError } = useAuth();
 
@@ -24,7 +29,7 @@ function Login() {
     try {
       await login(email, password);
       alert('Login successful!');
-      navigate('/'); // Navigate to home page after login
+      navigate(returnTo, { replace: true }); // back to the page that needed sign-in (or Home)
     } catch (err) {
       // Error is already set by useAuth hook, but we can add more specific handling here if needed
       // authError from useAuth is stale inside this closure; read the failed request instead.
@@ -36,6 +41,9 @@ function Login() {
   return (
     <div className="container-centered">
       <h2 className="mb-4">Login</h2>
+      {nextParam && !error && (
+        <div className="alert alert-info" role="status">Please log in to continue.</div>
+      )}
       {error && <div className="alert alert-danger">{error}</div>}
       <form onSubmit={handleSubmit} noValidate>
         <div className="mb-3">
