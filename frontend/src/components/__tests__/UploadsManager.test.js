@@ -1,8 +1,9 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import apiClient from '../../api/apiClient';
+import apiClient, { handleUnauthorized } from '../../api/apiClient';
 import UploadsManager, { DOCUMENTS_LIST_ENDPOINT } from '../UploadsManager';
+import { clearSession, setSession } from '../../utils/authStorage';
 
 jest.mock('../../api/apiClient');
 
@@ -91,6 +92,32 @@ describe('UploadsManager (Docs tab)', () => {
       await waitFor(() => expect(apiClient.get).toHaveBeenCalledTimes(2));
     } finally {
       global.fetch = originalFetch;
+    }
+  });
+
+  test('the upload sends the signed-in Bearer token, and a 401 hands off to the sign-in redirect', async () => {
+    setSession({ token: 'up.jwt.token' });
+    apiClient.get.mockImplementation(() => ok({ files: [] }));
+    const originalFetch = global.fetch;
+    global.fetch = jest.fn(() => Promise.resolve({ ok: false, status: 401 }));
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      render(<UploadsManager />);
+      await screen.findByText(/No files uploaded yet/i);
+      const file = new File(['hello'], 'up.txt', { type: 'text/plain' });
+      fireEvent.change(screen.getByLabelText(/Choose a document to upload/i), { target: { files: [file] } });
+      fireEvent.click(screen.getByRole('button', { name: 'Upload' }));
+
+      await waitFor(() => expect(global.fetch).toHaveBeenCalled());
+      const [, init] = global.fetch.mock.calls[0];
+      expect(init.headers).toEqual({ Authorization: 'Bearer up.jwt.token' });
+      await waitFor(() => expect(handleUnauthorized).toHaveBeenCalledWith(
+        expect.objectContaining({ response: { status: 401 } })
+      ));
+    } finally {
+      global.fetch = originalFetch;
+      clearSession();
+      console.error.mockRestore();
     }
   });
 });

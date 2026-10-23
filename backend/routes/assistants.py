@@ -9,6 +9,7 @@ import os
 
 from flask import Blueprint, request, jsonify
 from backend.routes._errors import GENERIC_ERROR, internal_error_message
+from backend.app.auth import auth_required
 
 logger = logging.getLogger(__name__)
 assistants_bp = Blueprint("assistants", __name__)
@@ -41,6 +42,7 @@ def assistants_health():
 
 
 @assistants_bp.route("/search", methods=["POST"])
+@auth_required
 def assistants_search():
     data = _payload()
     if data is None:
@@ -66,6 +68,7 @@ def assistants_search():
 
 
 @assistants_bp.route("/file", methods=["POST"])
+@auth_required
 def assistants_file():
     data = _payload()
     if data is None:
@@ -82,6 +85,7 @@ def assistants_file():
 
 
 @assistants_bp.route("/function", methods=["POST"])
+@auth_required
 def assistants_function():
     data = _payload()
     if data is None:
@@ -100,6 +104,7 @@ def assistants_function():
 
 
 @assistants_bp.route("/concierge", methods=["POST"])
+@auth_required
 def assistants_concierge():
     data = _payload()
     if data is None:

@@ -21,6 +21,7 @@ AUTH_ENDPOINTS = {
     "register": ("auth.register", "api.api_register_alias"),
     "forgot-password": ("auth.forgot_password", "api.api_forgot_password_alias"),
     "reset-password": ("auth.reset_password", "api.api_reset_password_alias"),
+    "refresh": ("auth.refresh",),
 }
 
 # Routes that call the LLM / RAG / orchestration stack (paid and slow).

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Card, Button, Form, ListGroup, Badge, Alert, ProgressBar } from 'react-bootstrap';
-import apiClient from '../api/apiClient';
+import apiClient, { handleUnauthorized } from '../api/apiClient';
+import { authHeaders } from '../utils/authStorage';
 import LoadingBar from './LoadingBar';
 import { ErrorState } from './AsyncState';
 import { friendlyError } from '../utils/friendlyError';
@@ -69,9 +70,13 @@ const RAGWorkflowInterface = ({
         // Direct upload when parent handler not provided
         const formData = new FormData();
         formData.append('file', selectedFile);
-        let res = await fetch('/api/files', { method: 'POST', body: formData });
-        if (!res.ok) {
-          res = await fetch('/api/documents/upload', { method: 'POST', body: formData });
+        // Raw fetch (multipart) bypasses apiClient: send the token ourselves.
+        let res = await fetch('/api/files', { method: 'POST', headers: authHeaders(), body: formData });
+        if (!res.ok && res.status !== 401) {
+          res = await fetch('/api/documents/upload', { method: 'POST', headers: authHeaders(), body: formData });
+        }
+        if (res.status === 401 && typeof handleUnauthorized === 'function') {
+          handleUnauthorized({ response: { status: 401 }, config: { url: '/api/files' } });
         }
         if (!res.ok) throw new Error(`Server responded with ${res.status}`);
         await res.json();

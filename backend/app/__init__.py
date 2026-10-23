@@ -101,6 +101,7 @@ def create_app(config_name=None):
     # Configure CORS: explicit allow-list (local dev, Docker service, FRONTEND_URL,
     # CORS_ALLOWED_ORIGINS). Any-port localhost reflection is dev/testing only.
     from backend.app.security import (
+        app_env,
         build_allowed_origins,
         init_rate_limiting,
         init_request_size_limit,
@@ -163,6 +164,14 @@ def create_app(config_name=None):
     # Request size cap -> clean 413 JSON (MAX_CONTENT_LENGTH, default 16 MB)
     init_request_size_limit(app)
 
+    # Signed access tokens guard chat/RAG/documents/orchestrator/assistants.
+    from backend.app.auth import auth_required
+    if not app.config.get('AUTH_REQUIRED', True):
+        if app_env(app) == 'production':
+            logger.error('AUTH_REQUIRED=false in PRODUCTION: protected routes are open to anyone. Local demos only.')
+        else:
+            logger.warning('AUTH_REQUIRED=false: protected routes accept requests without a token (local demo mode).')
+
     def _handle_file_upload():
         """Shared handler for all file upload URL shapes the prebuilt SPA uses."""
         if request.method == 'OPTIONS':
@@ -208,16 +217,19 @@ def create_app(config_name=None):
     # Prebuilt: POST http://localhost:5000/api/api/files
     @app.route('/api/api/files', methods=['POST', 'OPTIONS'])
     @app.route('/api/api/files/', methods=['POST', 'OPTIONS'])
+    @auth_required
     def upload_double_api_files():
         return _handle_file_upload()
 
     @app.route('/api/files', methods=['POST', 'OPTIONS'])
     @app.route('/api/files/', methods=['POST', 'OPTIONS'])
+    @auth_required
     def upload_api_files_direct():
         return _handle_file_upload()
 
     @app.route('/api/api/documents/upload', methods=['POST', 'OPTIONS'])
     @app.route('/api/api/documents/upload_and_ingest_document', methods=['POST', 'OPTIONS'])
+    @auth_required
     def upload_double_api_documents():
         return _handle_file_upload()
 
@@ -247,6 +259,7 @@ def create_app(config_name=None):
     # Prebuilt chat baseURL often hits /api/api/chat — explicit alias (middleware also rewrites)
     @app.route('/api/api/chat', methods=['POST', 'OPTIONS'])
     @app.route('/api/api/chat/', methods=['POST', 'OPTIONS'])
+    @auth_required
     def chat_double_api_prefix():
         if request.method == 'OPTIONS':
             return '', 204

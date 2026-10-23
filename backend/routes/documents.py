@@ -4,6 +4,7 @@ import logging
 from werkzeug.utils import secure_filename
 from backend.services.rag import get_rag_manager
 from backend.routes._errors import internal_error_message
+from backend.app.auth import auth_required
 
 logger = logging.getLogger(__name__)
 documents_bp = Blueprint('documents', __name__)
@@ -22,6 +23,7 @@ def _upload_and_ingest():
 
 
 @documents_bp.route('/upload', methods=['POST', 'OPTIONS'])
+@auth_required
 def upload_file():
     """Upload a document and add it to RAG system"""
     if request.method == 'OPTIONS':
@@ -35,6 +37,7 @@ def upload_file():
 
 
 @documents_bp.route('/upload_and_ingest_document', methods=['POST', 'OPTIONS'])
+@auth_required
 def upload_and_ingest_document():
     """
     Prebuilt RAG SPA fallback:
@@ -62,6 +65,7 @@ def _upload_folder():
 
 
 @documents_bp.route('/list', methods=['GET'])
+@auth_required
 def list_files():
     """List uploaded files"""
     try:

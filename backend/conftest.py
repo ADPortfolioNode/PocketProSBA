@@ -88,3 +88,13 @@ def app():
 @pytest.fixture
 def client(app):
     return app.test_client()
+
+
+@pytest.fixture
+def authed_client(app):
+    """Test client that sends a valid bearer token (for auth_required routes)."""
+    from backend.tests.auth_helpers import authenticate
+
+    c = app.test_client()
+    authenticate(c, app)
+    return c

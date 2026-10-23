@@ -1,5 +1,6 @@
 import pytest
 from backend.app import create_app
+from backend.tests.auth_helpers import authenticate
 
 @pytest.fixture
 def app():
@@ -8,7 +9,10 @@ def app():
 
 @pytest.fixture
 def client(app):
-    return app.test_client()
+    # /api/chat is auth_required: sign the client in.
+    c = app.test_client()
+    authenticate(c, app)
+    return c
 
 def test_health_check(client):
     response = client.get('/api/health')

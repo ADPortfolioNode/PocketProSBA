@@ -8,6 +8,7 @@ from unittest.mock import patch, MagicMock
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 from backend.app import create_app
+from backend.tests.auth_helpers import authenticate
 
 class TestAPIComprehensive:
     """Comprehensive test suite for API endpoints"""
@@ -21,8 +22,10 @@ class TestAPIComprehensive:
 
     @pytest.fixture
     def client(self, app):
-        """Create test client"""
-        return app.test_client()
+        """Create a signed-in test client (decompose/execute/query need a token)"""
+        c = app.test_client()
+        authenticate(c, app)
+        return c
 
     def test_health_check(self, client):
         """Test health check endpoint"""

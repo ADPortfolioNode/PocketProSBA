@@ -14,6 +14,7 @@ from flask import Blueprint, request, jsonify, current_app
 from sqlalchemy.exc import IntegrityError
 from werkzeug.security import generate_password_hash
 
+from backend.app.auth import create_access_token, get_current_user, token_required
 from backend.routes._errors import internal_error_message
 
 logger = logging.getLogger(__name__)
@@ -96,6 +97,8 @@ def auth_health():
             "POST /api/register",
             "POST /api/forgot-password",
             "POST /api/reset-password",
+            "GET /api/auth/me",
+            "POST /api/auth/refresh",
             "GET /api/auth/health",
             "GET /api/auth-health",
         ],
@@ -167,16 +170,35 @@ def login():
         user.last_login = datetime.utcnow()
         db.session.commit()
 
-        # Lightweight opaque token (dev-friendly; swap for JWT in production if needed)
-        token = secrets.token_urlsafe(32)
+        # Signed, expiring access token (HS256 JWT); send it as
+        # "Authorization: Bearer <token>" to protected routes.
+        issued = create_access_token(user)
         return jsonify({
             "success": True,
             "message": "Login successful",
-            "token": token,
+            **issued,
             "user": user.to_public_dict(),
         }), 200
     except Exception as e:
         return jsonify({"error": internal_error_message(e, public="Login failed. Please try again.")}), 500
+
+
+@auth_bp.route("/me", methods=["GET"])
+@token_required
+def me():
+    """Profile of the user the bearer token belongs to (401 if none/invalid)."""
+    return jsonify({"success": True, "user": get_current_user().to_public_dict()}), 200
+
+
+@auth_bp.route("/refresh", methods=["POST"])
+@token_required
+def refresh():
+    """Swap a still-valid access token for a fresh one (sliding session).
+
+    Expired tokens get a 401: the user logs in again.
+    """
+    issued = create_access_token(get_current_user())
+    return jsonify({"success": True, **issued}), 200
 
 
 @auth_bp.route("/forgot-password", methods=["POST"])

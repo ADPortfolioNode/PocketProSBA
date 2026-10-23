@@ -12,6 +12,7 @@ from backend.services.api_service import (
 )
 from backend.services.rag import get_rag_manager
 from backend.routes._errors import internal_error_message
+from backend.app.auth import auth_required
 
 api_bp = Blueprint('api', __name__)
 
@@ -145,6 +146,7 @@ def get_diagnostics():
         return jsonify({'error': 'Failed to retrieve diagnostics'}), 500
 
 @api_bp.route('/decompose', methods=['POST'])
+@auth_required
 def decompose_task():
     """Decompose a user task into steps"""
     try:
@@ -167,6 +169,7 @@ def decompose_task():
         return jsonify({'error': internal_error_message(e, public='Failed to process message')}), 500
 
 @api_bp.route('/execute', methods=['POST'])
+@auth_required
 def execute_step():
     """Execute a decomposed task step"""
     try:
@@ -183,6 +186,7 @@ def execute_step():
         return jsonify({'error': internal_error_message(e, public='Failed to execute step')}), 500
 
 @api_bp.route('/validate', methods=['POST'])
+@auth_required
 def validate_step():
     """Validate a step result"""
     try:
@@ -200,6 +204,7 @@ def validate_step():
         return jsonify({'error': internal_error_message(e, public='Failed to validate step')}), 500
 
 @api_bp.route('/query', methods=['POST'])
+@auth_required
 def query_documents():
     """Query documents"""
     try:
@@ -223,6 +228,7 @@ def query_documents():
 
 
 @api_bp.route('/search', methods=['GET', 'POST', 'OPTIONS'])
+@auth_required
 def api_search():
     """
     Prebuilt App.js:
@@ -296,6 +302,7 @@ def api_search():
 
 
 @api_bp.route('/rag', methods=['POST', 'OPTIONS'])
+@auth_required
 def api_rag_alias():
     """Alias so /api/rag works even if only api_bp is mounted without rewrite quirks."""
     if request.method == 'OPTIONS':

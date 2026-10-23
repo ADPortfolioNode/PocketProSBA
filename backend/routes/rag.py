@@ -11,6 +11,7 @@ from backend.services.api_service import (
 )
 from backend.services.rag import get_rag_manager
 from backend.routes._errors import internal_error_message
+from backend.app.auth import auth_required
 
 logger = logging.getLogger(__name__)
 
@@ -265,6 +266,7 @@ def _local_kb_sba_answer(question: str, max_chunks: int = 4):
 
 @rag_bp.route('', methods=['POST', 'OPTIONS'])
 @rag_bp.route('/', methods=['POST', 'OPTIONS'])
+@auth_required
 def rag_root_query():
     """
     Prebuilt App.js:
@@ -472,6 +474,7 @@ def rag_health():
         }), 500
 
 @rag_bp.route('/decompose', methods=['POST'])
+@auth_required
 def decompose_task():
     """Decompose a user task into steps"""
     try:
@@ -495,6 +498,7 @@ def decompose_task():
         return jsonify({'error': internal_error_message(e, public='Failed to process message')}), 500
 
 @rag_bp.route('/execute', methods=['POST'])
+@auth_required
 def execute_step():
     """Execute a decomposed task step"""
     try:
@@ -512,6 +516,7 @@ def execute_step():
         return jsonify({'error': internal_error_message(e, public='Failed to execute step')}), 500
 
 @rag_bp.route('/validate', methods=['POST'])
+@auth_required
 def validate_step():
     """Validate a step result"""
     try:
@@ -530,6 +535,7 @@ def validate_step():
         return jsonify({'error': internal_error_message(e, public='Failed to validate step')}), 500
 
 @rag_bp.route('/query', methods=['POST'])
+@auth_required
 def query_documents():
     """Query documents"""
     try:
@@ -563,6 +569,7 @@ def query_documents():
         return jsonify({'error': 'Failed to query documents'}), 500
 
 @rag_bp.route('/sba-query', methods=['POST'])
+@auth_required
 def query_sba_documents():
     """Query SBA documents using Gemini RAG, with local KB fallback."""
     try:

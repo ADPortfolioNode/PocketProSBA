@@ -1,5 +1,11 @@
 import pytest
 
+@pytest.fixture
+def client(authed_client):
+    """These tests call auth_required routes: sign the client in."""
+    return authed_client
+
+
 def test_health_check(client):
     response = client.get('/api/health')
     assert response.status_code == 200

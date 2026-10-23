@@ -11,6 +11,7 @@ import pytest
 
 from backend.app import create_app
 from backend.routes import files as files_routes
+from backend.tests.auth_helpers import authenticate
 
 
 @pytest.fixture
@@ -22,6 +23,8 @@ def client(tmp_path, monkeypatch):
     app = create_app('testing')
     app.config['TESTING'] = True
     with app.test_client() as c:
+        # Upload and list are auth_required.
+        authenticate(c, app)
         c.upload_dir = upload_dir
         yield c
 

@@ -71,6 +71,14 @@ class Config:
     # trusted (e.g. 1 on Render/Fly/nginx). 0 = use the socket address.
     TRUSTED_PROXY_COUNT = env_int('TRUSTED_PROXY_COUNT', 0)
 
+    # Authentication. Protected routes (chat/LLM, RAG, documents, orchestrator,
+    # assistants) need "Authorization: Bearer <access token>" from /api/auth/login.
+    # AUTH_REQUIRED=false turns enforcement off for local demos ONLY; never in
+    # production. Tokens are HS256 JWTs keyed from SECRET_KEY (or JWT_SECRET_KEY).
+    AUTH_REQUIRED = env_bool('AUTH_REQUIRED', True)
+    JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY') or None
+    JWT_ACCESS_TTL_SECONDS = env_int('JWT_ACCESS_TTL_SECONDS', 3600)
+
     # Extra CORS origins for production, comma-separated (FRONTEND_URL is added too).
     CORS_ALLOWED_ORIGINS = [
         o.strip() for o in (os.environ.get('CORS_ALLOWED_ORIGINS') or '').split(',') if o.strip()

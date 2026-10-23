@@ -18,6 +18,7 @@ from datetime import datetime, timezone
 from flask import Blueprint, request, jsonify
 from werkzeug.utils import secure_filename
 from backend.routes._errors import internal_error_message
+from backend.app.auth import auth_required
 
 logger = logging.getLogger(__name__)
 files_bp = Blueprint("files", __name__)
@@ -148,6 +149,7 @@ def process_upload():
 
 @files_bp.route("", methods=["POST", "OPTIONS"])
 @files_bp.route("/", methods=["POST", "OPTIONS"])
+@auth_required
 def upload_files_root():
     """POST /api/files"""
     if request.method == "OPTIONS":
@@ -161,6 +163,7 @@ def upload_files_root():
 
 
 @files_bp.route("/upload", methods=["POST", "OPTIONS"])
+@auth_required
 def upload_files_upload():
     """POST /api/files/upload"""
     if request.method == "OPTIONS":

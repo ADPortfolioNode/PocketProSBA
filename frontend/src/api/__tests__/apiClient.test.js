@@ -1,10 +1,9 @@
 import MockAdapter from 'axios-mock-adapter';
 import apiClient, { axiosInstance, MAX_RETRIES, isTransientError } from '../apiClient';
 
-// Earlier versions of this file asserted an auth-token request interceptor and a
-// 401 -> clear-token/redirect handler, plus a '/api' baseURL with a 10s timeout.
-// apiClient has none of those today (useAuth stores the token but nothing sends
-// it), so those assertions were replaced with the client's actual contract.
+// Transport contract (baseURL, retries, config pass-through). The Bearer token
+// interceptor and the 401 -> sign-out/redirect handling are covered in
+// apiAuth.test.js.
 describe('apiClient', () => {
   let mock;
 
