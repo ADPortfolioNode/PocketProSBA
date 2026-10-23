@@ -6,6 +6,7 @@ PocketPro:SBA is a Retrieval-Augmented Generation (RAG) application that provide
 - The repository uses `start.sh` as the canonical launcher. `start.sh` prefers `.env.template` (root) and `backend/.env.example` to create runtime `.env` files when missing.
 - `GEMINI_API_KEY` is required for LLM features — `start.sh` will abort if it is not set.
 - Production and development compose files live in the repo (`docker-compose.yml`, `docker-compose.dev.yml`).
+- The backend has one entry point, `wsgi:application`, used by the Procfile, Dockerfiles, compose files and start scripts. Production env vars, Docker and Vercel settings are in [DEPLOY.md](DEPLOY.md); `.env.example` lists every variable with placeholders.
 
 ## Code from anywhere (GitHub Codespaces)
 

@@ -14,25 +14,34 @@ services:
       - PORT=5000
       - CHROMADB_HOST=chromadb
       - CHROMADB_PORT=8000
-      - FRONTEND_URL=http://frontend:80
+      - FRONTEND_URL=${FRONTEND_URL:-http://localhost:3000}
+      # Values come from the shell or the project .env (Compose reads it for
+      # ${...} interpolation). The SECRET_KEY default is for local compose runs
+      # only: any real deployment must set its own (see DEPLOY.md).
+      - SECRET_KEY=${SECRET_KEY:-insecure-local-compose-key-change-me}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+    # Optional: a fresh clone has no .env and compose still starts.
     env_file:
-      - .env
+      - path: .env
+        required: false
     volumes:
       - ./uploads:/app/uploads
       - ./chromadb_data:/app/chromadb_data
       - ./logs:/app/logs
     restart: always
     depends_on:
-      - chromadb
+      chromadb:
+        condition: service_started
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5000/api/health"]
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:5000/api/health"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 30s
 
   chromadb:
-    image: chromadb/chroma:0.5.3
+    # Must match the chromadb client in backend/requirements.txt (0.4.24).
+    image: chromadb/chroma:0.4.24
     container_name: chromadb-production
     ports:
       - "8000:8000"
@@ -43,9 +52,11 @@ services:
       - CHROMA_SERVER_HTTP_PORT=8000
       - IS_PERSISTENT=TRUE
       - PERSIST_DIRECTORY=/chroma/chroma
+      - ANONYMIZED_TELEMETRY=FALSE
     restart: always
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/heartbeat"]
+      # The chroma image has python but no curl.
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/heartbeat', timeout=5)\""]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -62,7 +73,8 @@ services:
       - backend
     restart: always
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:80/"]
+      # nginx:alpine ships busybox wget, not curl.
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1/"]
       interval: 30s
       timeout: 10s
       retries: 3

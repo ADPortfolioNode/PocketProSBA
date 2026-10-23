@@ -29,7 +29,7 @@ mkdir -p logs
 
 # Install Python dependencies
 echo "Installing Python dependencies..."
-pip install -r requirements.txt
+pip install -r backend/requirements.txt
 
 # Install frontend dependencies
 echo "Installing frontend dependencies..."
@@ -41,7 +41,7 @@ echo "=== Starting Development Servers ==="
 
 # Start backend in development mode
 echo "Starting backend server..."
-python run.py &
+FLASK_ENV=development gunicorn wsgi:application --bind 0.0.0.0:5000 --reload --workers 1 --threads 4 --timeout 120 &
 BACKEND_PID=$!
 
 # Wait for backend to start
