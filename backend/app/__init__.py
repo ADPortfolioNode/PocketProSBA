@@ -98,17 +98,16 @@ def create_app(config_name=None):
             logger.error(f"Failed to create database tables: {e}")
             raise
 
-    # Configure CORS - allow local dev and Docker service origins
-    allowed_origins = [
-        'http://localhost',
-        'http://localhost:3000',
-        'http://127.0.0.1',
-        'http://127.0.0.1:3000',
-        'http://frontend:80',
-    ]
-    cors_origins = app.config.get('FRONTEND_URL')
-    if cors_origins and cors_origins not in allowed_origins:
-        allowed_origins.append(cors_origins)
+    # Configure CORS: explicit allow-list (local dev, Docker service, FRONTEND_URL,
+    # CORS_ALLOWED_ORIGINS). Any-port localhost reflection is dev/testing only.
+    from backend.app.security import (
+        build_allowed_origins,
+        init_rate_limiting,
+        init_request_size_limit,
+        make_origin_checker,
+    )
+    allowed_origins = build_allowed_origins(app)
+    _cors_origin_allowed = make_origin_checker(app, allowed_origins)
 
     # Prebuilt frontend (main.*.js) sends Cache-Control on health fetches.
     # Use broad allow_headers so preflight never fails on browser-added headers.
@@ -161,6 +160,9 @@ def create_app(config_name=None):
     if assistants_bp is not None:
         app.register_blueprint(assistants_bp, url_prefix='/api/assistants')
 
+    # Request size cap -> clean 413 JSON (MAX_CONTENT_LENGTH, default 16 MB)
+    init_request_size_limit(app)
+
     def _handle_file_upload():
         """Shared handler for all file upload URL shapes the prebuilt SPA uses."""
         if request.method == 'OPTIONS':
@@ -199,8 +201,8 @@ def create_app(config_name=None):
                 'rag_status': 'save_only',
             }), 200
         except Exception as e:
-            logger.exception('File upload handler failed')
-            return jsonify({'error': str(e), 'success': False}), 500
+            from backend.routes._errors import internal_error_message
+            return jsonify({'error': internal_error_message(e, context='file upload'), 'success': False}), 500
 
     # Explicit routes — do not rely only on middleware + empty blueprint rules
     # Prebuilt: POST http://localhost:5000/api/api/files
@@ -289,8 +291,11 @@ def create_app(config_name=None):
                 if hasattr(sba_routes, 'get_content_item_detail'):
                     return sba_routes.get_content_item_detail(head, '/'.join(parts[1:]))
         except Exception as e:
-            logger.exception('legacy sba-content handler failed: %s', e)
-            return jsonify({'error': str(e), 'items': [], 'path': target, 'success': True}), 200
+            from backend.routes._errors import internal_error_message
+            return jsonify({
+                'error': internal_error_message(e, context='legacy sba-content'),
+                'items': [], 'path': target, 'success': True,
+            }), 200
         return jsonify({
             'error': f'Unknown legacy sba-content path: {rest}',
             'items': [],
@@ -331,14 +336,6 @@ def create_app(config_name=None):
     @app.route('/test-cors')
     def test_cors():
         return jsonify({'message': 'CORS test successful'})
-
-    def _cors_origin_allowed(origin: str) -> bool:
-        if not origin:
-            return False
-        if origin in allowed_origins:
-            return True
-        # Dev convenience: any localhost / 127.0.0.1 port
-        return origin.startswith('http://localhost:') or origin.startswith('http://127.0.0.1:')
 
     @app.before_request
     def log_request_info():
@@ -397,5 +394,8 @@ def create_app(config_name=None):
     def internal_server_error(error):
         logger.exception('Internal Server Error: %s', error)
         return jsonify({"error": "Internal Server Error"}), 500
+
+    # Rate limits on auth + LLM routes. Applied last so every view is registered.
+    init_rate_limiting(app)
 
     return app

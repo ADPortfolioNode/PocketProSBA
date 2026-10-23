@@ -1,6 +1,7 @@
 # routes/chat.py
 from flask import Blueprint, request, jsonify
 import logging
+from backend.routes._errors import internal_error_message
 from backend.services.chat_processing_service import (
     process_chat_message,
     get_conversation_history,
@@ -193,5 +194,5 @@ def health_check():
         return jsonify({
             'status': 'unhealthy',
             'service': 'chat',
-            'error': str(e)
+            'error': internal_error_message(e)
         }), 500

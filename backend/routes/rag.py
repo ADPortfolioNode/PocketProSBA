@@ -10,6 +10,7 @@ from backend.services.api_service import (
     query_documents_service,
 )
 from backend.services.rag import get_rag_manager
+from backend.routes._errors import internal_error_message
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +39,32 @@ def _knowledge_base_roots():
         Path("/app/backend/knowledge_base"),
         Path("./knowledge_base"),
     ]
+
+
+def resolve_kb_path(name, collection=None):
+    """Find a knowledge-base file from the basename (+ folder) exposed in metadata.
+
+    Returns a Path inside one of the knowledge-base roots, or None. Rejects
+    anything that is not a plain basename, so client-supplied values cannot
+    traverse outside the knowledge base.
+    """
+    name = str(name or "")
+    if not name or Path(name).name != name or name in (".", ".."):
+        return None
+    collection = str(collection or "")
+    if collection and (Path(collection).name != collection or collection in (".", "..")):
+        collection = ""
+    for root in _knowledge_base_roots():
+        if not root.exists():
+            continue
+        candidates = ([root / collection / name] if collection else []) + [root / name]
+        for cand in candidates:
+            if cand.is_file():
+                return cand
+        for cand in root.rglob(name):
+            if cand.is_file():
+                return cand
+    return None
 
 
 def _static_sba_overview():
@@ -175,7 +202,7 @@ def _local_kb_sba_answer(question: str, max_chunks: int = 4):
                     snippet = "..." + snippet
                 if end < len(text):
                     snippet = snippet + "..."
-            scored.append((score, path.name, snippet, str(path)))
+            scored.append((score, path.name, snippet, str(path), path.parent.name))
 
     scored.sort(key=lambda x: x[0], reverse=True)
     top = scored[:max_chunks]
@@ -201,7 +228,7 @@ def _local_kb_sba_answer(question: str, max_chunks: int = 4):
 
     live_hits = sum(
         1
-        for _, name, _, p in top
+        for _, name, _, p, _ in top
         if "sba_api_live" in str(p).replace("\\", "/")
         or "sba_api" in str(name)
         or str(name).startswith("api_sba_")
@@ -219,12 +246,14 @@ def _local_kb_sba_answer(question: str, max_chunks: int = 4):
         ]
         kb_mode = "local_kb_fallback"
     sources = []
-    for score, name, snippet, full in top:
+    for score, name, snippet, _full, collection in top:
         answer_parts.append(snippet)
         answer_parts.append("")
         sources.append({
             "content": snippet[:200] + ("..." if len(snippet) > 200 else ""),
-            "metadata": {"source": name, "path": full, "score": score},
+            # Never expose absolute server paths: basename + KB folder name only.
+            # Use resolve_kb_path(name, collection) to find the file server-side.
+            "metadata": {"source": name, "path": name, "collection": collection, "score": score},
         })
 
     return {
@@ -271,7 +300,8 @@ def rag_root_query():
                     sources.append({
                         'title': meta.get('source') or meta.get('title') or s.get('title') or 'SBA KB',
                         'snippet': s.get('content') or s.get('snippet') or '',
-                        'path': meta.get('path') or s.get('path') or '',
+                        'path': os.path.basename(str(meta.get('path') or s.get('path') or '').replace('\\', '/')),
+                        'collection': meta.get('collection') or '',
                         'score': meta.get('score'),
                         'source': meta.get('source') or 'local_kb',
                     })
@@ -381,6 +411,7 @@ def rag_root_query():
         is_live = any(
             'sba_api' in str(s.get('source') or s.get('path') or '').lower()
             or 'sba_api_live' in str(s.get('path') or '').lower()
+            or str(s.get('collection') or '').lower() == 'sba_api_live'
             for s in (sources or [])
             if isinstance(s, dict)
         )
@@ -409,7 +440,7 @@ def rag_root_query():
     except Exception as e:
         logger.exception('POST /api/rag failed')
         return jsonify({
-            'error': str(e),
+            'error': internal_error_message(e),
             'answer': 'RAG query failed. Please try again.',
             'sources': [],
         }), 500
@@ -437,7 +468,7 @@ def rag_health():
         logger.error(f"Error checking RAG health: {str(e)}")
         return jsonify({
             'status': 'error',
-            'message': f'Failed to check RAG health: {str(e)}'
+            'message': internal_error_message(e, public='Failed to check RAG health')
         }), 500
 
 @rag_bp.route('/decompose', methods=['POST'])
@@ -461,7 +492,7 @@ def decompose_task():
 
     except Exception as e:
         logger.error(f"Error decomposing task: {str(e)}")
-        return jsonify({'error': f'Failed to process message: {str(e)}'}), 500
+        return jsonify({'error': internal_error_message(e, public='Failed to process message')}), 500
 
 @rag_bp.route('/execute', methods=['POST'])
 def execute_step():
@@ -478,7 +509,7 @@ def execute_step():
 
     except Exception as e:
         logger.error(f"Error executing step: {str(e)}")
-        return jsonify({'error': f'Failed to execute step: {str(e)}'}), 500
+        return jsonify({'error': internal_error_message(e, public='Failed to execute step')}), 500
 
 @rag_bp.route('/validate', methods=['POST'])
 def validate_step():
@@ -496,7 +527,7 @@ def validate_step():
 
     except Exception as e:
         logger.error(f"Error validating step: {str(e)}")
-        return jsonify({'error': f'Failed to validate step: {str(e)}'}), 500
+        return jsonify({'error': internal_error_message(e, public='Failed to validate step')}), 500
 
 @rag_bp.route('/query', methods=['POST'])
 def query_documents():

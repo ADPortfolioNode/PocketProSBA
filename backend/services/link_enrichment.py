@@ -127,7 +127,8 @@ def links_from_sources(sources: Optional[Iterable[Any]]) -> List[Tuple[str, str]
                 out.append((f"{title} — open in Resources", browse_href(path, str(title))))
             # live KB file names → try recover route from combined digests path in text
         path_fs = str(s.get("path") or meta.get("path") or "")
-        if "sba_api_live" in path_fs.replace("\\", "/"):
+        collection = str(s.get("collection") or meta.get("collection") or "")
+        if "sba_api_live" in path_fs.replace("\\", "/") or collection == "sba_api_live":
             # e.g. api_sba_content_loans_7a__combined.txt
             name = path_fs.replace("\\", "/").rsplit("/", 1)[-1]
             m = re.match(r"api_sba_(.+?)__(?:combined|overview|child).*\.txt$", name)

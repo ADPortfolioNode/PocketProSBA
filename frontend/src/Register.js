@@ -4,6 +4,9 @@ import { useAuth } from './hooks/useAuth';
 import LoadingBar from './components/LoadingBar';
 import { friendlyError } from './utils/friendlyError';
 
+// Keep in sync with backend/routes/auth.py MIN_PASSWORD_LENGTH
+export const MIN_PASSWORD_LENGTH = 8;
+
 function Register() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -23,6 +26,10 @@ function Register() {
     }
     if (password !== confirmPassword) {
       setError('Passwords do not match.');
+      return;
+    }
+    if (password.length < MIN_PASSWORD_LENGTH) {
+      setError(`Password must be at least ${MIN_PASSWORD_LENGTH} characters.`);
       return;
     }
 
@@ -63,8 +70,11 @@ function Register() {
             placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            minLength={MIN_PASSWORD_LENGTH}
+            aria-describedby="passwordHelp"
             required
           />
+          <div id="passwordHelp" className="form-text">Use {MIN_PASSWORD_LENGTH} or more characters.</div>
         </div>
         <div className="mb-3">
           <label htmlFor="confirmPassword" className="form-label">Confirm Password</label>
