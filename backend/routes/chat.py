@@ -2,6 +2,7 @@
 from flask import Blueprint, request, jsonify
 import logging
 from backend.routes._errors import internal_error_message
+from backend.app.auth import auth_required
 from backend.services.chat_processing_service import (
     process_chat_message,
     get_conversation_history,
@@ -13,6 +14,7 @@ logger = logging.getLogger(__name__)
 chat_bp = Blueprint('chat', __name__)
 
 @chat_bp.route('', methods=['POST'])
+@auth_required
 def post_message():
     """
     Process a chat message using the Concierge assistant
@@ -133,6 +135,7 @@ def post_message():
         }), 200
 
 @chat_bp.route('/history/<session_id>', methods=['GET'])
+@auth_required
 def get_conversation(session_id):
     """
     Get conversation history for a session
@@ -156,6 +159,7 @@ def get_conversation(session_id):
         }), 500
 
 @chat_bp.route('/clear/<session_id>', methods=['POST'])
+@auth_required
 def clear_conversation_endpoint(session_id):
     """
     Clear conversation history for a session

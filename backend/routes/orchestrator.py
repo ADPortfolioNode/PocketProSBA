@@ -8,11 +8,13 @@ from flask import Blueprint, request, jsonify
 import logging
 from backend.services.task_orchestrator import get_orchestrator
 from backend.routes._errors import internal_error_message
+from backend.app.auth import auth_required
 
 logger = logging.getLogger(__name__)
 orchestrator_bp = Blueprint('orchestrator', __name__)
 
 @orchestrator_bp.route('/submit', methods=['POST'])
+@auth_required
 def submit_task():
     """
     Submit a new task for orchestration
@@ -56,6 +58,7 @@ def submit_task():
         }), 500
 
 @orchestrator_bp.route('/task/<task_id>', methods=['GET'])
+@auth_required
 def get_task_status(task_id: str):
     """
     Get the current status of a task
@@ -80,6 +83,7 @@ def get_task_status(task_id: str):
         }), 500
 
 @orchestrator_bp.route('/task/<task_id>/details', methods=['GET'])
+@auth_required
 def get_task_details(task_id: str):
     """
     Get detailed information about a task
@@ -104,6 +108,7 @@ def get_task_details(task_id: str):
         }), 500
 
 @orchestrator_bp.route('/tasks', methods=['GET'])
+@auth_required
 def list_active_tasks():
     """
     List all active tasks
@@ -137,6 +142,7 @@ def list_active_tasks():
         }), 500
 
 @orchestrator_bp.route('/strategies', methods=['GET'])
+@auth_required
 def get_available_strategies():
     """
     Get list of available execution strategies
@@ -169,6 +175,7 @@ def get_available_strategies():
         }), 500
 
 @orchestrator_bp.route('/memory/stats', methods=['GET'])
+@auth_required
 def get_memory_stats():
     """
     Get memory repository statistics
@@ -191,6 +198,7 @@ def get_memory_stats():
         }), 500
 
 @orchestrator_bp.route('/memory/cleanup', methods=['POST'])
+@auth_required
 def cleanup_memory():
     """
     Clean up old memory entries
