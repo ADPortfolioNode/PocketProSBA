@@ -105,3 +105,15 @@ def test_chroma_server_matches_client_pin():
     ]
     for image in images:
         assert image == f"chromadb/chroma:{client}", f"{image} != client {client}"
+
+
+@pytest.mark.parametrize("rel,out", [("vercel.json", "frontend/build"),
+                                     ("frontend/vercel.json", "build")])
+def test_vercel_config_builds_frontend(rel, out):
+    import json
+    cfg = json.loads(_read(rel))
+    # Vercel sets CI=1; react-scripts would turn ESLint warnings into errors.
+    assert "CI=false" in cfg["buildCommand"]
+    assert "npm run build" in cfg["buildCommand"]
+    assert cfg["outputDirectory"] == out
+    assert any(r["destination"] == "/index.html" for r in cfg.get("rewrites", []))
