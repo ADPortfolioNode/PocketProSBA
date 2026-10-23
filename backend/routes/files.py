@@ -17,6 +17,7 @@ from datetime import datetime, timezone
 
 from flask import Blueprint, request, jsonify
 from werkzeug.utils import secure_filename
+from backend.routes._errors import internal_error_message
 
 logger = logging.getLogger(__name__)
 files_bp = Blueprint("files", __name__)
@@ -96,7 +97,8 @@ def process_upload():
         if rag_manager and rag_manager.is_available():
             metadata = {
                 "filename": filename,
-                "filepath": filepath,
+                # basename only: never store/return absolute server paths
+                "filepath": filename,
                 "size": size,
                 "uploaded_at": datetime.now(timezone.utc).isoformat(),
             }
@@ -126,7 +128,7 @@ def process_upload():
         "pages": pages,
         "chunks": chunks,
         "uploadTime": datetime.now(timezone.utc).isoformat(),
-        "path": filepath,
+        "path": filename,
         "rag_status": rag_status,
     }
 
@@ -155,7 +157,7 @@ def upload_files_root():
         return jsonify(body), code
     except Exception as e:
         logger.exception("Upload /api/files failed")
-        return jsonify({"error": str(e), "success": False}), 500
+        return jsonify({"error": internal_error_message(e), "success": False}), 500
 
 
 @files_bp.route("/upload", methods=["POST", "OPTIONS"])
@@ -168,4 +170,4 @@ def upload_files_upload():
         return jsonify(body), code
     except Exception as e:
         logger.exception("Upload /api/files/upload failed")
-        return jsonify({"error": str(e), "success": False}), 500
+        return jsonify({"error": internal_error_message(e), "success": False}), 500

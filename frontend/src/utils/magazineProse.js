@@ -11,11 +11,34 @@ export function escapeHtml(str) {
     .replace(/"/g, '&quot;');
 }
 
-/** Normalize href for app navigation vs external */
+const SAFE_SCHEMES = new Set(['http', 'https', 'mailto']);
+
+/**
+ * True when href is safe to put in an <a href>: http(s), mailto, or a
+ * same-origin relative/anchor link. Anything else (javascript:, data:,
+ * vbscript:, file:, protocol-relative //host, ...) is rejected.
+ * Browsers ignore ASCII whitespace/control chars inside a scheme
+ * ("java\tscript:"), so those are stripped before the scheme check.
+ */
+export function isSafeHref(href) {
+  const probe = String(href || '').replace(/[\u0000-\u0020\u007f-\u009f]/g, '');
+  if (!probe) return false;
+  // Protocol-relative (//evil.com) and backslash variants (/\evil.com, \\evil.com)
+  if (/^[/\\]{2}/.test(probe) || /^\\/.test(probe)) return false;
+  const scheme = probe.match(/^([a-z][a-z0-9+.-]*):/i);
+  if (scheme) return SAFE_SCHEMES.has(scheme[1].toLowerCase());
+  // No scheme: relative path, query, or fragment. A colon before the first
+  // "/", "?" or "#" would be read as a scheme by some parsers, so reject it.
+  const head = probe.split(/[/?#]/)[0];
+  return !head.includes(':');
+}
+
+/** Normalize href for app navigation vs external. Returns '' for unsafe links. */
 export function normalizeHref(raw) {
   let href = String(raw || '').trim().replace(/[.,;:)]+$/, '');
   if (!href) return '';
   if (/^www\./i.test(href)) href = `https://${href}`;
+  if (!isSafeHref(href)) return '';
   // API routes open in Resources browser (usable UI, not raw JSON)
   if (href.startsWith('/api/sba/')) {
     const title = href.split('/').filter(Boolean).pop() || 'SBA';

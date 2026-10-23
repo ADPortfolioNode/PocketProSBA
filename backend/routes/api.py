@@ -11,6 +11,7 @@ from backend.services.api_service import (
     query_documents_service,
 )
 from backend.services.rag import get_rag_manager
+from backend.routes._errors import internal_error_message
 
 api_bp = Blueprint('api', __name__)
 
@@ -111,7 +112,7 @@ def chromadb_health_check():
         logger.error(f"Error checking ChromaDB health: {str(e)}")
         return jsonify({
             'status': 'error',
-            'message': f'Failed to check ChromaDB health: {str(e)}'
+            'message': internal_error_message(e, public='Failed to check ChromaDB health')
         }), 500
 
 @api_bp.route('/info', methods=['GET'])
@@ -163,7 +164,7 @@ def decompose_task():
 
     except Exception as e:
         logger.error(f"Error decomposing task: {str(e)}")
-        return jsonify({'error': f'Failed to process message: {str(e)}'}), 500
+        return jsonify({'error': internal_error_message(e, public='Failed to process message')}), 500
 
 @api_bp.route('/execute', methods=['POST'])
 def execute_step():
@@ -179,7 +180,7 @@ def execute_step():
 
     except Exception as e:
         logger.error(f"Error executing step: {str(e)}")
-        return jsonify({'error': f'Failed to execute step: {str(e)}'}), 500
+        return jsonify({'error': internal_error_message(e, public='Failed to execute step')}), 500
 
 @api_bp.route('/validate', methods=['POST'])
 def validate_step():
@@ -196,7 +197,7 @@ def validate_step():
 
     except Exception as e:
         logger.error(f"Error validating step: {str(e)}")
-        return jsonify({'error': f'Failed to validate step: {str(e)}'}), 500
+        return jsonify({'error': internal_error_message(e, public='Failed to validate step')}), 500
 
 @api_bp.route('/query', methods=['POST'])
 def query_documents():
@@ -291,7 +292,7 @@ def api_search():
         }), 200
     except Exception as e:
         logger.exception('GET/POST /api/search failed')
-        return jsonify({'error': str(e), 'results': [], 'count': 0}), 500
+        return jsonify({'error': internal_error_message(e), 'results': [], 'count': 0}), 500
 
 
 @api_bp.route('/rag', methods=['POST', 'OPTIONS'])

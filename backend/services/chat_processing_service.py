@@ -92,8 +92,10 @@ def process_chat_message(user_id, message, session_id=None):
                         body = s.get("content") or ""
                         if path.endswith(".txt"):
                             try:
-                                p = Path(path)
-                                if p.exists():
+                                # metadata carries a basename only (no server paths)
+                                from backend.routes.rag import resolve_kb_path
+                                p = resolve_kb_path(Path(path).name, meta.get("collection"))
+                                if p is not None and p.exists():
                                     body = p.read_text(encoding="utf-8", errors="replace")
                             except Exception:
                                 pass

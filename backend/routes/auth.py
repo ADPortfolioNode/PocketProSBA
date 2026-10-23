@@ -4,15 +4,70 @@ Persists users via Flask-SQLAlchemy User model.
 """
 from __future__ import annotations
 
+import hashlib
+import hmac
 import logging
 import secrets
 from datetime import datetime, timedelta
 
 from flask import Blueprint, request, jsonify, current_app
 from sqlalchemy.exc import IntegrityError
+from werkzeug.security import generate_password_hash
+
+from backend.routes._errors import internal_error_message
 
 logger = logging.getLogger(__name__)
 auth_bp = Blueprint("auth", __name__)
+
+MIN_PASSWORD_LENGTH = 8
+PASSWORD_TOO_SHORT = f"Password must be at least {MIN_PASSWORD_LENGTH} characters"
+RESET_TOKEN_TTL = timedelta(hours=1)
+INVALID_RESET_TOKEN = "Invalid or expired reset token"
+# Same body whether or not the email already has an account (no enumeration).
+REGISTER_RESPONSE = {
+    "success": True,
+    "message": "Registration received. Please log in to continue.",
+}
+FORGOT_RESPONSE = {
+    "success": True,
+    "message": "If this email is registered, you will receive password reset instructions.",
+}
+
+
+def hash_reset_token(token: str) -> str:
+    """Reset tokens are stored as SHA-256 digests, never in plaintext.
+
+    The token is 32 random bytes, so a fast hash is enough (no brute-force
+    risk); a DB leak alone can no longer be used to reset passwords.
+    """
+    return hashlib.sha256(token.encode("utf-8")).hexdigest()
+
+
+def _password_ok(password) -> bool:
+    return isinstance(password, str) and len(password) >= MIN_PASSWORD_LENGTH
+
+
+def deliver_reset_token(email: str, token: str) -> None:
+    """Hand a reset token to the user out of band (never in the HTTP response).
+
+    Set ``app.config["PASSWORD_RESET_DELIVERY"]`` to a callable
+    ``(email, token) -> None`` to send it (email gateway, queue, ...).
+    Without one, the token is only written to the server log when the app is
+    running with DEBUG explicitly enabled, so local development still works.
+    """
+    sender = current_app.config.get("PASSWORD_RESET_DELIVERY")
+    if callable(sender):
+        sender(email, token)
+        return
+    if current_app.debug:
+        logger.warning(
+            "DEV ONLY (DEBUG on, no PASSWORD_RESET_DELIVERY configured): reset token for %s: %s",
+            email, token,
+        )
+    else:
+        logger.warning(
+            "Password reset requested but no PASSWORD_RESET_DELIVERY is configured; token not delivered."
+        )
 
 
 def _get_user_model():
@@ -60,33 +115,33 @@ def register():
 
     if not email or "@" not in email:
         return jsonify({"error": "Valid email is required"}), 400
-    if not password or len(password) < 6:
-        return jsonify({"error": "Password must be at least 6 characters"}), 400
+    if not _password_ok(password):
+        return jsonify({"error": PASSWORD_TOO_SHORT}), 400
 
     User, db = _get_user_model()
     try:
         existing = User.query.filter_by(email=email).first()
         if existing:
-            return jsonify({"error": "An account with this email already exists"}), 409
+            # Do the same hashing work as a real signup so timing doesn't leak
+            # which emails exist, and answer exactly like a successful signup.
+            generate_password_hash(password)
+            logger.info("Register attempted for an existing account")
+            return jsonify(REGISTER_RESPONSE), 201
 
         user = User(email=email, name=name)
         user.set_password(password)
         db.session.add(user)
         db.session.commit()
 
-        logger.info("Registered user %s", email)
-        return jsonify({
-            "success": True,
-            "message": "Registration successful",
-            "user": user.to_public_dict(),
-        }), 201
+        logger.info("Registered user id=%s", user.id)
+        return jsonify(REGISTER_RESPONSE), 201
     except IntegrityError:
+        # Concurrent signup for the same email: same generic answer.
         db.session.rollback()
-        return jsonify({"error": "An account with this email already exists"}), 409
+        return jsonify(REGISTER_RESPONSE), 201
     except Exception as e:
         db.session.rollback()
-        logger.exception("Register failed")
-        return jsonify({"error": f"Registration failed: {e}"}), 500
+        return jsonify({"error": internal_error_message(e, public="Registration failed. Please try again.")}), 500
 
 
 @auth_bp.route("/login", methods=["POST"])
@@ -121,17 +176,16 @@ def login():
             "user": user.to_public_dict(),
         }), 200
     except Exception as e:
-        logger.exception("Login failed")
-        return jsonify({"error": f"Login failed: {e}"}), 500
+        return jsonify({"error": internal_error_message(e, public="Login failed. Please try again.")}), 500
 
 
 @auth_bp.route("/forgot-password", methods=["POST"])
 def forgot_password():
     """
     Issue a password-reset token.
-    Always returns 200 with a generic message to avoid email enumeration.
-    In development, includes reset_token in the response when the user exists
-    so the UI can complete the flow without email infrastructure.
+    Always returns 200 with the same generic message (no email enumeration).
+    The token is NEVER included in the HTTP response, in any configuration:
+    it is stored hashed and handed to deliver_reset_token().
     """
     data = _json()
     if not data:
@@ -142,31 +196,25 @@ def forgot_password():
         return jsonify({"error": "Email is required"}), 400
 
     User, db = _get_user_model()
-    generic = {
-        "success": True,
-        "message": "If this email is registered, you will receive password reset instructions.",
-    }
     try:
         user = User.query.filter_by(email=email).first()
-        if not user:
-            return jsonify(generic), 200
+        if not user or not user.is_active:
+            return jsonify(FORGOT_RESPONSE), 200
 
-        token = secrets.token_urlsafe(24)
-        user.reset_token = token
-        user.reset_token_expires = datetime.utcnow() + timedelta(hours=2)
+        token = secrets.token_urlsafe(32)
+        user.reset_token = hash_reset_token(token)
+        user.reset_token_expires = datetime.utcnow() + RESET_TOKEN_TTL
         db.session.commit()
 
-        payload = dict(generic)
-        # Dev / no-mail mode: return token so the product is usable
-        if current_app.config.get("DEBUG", True):
-            payload["reset_token"] = token
-            payload["dev_note"] = "Token returned because DEBUG is on (no email gateway configured)."
-        logger.info("Password reset token issued for %s", email)
-        return jsonify(payload), 200
+        try:
+            deliver_reset_token(user.email, token)
+        except Exception:
+            logger.exception("Password reset delivery failed")
+        logger.info("Password reset token issued for user id=%s", user.id)
+        return jsonify(FORGOT_RESPONSE), 200
     except Exception as e:
         db.session.rollback()
-        logger.exception("Forgot password failed")
-        return jsonify({"error": f"Request failed: {e}"}), 500
+        return jsonify({"error": internal_error_message(e, public="Request failed. Please try again.")}), 500
 
 
 @auth_bp.route("/reset-password", methods=["POST"])
@@ -180,16 +228,21 @@ def reset_password():
     password = data.get("password") or data.get("new_password") or ""
     if not token:
         return jsonify({"error": "Reset token is required"}), 400
-    if not password or len(password) < 6:
-        return jsonify({"error": "Password must be at least 6 characters"}), 400
+    if not _password_ok(password):
+        return jsonify({"error": PASSWORD_TOO_SHORT}), 400
 
     User, db = _get_user_model()
     try:
-        user = User.query.filter_by(reset_token=token).first()
-        if not user:
-            return jsonify({"error": "Invalid or expired reset token"}), 400
-        if user.reset_token_expires and user.reset_token_expires < datetime.utcnow():
-            return jsonify({"error": "Reset token has expired"}), 400
+        token_hash = hash_reset_token(token)
+        user = User.query.filter_by(reset_token=token_hash).first()
+        if not user or not user.reset_token or not hmac.compare_digest(user.reset_token, token_hash):
+            return jsonify({"error": INVALID_RESET_TOKEN}), 400
+        # Tokens without an expiry (legacy rows) or past it are rejected and cleared.
+        if not user.reset_token_expires or user.reset_token_expires < datetime.utcnow():
+            user.reset_token = None
+            user.reset_token_expires = None
+            db.session.commit()
+            return jsonify({"error": INVALID_RESET_TOKEN}), 400
 
         user.set_password(password)
         user.reset_token = None
@@ -198,5 +251,4 @@ def reset_password():
         return jsonify({"success": True, "message": "Password updated successfully"}), 200
     except Exception as e:
         db.session.rollback()
-        logger.exception("Reset password failed")
-        return jsonify({"error": f"Reset failed: {e}"}), 500
+        return jsonify({"error": internal_error_message(e, public="Reset failed. Please try again.")}), 500
