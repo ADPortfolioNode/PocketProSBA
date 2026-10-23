@@ -618,3 +618,33 @@
     padding: 0.9rem 1rem 1rem;
   }
 }
+
+/* Clickable welcome starters (fill the input) */
+.welcome-starter-btn {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.welcome-starter-btn:hover,
+.welcome-starter-btn:focus-visible {
+  color: var(--pp-blue, #2563eb);
+  text-decoration: underline;
+}
+
+/* "Try again" sits next to the dismiss button */
+.error-message-modern .retry-button-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.error-message-modern .retry-button-text + .retry-button {
+  margin-left: 0;
+}

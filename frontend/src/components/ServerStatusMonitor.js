@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Alert, Button, Spinner } from 'react-bootstrap';
+import { Alert, Button } from 'react-bootstrap';
 import apiClient from '../api/apiClient';
+import LoadingBar from './LoadingBar';
+import { friendlyError } from '../utils/friendlyError';
 
 const ServerStatusMonitor = ({ onStatusChange }) => {
   const [status, setStatus] = useState('checking');
@@ -9,7 +11,8 @@ const ServerStatusMonitor = ({ onStatusChange }) => {
   const [serverInfo, setServerInfo] = useState(null);
 
   const checkServer = async () => {
-    setStatus('checking');
+    // Keep the last result on screen during background re-checks.
+    setStatus((prev) => (prev === 'offline' ? 'checking' : prev));
     try {
       // Prefer /api/health (apiClient baseURL is host without trailing /api)
       const response = await apiClient.get('/api/health');
@@ -22,7 +25,7 @@ const ServerStatusMonitor = ({ onStatusChange }) => {
     } catch (err) {
       console.error('Server connection error:', err);
       setStatus('offline');
-      setMessage(`Unable to connect to server: ${err.message}`);
+      setMessage(friendlyError(err));
       if (onStatusChange) {
         onStatusChange('offline', null);
       }
@@ -39,10 +42,7 @@ const ServerStatusMonitor = ({ onStatusChange }) => {
 
   if (status === 'checking') {
     return (
-      <Alert variant="info">
-        <Spinner animation="border" size="sm" className="me-2" />
-        Checking server connection...
-      </Alert>
+      <LoadingBar label="Checking server connection…" />
     );
   }
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import SBAContentExplorer from './SBAContentExplorer';
 import apiClient from '../api/apiClient';
@@ -79,6 +79,26 @@ describe('SBAContentExplorer', () => {
   test('shows a notice when the catalog is empty', async () => {
     mockGet({ catalogData: { resources: [] } });
     render(<SBAContentExplorer />);
-    expect(await screen.findByText(/No resources returned/i)).toBeInTheDocument();
+    expect(await screen.findByText(/No resources returned yet/i)).toBeInTheDocument();
+  });
+
+  test('shows the loader while the catalog loads, then a friendly error with Retry on failure', async () => {
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    let reject;
+    apiClient.get.mockImplementationOnce(() => new Promise((_, r) => { reject = r; }));
+    render(<SBAContentExplorer />);
+
+    expect(screen.getByRole('progressbar', { name: /Loading categories/i })).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+
+    await act(async () => { reject({ message: 'Request failed with status code 503', response: { status: 503 } }); });
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent(/on our side/i);
+    expect(alert).not.toHaveTextContent(/status code/);
+
+    mockGet();
+    fireEvent.click(screen.getByRole('button', { name: /^Retry$/i }));
+    expect(await screen.findByText('7(a) loans')).toBeInTheDocument();
+    console.error.mockRestore();
   });
 });

@@ -1,5 +1,8 @@
 import React, { useState } from "react";
 import { Button, Form, ListGroup, Alert } from "react-bootstrap";
+import LoadingBar from "./LoadingBar";
+import { ErrorState } from "./AsyncState";
+import { friendlyError } from "../utils/friendlyError";
 // import removed: UploadsManager from "./components/uploads/UploadsManager";
 
 const UploadsManagerComponent = ({ files, onUpload, onRefresh }) => {
@@ -33,13 +36,14 @@ const UploadsManagerComponent = ({ files, onUpload, onRefresh }) => {
         method: "POST",
         body: formData,
       });
-      if (!res.ok) throw new Error("Upload failed");
+      if (!res.ok) throw Object.assign(new Error("Upload failed"), { response: { status: res.status } });
       setSuccess("File uploaded successfully!");
       setSelectedFile(null);
       if (onUpload) onUpload();
       if (onRefresh) onRefresh();
     } catch (err) {
-      setError(err.message);
+      console.error("Upload failed:", err);
+      setError(friendlyError(err, "The upload didn't finish. Please try again."));
     } finally {
       setUploading(false);
     }
@@ -53,10 +57,13 @@ const UploadsManagerComponent = ({ files, onUpload, onRefresh }) => {
           <Form.Control type="file" onChange={handleFileChange} />
         </Form.Group>
         <Button type="submit" variant="primary" disabled={uploading || !selectedFile} className="mt-2">
-          {uploading ? "Uploading..." : "Upload"}
+          {uploading ? <LoadingBar inline label="Uploading…" /> : "Upload"}
         </Button>
       </Form>
-      {error && <Alert variant="danger">{error}</Alert>}
+      {uploading && <LoadingBar label={`Uploading ${selectedFile?.name || "your file"}…`} className="py-3" />}
+      {error && !uploading && (
+        <ErrorState compact title="Upload failed" message={error} onRetry={selectedFile ? handleUpload : undefined} />
+      )}
       {success && <Alert variant="success">{success}</Alert>}
       <h6 className="mt-4">Uploaded Files</h6>
       <ListGroup>

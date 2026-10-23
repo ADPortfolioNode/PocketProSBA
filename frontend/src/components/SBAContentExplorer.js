@@ -4,7 +4,6 @@ import {
   Form,
   Button,
   InputGroup,
-  Spinner,
   Alert,
   Badge,
   Row,
@@ -15,6 +14,10 @@ import {
   Modal,
 } from 'react-bootstrap';
 import apiClient from '../api/apiClient';
+import LoadingBar from './LoadingBar';
+import { ErrorState } from './AsyncState';
+import { friendlyError } from '../utils/friendlyError';
+import { useSlowFlag } from '../hooks/useAsync';
 
 /**
  * Resources page
@@ -257,6 +260,8 @@ const SBAContentExplorer = () => {
   const [loadingItems, setLoadingItems] = useState(false);
   const [results, setResults] = useState([]);
   const [error, setError] = useState(null);
+  // Set only for real request failures: renders ErrorState with this retry.
+  const [failure, setFailure] = useState(null);
   const [selectedItem, setSelectedItem] = useState(null);
   const [showDetail, setShowDetail] = useState(false);
   const [page, setPage] = useState(1);
@@ -264,6 +269,8 @@ const SBAContentExplorer = () => {
   const [resultMeta, setResultMeta] = useState(null);
   /** Stack of parents for recursive explore: { id, name, path, icon } */
   const [trail, setTrail] = useState([]);
+
+  const slowItems = useSlowFlag(loadingItems, 5000);
 
   const navGroups = useMemo(() => {
     const groups = {};
@@ -278,6 +285,7 @@ const SBAContentExplorer = () => {
   const loadCatalog = useCallback(async () => {
     setLoadingCatalog(true);
     setError(null);
+    setFailure(null);
     try {
       const res = await apiClient.get('/api/sba/resources', {}, { quiet: true });
       const list = res?.data?.resources || [];
@@ -294,10 +302,11 @@ const SBAContentExplorer = () => {
         }));
       setResources(cards);
       if (!cards.length) {
-        setError('No resources returned from /api/sba/resources');
+        setError('No resources returned yet. Try Refresh in a moment.');
       }
     } catch (err) {
-      setError(`Failed to load resource navigation: ${err.message}`);
+      console.error('Resource catalog failed:', err);
+      setFailure({ title: "Resources didn't load", message: friendlyError(err), retry: () => loadCatalog() });
       setResources([]);
     } finally {
       setLoadingCatalog(false);
@@ -313,6 +322,7 @@ const SBAContentExplorer = () => {
       if (!resource?.path) return;
       setLoadingItems(true);
       setError(null);
+      setFailure(null);
       setSelectedItem(null);
       setShowDetail(false);
       setActiveResource(resource);
@@ -397,9 +407,14 @@ const SBAContentExplorer = () => {
           );
         }
       } catch (err) {
+        console.error(`Loading ${resource.name} failed:`, err);
         setResults([]);
         setResultMeta(null);
-        setError(`Could not load ${resource.name}: ${err.message}`);
+        setFailure({
+          title: `${resource.name} didn't load`,
+          message: friendlyError(err),
+          retry: () => queryResource(resource, pageNum, query),
+        });
       } finally {
         setLoadingItems(false);
       }
@@ -575,6 +590,10 @@ const SBAContentExplorer = () => {
         </p>
       </div>
 
+      {failure && !loadingCatalog && !loadingItems && (
+        <ErrorState title={failure.title} message={failure.message} onRetry={failure.retry} compact />
+      )}
+
       {error && (
         <Alert
           variant={results.length ? 'warning' : 'info'}
@@ -598,14 +617,12 @@ const SBAContentExplorer = () => {
                 onClick={loadCatalog}
                 disabled={loadingCatalog}
               >
-                {loadingCatalog ? '…' : 'Refresh'}
+                {loadingCatalog ? <LoadingBar inline /> : 'Refresh'}
               </Button>
             </Card.Header>
             <Card.Body className="p-2">
               {loadingCatalog ? (
-                <div className="text-center py-4">
-                  <Spinner animation="border" size="sm" variant="primary" />
-                </div>
+                <LoadingBar label="Loading categories…" className="py-4" />
               ) : (
                 Object.entries(navGroups).map(([group, items]) => (
                   <div key={group} className="mb-3">
@@ -645,7 +662,7 @@ const SBAContentExplorer = () => {
 
         {/* —— Results + detail —— */}
         <Col lg={9} md={8}>
-          {!activeResource && !loadingCatalog && (
+          {!activeResource && !loadingCatalog && !failure && (
             <Card className="border-0 shadow-sm">
               <Card.Body className="text-center py-5 text-muted">
                 <div className="display-6 mb-2">📂</div>
@@ -734,18 +751,15 @@ const SBAContentExplorer = () => {
 
               <Card.Body>
                 {loadingItems ? (
-                  <div className="text-center py-5">
-                    <Spinner animation="border" variant="primary" />
-                    <div className="text-muted mt-2">
-                      Loading {activeResource.name} from API…
-                    </div>
-                  </div>
+                  <LoadingBar label={`Loading ${activeResource.name}…`} slow={slowItems} />
                 ) : (
                   <>
                     {results.length === 0 ? (
-                      <Alert variant="light" className="border mb-0">
-                        No items to display. Try another category or clear the search.
-                      </Alert>
+                      failure ? null : (
+                        <Alert variant="light" className="border mb-0">
+                          No items to display. Try another category or clear the search.
+                        </Alert>
+                      )
                     ) : (
                       <Row xs={1} lg={2} className="g-3">
                         {results.map((item) => {

@@ -31,7 +31,7 @@ const NAV_ITEMS = [
   { to: '/orchestrator', label: 'Tasks', testId: 'nav-orchestrator' },
 ];
 
-const SBANavigation = ({ serverConnected, apiUrl }) => {
+const SBANavigation = ({ serverConnected, connectionStatus, apiUrl }) => {
   const location = useLocation();
   const currentPath = location.pathname.toLowerCase();
 
@@ -70,7 +70,7 @@ const SBANavigation = ({ serverConnected, apiUrl }) => {
           })}
         </div>
         <div className="pp-nav-status">
-          <ConnectionStatusIndicator connected={serverConnected} apiUrl={apiUrl} />
+          <ConnectionStatusIndicator connected={serverConnected} status={connectionStatus} apiUrl={apiUrl} />
         </div>
       </div>
     </nav>
@@ -79,6 +79,7 @@ const SBANavigation = ({ serverConnected, apiUrl }) => {
 
 SBANavigation.propTypes = {
   serverConnected: PropTypes.bool.isRequired,
+  connectionStatus: PropTypes.oneOf(['checking', 'online', 'offline']),
   apiUrl: PropTypes.oneOfType([PropTypes.func, PropTypes.string]),
 };
 
