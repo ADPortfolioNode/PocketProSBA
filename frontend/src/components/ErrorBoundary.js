@@ -1,99 +1,85 @@
 import React, { Component } from 'react';
-import { Alert, Button, Card } from 'react-bootstrap';
+import PropTypes from 'prop-types';
+import { ErrorState } from './AsyncState';
 
+const defaultReload = () => {
+  if (typeof window !== 'undefined' && window.location) window.location.reload();
+};
+
+/**
+ * Catches render errors below it and shows the friendly ErrorState card with a
+ * Reload button instead of a blank page. Raw error text is never shown to users;
+ * pass `showDetails` (dev only) to expose the component stack.
+ *
+ * `resetKey`: when it changes (e.g. the active tab), the boundary clears itself,
+ * so moving to another tab recovers without a full reload.
+ */
 class ErrorBoundary extends Component {
   constructor(props) {
     super(props);
-    this.state = {
-      hasError: false,
-      error: null,
-      errorInfo: null,
-      timestamp: null
-    };
+    this.state = { hasError: false, error: null, errorInfo: null };
   }
 
   static getDerivedStateFromError(error) {
-    // Update state so the next render will show the fallback UI
-    return { hasError: true };
+    return { hasError: true, error };
   }
 
   componentDidCatch(error, errorInfo) {
-    // Catch errors in any components below and re-render with error message
-    this.setState({
-      error: error,
-      errorInfo: errorInfo,
-      timestamp: new Date().toISOString()
-    });
-    
-    // Log error to an error reporting service
-    console.error("Uncaught error:", error, errorInfo);
-    
-    // Could also send to a logging service here
-    // logErrorToService(error, errorInfo);
+    this.setState({ errorInfo });
+    console.error('Uncaught UI error:', error, errorInfo);
+    if (this.props.onError) this.props.onError(error, errorInfo);
+  }
+
+  componentDidUpdate(prevProps) {
+    if (this.state.hasError && prevProps.resetKey !== this.props.resetKey) {
+      this.resetErrorBoundary();
+    }
   }
 
   resetErrorBoundary = () => {
-    this.setState({
-      hasError: false,
-      error: null,
-      errorInfo: null,
-      timestamp: null
-    });
-    
-    // Call the onReset callback if provided
-    if (this.props.onReset) {
-      this.props.onReset();
-    }
-  }
+    this.setState({ hasError: false, error: null, errorInfo: null });
+    if (this.props.onReset) this.props.onReset();
+  };
 
   render() {
-    if (this.state.hasError) {
-      // Render fallback UI
-      return (
-        <Card className="error-boundary-card">
-          <Card.Header className="bg-danger text-white">
-            <h5>Something went wrong</h5>
-          </Card.Header>
-          <Card.Body>
-            <Alert variant="danger">
-              <p><strong>Error:</strong> {this.state.error && this.state.error.toString()}</p>
-              {this.props.showDetails && (
-                <details style={{ whiteSpace: 'pre-wrap' }}>
-                  <summary>Error Details</summary>
-                  {this.state.errorInfo && this.state.errorInfo.componentStack}
-                </details>
-              )}
-              <p className="text-muted mt-2">Timestamp: {this.state.timestamp}</p>
-            </Alert>
-            <div className="d-flex justify-content-between">
-              <Button 
-                variant="primary" 
-                onClick={this.resetErrorBoundary}
-              >
-                Try Again
-              </Button>
-              {this.props.fallbackComponent && (
-                <Button 
-                  variant="secondary" 
-                  onClick={() => this.props.onFallback && this.props.onFallback()}
-                >
-                  Switch to Fallback Mode
-                </Button>
-              )}
-            </div>
-            {this.props.fallbackComponent && this.props.showFallback && (
-              <div className="mt-3">
-                {this.props.fallbackComponent}
-              </div>
-            )}
-          </Card.Body>
-        </Card>
-      );
-    }
+    if (!this.state.hasError) return this.props.children;
 
-    // If there's no error, render children normally
-    return this.props.children;
+    const { title, message, onReload, showDetails, className } = this.props;
+    return (
+      <div className={`pp-error-boundary ${className || ''}`} data-testid="error-boundary">
+        <ErrorState
+          title={title}
+          message={message}
+          onRetry={onReload || defaultReload}
+          retryLabel="Reload"
+        />
+        {showDetails && this.state.errorInfo && (
+          <details className="pp-error-boundary__details">
+            <summary>Technical details</summary>
+            <pre>{String(this.state.error)}{this.state.errorInfo.componentStack}</pre>
+          </details>
+        )}
+      </div>
+    );
   }
 }
+
+ErrorBoundary.propTypes = {
+  children: PropTypes.node,
+  title: PropTypes.string,
+  message: PropTypes.string,
+  onReload: PropTypes.func,
+  onReset: PropTypes.func,
+  onError: PropTypes.func,
+  resetKey: PropTypes.any,
+  showDetails: PropTypes.bool,
+  className: PropTypes.string,
+};
+
+ErrorBoundary.defaultProps = {
+  title: 'Something went wrong',
+  message: 'This page hit an unexpected problem. Reloading usually fixes it.',
+  showDetails: false,
+};
 
 export default ErrorBoundary;

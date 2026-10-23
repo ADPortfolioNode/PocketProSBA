@@ -140,3 +140,23 @@
     animation: none;
   }
 }
+
+/* ErrorBoundary: same friendly card, centred when it replaces the whole app. */
+.pp-error-boundary {
+  padding: 1.5rem 0;
+}
+.pp-error-boundary--app {
+  max-width: 560px;
+  margin: 4rem auto;
+  padding: 0 1rem;
+}
+.pp-error-boundary__details {
+  margin-top: 0.75rem;
+  font-size: 0.8rem;
+  color: var(--pp-muted, #64748b);
+}
+.pp-error-boundary__details pre {
+  white-space: pre-wrap;
+  max-height: 240px;
+  overflow: auto;
+}

@@ -49,16 +49,28 @@ def upload_and_ingest_document():
         logger.error(f"Error upload_and_ingest: {str(e)}")
         return jsonify({'error': str(e), 'success': False}), 500
 
+def _upload_folder():
+    """Folder uploads are saved to: the same one process_upload() writes
+    (routes/files.py, honours the UPLOAD_FOLDER env var), so the Docs tab lists
+    what was actually uploaded."""
+    try:
+        from backend.routes import files as files_routes
+        return files_routes.UPLOAD_FOLDER
+    except Exception:  # pragma: no cover - files blueprint unavailable
+        return os.environ.get('UPLOAD_FOLDER', UPLOAD_FOLDER)
+
+
 @documents_bp.route('/list', methods=['GET'])
 def list_files():
     """List uploaded files"""
     try:
-        if not os.path.exists(UPLOAD_FOLDER):
+        folder = _upload_folder()
+        if not os.path.exists(folder):
             return jsonify({'files': []}), 200
 
         files = []
-        for filename in os.listdir(UPLOAD_FOLDER):
-            filepath = os.path.join(UPLOAD_FOLDER, filename)
+        for filename in sorted(os.listdir(folder)):
+            filepath = os.path.join(folder, filename)
             if os.path.isfile(filepath):
                 files.append({
                     'filename': filename,

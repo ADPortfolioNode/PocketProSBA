@@ -12,6 +12,7 @@ import SBAContent from './SBAContent';
 import TaskOrchestrator from './TaskOrchestrator';
 import Home from './Home';
 import LoadingBar from './LoadingBar';
+import ErrorBoundary from './ErrorBoundary';
 import { ErrorState } from './AsyncState';
 import { useSlowFlag } from '../hooks/useAsync';
 import { useConnection } from '../hooks/useConnection'; // Import the new hook
@@ -173,7 +174,7 @@ function MainLayout({ useConnectionHook = useConnection }) {
       case 'rag':
         return <RAGWorkflowInterface />;
       case 'documents':
-        return <UploadsManagerComponent />;
+        return <UploadsManagerComponent />; // loads its own list from /api/documents/list
       case 'sba':
         return <SBAContent />;
       case 'orchestrator':
@@ -193,7 +194,10 @@ function MainLayout({ useConnectionHook = useConnection }) {
       />
       <main className="pp-main flex-grow-1">
         <Container className="pp-main-inner">
-          {renderContent()}
+          {/* Per-tab boundary: header + nav stay usable; switching tabs resets it. */}
+          <ErrorBoundary resetKey={activeTab}>
+            {renderContent()}
+          </ErrorBoundary>
         </Container>
       </main>
       <Footer />

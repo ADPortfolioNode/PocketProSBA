@@ -63,13 +63,12 @@ jobs:
       - name: Install frontend dependencies
         run: npm ci
 
-      # Blocking. CI=false on purpose: with CI=true, react-scripts turns the
-      # current 20 ESLint warnings into errors. Plan step 9 clears the warnings
-      # and then removes this override.
+      # Blocking and strict: CI=true makes react-scripts treat every ESLint
+      # warning as an error, so new warnings fail the build (plan step 9).
       - name: Build
         run: npm run build
         env:
-          CI: "false"
+          CI: "true"
 
       # Blocking: the Jest suite was fixed in plan step 4.
       - name: Run frontend tests
