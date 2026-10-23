@@ -2,6 +2,12 @@ import pytest
 from unittest.mock import patch
 
 
+@pytest.fixture
+def client(authed_client):
+    """These tests call auth_required routes: sign the client in."""
+    return authed_client
+
+
 @pytest.mark.integration
 def test_full_chat_flow(client):
     """Test complete chat flow from frontend to backend"""

@@ -15,6 +15,7 @@ import pytest
 import backend.config as config_module
 from backend.app import create_app
 from backend.models.chat import db
+from backend.tests.auth_helpers import authenticate
 
 GOOD_PW = "correct-horse-1"
 
@@ -245,6 +246,7 @@ class TestRateLimits:
     def test_llm_routes_share_a_limit(self, monkeypatch):
         app = _make_app(monkeypatch, RATELIMIT_LLM="2 per minute")
         c = app.test_client()
+        authenticate(c, app)
         # empty messages are rejected fast (400) but still count
         assert _post(c, "/api/chat", {}).status_code == 400
         assert _post(c, "/api/decompose", {}).status_code != 429
@@ -329,7 +331,8 @@ class TestGenericErrors:
         ("/api/decompose", "backend.routes.api.decompose_task_service"),
         ("/api/rag/decompose", "backend.routes.rag.decompose_task_service"),
     ])
-    def test_route_500_is_generic(self, client, monkeypatch, url, target):
+    def test_route_500_is_generic(self, client, app, monkeypatch, url, target):
+        authenticate(client, app)
         mod, name = target.rsplit(".", 1)
         module = importlib.import_module(mod)
         if not hasattr(module, name):
@@ -402,6 +405,7 @@ class TestRagMetadataPaths:
     def test_upload_response_has_no_server_path(self, client, tmp_path, monkeypatch):
         import backend.routes.files as files
         monkeypatch.setattr(files, "UPLOAD_FOLDER", str(tmp_path / "uploads"))
+        authenticate(client)
         resp = client.post("/api/files", data={"file": (io.BytesIO(b"hello sba"), "notes.txt")},
                            content_type="multipart/form-data")
         assert resp.status_code == 200, resp.get_data(as_text=True)
