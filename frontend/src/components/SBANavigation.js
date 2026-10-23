@@ -2,6 +2,7 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import ConnectionStatusIndicator from './ConnectionStatusIndicator';
+import { useScrollFade } from '../hooks/useScrollFade';
 
 /**
  * Primary app nav.
@@ -9,7 +10,7 @@ import ConnectionStatusIndicator from './ConnectionStatusIndicator';
  * resources.html UI (API nav + click-to-load + detail cards), not the
  * stale prebuilt CRA bundle's client-side route.
  */
-const NAV_ITEMS = [
+export const NAV_ITEMS = [
   { to: '/', label: 'Home', testId: 'nav-home', exact: true },
   { to: '/chat', label: 'Chat', testId: 'nav-chat' },
   {
@@ -34,10 +35,13 @@ const NAV_ITEMS = [
 const SBANavigation = ({ serverConnected, connectionStatus, apiUrl }) => {
   const location = useLocation();
   const currentPath = location.pathname.toLowerCase();
+  // On narrow screens the links scroll sideways; fade the edge that has more.
+  const { ref: scrollRef, fadeLeft, fadeRight } = useScrollFade();
+  const navClass = `pp-nav${fadeLeft ? ' pp-nav--fade-left' : ''}${fadeRight ? ' pp-nav--fade-right' : ''}`;
 
   return (
-    <nav className="pp-nav" aria-label="Primary">
-      <div className="pp-shell pp-nav-inner">
+    <nav className={navClass} aria-label="Primary" data-testid="primary-nav">
+      <div className="pp-shell pp-nav-inner" ref={scrollRef}>
         <div className="pp-nav-links">
           {NAV_ITEMS.map((item) => {
             const active = item.exact

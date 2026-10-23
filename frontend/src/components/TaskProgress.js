@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Card, ProgressBar, Badge, Button, Alert, Spinner } from 'react-bootstrap';
 import apiClient from '../api/apiClient';
 
@@ -6,24 +6,20 @@ const TaskProgress = ({ taskId, onTaskComplete, onTaskError }) => {
   const [taskStatus, setTaskStatus] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [pollingInterval, setPollingInterval] = useState(null);
+  // Interval id lives in a ref so the unmount cleanup and the poll callback
+  // always see the current id (state captured by the effect went stale).
+  const pollingRef = useRef(null);
+  const callbacksRef = useRef({ onTaskComplete, onTaskError });
+  callbacksRef.current = { onTaskComplete, onTaskError };
 
-  useEffect(() => {
-    if (taskId) {
-      fetchTaskStatus();
-      // Start polling for updates
-      const interval = setInterval(fetchTaskStatus, 2000); // Poll every 2 seconds
-      setPollingInterval(interval);
+  const stopPolling = useCallback(() => {
+    if (pollingRef.current) {
+      clearInterval(pollingRef.current);
+      pollingRef.current = null;
     }
+  }, []);
 
-    return () => {
-      if (pollingInterval) {
-        clearInterval(pollingInterval);
-      }
-    };
-  }, [taskId]);
-
-  const fetchTaskStatus = async () => {
+  const fetchTaskStatus = useCallback(async () => {
     try {
       const response = await apiClient.get(`/orchestrator/task/${taskId}`);
       const status = response.data;
@@ -34,20 +30,14 @@ const TaskProgress = ({ taskId, onTaskComplete, onTaskError }) => {
 
       // Check if task is complete
       if (status.status === 'completed') {
-        if (pollingInterval) {
-          clearInterval(pollingInterval);
-          setPollingInterval(null);
-        }
-        if (onTaskComplete) {
-          onTaskComplete(status);
+        stopPolling();
+        if (callbacksRef.current.onTaskComplete) {
+          callbacksRef.current.onTaskComplete(status);
         }
       } else if (status.status === 'failed') {
-        if (pollingInterval) {
-          clearInterval(pollingInterval);
-          setPollingInterval(null);
-        }
-        if (onTaskError) {
-          onTaskError(status);
+        stopPolling();
+        if (callbacksRef.current.onTaskError) {
+          callbacksRef.current.onTaskError(status);
         }
       }
     } catch (err) {
@@ -55,7 +45,16 @@ const TaskProgress = ({ taskId, onTaskComplete, onTaskError }) => {
       setLoading(false);
       console.error('Error fetching task status:', err);
     }
-  };
+  }, [taskId, stopPolling]);
+
+  useEffect(() => {
+    if (taskId) {
+      fetchTaskStatus();
+      // Start polling for updates
+      pollingRef.current = setInterval(fetchTaskStatus, 2000); // Poll every 2 seconds
+    }
+    return stopPolling;
+  }, [taskId, fetchTaskStatus, stopPolling]);
 
   const getStatusVariant = (status) => {
     switch (status) {

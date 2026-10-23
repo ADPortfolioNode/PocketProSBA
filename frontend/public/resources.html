@@ -262,6 +262,9 @@
     }
     @media (prefers-reduced-motion: reduce) { .spinner, .expand-loading .spinner { animation: none !important; } }
   </style>
+  <!-- API base: filled from REACT_APP_API_URL by scripts/inject-api-base.js at build; empty = same origin. -->
+  <meta name="pp-api-base" content="%REACT_APP_API_URL%" />
+  <script src="/pp-api-base.js"></script>
 </head>
 <body>
   <div class="app">
@@ -271,12 +274,14 @@
           <img class="pp-logo-img pp-logo-animated" src="/images/yinyang.gif" width="28" height="28" alt="PocketPro SBA" onerror="this.src='/logo.gif'" />
           PocketPro <span style="color:var(--blue)">SBA</span>
         </a>
-        <nav class="side-nav">
+        <nav class="side-nav" aria-label="Primary">
           <a class="chip" href="/">Home</a>
           <a class="chip" href="/chat">Chat</a>
-          <a class="chip active" href="/browse">Resources</a>
-          <a class="chip" href="/sba">Programs</a>
+          <a class="chip active" href="/browse" aria-current="page">Resources</a>
           <a class="chip" href="/rag">RAG</a>
+          <a class="chip" href="/documents">Docs</a>
+          <a class="chip" href="/sba">Programs</a>
+          <a class="chip" href="/orchestrator">Tasks</a>
         </nav>
       </div>
       <div class="side-body" id="navList">
@@ -410,7 +415,8 @@
     }
 
     async function apiGetOnce(path, params, timeoutMs) {
-      const bases = [window.location.origin, 'http://127.0.0.1:5000', 'http://localhost:5000'];
+      // Same origin, or REACT_APP_API_URL injected at build (see /pp-api-base.js).
+      const bases = [window.ppApiBase ? window.ppApiBase() : window.location.origin];
       const ms = timeoutMs || 60000;
       let lastErr = null;
       for (const base of bases) {

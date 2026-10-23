@@ -1,6 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Card, Form, Button, Row, Col, Badge, ListGroup } from 'react-bootstrap';
-import TaskProgress from './TaskProgress';
+import { Card, Form, Button, Row, Col, ListGroup } from 'react-bootstrap';
 import apiClient from '../api/apiClient';
 import LoadingBar from './LoadingBar';
 import { ErrorState } from './AsyncState';
@@ -117,7 +116,7 @@ const TaskOrchestrator = () => {
           </p>
 
           <Form onSubmit={handleDecompose}>
-            <Form.Group className="mb-3">
+            <Form.Group controlId="taskDescription" className="mb-3">
               <Form.Label>Task Description</Form.Label>
               <Form.Control
                 as="textarea"

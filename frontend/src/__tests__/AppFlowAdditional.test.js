@@ -80,7 +80,9 @@ describe('Additional  Frontend Application Flow Tests', () => {
     expect(uploadInput).toBeInTheDocument();
 
     // Verify initial no-files state is shown
-    expect(screen.getByText(/No files uploaded yet/i)).toBeInTheDocument();
+    // The Docs tab loads GET /api/documents/list itself (the mock returns no files).
+    expect(await screen.findByText(/No files uploaded yet/i)).toBeInTheDocument();
+    expect(apiClient.get).toHaveBeenCalledWith('/api/documents/list', {}, { quiet: true });
   });
 
   test('SBA Content route renders the programs view', async () => {
