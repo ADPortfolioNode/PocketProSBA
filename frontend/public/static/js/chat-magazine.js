@@ -14,10 +14,25 @@
       .replace(/"/g, '&quot;');
   }
 
+  // Same rule as src/utils/magazineProse.js isSafeHref: only http(s), mailto
+  // and relative/anchor links; blocks javascript:, data:, vbscript:, //host.
+  function isSafeHref(href) {
+    var probe = String(href || '').replace(/[\u0000-\u0020\u007f-\u009f]/g, '');
+    if (!probe) return false;
+    if (/^[\/\\]{2}/.test(probe) || /^\\/.test(probe)) return false;
+    var scheme = probe.match(/^([a-z][a-z0-9+.-]*):/i);
+    if (scheme) {
+      var s = scheme[1].toLowerCase();
+      return s === 'http' || s === 'https' || s === 'mailto';
+    }
+    return probe.split(/[\/?#]/)[0].indexOf(':') === -1;
+  }
+
   function normalizeHref(raw) {
     var href = String(raw || '').trim().replace(/[.,;:)]+$/, '');
     if (!href) return '';
     if (/^www\./i.test(href)) href = 'https://' + href;
+    if (!isSafeHref(href)) return '';
     // Raw API routes → Resources browser deep-link (usable, not JSON)
     if (href.indexOf('/api/sba/') === 0) {
       var title = href.split('/').filter(Boolean).pop() || 'SBA';

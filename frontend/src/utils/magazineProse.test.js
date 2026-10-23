@@ -86,3 +86,29 @@ describe('magazineProse link safety', () => {
     if (a) expect(a.getAttribute('onmouseover')).toBeNull();
   });
 });
+
+describe('public/static/js/chat-magazine.js (prebuilt chat formatter) link safety', () => {
+  let legacy;
+  beforeAll(() => {
+    const fs = require('fs');
+    const path = require('path');
+    const src = fs.readFileSync(path.join(__dirname, '../../public/static/js/chat-magazine.js'), 'utf8');
+    // eslint-disable-next-line no-new-func
+    new Function(src)();
+    legacy = window.PocketProMagazineChat;
+  });
+
+  test.each(DANGEROUS)('rejects %p', (href) => {
+    expect(legacy.normalizeHref(href)).toBe('');
+  });
+
+  test('keeps safe links', () => {
+    expect(hrefsIn(legacy.format('[a](https://sba.gov) [b](mailto:a@b.co) [c](/browse) [d](#top)'))).toEqual([
+      'https://sba.gov',
+      'mailto:a@b.co',
+      '/browse',
+      '#top',
+    ]);
+    expect(hrefsIn(legacy.format('see [click](javascript:alert(document.domain))'))).toEqual([]);
+  });
+});
