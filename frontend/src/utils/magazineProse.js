@@ -21,8 +21,8 @@ const SAFE_SCHEMES = new Set(['http', 'https', 'mailto']);
  * ("java\tscript:"), so those are stripped before the scheme check.
  */
 export function isSafeHref(href) {
-  // Control characters are exactly what we need to strip here.
-  // eslint-disable-next-line no-control-regex
+  // Control characters are exactly what we need to strip here
+  // (no-control-regex is off for this file in package.json eslintConfig).
   const probe = String(href || '').replace(/[\u0000-\u0020\u007f-\u009f]/g, '');
   if (!probe) return false;
   // Protocol-relative (//evil.com) and backslash variants (/\evil.com, \\evil.com)
