@@ -521,8 +521,6 @@ const SBAContentExplorer = () => {
     });
   };
 
-  const openItemCard = (item) => activateResult(item);
-
   const closeItemCard = () => {
     setShowDetail(false);
     setSelectedItem(null);

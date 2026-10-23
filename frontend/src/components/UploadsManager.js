@@ -2,10 +2,33 @@ import React, { useState } from "react";
 import { Button, Form, ListGroup, Alert } from "react-bootstrap";
 import LoadingBar from "./LoadingBar";
 import { ErrorState } from "./AsyncState";
+import apiClient, { BASE_URL } from "../api/apiClient";
+import { useAsync } from "../hooks/useAsync";
 import { friendlyError } from "../utils/friendlyError";
-// import removed: UploadsManager from "./components/uploads/UploadsManager";
 
-const UploadsManagerComponent = ({ files, onUpload, onRefresh }) => {
+export const DOCUMENTS_LIST_ENDPOINT = "/api/documents/list";
+
+const fetchDocumentList = () =>
+  apiClient
+    .get(DOCUMENTS_LIST_ENDPOINT, {}, { quiet: true })
+    .then((res) => (Array.isArray(res?.data?.files) ? res.data.files : []));
+
+/**
+ * Docs tab. When the parent passes `files` (+ `onRefresh`) it is a controlled
+ * list; otherwise (how MainLayout mounts it) it loads GET /api/documents/list
+ * itself and reloads after an upload or on "Refresh List".
+ */
+const UploadsManagerComponent = ({ files: filesProp, onUpload, onRefresh: onRefreshProp }) => {
+  const controlled = filesProp !== undefined;
+  const list = useAsync(fetchDocumentList, {
+    immediate: !controlled,
+    errorFallback: "We couldn't load your documents. Please try again.",
+  });
+  const files = controlled ? filesProp : list.data;
+  const onRefresh = controlled ? onRefreshProp : () => list.run();
+  const listLoading = !controlled && list.status === "loading";
+  const listError = !controlled && list.status === "error";
+
   const [selectedFile, setSelectedFile] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState(null);
@@ -16,7 +39,6 @@ const UploadsManagerComponent = ({ files, onUpload, onRefresh }) => {
     setError(null);
     setSuccess(null);
   };
-  /////upload this file to git
 
   const handleUpload = async (e) => {
     e.preventDefault();
@@ -32,7 +54,11 @@ const UploadsManagerComponent = ({ files, onUpload, onRefresh }) => {
       if (window.endpoints && window.endpoints.upload) {
         uploadEndpoint = window.endpoints.upload;
       }
-      const res = await fetch(uploadEndpoint, {
+      // Same backend as the list (apiClient base: same origin or REACT_APP_API_URL).
+      const uploadUrl = /^https?:\/\//i.test(uploadEndpoint)
+        ? uploadEndpoint
+        : `${(BASE_URL || "").replace(/\/+$/, "")}${uploadEndpoint}`;
+      const res = await fetch(uploadUrl, {
         method: "POST",
         body: formData,
       });
@@ -54,6 +80,7 @@ const UploadsManagerComponent = ({ files, onUpload, onRefresh }) => {
       <h5>Upload Document</h5>
       <Form onSubmit={handleUpload} className="mb-3">
         <Form.Group controlId="uploadFile">
+          <Form.Label className="visually-hidden">Choose a document to upload</Form.Label>
           <Form.Control type="file" onChange={handleFileChange} />
         </Form.Group>
         <Button type="submit" variant="primary" disabled={uploading || !selectedFile} className="mt-2">
@@ -66,18 +93,24 @@ const UploadsManagerComponent = ({ files, onUpload, onRefresh }) => {
       )}
       {success && <Alert variant="success">{success}</Alert>}
       <h6 className="mt-4">Uploaded Files</h6>
-      <ListGroup>
-        {files && files.length > 0 ? (
-          files.map((file, idx) => (
-            <ListGroup.Item key={idx}>
-              {file.filename} <span className="text-muted">({Math.round(file.size/1024)} KB)</span>
-            </ListGroup.Item>
-          ))
-        ) : (
-          <ListGroup.Item>No files uploaded yet.</ListGroup.Item>
-        )}
-      </ListGroup>
-      <Button variant="secondary" size="sm" className="mt-2" onClick={onRefresh}>
+      {listLoading ? (
+        <LoadingBar label="Loading your documents…" slow={list.isSlow} className="py-3" />
+      ) : listError ? (
+        <ErrorState compact title="Couldn't load your documents" message={list.error} onRetry={list.retry} />
+      ) : (
+        <ListGroup>
+          {files && files.length > 0 ? (
+            files.map((file, idx) => (
+              <ListGroup.Item key={file.filename || file.name || idx}>
+                {file.filename || file.name} <span className="text-muted">({Math.round((file.size || 0) / 1024)} KB)</span>
+              </ListGroup.Item>
+            ))
+          ) : (
+            <ListGroup.Item>No files uploaded yet.</ListGroup.Item>
+          )}
+        </ListGroup>
+      )}
+      <Button variant="secondary" size="sm" className="mt-2" onClick={onRefresh} disabled={!onRefresh || listLoading}>
         Refresh List
       </Button>
     </div>

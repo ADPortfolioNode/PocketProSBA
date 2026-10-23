@@ -32,7 +32,7 @@ const SBAContent = ({ onProgramSelect, onResourceSelect }) => {
   const [error, setError] = useState(null);
   const [selected, setSelected] = useState(null);
   const [related, setRelated] = useState([]);
-  const [relatedLoading, setRelatedLoading] = useState(false);
+  const [relatedLoading] = useState(false);
   const slowLoading = useSlowFlag(loading, 5000);
 
   const normalizeCard = (raw, index, fallbackIcon = '📁') => {
