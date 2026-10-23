@@ -10,9 +10,8 @@ RUN npm ci
 # Copy the rest of the frontend source code
 COPY frontend/ ./
 
-# Build the application for production. CI=false until the ESLint warnings
-# are cleared (react-scripts treats warnings as errors when CI is truthy).
-RUN CI=false npm run build
+# Build the application for production
+RUN npm run build
 
 # Stage 2: Serve the application with Nginx
 FROM nginx:1.27-alpine

@@ -112,8 +112,8 @@ def test_chroma_server_matches_client_pin():
 def test_vercel_config_builds_frontend(rel, out):
     import json
     cfg = json.loads(_read(rel))
-    # Vercel sets CI=1; react-scripts would turn ESLint warnings into errors.
-    assert "CI=false" in cfg["buildCommand"]
+    # Vercel sets CI=1, so react-scripts treats ESLint warnings as errors,
+    # the same strict build GitHub CI runs (CI=true).
     assert "npm run build" in cfg["buildCommand"]
     assert cfg["outputDirectory"] == out
     assert any(r["destination"] == "/index.html" for r in cfg.get("rewrites", []))

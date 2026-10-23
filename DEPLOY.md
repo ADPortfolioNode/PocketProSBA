@@ -47,10 +47,10 @@ The rate-limit, CORS-origin and proxy variables take effect once the security-ha
 
 The frontend is a Create React App in `frontend/`. Both possible Vercel layouts are covered in the repo:
 
-- Vercel project **Root Directory = `frontend`** → `frontend/vercel.json` (install `npm ci`, build `CI=false npm run build`, output `build`, SPA rewrites).
+- Vercel project **Root Directory = `frontend`** → `frontend/vercel.json` (install `npm ci`, build `npm run build`, output `build`, SPA rewrites).
 - Root Directory = repo root → `vercel.json` (installs and builds inside `frontend/`, output `frontend/build`).
 
-`CI=false` is required for now: Vercel sets `CI=1` during builds, and react-scripts then treats the existing ESLint warnings as errors and fails. Drop the override once the build is warning-free.
+Vercel sets `CI=1` during builds, so react-scripts treats every ESLint warning as an error. That is what broke the Vercel deploys from Sep 18 on (the build had ~15-20 warnings). GitHub CI now builds with `CI=true` too, so a warning fails the PR before it can reach Vercel. Keep the build warning-free rather than adding `CI=false`.
 
 Dashboard settings to check (Vercel → project `pocket-pro-sba` → Settings):
 1. **Build & Development Settings**: leave Build Command, Output Directory and Install Command on their defaults (no override toggled), so `vercel.json` applies. Framework Preset: Create React App.

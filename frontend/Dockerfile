@@ -9,9 +9,6 @@ RUN npm ci
 # Copy source files
 COPY . .
 
-# CI=false until the ESLint warnings are cleared (react-scripts treats
-# warnings as errors when CI is truthy).
-ENV CI=false
 ENV NODE_OPTIONS=--max-old-space-size=4096
 
 # Build the application
