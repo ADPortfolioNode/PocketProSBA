@@ -3,6 +3,7 @@ import os
 import logging
 from werkzeug.utils import secure_filename
 from backend.services.rag import get_rag_manager
+from backend.routes._errors import internal_error_message
 
 logger = logging.getLogger(__name__)
 documents_bp = Blueprint('documents', __name__)
@@ -30,7 +31,7 @@ def upload_file():
         return jsonify(body), code
     except Exception as e:
         logger.error(f"Error uploading file: {str(e)}")
-        return jsonify({'error': str(e), 'success': False}), 500
+        return jsonify({'error': internal_error_message(e), 'success': False}), 500
 
 
 @documents_bp.route('/upload_and_ingest_document', methods=['POST', 'OPTIONS'])
@@ -47,7 +48,7 @@ def upload_and_ingest_document():
         return jsonify(body), code
     except Exception as e:
         logger.error(f"Error upload_and_ingest: {str(e)}")
-        return jsonify({'error': str(e), 'success': False}), 500
+        return jsonify({'error': internal_error_message(e), 'success': False}), 500
 
 def _upload_folder():
     """Folder uploads are saved to: the same one process_upload() writes
@@ -82,4 +83,4 @@ def list_files():
 
     except Exception as e:
         logger.error(f"Error listing files: {str(e)}")
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': internal_error_message(e)}), 500

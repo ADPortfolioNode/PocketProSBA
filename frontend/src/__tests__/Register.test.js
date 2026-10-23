@@ -52,14 +52,24 @@ describe('Register Page', () => {
     expect(screen.getByText('Login page')).toBeInTheDocument();
   });
 
-  test('registers and sends the user to Login', async () => {
-    apiClient.post.mockResolvedValueOnce(axiosResponse({ ok: true }));
+  test('requires at least 8 characters before calling the API', () => {
     renderRegister();
     fill(/Email address/i, 'a@b.co');
-    fill(/^Password$/i, 'secret1');
-    fill(/Confirm Password/i, 'secret1');
+    fill(/^Password$/i, 'secret7');
+    fill(/Confirm Password/i, 'secret7');
+    fireEvent.click(screen.getByRole('button', { name: /Sign Up/i }));
+    expect(screen.getByText(/at least 8 characters/i)).toBeInTheDocument();
+    expect(apiClient.post).not.toHaveBeenCalled();
+  });
+
+  test('registers and sends the user to Login', async () => {
+    apiClient.post.mockResolvedValueOnce(axiosResponse({ success: true, message: 'Registration received. Please log in to continue.' }));
+    renderRegister();
+    fill(/Email address/i, 'a@b.co');
+    fill(/^Password$/i, 'secret12');
+    fill(/Confirm Password/i, 'secret12');
     fireEvent.click(screen.getByRole('button', { name: /Sign Up/i }));
     expect(await screen.findByText('Login page')).toBeInTheDocument();
-    await waitFor(() => expect(apiClient.post).toHaveBeenCalledWith('/api/register', expect.objectContaining({ email: 'a@b.co', password: 'secret1' })));
+    await waitFor(() => expect(apiClient.post).toHaveBeenCalledWith('/api/register', expect.objectContaining({ email: 'a@b.co', password: 'secret12' })));
   });
 });

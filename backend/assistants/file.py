@@ -110,7 +110,7 @@ class FileAgent(BaseAssistant):
         return {
             "success": True,
             "filename": filename,
-            "path": dest,
+            "path": filename,  # basename only (no server paths)
             "size": os.path.getsize(dest),
         }
 

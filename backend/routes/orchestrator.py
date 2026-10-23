@@ -7,6 +7,7 @@ API endpoints for task orchestration, monitoring, and management.
 from flask import Blueprint, request, jsonify
 import logging
 from backend.services.task_orchestrator import get_orchestrator
+from backend.routes._errors import internal_error_message
 
 logger = logging.getLogger(__name__)
 orchestrator_bp = Blueprint('orchestrator', __name__)
@@ -51,7 +52,7 @@ def submit_task():
         logger.error(f"Error submitting task: {str(e)}")
         return jsonify({
             'error': 'Failed to submit task',
-            'message': str(e)
+            'message': internal_error_message(e)
         }), 500
 
 @orchestrator_bp.route('/task/<task_id>', methods=['GET'])
@@ -75,7 +76,7 @@ def get_task_status(task_id: str):
         logger.error(f"Error getting task status: {str(e)}")
         return jsonify({
             'error': 'Failed to get task status',
-            'message': str(e)
+            'message': internal_error_message(e)
         }), 500
 
 @orchestrator_bp.route('/task/<task_id>/details', methods=['GET'])
@@ -99,7 +100,7 @@ def get_task_details(task_id: str):
         logger.error(f"Error getting task details: {str(e)}")
         return jsonify({
             'error': 'Failed to get task details',
-            'message': str(e)
+            'message': internal_error_message(e)
         }), 500
 
 @orchestrator_bp.route('/tasks', methods=['GET'])
@@ -132,7 +133,7 @@ def list_active_tasks():
         logger.error(f"Error listing tasks: {str(e)}")
         return jsonify({
             'error': 'Failed to list tasks',
-            'message': str(e)
+            'message': internal_error_message(e)
         }), 500
 
 @orchestrator_bp.route('/strategies', methods=['GET'])
@@ -164,7 +165,7 @@ def get_available_strategies():
         logger.error(f"Error getting strategies: {str(e)}")
         return jsonify({
             'error': 'Failed to get strategies',
-            'message': str(e)
+            'message': internal_error_message(e)
         }), 500
 
 @orchestrator_bp.route('/memory/stats', methods=['GET'])
@@ -186,7 +187,7 @@ def get_memory_stats():
         logger.error(f"Error getting memory stats: {str(e)}")
         return jsonify({
             'error': 'Failed to get memory stats',
-            'message': str(e)
+            'message': internal_error_message(e)
         }), 500
 
 @orchestrator_bp.route('/memory/cleanup', methods=['POST'])
@@ -218,7 +219,7 @@ def cleanup_memory():
         logger.error(f"Error during memory cleanup: {str(e)}")
         return jsonify({
             'error': 'Failed to cleanup memory',
-            'message': str(e)
+            'message': internal_error_message(e)
         }), 500
 
 @orchestrator_bp.route('/health', methods=['GET'])
@@ -245,5 +246,5 @@ def orchestrator_health():
         return jsonify({
             'status': 'unhealthy',
             'service': 'orchestrator',
-            'error': str(e)
+            'error': internal_error_message(e)
         }), 500

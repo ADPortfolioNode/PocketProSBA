@@ -3,6 +3,7 @@
 from flask import Blueprint, request, jsonify
 import logging
 from backend.services.SBA_Content import SBAContentAPI
+from backend.routes._errors import internal_error_message
 
 logger = logging.getLogger(__name__)
 
@@ -881,7 +882,7 @@ def sba_app_standard():
 
         return jsonify({'status': 'ok', **describe_standard()}), 200
     except Exception as e:
-        return jsonify({'status': 'error', 'error': str(e)}), 200
+        return jsonify({'status': 'error', 'error': internal_error_message(e)}), 200
 
 
 @sba_bp.route('/rag-ingest', methods=['GET', 'POST', 'OPTIONS'])
@@ -902,7 +903,7 @@ def sba_rag_ingest():
             return jsonify({'status': 'ok', **st}), 200
         except Exception as e:
             logger.warning('rag-ingest status soft-fail: %s', e)
-            return jsonify({'status': 'degraded', 'error': str(e)}), 200
+            return jsonify({'status': 'degraded', 'error': internal_error_message(e)}), 200
 
     data = request.get_json(silent=True) or {}
     path = (data.get('path') or data.get('route') or request.args.get('path') or '').strip()
@@ -930,7 +931,7 @@ def sba_rag_ingest():
         return jsonify({'ok': True, 'path': route, 'ingest': result, 'rag_ingest': result}), 200
     except Exception as e:
         logger.warning('manual SBA RAG ingest soft-fail: %s', e)
-        return jsonify({'ok': False, 'error': str(e), 'path': path}), 200
+        return jsonify({'ok': False, 'error': internal_error_message(e), 'path': path}), 200
 
 
 @sba_bp.route('/resources', methods=['GET'])
@@ -1309,7 +1310,7 @@ def source_status():
         return jsonify(sba_api.get_source_status()), 200
     except Exception as e:
         logger.error("SBA source status failed: %s", e)
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': internal_error_message(e)}), 500
 
 
 @sba_bp.route('/content/articles', methods=['GET'])
@@ -1320,7 +1321,7 @@ def search_articles():
         return jsonify(_envelope(result, page)), 200
     except Exception as e:
         logger.error("Error searching articles: %s", e)
-        return jsonify(_envelope({'error': str(e), 'items': []}, page)), 200
+        return jsonify(_envelope({'error': internal_error_message(e), 'items': []}, page)), 200
 
 
 @sba_bp.route('/content/articles/<int:article_id>', methods=['GET'])
@@ -1343,7 +1344,7 @@ def search_blogs():
         return jsonify(_envelope(result, page)), 200
     except Exception as e:
         logger.error("Error searching blogs: %s", e)
-        return jsonify(_envelope({'error': str(e), 'items': []}, page)), 200
+        return jsonify(_envelope({'error': internal_error_message(e), 'items': []}, page)), 200
 
 
 @sba_bp.route('/content/courses', methods=['GET'])
@@ -1354,7 +1355,7 @@ def search_courses():
         return jsonify(_envelope(result, page)), 200
     except Exception as e:
         logger.error("Error searching courses: %s", e)
-        return jsonify(_envelope({'error': str(e), 'items': []}, page)), 200
+        return jsonify(_envelope({'error': internal_error_message(e), 'items': []}, page)), 200
 
 
 @sba_bp.route('/content/documents', methods=['GET'])
@@ -1365,7 +1366,7 @@ def search_documents():
         return jsonify(_envelope(result, page)), 200
     except Exception as e:
         logger.error("Error searching documents: %s", e)
-        return jsonify(_envelope({'error': str(e), 'items': []}, page)), 200
+        return jsonify(_envelope({'error': internal_error_message(e), 'items': []}, page)), 200
 
 
 @sba_bp.route('/content/events', methods=['GET'])
@@ -1376,7 +1377,7 @@ def search_events():
         return jsonify(_envelope(result, page)), 200
     except Exception as e:
         logger.error("Error searching events: %s", e)
-        return jsonify(_envelope({'error': str(e), 'items': []}, page)), 200
+        return jsonify(_envelope({'error': internal_error_message(e), 'items': []}, page)), 200
 
 
 @sba_bp.route('/content/offices', methods=['GET'])
@@ -1387,7 +1388,7 @@ def search_offices():
         return jsonify(_envelope(result, page)), 200
     except Exception as e:
         logger.error("Error searching offices: %s", e)
-        return jsonify(_envelope({'error': str(e), 'items': []}, page)), 200
+        return jsonify(_envelope({'error': internal_error_message(e), 'items': []}, page)), 200
 
 
 def _with_child_paths(parent_path, items):
@@ -1820,7 +1821,7 @@ def search_loans():
         return jsonify(env), 200
     except Exception as e:
         logger.error("Error searching loans: %s", e)
-        return jsonify(_envelope({'error': str(e), 'items': []}, page, route='/api/sba/content/loans', title='SBA Loans')), 200
+        return jsonify(_envelope({'error': internal_error_message(e), 'items': []}, page, route='/api/sba/content/loans', title='SBA Loans')), 200
 
 
 @sba_bp.route('/content/loans/<loan_id>', methods=['GET'])
@@ -1865,7 +1866,7 @@ def get_loan_program(loan_id):
         return jsonify(env), 200
     except Exception as e:
         logger.error("Error getting loan program %s: %s", loan_id, e)
-        return jsonify(_envelope({'error': str(e), 'items': []}, 1, route=route, title=str(loan_id))), 200
+        return jsonify(_envelope({'error': internal_error_message(e), 'items': []}, 1, route=route, title=str(loan_id))), 200
 
 
 @sba_bp.route('/content/sbir', methods=['GET'])
@@ -1901,7 +1902,7 @@ def search_sbir():
         return jsonify(env), 200
     except Exception as e:
         logger.error("Error searching SBIR awards: %s", e)
-        return jsonify(_envelope({'error': str(e), 'items': [], 'source': 'sbir'}, page)), 200
+        return jsonify(_envelope({'error': internal_error_message(e), 'items': [], 'source': 'sbir'}, page)), 200
 
 
 @sba_bp.route('/content/lenders', methods=['GET'])
@@ -1912,7 +1913,7 @@ def search_lenders():
         return jsonify(_envelope(result, page)), 200
     except Exception as e:
         logger.error("Error searching lenders: %s", e)
-        return jsonify(_envelope({'error': str(e), 'items': []}, page)), 200
+        return jsonify(_envelope({'error': internal_error_message(e), 'items': []}, page)), 200
 
 
 @sba_bp.route('/content/node/<int:node_id>', methods=['GET'])
@@ -1985,7 +1986,7 @@ def get_content_item_detail(content_type, item_id):
         return jsonify(_envelope({
             'id': item_id,
             'title': f'SBA {content_type}',
-            'description': f'Unable to load detail ({e}). Visit sba.gov for official information.',
+            'description': 'Unable to load detail right now. Visit sba.gov for official information.',
             'items': [],
             'url': 'https://www.sba.gov',
         }, 1, route=f'/api/sba/content/{content_type}/{item_id}', title=str(item_id))), 200

@@ -8,6 +8,7 @@ import logging
 import os
 
 from flask import Blueprint, request, jsonify
+from backend.routes._errors import GENERIC_ERROR, internal_error_message
 
 logger = logging.getLogger(__name__)
 assistants_bp = Blueprint("assistants", __name__)
@@ -61,7 +62,7 @@ def assistants_search():
         return jsonify(result), 200 if not result.get("error") else 200
     except Exception as e:
         logger.exception("assistants/search failed")
-        return jsonify({"error": str(e), "success": False, "text": str(e)}), 500
+        return jsonify({"error": internal_error_message(e), "success": False, "text": GENERIC_ERROR}), 500
 
 
 @assistants_bp.route("/file", methods=["POST"])
@@ -77,7 +78,7 @@ def assistants_file():
         return jsonify(result), 200
     except Exception as e:
         logger.exception("assistants/file failed")
-        return jsonify({"error": str(e), "success": False, "text": str(e)}), 500
+        return jsonify({"error": internal_error_message(e), "success": False, "text": GENERIC_ERROR}), 500
 
 
 @assistants_bp.route("/function", methods=["POST"])
@@ -95,7 +96,7 @@ def assistants_function():
         return jsonify(result), 200
     except Exception as e:
         logger.exception("assistants/function failed")
-        return jsonify({"error": str(e), "success": False, "text": str(e)}), 500
+        return jsonify({"error": internal_error_message(e), "success": False, "text": GENERIC_ERROR}), 500
 
 
 @assistants_bp.route("/concierge", methods=["POST"])
@@ -112,4 +113,4 @@ def assistants_concierge():
         return jsonify(result), 200
     except Exception as e:
         logger.exception("assistants/concierge failed")
-        return jsonify({"error": str(e), "success": False, "text": str(e)}), 500
+        return jsonify({"error": internal_error_message(e), "success": False, "text": GENERIC_ERROR}), 500

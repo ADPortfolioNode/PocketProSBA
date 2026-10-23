@@ -6,6 +6,7 @@ from werkzeug.utils import secure_filename
 from backend.services.api_service import get_system_info_service
 from backend.services.rag import get_rag_manager
 from config import Config
+from backend.routes._errors import internal_error_message
 
 logger = logging.getLogger(__name__)
 data_bp = Blueprint('data', __name__)
@@ -96,7 +97,7 @@ def upload_file():
 
     except Exception as e:
         logger.error(f"Error uploading file: {str(e)}")
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': internal_error_message(e)}), 500
 
 @data_bp.route('/documents/list', methods=['GET'])
 def list_files():
@@ -119,4 +120,4 @@ def list_files():
 
     except Exception as e:
         logger.error(f"Error listing files: {str(e)}")
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': internal_error_message(e)}), 500
