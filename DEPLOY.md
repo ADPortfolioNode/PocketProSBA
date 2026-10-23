@@ -27,17 +27,19 @@ Set these in the host's secret store (Fly secrets, Render env, etc.), never in a
 | `GEMINI_API_KEY` | yes, for chat/RAG answers | Google AI Studio key. Without it the app runs but LLM answers degrade. Restrict the key to the Generative Language API. |
 | `FRONTEND_URL` | yes | Public URL of the frontend (e.g. `https://pocket-pro-sba.vercel.app`). Always allowed as a CORS origin. |
 | `CORS_ALLOWED_ORIGINS` | optional | Extra allowed origins, comma-separated, exact scheme+host (e.g. a custom domain). No wildcards. |
-| `TRUSTED_PROXY_COUNT` | recommended | Number of proxies in front of the app whose `X-Forwarded-For` is trusted: `1` on Fly/Render/nginx, `0` when hit directly. Rate limits key on the client IP, so this must be right. |
-| `RATELIMIT_STORAGE_URI` | recommended | Flask-Limiter storage. `memory://` (default) is per process, so with 2 workers or several machines each keeps its own counters. Use `redis://host:6379/0` in production. |
+| `TRUSTED_PROXY_COUNT` | **yes, behind a proxy** | Number of reverse proxies in front of the app whose `X-Forwarded-For` is trusted. Set **`1`** behind Fly, Render, Vercel rewrites or the compose nginx (one hop); `0` (default) only when clients hit gunicorn directly. Too low and every client shares the proxy's IP (one user can rate-limit everyone); too high and clients can spoof their IP to dodge limits. |
+| `RATELIMIT_STORAGE_URI` | **yes, with >1 worker** | Flask-Limiter (4.1.1) storage. `memory://` (default) is per process: the Procfile runs 2 gunicorn workers, so each keeps its own counters and the effective limit doubles (more with several machines). Use Redis, e.g. `redis://default:<password>@host:6379/0` (Upstash/Fly Redis/Render Key Value). |
+| `RATELIMIT_ENABLED` | no | Defaults to on. `false` turns rate limiting off (tests/debugging only). |
 | `RATELIMIT_AUTH`, `RATELIMIT_LLM` | optional | Limit strings for auth and LLM routes (defaults `10 per minute;100 per hour` and `30 per minute;500 per hour`). |
 | `MAX_CONTENT_LENGTH` | optional | Max request body in bytes, uploads included. Default 16 MB (`16777216`); larger requests get a 413. |
 | `DATABASE_URL` | recommended | SQLAlchemy URL. Default is SQLite in the working dir, which is lost on redeploy unless it sits on a persistent volume. Use Postgres (`postgresql://user:pass@host:5432/db`) for anything shared. |
 | `CHROMADB_HOST`, `CHROMADB_PORT` | if using Chroma | Chroma server. The server image must match the client pin (`chromadb==0.4.24` → `chromadb/chroma:0.4.24`). |
 | `PORT` | set by host | Port gunicorn binds (Procfile). |
-| `FLASK_DEBUG` | no | Leave unset/`0` in production. |
+| `FLASK_DEBUG` (or `DEBUG`) | no | Debug is **off in every environment** unless `FLASK_DEBUG=1` (or `DEBUG=1`) is set. Never set it in production: debug mode logs password-reset tokens to the server log. |
+| `PASSWORD_RESET_DELIVERY` | yes, before enabling password reset | Not an env var: an `app.config` hook. Set `app.config["PASSWORD_RESET_DELIVERY"]` to a callable `(email, token) -> None` that sends the token (email gateway, queue). Reset tokens are never returned in the HTTP response; without this hook, production users never receive one (a warning is logged). |
 | `SBA_KB_LIVE_DIR` | no | Overrides where live SBA API ingests are written (the test suite points it at a temp dir). Leave unset in production: keyword RAG reads `backend/knowledge_base/`. |
 
-The rate-limit, CORS-origin and proxy variables take effect once the security-hardening PR is merged; until then they are ignored.
+Minimum production set: `FLASK_ENV=production`, `SECRET_KEY`, `GEMINI_API_KEY`, `FRONTEND_URL`, `TRUSTED_PROXY_COUNT=1`, `RATELIMIT_STORAGE_URI=redis://...`, and a persistent `DATABASE_URL`.
 
 ## Docker Compose
 

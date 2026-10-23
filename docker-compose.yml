@@ -20,6 +20,10 @@ services:
       # only: any real deployment must set its own (see DEPLOY.md).
       - SECRET_KEY=${SECRET_KEY:-insecure-local-compose-key-change-me}
       - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      # The frontend nginx proxies /api to this service: one trusted hop.
+      - TRUSTED_PROXY_COUNT=${TRUSTED_PROXY_COUNT:-1}
+      # memory:// is per worker; point at Redis for shared limits.
+      - RATELIMIT_STORAGE_URI=${RATELIMIT_STORAGE_URI:-memory://}
     # Optional: a fresh clone has no .env and compose still starts.
     env_file:
       - path: .env
