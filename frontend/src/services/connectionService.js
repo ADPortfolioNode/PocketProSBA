@@ -1,4 +1,4 @@
-import apiClient from '../api/apiClient';
+import apiClient, { BASE_URL } from '../api/apiClient';
 
 // 15s — aggressive 5s polling hammered the backend during restarts
 const CONNECTION_CHECK_INTERVAL = 15000;
@@ -6,40 +6,15 @@ let healthCheckIntervalId = null;
 let connectionListeners = [];
 let lastFailLogAt = 0;
 
-/** Prefer same-origin nginx proxy, then IPv4 backend (avoids Windows localhost→IPv6 flakes). */
+/**
+ * Health probe through apiClient, so it uses the same base URL as every other
+ * call (REACT_APP_API_URL at build, ?backend_host=, or same-origin). No
+ * hard-coded loopback-port fallbacks.
+ */
 async function probeHealth() {
-  const candidates = [];
-  if (typeof window !== 'undefined' && window.location?.origin) {
-    // When UI is on :3000, /api/* is proxied by nginx → backend
-    candidates.push(`${window.location.origin}/api/health`);
-  }
-  candidates.push('http://127.0.0.1:5000/api/health');
-  candidates.push('http://127.0.0.1:5000/api/api/health');
-  candidates.push('http://localhost:5000/api/health');
-
-  let lastError = null;
-  for (const url of candidates) {
-    try {
-      const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
-      const timer = controller ? setTimeout(() => controller.abort(), 4000) : null;
-      const res = await fetch(url, {
-        method: 'GET',
-        headers: { Accept: 'application/json' },
-        signal: controller?.signal,
-        cache: 'no-store',
-      });
-      if (timer) clearTimeout(timer);
-      if (!res.ok) {
-        lastError = new Error(`HTTP ${res.status} from ${url}`);
-        continue;
-      }
-      const data = await res.json().catch(() => ({ status: 'healthy' }));
-      return { connected: true, data, url };
-    } catch (e) {
-      lastError = e;
-    }
-  }
-  throw lastError || new Error('All health probes failed');
+  const response = await apiClient.get('/api/health', { timeout: 4000 }, { quiet: true, retry: false });
+  const data = response?.data || { status: 'healthy' };
+  return { connected: true, data, url: `${BASE_URL || ''}/api/health` };
 }
 
 const connectionService = {
@@ -77,7 +52,7 @@ const connectionService = {
 
   checkConnection: async () => {
     try {
-      // Prefer lightweight multi-URL probe (IPv4 + same-origin proxy)
+      // Lightweight /api/health probe first, /api/info as a fallback
       let info = null;
       try {
         const probed = await probeHealth();
@@ -132,9 +107,11 @@ const connectionService = {
 
   getDiagnostics: async () => {
     try {
-      const response = await apiClient.get('/api/diagnostics'); // Assuming a diagnostics endpoint
+      const response = await apiClient.get('/api/diagnostics', { skipAuthRedirect: true }, { quiet: true, retry: false });
       return response.data;
     } catch (error) {
+      // Diagnostics need a signed-in user; a 401 is expected when signed out.
+      if (error?.response?.status === 401) return { unauthorized: true };
       console.error('Error fetching diagnostics:', error);
       return { error: error.message || 'Failed to fetch diagnostics' };
     }

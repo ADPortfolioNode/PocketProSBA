@@ -70,7 +70,7 @@ export const useAuth = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await apiClient.post('/api/reset-password', {
+      const response = await apiClient.post('/api/auth/reset-password', {
         token,
         password,
       });

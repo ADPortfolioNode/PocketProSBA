@@ -76,9 +76,11 @@ export const useConnection = () => {
 
   const getDiagnostics = useCallback(async () => {
     try {
-      const response = await apiClient.get('/api/diagnostics');
+      const response = await apiClient.get('/api/diagnostics', { skipAuthRedirect: true }, { quiet: true, retry: false });
       return response.data;
     } catch (error) {
+      // Diagnostics need a signed-in user; a 401 just means "not available".
+      if (error?.response?.status === 401) return { unauthorized: true };
       console.error('Error fetching diagnostics:', error);
       return { error: friendlyError(error) };
     }

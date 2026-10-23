@@ -22,7 +22,8 @@ const ConnectionStatusDashboard = () => {
     const fetchDiagnostics = async () => {
       try {
         const diag = await getDiagnostics();
-        setDiagnostics(diag);
+        // Signed out: diagnostics are protected, so show N/A rather than an error.
+        setDiagnostics(diag?.unauthorized ? null : diag);
       } catch (error) {
         console.error('Failed to fetch diagnostics:', error);
       }

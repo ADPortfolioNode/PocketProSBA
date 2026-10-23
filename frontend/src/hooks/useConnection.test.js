@@ -110,6 +110,29 @@ describe('useConnection', () => {
     expect(diagnostics).toEqual({ error: expect.any(String) });
   });
 
+  it('treats a 401 from diagnostics quietly (no redirect, no session wipe)', async () => {
+    const { setSession, getToken, clearSession } = require('../utils/authStorage');
+    const { setUnauthorizedHandler } = require('../api/apiClient');
+    const onUnauthorized = jest.fn();
+    setUnauthorizedHandler(onUnauthorized);
+    setSession({ token: 'keep-me' });
+    mock.onGet('/api/info').reply(200, { status: 'operational' });
+    mock.onGet('/api/diagnostics').reply(401, { code: 'token_missing' });
+
+    const { result } = renderHook(() => useConnection());
+    let diagnostics;
+    await act(async () => {
+      diagnostics = await result.current.getDiagnostics();
+    });
+
+    expect(diagnostics).toEqual({ unauthorized: true });
+    expect(onUnauthorized).not.toHaveBeenCalled();
+    expect(getToken()).toBe('keep-me');
+    expect(console.error).not.toHaveBeenCalled();
+    setUnauthorizedHandler(null);
+    clearSession();
+  });
+
   it('reports status checking -> online, and keeps online during background re-checks', async () => {
     mock.onGet('/api/info').reply(200, { status: 'operational' });
     const { result } = renderHook(() => useConnection());
