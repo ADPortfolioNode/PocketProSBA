@@ -44,6 +44,48 @@ Set these in the host's secret store (Fly secrets, Render env, etc.), never in a
 
 Minimum production set: `FLASK_ENV=production`, `SECRET_KEY`, `GEMINI_API_KEY`, `FRONTEND_URL`, `TRUSTED_PROXY_COUNT=1`, `RATELIMIT_STORAGE_URI=redis://...`, and a persistent `DATABASE_URL`.
 
+## Deploy backend on Render
+
+`render.yaml` (repo root) is a Render Blueprint: one Python web service `pocketpro-sba-api` (Starter plan, `pip install -r backend/requirements.txt` plus `redis` for the limiter storage, the Procfile's gunicorn command, health check `/api/health`, 1 GB disk at `/var/data`) plus a free Key Value (Redis) `pocketpro-sba-ratelimit` for rate limits.
+
+1. Render dashboard → **New → Blueprint** → connect `ADPortfolioNode/PocketProSBA`, branch `main`.
+2. Fill the prompted (`sync: false`) values: `GEMINI_API_KEY` (a **new, rotated** key), `FRONTEND_URL` (the Vercel URL), optionally `CORS_ALLOWED_ORIGINS`, `GOOGLE_API_KEY`, `SBA_API_KEY`, `SBA_CONTENT_API_KEY`. Leave `PASSWORD_RESET_DELIVERY` blank (see below). Apply.
+3. Wait for the deploy to go live; note the URL (`https://pocketpro-sba-api.onrender.com` or similar).
+4. Vercel → project `pocket-pro-sba` → Settings → Environment Variables: `REACT_APP_API_URL` = that Render URL (with or without `/api`), then **redeploy** (it is baked in at build time).
+
+| Variable | Set by | Value |
+|---|---|---|
+| `PYTHON_VERSION` | render.yaml | `3.11.11` (chroma-hnswlib does not build on 3.12) |
+| `FLASK_ENV` | render.yaml | `production` |
+| `SECRET_KEY` | render.yaml | `generateValue: true` (random 256-bit) |
+| `AUTH_REQUIRED` | render.yaml | `true` |
+| `TRUSTED_PROXY_COUNT` | render.yaml | `1` (Render's proxy) |
+| `RATELIMIT_STORAGE_URI` | render.yaml | Key Value `connectionString` (private network) |
+| `DATABASE_URL` | render.yaml | `sqlite:////var/data/pocketpro.db` (on the disk) |
+| `UPLOAD_FOLDER` | render.yaml | `/var/data/uploads` |
+| `GEMINI_API_KEY` | you | rotated Google AI Studio key |
+| `FRONTEND_URL`, `CORS_ALLOWED_ORIGINS` | you | Vercel URL / extra origins |
+| `GOOGLE_API_KEY`, `SBA_API_KEY`, `SBA_CONTENT_API_KEY` | you | optional |
+| `PASSWORD_RESET_DELIVERY` | you | placeholder only: the code reads an `app.config` callable, not this env var |
+
+Disk notes: a disk needs a paid instance and turns off zero-downtime deploys. `backend/routes/documents.py` still writes to a relative `uploads/` (ignores `UPLOAD_FOLDER`), and `backend/instance/task_memory.json` is not on the disk, so both reset on redeploy until the code reads env paths.
+
+Smoke checks after deploy (`API=https://<your-service>.onrender.com`):
+
+```bash
+curl -fsS $API/api/health                                   # 200 JSON
+curl -s -o /dev/null -w "%{http_code}\n" $API/api/documents/list   # 401 (auth on)
+curl -s -o /dev/null -w "%{http_code}\n" -H "Origin: https://<vercel-app>" -I $API/api/health  # 200, check Access-Control-Allow-Origin
+```
+
+Then open the Vercel site, register, log in and send one chat message.
+
+**Security must-dos before going public**
+
+- **Rotate the Google API key** leaked in commit `fecb828` (Google Cloud console → Credentials → delete/regenerate), restrict the new one to the Generative Language API, and put it only in Render.
+- **Treat the old committed `SECRET_KEY` as compromised.** Never reuse it; the Blueprint generates a fresh one.
+- **Wire password-reset email**: set `app.config["PASSWORD_RESET_DELIVERY"]` to a callable `(email, token)` that sends mail (e.g. an SMTP/Resend/SendGrid helper). Until then production users can't receive reset tokens.
+
 ## Docker Compose
 
 `docker compose up --build` (prod-like) and `docker compose -f docker-compose.dev.yml up --build` work on a fresh clone without a `.env`: the `env_file` entries are optional and the prod compose falls back to a clearly-named local-only `SECRET_KEY`. For anything reachable from the internet, put a real `SECRET_KEY` (and `GEMINI_API_KEY`) in `.env` or the shell; Compose reads `.env` for `${...}` interpolation. Requires Docker Compose v2.24+ (for `env_file: required: false`).

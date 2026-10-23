@@ -1,0 +1,60 @@
+# Render Blueprint for the PocketPro:SBA backend (Flask API).
+# Frontend stays on Vercel; point its REACT_APP_API_URL at this service.
+# Spec: https://render.com/docs/blueprint-spec   Guide: DEPLOY.md
+services:
+  - type: web
+    name: pocketpro-sba-api
+    runtime: python
+    plan: starter            # a persistent disk needs a paid instance
+    # redis: Flask-Limiter needs it for the redis:// storage below
+    # (not in backend/requirements.txt yet; without it the app fails to start).
+    buildCommand: pip install --upgrade pip && pip install -r backend/requirements.txt "redis==5.2.1"
+    # Same command as the Procfile.
+    startCommand: gunicorn wsgi:application --bind 0.0.0.0:${PORT:-5000} --workers 2 --threads 4 --timeout 60
+    healthCheckPath: /api/health
+    autoDeploy: true
+    # SQLite users DB and uploads are written to local paths, so keep them on a disk.
+    disk:
+      name: sba-data
+      mountPath: /var/data
+      sizeGB: 1
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.11"
+      - key: FLASK_ENV
+        value: production
+      - key: SECRET_KEY
+        generateValue: true
+      - key: AUTH_REQUIRED
+        value: "true"
+      - key: TRUSTED_PROXY_COUNT
+        value: "1"
+      - key: RATELIMIT_STORAGE_URI
+        fromService:
+          type: keyvalue
+          name: pocketpro-sba-ratelimit
+          property: connectionString
+      - key: DATABASE_URL
+        value: sqlite:////var/data/pocketpro.db
+      - key: UPLOAD_FOLDER
+        value: /var/data/uploads
+      - key: FRONTEND_URL
+        sync: false
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GOOGLE_API_KEY
+        sync: false
+      - key: SBA_API_KEY
+        sync: false
+      - key: SBA_CONTENT_API_KEY
+        sync: false
+      - key: PASSWORD_RESET_DELIVERY
+        sync: false
+
+  - type: keyvalue
+    name: pocketpro-sba-ratelimit
+    plan: free
+    maxmemoryPolicy: allkeys-lru   # rate-limit counters only; safe to evict
+    ipAllowList: []                # private network only
