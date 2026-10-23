@@ -54,6 +54,9 @@ function ForgotPassword() {
         </button>
       </form>
       <p className="mt-3 text-center auth-links">
+        Have a reset token? <Link to="/reset-password">Set a new password</Link>
+      </p>
+      <p className="mt-2 text-center auth-links">
         Remembered your password? <Link to="/login">Log in</Link>
       </p>
     </div>

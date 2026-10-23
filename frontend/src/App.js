@@ -5,6 +5,7 @@ import './App.css';
 import Login from './Login';
 import Register from './Register';
 import ForgotPassword from './ForgotPassword';
+import ResetPassword from './ResetPassword';
 import MainLayout from './components/MainLayout';
 import { AppProvider } from './context/AppProvider';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -37,6 +38,7 @@ function App() {
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
               {/* Home + app tabs share one minimal shell (MainLayout) */}
               <Route path="/*" element={<MainLayout />} />
             </Routes>

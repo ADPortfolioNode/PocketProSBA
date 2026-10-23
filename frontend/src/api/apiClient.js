@@ -96,9 +96,14 @@ const setUnauthorizedHandler = (fn) => {
   unauthorizedHandler = typeof fn === 'function' ? fn : defaultUnauthorizedHandler;
 };
 
+/** True when a request opted out of the 401 -> /login redirect (config.skipAuthRedirect). */
+const isQuietUnauthorized = (error) => error?.response?.status === 401 && !!error?.config?.skipAuthRedirect;
+
 const handleUnauthorized = (error) => {
   const url = String(error?.config?.url || '');
   if (error?.response?.status !== 401 || AUTH_ENDPOINT_RE.test(url)) return;
+  // Optional, background calls (e.g. diagnostics) must not log the user out or redirect.
+  if (error?.config?.skipAuthRedirect) return;
   clearSession();
   if (typeof window === 'undefined' || !window.location) return;
   const { pathname = '/', search = '', hash = '' } = window.location;
@@ -163,7 +168,7 @@ const makeRequest = async (method, endpoint, data = null, config = {}, retries =
       return makeRequest(method, endpoint, data, config, retries - 1, { ...options, _startedAt: startedAt });
     }
     error.attempts = attempt + 1;
-    if (!quiet) {
+    if (!quiet && !isQuietUnauthorized(error)) {
       console.error('API Error:', error);
     }
     throw error;
@@ -215,6 +220,7 @@ export {
   isTransientError,
   setUnauthorizedHandler,
   handleUnauthorized,
+  isQuietUnauthorized,
 };
 
 export default api;

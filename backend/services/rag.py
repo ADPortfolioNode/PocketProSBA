@@ -10,6 +10,12 @@ logger = logging.getLogger(__name__)
 # Global RAG manager instance
 _rag_manager_instance = None
 
+# Negative cache: after a failed Chroma connect, skip reconnect attempts for a
+# short window so /api/info and health checks don't pay the connect timeout
+# (~4s) on every call while Chroma is down.
+CHROMA_RETRY_SECONDS = float(os.environ.get('CHROMA_RETRY_SECONDS', '30'))
+_rag_failed_at = None
+
 # Lazy import of Gemini RAG service only when needed
 _gemini_service_loaded = False
 _gemini_service = None
@@ -125,10 +131,13 @@ def get_rag_manager():
     Cache a working instance. Reconnecting to Chroma on every health/chat
     request was thrashing low-RAM Docker Desktop hosts.
     """
-    global _rag_manager_instance
+    global _rag_manager_instance, _rag_failed_at
 
     if _rag_manager_instance is not None and _rag_manager_instance.is_available():
         return _rag_manager_instance
+
+    if _rag_failed_at is not None and (time.monotonic() - _rag_failed_at) < CHROMA_RETRY_SECONDS:
+        return RAGManager()
 
     try:
         try:
@@ -145,14 +154,17 @@ def get_rag_manager():
 
         if candidate.is_available():
             _rag_manager_instance = candidate
+            _rag_failed_at = None
             return _rag_manager_instance
 
-        logger.warning("ChromaDB RAG manager is not available yet; retrying on next request.")
+        logger.warning("ChromaDB RAG manager is not available yet; retrying in %ss.", CHROMA_RETRY_SECONDS)
         _rag_manager_instance = None
+        _rag_failed_at = time.monotonic()
 
     except Exception as e:
         logger.error(f"Failed to initialize RAG manager: {str(e)}")
         _rag_manager_instance = None
+        _rag_failed_at = time.monotonic()
 
     # Return a non-operational manager when ChromaDB is unavailable.
     return RAGManager()

@@ -132,6 +132,7 @@ def get_system_info():
         return jsonify({'error': 'Failed to retrieve system information'}), 500
 
 @api_bp.route('/diagnostics', methods=['GET'])
+@auth_required
 def get_diagnostics():
     """Get diagnostics information"""
     try:
