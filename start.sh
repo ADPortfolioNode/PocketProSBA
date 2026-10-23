@@ -232,7 +232,7 @@ ensure_env() {
   fi
   export HOST PORT
   export FLASK_ENV="${FLASK_ENV:-production}"
-  export FLASK_APP="${FLASK_APP:-app.py}"
+  export FLASK_APP="${FLASK_APP:-wsgi:application}"
   export PYTHONPATH="$ROOT:$ROOT/backend:$ROOT/src${PYTHONPATH:+:$PYTHONPATH}"
 }
 

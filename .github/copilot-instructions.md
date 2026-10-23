@@ -24,8 +24,8 @@ Frontend (React) → apiClient → Backend (Flask) → Services → ChromaDB
 ### Local Development
 1. Backend: 
    ```bash
-   cd backend
-   flask run --debug
+   # repo root
+   FLASK_ENV=development gunicorn wsgi:application --reload
    ```
 2. Frontend:
    ```bash

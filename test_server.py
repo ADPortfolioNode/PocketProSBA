@@ -6,7 +6,7 @@ import sys
 import requests
 import threading
 import time
-from run import app
+from wsgi import application as app
 
 def run_server():
     """Run the server in a thread"""

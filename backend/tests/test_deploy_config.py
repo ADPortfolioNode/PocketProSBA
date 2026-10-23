@@ -54,6 +54,26 @@ def test_launcher_does_not_reference_stub_apps(rel):
         assert stub not in body, f"{rel} references stub entry {stub!r}"
 
 
+REMOVED_STUBS = [
+    "app.py", "app_fixed.py", "app_simple.py", "minimal_app.py", "app_fastapi.py",
+    "fastapi_app.py", "app_full.py", "startup_simple.py", "run.py",
+    "backend/app.py", "backend/run.py", "backend/app_minimal.py", "backend/server.js",
+    "frontend/public/static/js/chat-magazine.js",
+]
+
+
+@pytest.mark.parametrize("rel", REMOVED_STUBS)
+def test_removed_stub_entry_stays_removed(rel):
+    assert not (ROOT / rel).exists(), f"{rel} came back; the only entry is {ENTRY}"
+
+
+def test_backend_app_resolves_to_package():
+    # With backend/app.py gone, `backend.app` must be the backend/app/ package.
+    import backend.app as pkg
+    assert Path(pkg.__file__).resolve() == ROOT / "backend" / "app" / "__init__.py"
+    assert callable(pkg.create_app)
+
+
 def test_wsgi_exposes_application():
     text = _read("wsgi.py")
     assert "application = app" in text

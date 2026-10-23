@@ -20,7 +20,7 @@ def test_app_startup():
     # Start the app in a subprocess
     try:
         process = subprocess.Popen([
-            sys.executable, 'app.py'
+            sys.executable, 'wsgi.py'
         ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
         
         # Wait for startup

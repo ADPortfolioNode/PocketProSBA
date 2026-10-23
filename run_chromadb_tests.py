@@ -36,7 +36,7 @@ def check_files_exist():
     required_files = [
         'fix_chromadb.py',
         'test_chromadb_simple.py',
-        'app.py'
+        'wsgi.py'
     ]
     
     missing_files = []
@@ -76,16 +76,16 @@ def main():
     # Step 3: Start the app (this will run until interrupted)
     print(f"\n{'='*60}")
     print("🚀 Starting the main application")
-    print("Running: python app.py")
+    print("Running: python wsgi.py")
     print("Press Ctrl+C to stop the application")
     print('='*60)
     
     try:
-        subprocess.run([sys.executable, 'app.py'], cwd=Path.cwd())
+        subprocess.run([sys.executable, 'wsgi.py'], cwd=Path.cwd())
     except KeyboardInterrupt:
         print("\n\n🛑 Application stopped by user")
     except Exception as e:
-        print(f"\n❌ Error running app.py: {e}")
+        print(f"\n❌ Error running wsgi.py: {e}")
         return False
     
     return True

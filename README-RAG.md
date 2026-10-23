@@ -37,7 +37,7 @@ Running the app locally
 
 ```bash
 export VECTOR_STORE=memory
-python app.py
+FLASK_ENV=development python wsgi.py
 ```
 
 - Production with Chromadb (if installed and configured):
@@ -45,7 +45,7 @@ python app.py
 ```bash
 export VECTOR_STORE=chromadb
 export CHROMADB_URL=http://localhost:8000
-python app.py
+SECRET_KEY=change-me gunicorn wsgi:application
 ```
 
 Notes
