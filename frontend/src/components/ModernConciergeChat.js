@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Send, Bot, User, AlertCircle, RefreshCw } from 'lucide-react';
 import { formatMagazineHtml } from '../utils/magazineProse';
+import { friendlyError } from '../utils/friendlyError';
 import '../styles/modern-chat.css';
 
 const sbaTips = [
@@ -16,8 +17,14 @@ const sbaTips = [
   "SBA's Lender Match tool connects small businesses with approved SBA lenders.",
 ];
 
-const ModernConciergeChat = ({ onSend, messages = [], loading, userName }) => {
-  const [input, setInput] = useState('');
+const STARTERS = [
+  'What is an SBA 7(a) loan?',
+  'How do I find a local lender?',
+  'Steps to start a small business',
+];
+
+const ModernConciergeChat = ({ onSend, messages = [], loading, userName, initialDraft }) => {
+  const [input, setInput] = useState(initialDraft || '');
   const [tipIndex, setTipIndex] = useState(0);
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState(null);
@@ -26,13 +33,18 @@ const ModernConciergeChat = ({ onSend, messages = [], loading, userName }) => {
 
   const safeMessages = Array.isArray(messages) ? messages : [];
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+  const thinking = !!loading || isSending;
+
+  // Only follow the conversation once there is one; scrolling on mount pushed
+  // the welcome card's heading out of view.
+  useEffect(() => {
+    if (safeMessages.length === 0 && !thinking) return;
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }, [safeMessages.length, thinking]);
 
   useEffect(() => {
-    scrollToBottom();
-  }, [safeMessages, loading]);
+    if (initialDraft) setInput(initialDraft);
+  }, [initialDraft]);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -58,7 +70,8 @@ const ModernConciergeChat = ({ onSend, messages = [], loading, userName }) => {
         setInput('');
       } catch (err) {
         console.error('Error in chat submission:', err);
-        setError(err.message || 'Failed to send message. Please try again.');
+        // The draft stays in the input so "Try again" resends it.
+        setError(friendlyError(err, "Your message didn't go through. Please try again."));
       } finally {
         setIsSending(false);
       }
@@ -107,7 +120,7 @@ const ModernConciergeChat = ({ onSend, messages = [], loading, userName }) => {
       </div>
 
       <div className="chat-messages-modern" role="log" aria-live="polite" aria-relevant="additions">
-        {safeMessages.length === 0 && !loading && (
+        {safeMessages.length === 0 && !thinking && (
           <div className="welcome-message">
             <div className="welcome-icon">
               <Bot size={48} />
@@ -118,15 +131,20 @@ const ModernConciergeChat = ({ onSend, messages = [], loading, userName }) => {
               Answers open as readable articles with itemized lists you can scan.
             </p>
             <ul className="mag-list mag-list-ul welcome-starters">
-              <li className="mag-li">
-                <span className="mag-li-text">What is an SBA 7(a) loan?</span>
-              </li>
-              <li className="mag-li">
-                <span className="mag-li-text">How do I find a local lender?</span>
-              </li>
-              <li className="mag-li">
-                <span className="mag-li-text">Steps to start a small business</span>
-              </li>
+              {STARTERS.map((q) => (
+                <li className="mag-li" key={q}>
+                  <button
+                    type="button"
+                    className="mag-li-text welcome-starter-btn"
+                    onClick={() => {
+                      setInput(q);
+                      inputRef.current?.focus();
+                    }}
+                  >
+                    {q}
+                  </button>
+                </li>
+              ))}
             </ul>
           </div>
         )}
@@ -157,7 +175,7 @@ const ModernConciergeChat = ({ onSend, messages = [], loading, userName }) => {
           );
         })}
 
-        {loading && (
+        {thinking && (
           <div className="message-modern assistant">
             <div className="message-avatar">
               <Bot size={20} />
@@ -178,13 +196,23 @@ const ModernConciergeChat = ({ onSend, messages = [], loading, userName }) => {
           <div className="error-message-modern" role="alert">
             <AlertCircle size={16} />
             <span>{error}</span>
+            {input.trim() && typeof onSend === 'function' && (
+              <button
+                type="button"
+                className="retry-button retry-button-text"
+                onClick={handleSubmit}
+                disabled={isSending}
+              >
+                <RefreshCw size={14} /> Try again
+              </button>
+            )}
             <button
               type="button"
               className="retry-button"
               onClick={() => setError(null)}
               aria-label="Dismiss error"
             >
-              <RefreshCw size={14} />
+              ×
             </button>
           </div>
         )}
@@ -207,13 +235,13 @@ const ModernConciergeChat = ({ onSend, messages = [], loading, userName }) => {
               placeholder="Ask about SBA loans, grants, or business advice..."
               className="modern-textarea"
               rows={1}
-              disabled={isSending || loading}
+              disabled={thinking}
               aria-label="Message input"
             />
             <button
               type="submit"
               className="send-button-modern"
-              disabled={!input.trim() || isSending || loading}
+              disabled={!input.trim() || thinking}
               aria-label="Send"
             >
               <Send size={20} />

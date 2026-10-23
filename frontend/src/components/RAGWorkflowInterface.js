@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import RAGWorkflowVisualization from './RAGWorkflowVisualization';
 import { Card, Row, Col, Button, Form, ListGroup, Badge, Accordion, Alert, ProgressBar } from 'react-bootstrap';
 import apiClient from '../api/apiClient';
+import LoadingBar from './LoadingBar';
+import { ErrorState } from './AsyncState';
+import { friendlyError } from '../utils/friendlyError';
 
 // apiClient resolves to an axios response; the JSON body lives in .data.
 const bodyOf = (res) => (res && res.data !== undefined ? res.data : res) || {};
@@ -24,6 +27,23 @@ const RAGWorkflowInterface = ({
   const [validationResult, setValidationResult] = useState(null);
   const [queryResults, setQueryResults] = useState([]);
   const [finalResponse, setFinalResponse] = useState(null);
+  // Shared pending/failure state for every backend step: a loader while the
+  // request (and apiClient's retries) run, a friendly error with Retry after.
+  const [busy, setBusy] = useState(null);
+  const [failure, setFailure] = useState(null);
+
+  const runStep = async (label, fn, retry) => {
+    setBusy(label);
+    setFailure(null);
+    try {
+      await fn();
+    } catch (err) {
+      console.error(`${label} failed:`, err);
+      setFailure({ message: friendlyError(err), retry });
+    } finally {
+      setBusy(null);
+    }
+  };
 
   const handleStepChange = (step) => {
     setCurrentStep(step);
@@ -67,6 +87,7 @@ const RAGWorkflowInterface = ({
     } catch (err) {
       console.error('File upload error:', err);
       setUploadProgress(null);
+      setFailure({ message: friendlyError(err, "The upload didn't finish. Please try again."), retry: handleUpload });
     } finally {
       clearInterval(fakeProgress);
       setTimeout(() => setUploadProgress(null), 800);
@@ -74,49 +95,33 @@ const RAGWorkflowInterface = ({
   };
 
   // Step 1: Decompose task
-  const handleDecompose = async (taskText) => {
-    try {
-      const res = await apiClient.post('/api/decompose', {
-        message: taskText,
-        session_id: 'session_' + Date.now()
-      });
-      const body = bodyOf(res);
-      setDecomposedSteps(body.response?.steps || body.steps || []);
-      setCurrentStep('execute');
-    } catch (err) {
-      console.error('Decompose error:', err);
-    }
-  };
+  const handleDecompose = (taskText) => runStep('Breaking your task into steps…', async () => {
+    const res = await apiClient.post('/api/decompose', {
+      message: taskText,
+      session_id: 'session_' + Date.now()
+    });
+    const body = bodyOf(res);
+    setDecomposedSteps(body.response?.steps || body.steps || []);
+    setCurrentStep('execute');
+  }, () => handleDecompose(taskText));
 
   // Step 2: Execute each decomposed step
-  const handleExecuteStep = async (step) => {
-    try {
-      const res = await apiClient.post('/api/execute', { task: step });
-      setStepResults(prev => [...prev, bodyOf(res)]);
-    } catch (err) {
-      console.error('Execute step error:', err);
-    }
-  };
+  const handleExecuteStep = (step) => runStep('Running this step…', async () => {
+    const res = await apiClient.post('/api/execute', { task: step });
+    setStepResults(prev => [...prev, bodyOf(res)]);
+  }, () => handleExecuteStep(step));
 
   // Step 3: Validate step result
-  const handleValidateStep = async (result, step) => {
-    try {
-      const res = await apiClient.post('/api/validate', { result, task: step });
-      setValidationResult(bodyOf(res));
-    } catch (err) {
-      console.error('Validate step error:', err);
-    }
-  };
+  const handleValidateStep = (result, step) => runStep('Checking the result…', async () => {
+    const res = await apiClient.post('/api/validate', { result, task: step });
+    setValidationResult(bodyOf(res));
+  }, () => handleValidateStep(result, step));
 
   // Step 4: Query documents
-  const handleQueryDocuments = async (query) => {
-    try {
-      const res = await apiClient.post('/api/query', { query, top_k: 5 });
-      setQueryResults(bodyOf(res).results || []);
-    } catch (err) {
-      console.error('Query documents error:', err);
-    }
-  };
+  const handleQueryDocuments = (query) => runStep('Searching your documents…', async () => {
+    const res = await apiClient.post('/api/query', { query, top_k: 5 });
+    setQueryResults(bodyOf(res).results || []);
+  }, () => handleQueryDocuments(query));
 
   // Step 5: Generate final response (simulate)
   const handleGenerateResponse = () => {
@@ -323,6 +328,10 @@ const RAGWorkflowInterface = ({
             ))}
           </ListGroup>
         </div>
+      )}
+      {busy && <LoadingBar label={busy} className="py-3" />}
+      {!busy && failure && (
+        <ErrorState compact title="That step didn't finish" message={failure.message} onRetry={failure.retry} />
       )}
       {stepContent}
     </div>

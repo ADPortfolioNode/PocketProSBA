@@ -37,8 +37,35 @@ const getBackendHost = () => {
 };
 
 const BASE_URL = getBackendHost();
-const MAX_RETRIES = 3;
+// Retry policy for transient failures (cold start, deploy, proxy hiccup).
+// Retries back off 1s, 2s, 4s, 4s, 4s (~15s) and stop once RETRY_BUDGET_MS has
+// passed, so a real outage surfaces as an error after ~15-20s, never instantly.
+const MAX_RETRIES = 5;
 const RETRY_DELAY = 1000;
+const MAX_RETRY_DELAY = 4000;
+const RETRY_BUDGET_MS = 20000;
+const RETRYABLE_STATUS = [502, 503, 504];
+
+/** True for failures worth retrying: no response (refused/reset/network) or a gateway 502/503/504. */
+const isTransientError = (error, method = 'GET') => {
+  if (!error || axios.isCancel?.(error)) return false;
+  const status = error.response?.status;
+  if (status) {
+    // 504 may mean the backend did the work; don't replay non-idempotent calls.
+    if (status === 504 && !['GET', 'HEAD', 'OPTIONS'].includes(String(method).toUpperCase())) return false;
+    return RETRYABLE_STATUS.includes(status);
+  }
+  // Our own long timeout already exceeded the retry budget; don't stack another.
+  if (error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT') return false;
+  return ['ECONNREFUSED', 'ECONNRESET', 'ERR_NETWORK', 'EAI_AGAIN'].includes(error.code) || !!error.request || error.message === 'Network Error';
+};
+
+/* global globalThis */
+// globalThis.__PP_RETRY_DELAY_MS__ lets the Jest setup shrink the back-off (setupTests.js).
+const retryDelay = (attempt) => {
+  const base = typeof globalThis.__PP_RETRY_DELAY_MS__ === 'number' ? globalThis.__PP_RETRY_DELAY_MS__ : RETRY_DELAY;
+  return Math.min(base * 2 ** attempt, base ? MAX_RETRY_DELAY : 0);
+};
 
 const axiosInstance = axios.create({
   baseURL: BASE_URL,
@@ -50,11 +77,15 @@ const axiosInstance = axios.create({
 });
 
 // Create the request handler
+// options: { quiet } suppresses logging; { retry: false } disables retries;
+// { retryBudgetMs } overrides the total time spent retrying.
 const makeRequest = async (method, endpoint, data = null, config = {}, retries = MAX_RETRIES, options = {}) => {
-  const { quiet = false } = options;
+  const { quiet = false, retry = true, retryBudgetMs = RETRY_BUDGET_MS } = options;
+  const startedAt = options._startedAt || Date.now();
+  const attempt = MAX_RETRIES - retries;
 
   try {
-    console.log('Making request to:', endpoint);
+    if (!quiet) console.log('Making request to:', endpoint);
     const requestConfig = {
       method,
       url: endpoint,
@@ -68,15 +99,18 @@ const makeRequest = async (method, endpoint, data = null, config = {}, retries =
     const response = await axiosInstance(requestConfig);
     return response;
   } catch (error) {
+    const delay = retryDelay(attempt);
+    const withinBudget = Date.now() - startedAt + delay <= retryBudgetMs;
+    if (retry && retries > 0 && withinBudget && isTransientError(error, method)) {
+      if (!quiet) {
+        console.log(`Retrying ${endpoint} in ${delay}ms (${retries} attempts left)`);
+      }
+      await new Promise(resolve => setTimeout(resolve, delay));
+      return makeRequest(method, endpoint, data, config, retries - 1, { ...options, _startedAt: startedAt });
+    }
+    error.attempts = attempt + 1;
     if (!quiet) {
       console.error('API Error:', error);
-    }
-    if (retries > 0 && (error.code === 'ECONNREFUSED' || error.code === 'ECONNRESET')) {
-      if (!quiet) {
-        console.log(`Retrying... (${retries} attempts left)`);
-      }
-      await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
-      return makeRequest(method, endpoint, data, config, retries - 1, options);
     }
     throw error;
   }
@@ -119,6 +153,6 @@ const api = {
 };
 
 // Named exports for tests (e.g. axios-mock-adapter needs the axios instance).
-export { axiosInstance, BASE_URL, MAX_RETRIES };
+export { axiosInstance, BASE_URL, MAX_RETRIES, RETRY_BUDGET_MS, isTransientError };
 
 export default api;

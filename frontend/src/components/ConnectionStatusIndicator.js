@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Badge, OverlayTrigger, Tooltip, Spinner, Button } from 'react-bootstrap';
+import { Badge, OverlayTrigger, Tooltip, Button } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import connectionService from '../services/connectionService';
+import LoadingBar from './LoadingBar';
 
 /**
  * Enhanced ConnectionStatusIndicator with comprehensive backend connectivity
@@ -9,6 +10,7 @@ import connectionService from '../services/connectionService';
  */
 const ConnectionStatusIndicator = ({
   connected,
+  status,
   systemInfo,
   checkInterval = 30000,
   onConnectionChange
@@ -64,12 +66,16 @@ const ConnectionStatusIndicator = ({
 
   // Initialize connection monitoring
   useEffect(() => {
+    // When the parent passes `status` (MainLayout's useConnection), it already
+    // polls; don't run a second, competing poll here.
+    if (status) return undefined;
     checkConnection(); // Initial check
     
     const intervalId = setInterval(checkConnection, checkInterval);
     
     return () => clearInterval(intervalId);
-  }, [checkInterval, retryCount]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [checkInterval, retryCount, status]);
 
   // Format connection info for display
   const getConnectionInfo = () => {
@@ -83,7 +89,7 @@ const ConnectionStatusIndicator = ({
     return (
       <>
         <div><strong>Backend:</strong> {connectionSource || 'Unknown'}</div>
-        <div><strong>Status:</strong> {connected ? 'Connected' : 'Disconnected'}</div>
+        <div><strong>Status:</strong> {connected ? 'Connected' : (status === 'checking' ? 'Connecting…' : 'Disconnected')}</div>
         {info.server?.self && <div><strong>Server Self:</strong> {info.server.self}</div>}
         {info.source && connectionSource !== info.source && <div><strong>Source:</strong> {info.source}</div>}
         {info.server_type && <div><strong>Type:</strong> {info.server_type}</div>}
@@ -124,9 +130,11 @@ const ConnectionStatusIndicator = ({
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
   };
 
-  // Determine badge variant based on connection status
-  const badgeVariant = connected ? 'success' : 'danger';
-  const statusText = connected ? 'Connected' : 'Disconnected';
+  // Determine badge variant based on connection status. 'checking' is neutral:
+  // a check in progress is not a failure.
+  const effective = status || (isChecking && !connectionDetails ? 'checking' : (connected ? 'online' : 'offline'));
+  const badgeVariant = effective === 'online' ? 'success' : effective === 'offline' ? 'danger' : 'light';
+  const statusText = effective === 'online' ? 'Connected' : effective === 'offline' ? 'Offline' : 'Connecting…';
 
   return (
     <OverlayTrigger
@@ -156,15 +164,15 @@ const ConnectionStatusIndicator = ({
     >
       <Badge 
         bg={badgeVariant} 
+        text={badgeVariant === 'light' ? 'dark' : undefined}
         className="connection-status-badge"
         style={{ cursor: 'pointer' }}
         onClick={() => checkConnection()}
+        data-testid="connection-badge"
+        data-status={effective}
       >
-        {isChecking ? (
-          <>
-            <Spinner animation="border" size="sm" className="me-1" />
-            Checking...
-          </>
+        {effective === 'checking' ? (
+          <LoadingBar inline label={statusText} />
         ) : (
           <>
             <span className={`connection-indicator ${connected ? 'connected' : 'disconnected'}`}>⬤</span>
@@ -178,6 +186,7 @@ const ConnectionStatusIndicator = ({
 
 ConnectionStatusIndicator.propTypes = {
   connected: PropTypes.bool.isRequired,
+  status: PropTypes.oneOf(['checking', 'online', 'offline']),
   systemInfo: PropTypes.object,
   checkInterval: PropTypes.number,
   onConnectionChange: PropTypes.func

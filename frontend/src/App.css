@@ -763,3 +763,36 @@ footer.app-footer {
 @media (prefers-reduced-motion: reduce) {
   .pp-logo-img, .pp-logo-animated { animation: none; }
 }
+
+/* —— Auth pages (Login / Register / Forgot password) ——
+   .container-centered was referenced by the pages but never defined. */
+.container-centered {
+  max-width: 420px;
+  margin: 3rem auto;
+  padding: 2rem 1.75rem;
+  background: var(--pp-surface);
+  border: 1px solid var(--pp-line);
+  border-radius: var(--pp-radius);
+  box-shadow: var(--pp-shadow);
+}
+
+.container-centered h2 {
+  font-weight: 700;
+}
+
+.container-centered .auth-links a {
+  display: inline-block;
+  padding: 0.35rem 0.15rem; /* 44px-ish tap target with line-height */
+}
+
+@media (max-width: 480px) {
+  .container-centered {
+    margin: 1.25rem 1rem;
+    padding: 1.5rem 1.25rem;
+  }
+}
+
+/* Hero glow bled past the viewport on phones (horizontal page scroll). */
+.svc-hero {
+  overflow-x: clip;
+}

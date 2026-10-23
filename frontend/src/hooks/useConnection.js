@@ -1,34 +1,55 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import apiClient from '../api/apiClient';
+import { friendlyError } from '../utils/friendlyError';
 
 const CONNECTION_CHECK_INTERVAL = 5000; // 5 seconds
 
+/**
+ * Backend connection state.
+ *
+ * status: 'checking' until the first check settles (apiClient retries transient
+ * failures for ~15-20s first), then 'online' or 'offline'. Background re-checks
+ * keep the last known status, so the UI never flips to an error while a check
+ * is merely in flight. backendError holds friendly copy, never raw exception text.
+ */
 export const useConnection = () => {
+  const [status, setStatus] = useState('checking');
   const [serverConnected, setServerConnected] = useState(false);
   const [backendError, setBackendError] = useState(null);
   const [isCheckingHealth, setIsCheckingHealth] = useState(false);
   const [connectionInfo, setConnectionInfo] = useState(null);
+  const inFlight = useRef(null);
 
-  const checkConnection = useCallback(async () => {
+  const checkConnection = useCallback(async ({ userInitiated = false } = {}) => {
+    // One check at a time: a slow check plus the interval must not stack requests.
+    if (inFlight.current) return inFlight.current;
     setIsCheckingHealth(true);
-    setBackendError(null);
-    try {
-      const response = await apiClient.get('/api/info');
-      const connected = !!response?.data && response.data.status === 'operational';
-      setServerConnected(connected);
-      setConnectionInfo(response.data);
-      if (!connected) {
-        setBackendError('Unable to connect to backend server');
+    // A user-pressed Retry goes back to the loading state; background polls don't.
+    if (userInitiated) setStatus('checking');
+
+    const run = (async () => {
+      try {
+        const response = await apiClient.get('/api/info', {}, { quiet: true });
+        const connected = !!response?.data && response.data.status === 'operational';
+        setServerConnected(connected);
+        setConnectionInfo(response.data);
+        setStatus(connected ? 'online' : 'offline');
+        setBackendError(connected ? null : 'PocketPro is up but not ready yet. Please try again in a moment.');
+        return { connected, info: response.data, error: null };
+      } catch (error) {
+        const message = friendlyError(error);
+        setServerConnected(false);
+        setConnectionInfo(null);
+        setStatus('offline');
+        setBackendError(message);
+        return { connected: false, info: null, error: message };
+      } finally {
+        setIsCheckingHealth(false);
+        inFlight.current = null;
       }
-      return { connected, info: response.data, error: null };
-    } catch (error) {
-      setServerConnected(false);
-      setConnectionInfo(null);
-      setBackendError(error.message || 'Connection failed');
-      return { connected: false, info: null, error: error.message || 'Connection failed' };
-    } finally {
-      setIsCheckingHealth(false);
-    }
+    })();
+    inFlight.current = run;
+    return run;
   }, []);
 
   const apiCall = useCallback(async (url, options = {}) => {
@@ -59,13 +80,15 @@ export const useConnection = () => {
       return response.data;
     } catch (error) {
       console.error('Error fetching diagnostics:', error);
-      return { error: error.message || 'Failed to fetch diagnostics' };
+      return { error: friendlyError(error) };
     }
   }, []);
 
   const resetConnection = useCallback(async () => {
-    await checkConnection();
+    await checkConnection({ userInitiated: true });
   }, [checkConnection]);
+
+  const retryConnection = useCallback(() => checkConnection({ userInitiated: true }), [checkConnection]);
 
   useEffect(() => {
     checkConnection();
@@ -74,11 +97,13 @@ export const useConnection = () => {
   }, [checkConnection]);
 
   return {
+    status,
     serverConnected,
     backendError,
     isCheckingHealth,
     connectionInfo,
     checkConnection,
+    retryConnection,
     apiCall,
     getDiagnostics,
     resetConnection,

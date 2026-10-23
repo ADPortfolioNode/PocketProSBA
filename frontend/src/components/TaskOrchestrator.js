@@ -1,7 +1,10 @@
-import React, { useState } from 'react';
-import { Card, Form, Button, Alert, Row, Col, Badge, ListGroup } from 'react-bootstrap';
+import React, { useState, useRef } from 'react';
+import { Card, Form, Button, Row, Col, Badge, ListGroup } from 'react-bootstrap';
 import TaskProgress from './TaskProgress';
 import apiClient from '../api/apiClient';
+import LoadingBar from './LoadingBar';
+import { ErrorState } from './AsyncState';
+import { friendlyError } from '../utils/friendlyError';
 
 const TaskOrchestrator = () => {
   const [taskMessage, setTaskMessage] = useState('');
@@ -10,10 +13,14 @@ const TaskOrchestrator = () => {
   const [stepResults, setStepResults] = useState([]);
   const [validationResults, setValidationResults] = useState([]);
   const [error, setError] = useState(null);
+  const [busyStep, setBusyStep] = useState(null); // e.g. 'Running step 2…'
+  const retryRef = useRef(null); // re-runs whatever just failed
+  const noEvent = { preventDefault() {} };
 
   // Step 1: Decompose task
   const handleDecompose = async (e) => {
     e.preventDefault();
+    retryRef.current = null;
     if (!taskMessage.trim()) {
       setError('Please enter a task description');
       return;
@@ -49,7 +56,8 @@ const TaskOrchestrator = () => {
       }
       setTaskMessage('');
     } catch (err) {
-      setError('Failed to decompose task.');
+      retryRef.current = () => handleDecompose(noEvent);
+      setError(friendlyError(err, "We couldn't break that task into steps. Please try again."));
       console.error('Decompose error:', err);
     } finally {
       setSubmitting(false);
@@ -58,6 +66,8 @@ const TaskOrchestrator = () => {
 
   // Step 2: Execute each decomposed step
   const handleExecuteStep = async (step, idx) => {
+    setBusyStep(`Running step ${idx + 1}…`);
+    setError(null);
     try {
       const res = await apiClient.post('/api/execute', { task: step });
       setStepResults(prev => {
@@ -66,13 +76,18 @@ const TaskOrchestrator = () => {
         return updated;
       });
     } catch (err) {
-      setError('Failed to execute step.');
+      retryRef.current = () => handleExecuteStep(step, idx);
+      setError(friendlyError(err, "That step didn't run. Please try again."));
       console.error('Execute step error:', err);
+    } finally {
+      setBusyStep(null);
     }
   };
 
   // Step 3: Validate step result
   const handleValidateStep = async (result, step, idx) => {
+    setBusyStep(`Checking step ${idx + 1}…`);
+    setError(null);
     try {
       const res = await apiClient.post('/api/validate', { result, task: step });
       setValidationResults(prev => {
@@ -81,8 +96,11 @@ const TaskOrchestrator = () => {
         return updated;
       });
     } catch (err) {
-      setError('Failed to validate step.');
+      retryRef.current = () => handleValidateStep(result, step, idx);
+      setError(friendlyError(err, "We couldn't check that result. Please try again."));
       console.error('Validate step error:', err);
+    } finally {
+      setBusyStep(null);
     }
   };
 
@@ -119,17 +137,20 @@ const TaskOrchestrator = () => {
               disabled={submitting || !taskMessage.trim()}
               className="w-100"
             >
-              {submitting ? (
-                <>
-                  <span className="spinner-border spinner-border-sm me-2" role="status" />
-                  Decomposing Task...
-                </>
-              ) : 'Decompose Task'}
+              {submitting ? <LoadingBar inline label="Decomposing task…" /> : 'Decompose Task'}
             </Button>
           </Form>
 
-          {error && (
-            <Alert variant="danger" className="mt-3">{error}</Alert>
+          {submitting && <LoadingBar label="Breaking your task into steps…" className="py-3" />}
+          {busyStep && <LoadingBar label={busyStep} className="py-3" />}
+          {error && !submitting && (
+            <ErrorState
+              compact
+              title="That didn't finish"
+              message={error}
+              onRetry={() => { const again = retryRef.current; setError(null); if (again) again(); }}
+              retryLabel={retryRef.current ? 'Retry' : 'OK'}
+            />
           )}
 
           {decomposedSteps.length > 0 && (

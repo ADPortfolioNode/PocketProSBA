@@ -71,7 +71,7 @@ const services = [
 
 function Home() {
   return (
-    <main className="pp-home svc-home">
+    <div className="pp-home svc-home">
       <section className="svc-hero">
         <div className="svc-hero-copy">
           <p className="pp-eyebrow svc-eyebrow">SBA service workspace</p>
@@ -167,7 +167,7 @@ function Home() {
           />
         </div>
       </section>
-    </main>
+    </div>
   );
 }
 

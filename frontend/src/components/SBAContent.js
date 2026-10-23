@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { businessLifecycleStages, localResourceTypes, sbaPrograms } from '../sbaResources';
 import apiClient from '../api/apiClient';
+import LoadingBar from './LoadingBar';
+import { useSlowFlag } from '../hooks/useAsync';
 import {
   Card,
   Nav,
@@ -8,7 +10,6 @@ import {
   Col,
   Container,
   Badge,
-  Spinner,
   Alert,
   Button,
   Modal,
@@ -32,6 +33,7 @@ const SBAContent = ({ onProgramSelect, onResourceSelect }) => {
   const [selected, setSelected] = useState(null);
   const [related, setRelated] = useState([]);
   const [relatedLoading, setRelatedLoading] = useState(false);
+  const slowLoading = useSlowFlag(loading, 5000);
 
   const normalizeCard = (raw, index, fallbackIcon = '📁') => {
     if (!raw || typeof raw !== 'object') return null;
@@ -103,7 +105,9 @@ const SBAContent = ({ onProgramSelect, onResourceSelect }) => {
       setLifecycle(life.map((c, i) => normalizeCard(c, i, '📌')).filter(Boolean));
       setLocal(loc.map((c, i) => normalizeCard(c, i, '📍')).filter(Boolean));
     } catch (err) {
-      setError(err.message || 'Failed to load SBA program cards');
+      console.error('SBA program cards failed:', err);
+      // Fallback cards still render, so this is a soft notice, not an error screen.
+      setError("Live SBA data isn't available right now");
       setPrograms((sbaPrograms || []).map((c, i) => normalizeCard(c, i, '💼')).filter(Boolean));
       setLifecycle(
         (businessLifecycleStages || []).map((c, i) => normalizeCard(c, i, '📌')).filter(Boolean)
@@ -279,12 +283,7 @@ const SBAContent = ({ onProgramSelect, onResourceSelect }) => {
       </Card.Header>
 
       <Card.Body className="content-explorer-body navigation-content">
-        {loading && (
-          <div className="text-center py-5">
-            <Spinner animation="border" variant="primary" />
-            <div className="mt-2 text-muted">Loading SBA resources…</div>
-          </div>
-        )}
+        {loading && <LoadingBar label="Loading SBA resources…" slow={slowLoading} />}
         {!loading && error && (
           <Alert variant="warning" className="mb-3">
             {error} — showing best available cards.
@@ -354,10 +353,7 @@ const SBAContent = ({ onProgramSelect, onResourceSelect }) => {
                 </>
               )}
               {relatedLoading && (
-                <div className="text-muted small">
-                  <Spinner animation="border" size="sm" className="me-2" />
-                  Loading API endpoint results into this card…
-                </div>
+                <LoadingBar label="Loading related results…" className="py-3" />
               )}
               {!relatedLoading && related.length > 0 && (
                 <>

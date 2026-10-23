@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from './hooks/useAuth';
+import LoadingBar from './components/LoadingBar';
+import { friendlyError } from './utils/friendlyError';
 
 function ForgotPassword() {
   const [email, setEmail] = useState('');
@@ -24,7 +26,8 @@ function ForgotPassword() {
       setMessage('If this email is registered, you will receive password reset instructions.');
     } catch (err) {
       // authError from useAuth is stale inside this closure; read the failed request instead.
-      setError(err?.response?.data?.error || authError || 'Password reset request failed');
+      // friendlyError keeps short 4xx messages ("Invalid credentials") and hides raw 5xx/network text.
+      setError(friendlyError(err, authError || 'Password reset request failed. Please try again.'));
     }
   };
 
@@ -46,9 +49,11 @@ function ForgotPassword() {
             required
           />
         </div>
-        <button type="submit" className="btn btn-primary w-100">Send Reset Link</button>
+        <button type="submit" className="btn btn-primary w-100" disabled={loading} aria-busy={loading}>
+          {loading ? <LoadingBar inline label="Sending…" /> : 'Send Reset Link'}
+        </button>
       </form>
-      <p className="mt-3 text-center">
+      <p className="mt-3 text-center auth-links">
         Remembered your password? <Link to="/login">Log in</Link>
       </p>
     </div>

@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from './hooks/useAuth';
+import LoadingBar from './components/LoadingBar';
+import { friendlyError } from './utils/friendlyError';
 
 function Login() {
   const [email, setEmail] = useState('');
@@ -26,7 +28,8 @@ function Login() {
     } catch (err) {
       // Error is already set by useAuth hook, but we can add more specific handling here if needed
       // authError from useAuth is stale inside this closure; read the failed request instead.
-      setError(err?.response?.data?.error || authError || 'Login failed');
+      // friendlyError keeps short 4xx messages ("Invalid credentials") and hides raw 5xx/network text.
+      setError(friendlyError(err, authError || 'Login failed. Please try again.'));
     }
   };
 
@@ -59,10 +62,14 @@ function Login() {
             required
           />
         </div>
-        <button type="submit" className="btn btn-primary w-100">Log In</button>
+        <button type="submit" className="btn btn-primary w-100" disabled={loading} aria-busy={loading}>
+          {loading ? <LoadingBar inline label="Signing in…" /> : 'Log In'}
+        </button>
       </form>
-      <p className="mt-3 text-center">
+      <p className="mt-3 text-center auth-links">
         Don't have an account? <Link to="/register">Register</Link>
+        <span className="mx-2" aria-hidden="true">·</span>
+        <Link to="/forgot-password">Forgot password?</Link>
       </p>
     </div>
   );

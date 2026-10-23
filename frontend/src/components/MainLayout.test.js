@@ -39,14 +39,54 @@ describe('MainLayout', () => {
     expect(screen.getByText('Chat view')).toBeInTheDocument();
   });
 
-  test('when the backend is unreachable it offers a retry that re-checks the connection', () => {
-    const checkConnection = jest.fn();
+  test('while the first connection check is pending it shows the loader, never an error', () => {
     renderWithProviders(
-      <MainLayout useConnectionHook={connection({ serverConnected: false, backendError: 'Network Error', checkConnection })} />,
+      <MainLayout useConnectionHook={connection({ status: 'checking', serverConnected: false })} />,
+      { route: '/chat' }
+    );
+    expect(screen.getByRole('progressbar', { name: /Connecting to PocketPro/i })).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(screen.queryByText(/error/i)).not.toBeInTheDocument();
+    expect(screen.queryByText('Chat view')).not.toBeInTheDocument();
+  });
+
+  test('a hook without `status` that has no result yet also reads as loading', () => {
+    renderWithProviders(
+      <MainLayout useConnectionHook={connection({ status: undefined, serverConnected: false, backendError: null })} />,
+      { route: '/rag' }
+    );
+    expect(screen.getByTestId('connection-loading')).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
+  test('Home is static and renders even while the backend is still connecting', () => {
+    renderWithProviders(
+      <MainLayout useConnectionHook={connection({ status: 'checking', serverConnected: false })} />,
+      { route: '/' }
+    );
+    expect(screen.getByRole('heading', { name: /Funding guidance built for small business/i })).toBeInTheDocument();
+    expect(screen.queryByTestId('connection-loading')).not.toBeInTheDocument();
+  });
+
+  test('after a real failure it shows a friendly error with Retry (no raw exception text)', () => {
+    const retryConnection = jest.fn();
+    renderWithProviders(
+      <MainLayout
+        useConnectionHook={connection({
+          status: 'offline',
+          serverConnected: false,
+          backendError: "We couldn't reach PocketPro. Check your connection and try again.",
+          retryConnection,
+        })}
+      />,
       { route: '/chat' }
     );
     expect(screen.queryByText('Chat view')).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: /Retry Connection/i }));
-    expect(checkConnection).toHaveBeenCalled();
+    const alert = screen.getByRole('alert');
+    expect(alert).toHaveTextContent(/can't reach PocketPro/i);
+    expect(alert).not.toHaveTextContent(/status code|AxiosError|Backend URL/i);
+    fireEvent.click(screen.getByRole('button', { name: /^Retry$/i }));
+    expect(retryConnection).toHaveBeenCalled();
   });
+
 });

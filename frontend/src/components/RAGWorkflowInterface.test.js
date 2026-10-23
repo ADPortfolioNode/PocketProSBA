@@ -95,4 +95,30 @@ describe('RAGWorkflowInterface', () => {
     fireEvent.click(screen.getByRole('button', { name: /Generate Final Answer/i }));
     await waitFor(() => expect(screen.getByText(/AI-generated answer based on validated steps and retrieved context\./i)).toBeInTheDocument());
   });
+
+  it('shows the loader while decomposing and a friendly Retry on failure', async () => {
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    let reject;
+    apiClient.post.mockImplementationOnce(() => new Promise((_, r) => { reject = r; }));
+    apiClient.post.mockResolvedValueOnce({ data: { response: { steps: [{ instruction: 'Step A' }] } } });
+    render(<RAGWorkflowInterface documents={[]} searchResults={[]} ragResponse={null} />);
+    fireEvent.click(screen.getByText(/Start Task Without Upload/i));
+    fireEvent.change(screen.getByPlaceholderText(/Find SBA loan options/i), { target: { value: 'Find SBA loan options' } });
+    fireEvent.click(screen.getByRole('button', { name: /Decompose Task/i }));
+
+    expect(await screen.findByRole('progressbar', { name: /Breaking your task into steps/i })).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+
+    reject({ response: { status: 500, data: { error: 'Failed to process message: boom' } } });
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent(/on our side/i);
+    expect(alert).not.toHaveTextContent(/boom/);
+
+    fireEvent.click(screen.getByRole('button', { name: /^Retry$/i }));
+    // A successful decompose moves the view to the Execute step, one button per step.
+    expect(await screen.findByRole('button', { name: /Execute Step 1/i })).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(apiClient.post).toHaveBeenCalledTimes(2);
+    console.error.mockRestore();
+  });
 });

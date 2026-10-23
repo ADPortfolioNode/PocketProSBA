@@ -110,6 +110,47 @@ describe('useConnection', () => {
     expect(diagnostics).toEqual({ error: expect.any(String) });
   });
 
+  it('reports status checking -> online, and keeps online during background re-checks', async () => {
+    mock.onGet('/api/info').reply(200, { status: 'operational' });
+    const { result } = renderHook(() => useConnection());
+    expect(result.current.status).toBe('checking');
+    await waitFor(() => expect(result.current.status).toBe('online'));
+
+    let resolveSlow;
+    mock.onGet('/api/info').reply(() => new Promise((r) => { resolveSlow = () => r([200, { status: 'operational' }]); }));
+    act(() => { result.current.checkConnection(); });
+    await waitFor(() => expect(result.current.isCheckingHealth).toBe(true));
+    expect(result.current.status).toBe('online'); // no flip to checking/offline mid-check
+    expect(result.current.backendError).toBeNull();
+    await act(async () => { resolveSlow(); });
+  });
+
+  it('stays "checking" while a cold backend answers 502s, then goes online', async () => {
+    mock.onGet('/api/info').replyOnce(502).onGet('/api/info').replyOnce(502).onGet('/api/info').reply(200, { status: 'operational' });
+    const { result } = renderHook(() => useConnection());
+    expect(result.current.status).toBe('checking');
+    await waitFor(() => expect(result.current.status).toBe('online'));
+    expect(result.current.backendError).toBeNull();
+  });
+
+  it('goes offline with friendly copy only after retries are exhausted', async () => {
+    mock.onGet('/api/info').networkError();
+    const { result } = renderHook(() => useConnection());
+    await waitFor(() => expect(result.current.status).toBe('offline'));
+    expect(result.current.backendError).toMatch(/couldn't reach PocketPro/i);
+    expect(result.current.backendError).not.toMatch(/Network Error/);
+    expect(mock.history.get.filter((r) => r.url === '/api/info').length).toBeGreaterThan(1);
+  });
+
+  it('retryConnection returns to the loading state before re-checking', async () => {
+    mock.onGet('/api/info').replyOnce(500).onGet('/api/info').reply(200, { status: 'operational' });
+    const { result } = renderHook(() => useConnection());
+    await waitFor(() => expect(result.current.status).toBe('offline'));
+    act(() => { result.current.retryConnection(); });
+    expect(result.current.status).toBe('checking');
+    await waitFor(() => expect(result.current.status).toBe('online'));
+  });
+
   it('should reset connection by re-checking health', async () => {
     mock.onGet('/api/info').replyOnce(500).onGet('/api/info').reply(200, { status: 'operational' });
 

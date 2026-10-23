@@ -239,6 +239,28 @@
     .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
       @keyframes pp-yinyang-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
     .pp-logo-img, .pp-logo-animated, img[src*="yinyang"], img[src*="logo.gif"] { width: 28px; height: 28px; border-radius: 50%; object-fit: contain; background: #fff; box-shadow: 0 0 0 2px var(--soft, #dbeafe); animation: pp-yinyang-spin 6s linear infinite; vertical-align: middle; }
+    /* Candy-stripe loading bar (same look as the SPA's LoadingBar) */
+    .spinner {
+      width: min(260px, 80%); height: 10px; border: 0; border-radius: 999px; margin: 0 auto .85rem;
+      background-color: var(--blue, #2563eb);
+      background-image: linear-gradient(-45deg, rgba(255,255,255,.38) 25%, transparent 25%, transparent 50%, rgba(255,255,255,.38) 50%, rgba(255,255,255,.38) 75%, transparent 75%, transparent);
+      background-size: 20px 20px; animation: pp-candy .9s linear infinite;
+    }
+    @keyframes pp-candy { from { background-position: 0 0; } to { background-position: 20px 0; } }
+    /* Small inline spots get the pinwheel */
+    .expand-loading .spinner {
+      width: 18px; height: 18px; margin: 0; border-radius: 50%;
+      background: conic-gradient(var(--blue, #2563eb) 0 25%, var(--soft, #dbeafe) 0 50%, var(--blue, #2563eb) 0 75%, var(--soft, #dbeafe) 0);
+      animation: spin .8s linear infinite;
+    }
+    .pp-fail { text-align: center; padding: 2.25rem 1rem; color: #334155; }
+    .pp-fail p { margin: 0 0 .85rem; }
+    .pp-retry {
+      display: inline-flex; align-items: center; justify-content: center; min-height: 40px; padding: .5rem 1.1rem;
+      border-radius: 999px; border: 0; cursor: pointer; font: inherit; font-weight: 600; color: #fff;
+      background: linear-gradient(135deg, #3b82f6, #2563eb); box-shadow: 0 8px 18px rgba(37,99,235,.22);
+    }
+    @media (prefers-reduced-motion: reduce) { .spinner, .expand-loading .spinner { animation: none !important; } }
   </style>
 </head>
 <body>
@@ -353,7 +375,41 @@
         .replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
     }
 
-    async function apiGet(path, params, timeoutMs) {
+    /* Friendly failure block with Retry (shown only after apiGet gave up). */
+    function failHtml(msg) {
+      return '<div class="pp-fail" role="alert"><p>' + escapeHtml(msg) + '</p>' +
+        '<button type="button" class="pp-retry" data-pp-retry="1">Retry</button></div>';
+    }
+    function bindRetry(container, fn) {
+      var b = container && container.querySelector('[data-pp-retry]');
+      if (b) b.addEventListener('click', fn);
+    }
+    function friendlyFail(e) {
+      var m = String((e && e.message) || e || '');
+      if (/Timed out/i.test(m)) return 'This is taking longer than expected. Please try again.';
+      if (/HTTP 5\d\d/.test(m)) return 'Something went wrong on our side. Please try again in a moment.';
+      if (/HTTP 4\d\d/.test(m)) return "We couldn't find that section. Try another category.";
+      return "We couldn't reach PocketPro. Check your connection and try again.";
+    }
+
+    /* Retry transient failures (cold start, 5xx, network) for up to ~15s before
+       reporting an error, so slow startups show the loader, not a failure. */
+    async function apiGet() {
+      var args = arguments, delays = [1000, 2000, 4000, 4000, 4000], started = Date.now(), lastErr;
+      for (var i = 0; i <= delays.length; i++) {
+        try { return await apiGetOnce.apply(null, args); }
+        catch (e) {
+          lastErr = e;
+          var msg = String((e && e.message) || '');
+          var transient = !/HTTP 4\d\d/.test(msg) && !/Timed out/i.test(msg);
+          if (!transient || i === delays.length || Date.now() - started + delays[i] > 20000) break;
+          await new Promise(function (r) { setTimeout(r, delays[i]); });
+        }
+      }
+      throw lastErr;
+    }
+
+    async function apiGetOnce(path, params, timeoutMs) {
       const bases = [window.location.origin, 'http://127.0.0.1:5000', 'http://localhost:5000'];
       const ms = timeoutMs || 60000;
       let lastErr = null;
@@ -372,10 +428,10 @@
             headers: { Accept: 'application/json' },
             signal: controller ? controller.signal : undefined,
           });
-          if (!res.ok) { lastErr = new Error('HTTP ' + res.status); continue; }
+          if (!res.ok) { if (!(lastErr && /^HTTP /.test(lastErr.message))) lastErr = new Error('HTTP ' + res.status); continue; }
           return await res.json();
         } catch (e) {
-          lastErr = e && e.name === 'AbortError' ? new Error('Timed out: ' + path) : e;
+          if (!(lastErr && /^HTTP /.test(lastErr.message))) lastErr = e && e.name === 'AbortError' ? new Error('Timed out: ' + path) : e;
         } finally {
           if (timer) clearTimeout(timer);
         }
@@ -658,8 +714,9 @@
         renderTopicPage();
       } catch (e) {
         console.error(e);
-        $('page').innerHTML = '<div class="empty">Failed to digest this route.</div>';
-        showAlert('Load failed for ' + route + ': ' + (e.message || e), true);
+        $('page').innerHTML = failHtml(friendlyFail(e));
+        bindRetry($('page'), function () { openRoute(route, title, opts); });
+        showAlert('');
       }
     }
 
@@ -1083,8 +1140,9 @@
           if (preferred) await openRoute(preferred.path, preferred.name, { resetHistory: true });
         }
       } catch (e) {
-        $('navList').innerHTML = '<div class="empty">Catalog failed.</div>';
-        showAlert('Could not load /api/sba/resources: ' + (e.message || e), true);
+        $('navList').innerHTML = failHtml(friendlyFail(e));
+        bindRetry($('navList'), function () { loadCatalog(); });
+        showAlert('');
       }
     }
 

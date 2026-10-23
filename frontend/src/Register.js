@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from './hooks/useAuth';
+import LoadingBar from './components/LoadingBar';
+import { friendlyError } from './utils/friendlyError';
 
 function Register() {
   const [email, setEmail] = useState('');
@@ -30,7 +32,8 @@ function Register() {
       navigate('/login');
     } catch (err) {
       // authError from useAuth is stale inside this closure; read the failed request instead.
-      setError(err?.response?.data?.error || authError || 'Registration failed');
+      // friendlyError keeps short 4xx messages ("Invalid credentials") and hides raw 5xx/network text.
+      setError(friendlyError(err, authError || 'Registration failed. Please try again.'));
     }
   };
 
@@ -75,9 +78,11 @@ function Register() {
             required
           />
         </div>
-        <button type="submit" className="btn btn-primary w-100">Sign Up</button>
+        <button type="submit" className="btn btn-primary w-100" disabled={loading} aria-busy={loading}>
+          {loading ? <LoadingBar inline label="Creating account…" /> : 'Sign Up'}
+        </button>
       </form>
-      <p className="mt-3 text-center">
+      <p className="mt-3 text-center auth-links">
         Already have an account? <Link to="/login">Log in</Link>
       </p>
     </div>
