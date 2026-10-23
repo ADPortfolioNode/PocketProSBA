@@ -11,7 +11,7 @@ if %ERRORLEVEL% EQU 0 (
     del backend-local-health.tmp
 ) else (
     echo [ERROR] Local Backend API is NOT running or not accessible
-    echo         Make sure to start the local backend with 'python run.py'
+    echo         Make sure to start the local backend with 'python wsgi.py'
 )
 echo.
 

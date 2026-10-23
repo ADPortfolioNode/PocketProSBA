@@ -9,7 +9,7 @@ try {
     Write-Host "    Status: $($response.StatusCode)" -ForegroundColor Green
 } catch {
     Write-Host "[X] Local backend API is NOT running or not accessible on port 5000" -ForegroundColor Red
-    Write-Host "    Make sure to start the local backend with 'python run.py'" -ForegroundColor Red
+    Write-Host "    Make sure to start the local backend with 'python wsgi.py'" -ForegroundColor Red
 }
 Write-Host ""
 
@@ -215,7 +215,7 @@ if (-not (Test-Path $fixScriptPath)) {
 
 Write-Host "===== Troubleshooting Tips =====" -ForegroundColor Cyan
 Write-Host "1. For local development:" -ForegroundColor White
-Write-Host "   - Start backend: python run.py" -ForegroundColor White
+Write-Host "   - Start backend: python wsgi.py" -ForegroundColor White
 Write-Host "   - Start frontend: cd frontend & npm start" -ForegroundColor White
 Write-Host ""
 Write-Host "2. For Docker setup:" -ForegroundColor White

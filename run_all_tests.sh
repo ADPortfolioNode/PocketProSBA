@@ -74,10 +74,11 @@ run_integration_tests() {
     echo -e "${YELLOW}Running integration tests...${NC}"
 
     # Start backend server in background
-    cd backend
-    source venv/bin/activate
-    python app.py &
+    # Start from the repo root through the single entrypoint (wsgi:application)
+    source backend/venv/bin/activate
+    FLASK_ENV=development gunicorn wsgi:application --bind 127.0.0.1:5000 &
     BACKEND_PID=$!
+    cd backend
 
     # Wait for backend to start
     sleep 5

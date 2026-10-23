@@ -31,7 +31,8 @@ echo === Starting Development Servers ===
 
 REM Start backend server
 echo Starting backend server...
-start "PocketPro Backend" python run.py
+REM Same entrypoint as production (wsgi:application); gunicorn has no Windows build.
+start "PocketPro Backend" cmd /c "set FLASK_ENV=development&& set PORT=5000&& python wsgi.py"
 
 REM Wait for backend to start
 timeout /t 5 /nobreak

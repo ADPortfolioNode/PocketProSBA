@@ -33,6 +33,6 @@ if [ -z "$GEMINI_API_KEY" ]; then
     echo "Warning: GEMINI_API_KEY is not set"
 fi
 
-# Start the FastAPI application
-echo "Starting FastAPI application..."
-exec uvicorn app_fastapi:app --host 0.0.0.0 --port 5000
+# Start the Flask app through the single entrypoint (wsgi:application)
+echo "Starting PocketPro SBA (gunicorn wsgi:application)..."
+exec gunicorn wsgi:application --bind 0.0.0.0:${PORT:-5000} --workers 2 --threads 4 --timeout 60

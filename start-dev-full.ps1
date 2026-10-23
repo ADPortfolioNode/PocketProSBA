@@ -1,7 +1,8 @@
 Write-Host "Starting PocketPro:SBA Edition (Backend and Frontend)..." -ForegroundColor Cyan
 
 # Start the backend in a new window
-Start-Process powershell -ArgumentList "-Command python run.py" -WindowStyle Normal
+# Same entrypoint as production (wsgi:application); gunicorn has no Windows build.
+Start-Process powershell -ArgumentList "-Command `$env:FLASK_ENV='development'; `$env:PORT='5000'; python wsgi.py" -WindowStyle Normal
 
 # Wait a moment for the backend to initialize
 Write-Host "Waiting for backend to initialize..." -ForegroundColor Yellow

@@ -31,7 +31,8 @@ echo    Health check: http://localhost:5000/health
 echo.
 
 REM Start backend in a new window
-start "PocketPro Backend" cmd /k "python app.py"
+REM Same entrypoint as production (wsgi:application); gunicorn has no Windows build
+start "PocketPro Backend" cmd /k "set FLASK_ENV=development&& set PORT=5000&& python wsgi.py"
 
 REM Wait a moment for backend to start
 echo Waiting 5 seconds for backend to initialize...

@@ -63,8 +63,9 @@ cd ..
 echo %YELLOW%Running integration tests...%NC%
 
 REM Start backend server in background
+REM Same entrypoint as production (wsgi:application), started from the repo root
+start /B cmd /c "set FLASK_ENV=development&& set PORT=5000&& python wsgi.py"
 cd backend
-start /B python app.py
 timeout /t 5 /nobreak > nul
 
 REM Run integration tests

@@ -1,1 +1,3 @@
+# Keep in lockstep with the chromadb client pinned in backend/requirements.txt
+# (0.4.24). A 0.5.x server breaks the 0.4.x client ("dimension" errors).
 FROM chromadb/chroma:0.4.24
