@@ -2,7 +2,7 @@
 echo "Starting PocketPro:SBA Edition (Backend and Frontend)..."
 
 # Start the backend in the background
-python run.py &
+FLASK_ENV=development gunicorn wsgi:application --bind 0.0.0.0:5000 --reload --workers 1 --threads 4 --timeout 120 &
 BACKEND_PID=$!
 
 # Wait a moment for the backend to initialize

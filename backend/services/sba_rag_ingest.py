@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import hashlib
 import logging
+import os
 import re
 import threading
 import time
@@ -28,6 +29,14 @@ _lock = threading.Lock()
 
 
 def _kb_live_dir() -> Path:
+    # SBA_KB_LIVE_DIR overrides where live ingests are written. The test suite
+    # points it at a temp dir so pytest never rewrites the tracked
+    # backend/knowledge_base/ files.
+    override = os.environ.get("SBA_KB_LIVE_DIR", "").strip()
+    if override:
+        p = Path(override)
+        p.mkdir(parents=True, exist_ok=True)
+        return p
     here = Path(__file__).resolve()
     candidates = [
         here.parents[1] / "knowledge_base" / "sba_api_live",  # backend/knowledge_base/sba_api_live

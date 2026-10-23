@@ -1,5 +1,5 @@
 # Multi-stage Dockerfile for production deployment
-FROM python:3.11-slim as base
+FROM python:3.11-slim AS base
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -28,10 +28,10 @@ RUN pip install --no-cache-dir --upgrade pip setuptools wheel \
     && pip install --no-cache-dir -r backend/requirements.txt
 
 # Production stage
-FROM base as production
+FROM base AS production
 
-# Copy application entrypoints and backend package
-COPY wsgi.py run.py ./
+# Copy the single entrypoint (wsgi:application) and the backend package
+COPY wsgi.py ./
 COPY backend/ ./backend/
 
 # Runtime directories
@@ -48,7 +48,7 @@ USER app
 EXPOSE 5000
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
   CMD curl -f http://127.0.0.1:5000/api/health || exit 1
 
 # Start application via WSGI entrypoint (preserves backend.* imports)

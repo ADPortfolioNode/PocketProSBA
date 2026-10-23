@@ -7,7 +7,7 @@ echo Checking if the local backend API is running on port 5000...
 curl -s -o nul -w "%%{http_code}" http://localhost:5000/health
 if %ERRORLEVEL% NEQ 0 (
     echo [X] Local backend API is NOT running or not accessible on port 5000
-    echo     Make sure to start the local backend with 'python run.py'
+    echo     Make sure to start the local backend with 'python wsgi.py'
 ) else (
     echo [√] Local backend API is running at http://localhost:5000
 )
@@ -53,7 +53,7 @@ echo.
 
 echo ===== Troubleshooting Tips =====
 echo 1. For local development:
-echo    - Start backend: python run.py
+echo    - Start backend: python wsgi.py
 echo    - Start frontend: cd frontend ^& npm start
 echo.
 echo 2. For Docker setup:

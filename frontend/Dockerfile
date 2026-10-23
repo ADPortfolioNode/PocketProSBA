@@ -1,26 +1,26 @@
-﻿FROM node:16-alpine as build
+FROM node:22-alpine AS build
 
 WORKDIR /app
 
-# Copy package files and install dependencies
-COPY package*.json ./
-RUN npm install
-RUN npm install react-bootstrap@2.8.0 --save
+# Install exactly what package-lock.json pins
+COPY package.json package-lock.json ./
+RUN npm ci
 
 # Copy source files
 COPY . .
 
-# Set environment variables - prevent ESLint errors from failing the build
-ENV CI=false
-ENV ESLINT_NO_DEV_ERRORS=true
 ENV NODE_OPTIONS=--max-old-space-size=4096
 
 # Build the application
 RUN npm run build
 
 # Production environment
-FROM nginx:alpine
+FROM nginx:1.27-alpine
 COPY --from=build /app/build /usr/share/nginx/html
 EXPOSE 80
+
+# nginx:alpine ships busybox wget, not curl.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD wget -q --spider http://127.0.0.1/ || exit 1
 
 CMD ["nginx", "-g", "daemon off;"]

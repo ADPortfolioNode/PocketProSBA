@@ -1,6 +1,15 @@
 #!/usr/bin/env python3
 """
-Simplified entry point for Render.com deployment
+The single backend entry point for PocketPro:SBA.
+
+Every launcher uses ``wsgi:application``:
+  - Procfile / Fly / Render:  gunicorn wsgi:application
+  - Dockerfile.production:    gunicorn wsgi:application
+  - Dockerfile.dev / compose: gunicorn wsgi:application --reload (FLASK_ENV=development)
+  - start.sh, start-dev*.sh:  gunicorn wsgi:application
+  - Windows (no gunicorn):    python wsgi.py
+FLASK_ENV defaults to production here, so SECRET_KEY must be set unless
+FLASK_ENV=development is exported first.
 """
 import os
 import sys
@@ -28,8 +37,9 @@ try:
 
     app = create_app()
     
-    # Configure for production
-    app.config['DEBUG'] = False
+    # Production never runs with DEBUG on, whatever the config says.
+    if os.environ.get('FLASK_ENV', 'production') == 'production':
+        app.config['DEBUG'] = False
     app.config['TESTING'] = False
     
     # Ensure uploads directory exists
@@ -46,7 +56,7 @@ try:
     
     if __name__ == "__main__":
         # For local testing - ensure proper host/port binding
-        port = int(os.environ.get('PORT', 10000))  # Default to 10000 per Render.com docs
+        port = int(os.environ.get('PORT', 5000))  # hosts (Render/Fly) set PORT
         print(f"🚀 Starting on host=0.0.0.0, port={port}")
         app.run(host='0.0.0.0', port=port, debug=False)
         

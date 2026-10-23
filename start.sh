@@ -343,10 +343,10 @@ if [[ "$LOCAL" == true ]]; then
     set +a
   fi
   if [[ "$MODE" == "prod" ]]; then
-    CMD=(gunicorn --bind "$HOST:$PORT" --config backend/gunicorn.conf.py app:app)
+    CMD=(gunicorn --config backend/gunicorn.conf.py --bind "$HOST:$PORT" wsgi:application)
   else
     export FLASK_ENV=development
-    CMD=(python run.py)
+    CMD=(gunicorn --bind "$HOST:$PORT" --reload --workers 1 --threads 4 --timeout 120 wsgi:application)
   fi
   if [[ "$NO_LOGFILE" == true ]]; then
     "${CMD[@]}" &

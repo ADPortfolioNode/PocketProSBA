@@ -246,6 +246,9 @@ datasets/
 !config/*.json
 !config/*.yaml
 !config/*.yml
+# Vercel project config (frontend deploy)
+!vercel.json
+!frontend/vercel.json
 
 # ==============================================================================
 # IDEs & Editors
