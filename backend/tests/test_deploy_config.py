@@ -117,3 +117,20 @@ def test_vercel_config_builds_frontend(rel, out):
     assert "npm run build" in cfg["buildCommand"]
     assert cfg["outputDirectory"] == out
     assert any(r["destination"] == "/index.html" for r in cfg.get("rewrites", []))
+
+
+def test_dev_image_pins_match_backend_requirements():
+    """Dockerfile.dev installs pinned packages in batches instead of reading
+    backend/requirements.txt; every pin it names must match, and the
+    rate limiter must be there (security.py silently disables limits without it)."""
+    req = dict(
+        (m.group(1).lower(), m.group(2))
+        for m in re.finditer(r"^([A-Za-z0-9_.\-]+)==([\w.]+)", _read("backend/requirements.txt"), flags=re.M)
+    )
+    dev = dict(
+        (m.group(1).lower(), m.group(2))
+        for m in re.finditer(r"(?<![\w\"<>=-])([A-Za-z][A-Za-z0-9_.\-]*)==([\w.]+)", _read("Dockerfile.dev"))
+    )
+    assert "flask-limiter" in dev
+    mismatched = {k: (v, req[k]) for k, v in dev.items() if k in req and req[k] != v}
+    assert not mismatched, f"Dockerfile.dev pins differ from backend/requirements.txt: {mismatched}"
