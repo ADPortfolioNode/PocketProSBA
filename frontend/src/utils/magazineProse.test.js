@@ -87,28 +87,17 @@ describe('magazineProse link safety', () => {
   });
 });
 
-describe('public/static/js/chat-magazine.js (prebuilt chat formatter) link safety', () => {
-  let legacy;
-  beforeAll(() => {
+describe('legacy prebuilt chat formatter', () => {
+  // public/static/js/chat-magazine.js was an unused copy of this formatter and was
+  // removed; magazineProse.js is the only chat formatter, so nothing may load it.
+  test('public/ has no chat-magazine.js and no page loads it', () => {
     const fs = require('fs');
     const path = require('path');
-    const src = fs.readFileSync(path.join(__dirname, '../../public/static/js/chat-magazine.js'), 'utf8');
-    // eslint-disable-next-line no-new-func
-    new Function(src)();
-    legacy = window.PocketProMagazineChat;
-  });
-
-  test.each(DANGEROUS)('rejects %p', (href) => {
-    expect(legacy.normalizeHref(href)).toBe('');
-  });
-
-  test('keeps safe links', () => {
-    expect(hrefsIn(legacy.format('[a](https://sba.gov) [b](mailto:a@b.co) [c](/browse) [d](#top)'))).toEqual([
-      'https://sba.gov',
-      'mailto:a@b.co',
-      '/browse',
-      '#top',
-    ]);
-    expect(hrefsIn(legacy.format('see [click](javascript:alert(document.domain))'))).toEqual([]);
+    const publicDir = path.join(__dirname, '../../public');
+    expect(fs.existsSync(path.join(publicDir, 'static/js/chat-magazine.js'))).toBe(false);
+    const html = fs.readdirSync(publicDir).filter((f) => f.endsWith('.html'));
+    html.forEach((f) => {
+      expect(fs.readFileSync(path.join(publicDir, f), 'utf8')).not.toContain('chat-magazine.js');
+    });
   });
 });

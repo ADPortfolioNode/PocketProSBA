@@ -52,9 +52,8 @@ npm install
 
 ### 4. Run Locally
 ```bash
-# Terminal 1 - Backend
-cd backend
-flask run
+# Terminal 1 - Backend (repo root)
+FLASK_ENV=development python wsgi.py
 
 # Terminal 2 - Frontend  
 cd frontend
@@ -106,13 +105,11 @@ GENERATE_SOURCEMAP=false
 
 ### Backend Development
 ```bash
-cd backend
-
-# Development mode with auto-reload
-flask run --debug
+# From the repo root. Development mode with auto-reload
+FLASK_ENV=development gunicorn wsgi:application --reload
 
 # Or with custom port
-FLASK_ENV=development flask run --port=5000
+FLASK_ENV=development PORT=5000 python wsgi.py
 ```
 
 ### Start with launcher script
@@ -306,8 +303,8 @@ Returns system diagnostics information.
 
 **Backend logs:**
 ```bash
-# Flask development logs
-FLASK_ENV=development flask run
+# Flask development logs (repo root)
+FLASK_ENV=development python wsgi.py
 
 # Gunicorn production logs  
 gunicorn 'backend.app:create_app()' --bind 0.0.0.0:5000 --log-level debug

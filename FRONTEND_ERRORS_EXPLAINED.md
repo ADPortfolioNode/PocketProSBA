@@ -27,7 +27,7 @@ Download the Apollo DevTools for a better development experience
 - **What it is**: Frontend trying to load favicon/manifest through backend proxy
 - **Why it fails**: Backend server (localhost:5000) not running
 - **Problem**: Static assets not served properly
-- **Action**: Start backend with `python app.py`
+- **Action**: Start backend with `gunicorn wsgi:application` (or `python wsgi.py` on Windows)
 
 ### 4. `Apollo DevTools` ✅ **OPTIONAL BROWSER EXTENSION**
 - **What it is**: Suggestion to install GraphQL debugging tools
@@ -39,8 +39,8 @@ Download the Apollo DevTools for a better development experience
 
 ### ✅ **Quick Fix - Start Backend:**
 ```bash
-# In your main directory
-python app.py
+# In the repo root
+FLASK_ENV=development python wsgi.py   # or: SECRET_KEY=... gunicorn wsgi:application
 ```
 
 ### ✅ **Better Fix - Use the Startup Script:**
@@ -73,7 +73,7 @@ GENERATE_SOURCEMAP=false
 
 ## 🚀 **Next Steps:**
 
-1. **Start Backend**: Run `python app.py` or use `start-dev-full.bat`
+1. **Start Backend**: Run `python wsgi.py` (repo root) or use `start-dev-full.bat`
 2. **Check URLs**: 
    - Frontend: http://localhost:3000 
    - Backend: http://localhost:5000/health

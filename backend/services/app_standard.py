@@ -57,7 +57,7 @@ STANDARD_SURFACES = {
     "chat": {
         "url": "/chat",
         "assets": [
-            "frontend/build/static/js/chat-magazine.js",
+            "frontend/src/utils/magazineProse.js",
             "frontend/build/static/css/sleek-layout.css",
         ],
         "pattern": "magazine_prose_actionable_links",
