@@ -170,6 +170,33 @@ a:hover {
   flex-shrink: 0;
 }
 
+/* Sideways-scroll cue: when the nav overflows (phones), fade whichever edge
+   has more links. Classes are set by useScrollFade in SBANavigation. */
+.pp-nav::before,
+.pp-nav::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 32px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 160ms ease;
+  z-index: 1;
+}
+.pp-nav::before {
+  left: 0;
+  background: linear-gradient(to right, rgba(255, 255, 255, 0.98), rgba(255, 255, 255, 0));
+}
+.pp-nav::after {
+  right: 0;
+  background: linear-gradient(to left, rgba(255, 255, 255, 0.98), rgba(255, 255, 255, 0));
+}
+.pp-nav--fade-left::before,
+.pp-nav--fade-right::after {
+  opacity: 1;
+}
+
 .pp-main {
   padding: 1.5rem 0 3.5rem;
 }
@@ -781,8 +808,13 @@ footer.app-footer {
 }
 
 .container-centered .auth-links a {
-  display: inline-block;
-  padding: 0.35rem 0.15rem; /* 44px-ish tap target with line-height */
+  /* WCAG 2.5.5 / Apple HIG: at least 44x44px tap targets on touch screens. */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0.5rem 0.6rem;
 }
 
 @media (max-width: 480px) {

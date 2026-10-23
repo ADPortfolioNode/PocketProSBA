@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "start": "react-scripts start",
-    "build": "react-scripts build",
+    "build": "react-scripts build && node scripts/inject-api-base.js",
     "test": "react-scripts test --env=jsdom",
     "eject": "react-scripts eject"
   },
@@ -33,6 +33,17 @@
     "extends": [
       "react-app",
       "react-app/jest"
+    ],
+    "overrides": [
+      {
+        "files": [
+          "src/utils/magazineProse.js"
+        ],
+        "rules": {
+          "no-control-regex": "off",
+          "no-unused-vars": "off"
+        }
+      }
     ]
   },
   "browserslist": {

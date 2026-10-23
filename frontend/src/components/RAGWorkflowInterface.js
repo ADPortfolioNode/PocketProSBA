@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import RAGWorkflowVisualization from './RAGWorkflowVisualization';
-import { Card, Row, Col, Button, Form, ListGroup, Badge, Accordion, Alert, ProgressBar } from 'react-bootstrap';
+import { Card, Button, Form, ListGroup, Badge, Alert, ProgressBar } from 'react-bootstrap';
 import apiClient from '../api/apiClient';
 import LoadingBar from './LoadingBar';
 import { ErrorState } from './AsyncState';
@@ -20,7 +19,6 @@ const RAGWorkflowInterface = ({
   const [currentStep, setCurrentStep] = useState('upload');
   const [queryText, setQueryText] = useState('');
   const [selectedFile, setSelectedFile] = useState(null);
-  const [activeDocument, setActiveDocument] = useState(null);
   const [uploadProgress, setUploadProgress] = useState(null);
   const [decomposedSteps, setDecomposedSteps] = useState([]);
   const [stepResults, setStepResults] = useState([]);
@@ -43,10 +41,6 @@ const RAGWorkflowInterface = ({
     } finally {
       setBusy(null);
     }
-  };
-
-  const handleStepChange = (step) => {
-    setCurrentStep(step);
   };
 
   const handleFileSelect = (e) => {
