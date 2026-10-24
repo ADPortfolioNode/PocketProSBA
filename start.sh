@@ -22,11 +22,11 @@ COMPOSE_PROD="${COMPOSE_PROD:-docker-compose.yml}"
 [[ -f docker-compose.prod.yml ]] && COMPOSE_PROD="docker-compose.prod.yml"
 COMPOSE_DEV="${COMPOSE_DEV:-docker-compose.dev.yml}"
 HEALTH_URL_DEV="${HEALTH_URL_DEV:-http://localhost:5000/api/health}"
-HEALTH_URL_PROD="${HEALTH_URL_PROD:-http://localhost:8000/api/health}"
+HEALTH_URL_PROD="${HEALTH_URL_PROD:-http://localhost:5000/api/health}"
 CHAT_URL_DEV="${CHAT_URL_DEV:-http://localhost:5000/api/chat}"
-CHAT_URL_PROD="${CHAT_URL_PROD:-http://localhost:8000/api/chat}"
+CHAT_URL_PROD="${CHAT_URL_PROD:-http://localhost:5000/api/chat}"
 INIT_URL_DEV="${INIT_URL_DEV:-http://localhost:5000/api/startup_init}"
-INIT_URL_PROD="${INIT_URL_PROD:-http://localhost:8000/api/startup_init}"
+INIT_URL_PROD="${INIT_URL_PROD:-http://localhost:5000/api/startup_init}"
 FRONT_URL_DEV="${FRONT_URL_DEV:-http://localhost:3000}"
 FRONT_URL_PROD="${FRONT_URL_PROD:-http://localhost:3000}"
 DOCKER_PORTS=(80 3000 5000 8000)
@@ -41,7 +41,7 @@ Starts ${APP_NAME} with Docker Compose by default.
 
   --mode prod|dev   Compose file. Default: prod
   --host HOST       Bind host. Default: 0.0.0.0
-  --port PORT       Bind port. Default: 8000 prod / 5000 dev
+  --port PORT       Bind port. Default: 5000
   --local           Host process instead of Docker
   --docker          Force Docker Compose (default)
   --docker-arg ARG  Extra compose arg (repeatable)
@@ -118,7 +118,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [[ -z "$PORT" ]]; then
-  if [[ "$MODE" == "prod" ]]; then PORT=8000; else PORT=5000; fi
+  if [[ "$MODE" == "prod" ]]; then PORT=5000; else PORT=5000; fi
 fi
 
 if [[ "$MODE" == "prod" ]]; then

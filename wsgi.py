@@ -29,7 +29,7 @@ os.environ.setdefault('PYTHONPATH', f"{project_root}/src:{project_root}")
 required_dirs = ['uploads', 'logs', 'static/js', 'templates']
 for dir_name in required_dirs:
     dir_path = project_root / dir_name
-    dir_path.mkdir(exist_ok=True)
+    dir_path.mkdir(parents=True, exist_ok=True)
 
 # Import and configure the Flask app
 try:
