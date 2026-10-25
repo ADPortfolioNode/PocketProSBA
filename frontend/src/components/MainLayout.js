@@ -108,7 +108,10 @@ function MainLayout({ useConnectionHook = useConnection }) {
 
       const assistantMessage = {
         role: 'assistant',
-        content: response.response || response.message || 'Response received'
+        content: response.response || response.message || 'Response received',
+        // Keep sources with the message so the chat Resources tab can list
+        // them; the conversation itself always stays visible.
+        sources: response.sources || []
       };
       setMessages(prev => [...prev, assistantMessage]);
       return response;

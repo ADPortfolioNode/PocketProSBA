@@ -32,15 +32,45 @@ const STARTERS = [
   },
 ];
 
+const collectLinks = (msgs) => {
+  const seen = new Set();
+  const links = [];
+  const push = (label, url) => {
+    if (!url || seen.has(url)) return;
+    seen.add(url);
+    links.push({ label: label || url, url });
+  };
+  msgs.forEach((msg) => {
+    (msg.sources || []).forEach((s) => {
+      if (!s) return;
+      if (typeof s === 'string') push(s, s);
+      else push(s.title || s.name || s.path || s.url, s.path || s.url);
+    });
+    const content = typeof msg.content === 'string' ? msg.content : '';
+    const md = content.matchAll(/\[([^\]]+)\]\(([^)]+)\)/g);
+    [...md].forEach((m) => push(m[1], m[2]));
+    const html = content.matchAll(/href="([^"]+)"[^>]*>([^<]+)/g);
+    [...html].forEach((m) => push(m[2], m[1]));
+  });
+  return links;
+};
+
 const ModernConciergeChat = ({ onSend, messages = [], loading, userName, initialDraft }) => {
   const [input, setInput] = useState(initialDraft || '');
   const [tipIndex, setTipIndex] = useState(0);
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState(null);
+  // Links & resources live in a tabbed side panel, never replacing the chat:
+  // the conversation stays visible (split view) for the concierge to function.
+  const [showResources, setShowResources] = useState(
+    () => typeof window === 'undefined' || window.innerWidth >= 1024,
+  );
+  const [resourceTab, setResourceTab] = useState('links');
   const messagesContainerRef = useRef(null);
   const inputRef = useRef(null);
 
   const safeMessages = Array.isArray(messages) ? messages : [];
+  const conversationLinks = collectLinks(safeMessages);
 
   const thinking = !!loading || isSending;
 
@@ -114,7 +144,8 @@ const ModernConciergeChat = ({ onSend, messages = [], loading, userName, initial
   };
 
   return (
-    <div className="modern-chat-container magazine-chat">
+    <div className="modern-chat-layout">
+    <div className="modern-chat-container magazine-chat modern-chat-main">
       <div className="chat-header-modern">
         <div className="chat-avatar">
           <Bot size={32} />
@@ -124,6 +155,14 @@ const ModernConciergeChat = ({ onSend, messages = [], loading, userName, initial
           <h1>PocketPro SBA Assistant</h1>
           <p>Straightforward guidance on loans, programs, and your next steps{userName ? `, ${userName}` : ''}.</p>
         </div>
+        <button
+          type="button"
+          className="chat-resources-toggle"
+          aria-expanded={showResources}
+          onClick={() => setShowResources((v) => !v)}
+        >
+          Resources
+        </button>
         <a href="/browse" className="chat-resources-link">
           Browse SBA resources <ArrowUpRight size={16} aria-hidden="true" />
         </a>
@@ -282,6 +321,63 @@ const ModernConciergeChat = ({ onSend, messages = [], loading, userName, initial
           </div>
         </div>
       </div>
+    </div>
+    {showResources && (
+      <aside className="chat-resources-panel" aria-label="Links and resources">
+        <div className="chat-resources-panel-header">
+          <h2>Links &amp; resources</h2>
+          <p>Chat stays visible — select a link to open it in Resources.</p>
+        </div>
+        <div className="chat-resources-tabs" role="tablist" aria-label="Resource tabs">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={resourceTab === 'links'}
+            className={resourceTab === 'links' ? 'is-active' : ''}
+            onClick={() => setResourceTab('links')}
+          >
+            Links
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={resourceTab === 'resources'}
+            className={resourceTab === 'resources' ? 'is-active' : ''}
+            onClick={() => setResourceTab('resources')}
+          >
+            Resources
+          </button>
+        </div>
+        {resourceTab === 'links' ? (
+          conversationLinks.length > 0 ? (
+            <ul className="chat-resources-list">
+              {conversationLinks.map((link) => (
+                <li key={link.url}>
+                  <a href={link.url}>{link.label}</a>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="chat-resources-empty">
+              Links from this conversation will appear here when the assistant shares them.
+            </p>
+          )
+        ) : (
+          <div>
+            <ul className="chat-resources-list">
+              <li><a href="/browse">Browse SBA resources</a></li>
+              <li><a href="/sba">SBA Programs</a></li>
+              <li><a href="https://www.sba.gov/funding-programs/loans">SBA Loans (official)</a></li>
+            </ul>
+            <p className="chat-resources-note">
+              Guidance only — not a loan approval, eligibility decision, or legal or
+              financial advice. A lender and the SBA decide eligibility, amount, and
+              timing, and will ask for documentation.
+            </p>
+          </div>
+        )}
+      </aside>
+    )}
     </div>
   );
 };
