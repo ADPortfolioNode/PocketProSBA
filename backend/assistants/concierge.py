@@ -159,6 +159,18 @@ class Concierge(BaseAssistant):
             
         message_lower = message.lower().strip()
         
+        # Strong task phrases win over an embedded search word such as
+        # "research" in "Help me create a business plan ... research SBA
+        # loan options". Without this, a multi-intent task request was
+        # misclassified as a plain document search.
+        strong_task_phrases = [
+            "help me create", "help me build", "help me develop",
+            "help me make", "create a business plan",
+            "create a marketing strategy",
+        ]
+        if any(phrase in message_lower for phrase in strong_task_phrases):
+            return "task_request"
+
         # Enhanced intent classification with better pattern matching
         # Document search intent
         search_patterns = [
@@ -234,8 +246,8 @@ class Concierge(BaseAssistant):
             return False
             
         # Simple check: if the message is short and seems like a follow-up
-        if len(current_message.split()) <= 3:
-            return any(term in current_message for term in ["that", "it", "what", "how", "why", "when"])
+        if len(current_message.split()) <= 4:
+            return any(term in current_message for term in ["that", "it", "what", "how", "why", "when", "more", "next", "another", "also", "further", "continue"])
         return False
     
     def _handle_follow_up_query(self, message, conversation):

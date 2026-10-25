@@ -12,6 +12,8 @@ from datetime import datetime
 # Add backend to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'backend'))
 
+API_BASE = os.environ.get("POCKETPRO_API_BASE", "http://localhost:5000")
+
 def test_hierarchical_workflow():
     """Test the complete hierarchical workflow"""
     print("🧪 Testing Hierarchical Assistant Workflow")
@@ -56,9 +58,11 @@ def test_hierarchical_workflow():
             print("   ❌ Concierge failed to handle task request")
             return False
 
-        # Test 3: Direct TaskAssistant API call
-        print("\n3. Testing TaskAssistant API Endpoint...")
-        api_url = "http://localhost:5000/api/assistants/task"
+        # Test 3: Direct assistant API call (there is no /api/assistants/task;
+        # the real endpoints are /concierge, /search, /file, /function,
+        # all protected by Bearer auth, so 401 without a token is expected)
+        print("\n3. Testing Assistant API Endpoint...")
+        api_url = f"{API_BASE}/api/assistants/concierge"
 
         payload = {
             "message": test_message,
@@ -69,19 +73,20 @@ def test_hierarchical_workflow():
 
         try:
             response = requests.post(api_url, json=payload, timeout=10)
-            if response.status_code == 200:
+            if response.status_code == 401:
+                print("   [WARN] Assistant API is protected (401 without a token) - endpoint reachable")
+            elif response.status_code == 200:
                 data = response.json()
-                if data.get("success"):
-                    print("   ✅ TaskAssistant API endpoint working")
-                    print(f"   Response preview: {data['response']['text'][:100]}...")
+                if data.get("text") or data.get("success"):
+                    print("   [OK] Assistant API endpoint working")
                 else:
-                    print("   ❌ TaskAssistant API returned error")
+                    print("   [FAIL] Assistant API returned error")
                     return False
             else:
-                print(f"   ❌ TaskAssistant API returned status {response.status_code}")
+                print(f"   [FAIL] Assistant API returned status {response.status_code}")
                 return False
         except requests.exceptions.RequestException as e:
-            print(f"   ❌ TaskAssistant API call failed: {e}")
+            print(f"   [FAIL] Assistant API call failed: {e}")
             print("   Note: This is expected if the server is not running")
             print("   Manual testing required when server is running")
 
@@ -95,7 +100,7 @@ def test_hierarchical_workflow():
         ]
 
         for assistant_type, test_query in assistants:
-            api_url = f"http://localhost:5000/api/assistants/{assistant_type}"
+            api_url = f"{API_BASE}/api/assistants/{assistant_type}"
             payload = {
                 "message": test_query,
                 "context": {"source": "test"}
@@ -103,16 +108,14 @@ def test_hierarchical_workflow():
 
             try:
                 response = requests.post(api_url, json=payload, timeout=5)
-                if response.status_code == 200:
-                    data = response.json()
-                    if data.get("success"):
-                        print(f"   ✅ {assistant_type.title()}Agent API working")
-                    else:
-                        print(f"   ❌ {assistant_type.title()}Agent API returned error")
+                if response.status_code == 401:
+                    print(f"   [WARN] {assistant_type.title()}Agent API is protected (401 without a token)")
+                elif response.status_code == 200:
+                    print(f"   [OK] {assistant_type.title()}Agent API working")
                 else:
-                    print(f"   ❌ {assistant_type.title()}Agent API returned status {response.status_code}")
+                    print(f"   [FAIL] {assistant_type.title()}Agent API returned status {response.status_code}")
             except requests.exceptions.RequestException:
-                print(f"   ⚠️  {assistant_type.title()}Agent API not accessible (server not running)")
+                print(f"   [WARN] {assistant_type.title()}Agent API not accessible (server not running)")
 
         # Test 5: RAG Workflow verification
         print("\n5. Testing RAG Workflows...")
@@ -127,12 +130,13 @@ def test_hierarchical_workflow():
             else:
                 print("   ❌ Basic RAG workflow failed")
 
-            # Test adaptive RAG
-            adaptive_results = rag_manager.query_documents_adaptive("SBA business planning", n_results=2)
-            if "error" not in adaptive_results:
-                print("   ✅ Adaptive RAG workflow working")
+            # Second RAG query (there is no query_documents_adaptive on
+            # RAGManager; the real workflow is query_documents)
+            second_results = rag_manager.query_documents("SBA business planning", n_results=2)
+            if "error" not in second_results:
+                print("   ✅ Second RAG query working")
             else:
-                print("   ❌ Adaptive RAG workflow failed")
+                print("   ❌ Second RAG query failed")
         else:
             print("   ⚠️  RAG manager not available for testing")
 

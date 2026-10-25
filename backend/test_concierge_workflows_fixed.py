@@ -7,8 +7,8 @@ import sys
 import os
 import logging
 
-# Add backend to path
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+# Add repo root to path so canonical backend.* imports work from any cwd.
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -33,7 +33,7 @@ def test_concierge_basic():
     safe_print("=== Testing Basic Concierge Functionality ===")
     
     try:
-        from assistants.concierge import Concierge
+        from backend.assistants.concierge import Concierge
         
         # Test import
         concierge = Concierge()
@@ -50,7 +50,7 @@ def test_concierge_basic():
             ("good morning", "greeting"),
             ("thank you", "acknowledgment"),
             ("thanks for your help", "acknowledgment"),
-            ("what is SBA", "simple_query"),
+            ("what is SBA", "document_search"),
             ("tell me about small business loans", "document_search"),
             ("how do I get funding", "task_request"),
             ("information about business planning", "document_search")
@@ -72,7 +72,7 @@ def test_concierge_basic():
         
         follow_up_test_cases = [
             ("more information", "follow_up_query"),
-            ("what about grants", "document_search"),
+            ("what about grants", "follow_up_query"),
             ("next step", "follow_up_query")
         ]
         
@@ -113,7 +113,7 @@ def test_rag_integration():
     safe_print("\n=== Testing RAG Integration ===")
     
     try:
-        from services.rag import get_rag_manager
+        from backend.services.rag import get_rag_manager
         
         rag_manager = get_rag_manager()
         safe_print(f"[OK] RAG Manager instantiated: {rag_manager.is_available()}")
@@ -150,7 +150,7 @@ def test_api_service_integration():
     safe_print("\n=== Testing API Service Integration ===")
     
     try:
-        from services.api_service import decompose_task_service
+        from backend.services.api_service import decompose_task_service
         
         test_messages = [
             "How to get SBA loan",

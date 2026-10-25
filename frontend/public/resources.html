@@ -36,7 +36,7 @@
     a { color: var(--blue); text-decoration: none; }
     a:hover { color: var(--blue-deep); }
     .app { display: grid; grid-template-columns: var(--sidebar) 1fr; min-height: 100vh; }
-    @media (max-width: 960px) { .app { grid-template-columns: 1fr; } .sidebar { position: sticky; top: 0; z-index: 20; } }
+    @media (max-width: 960px) { .app { grid-template-columns: 1fr; } .sidebar { position: static; max-height: none; } }
 
     /* Sidebar */
     .sidebar {
