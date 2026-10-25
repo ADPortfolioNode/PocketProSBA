@@ -393,6 +393,16 @@ class TestRagMetadataPaths:
         assert str(kb) not in dumped
         assert result["mode"] == "sba_api_live"
 
+    def test_generic_document_search_does_not_match_unrelated_sba_digests(self, kb):
+        from backend.routes.rag import _local_kb_sba_answer
+
+        result = _local_kb_sba_answer(
+            "Find the document about PocketPro rebuild retrieval test sapphire paddle 8842 "
+            "and tell me its confirmation phrase."
+        )
+        assert result["mode"] == "static_fallback"
+        assert result["source_documents"] == []
+
     def test_resolve_kb_path(self, kb):
         from backend.routes.rag import resolve_kb_path
         found = resolve_kb_path("api_sba_content_loans_7a__combined.txt", "sba_api_live")

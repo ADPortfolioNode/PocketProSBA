@@ -144,6 +144,9 @@ def _local_kb_sba_answer(question: str, max_chunks: int = 4):
     tokens = [t for t in re.findall(r"[a-z0-9]{3,}", q_spaced) if t not in {
         "the", "and", "for", "what", "how", "are", "with", "from", "this", "that",
         "can", "does", "about", "loan", "loans", "sba",  # too common in all docs
+        "find", "search", "look", "document", "documents", "file", "tell", "show",
+        "locate", "explain", "describe", "summarize", "summary", "test", "tests",
+        "confirmation", "phrase", "its", "their", "your",
     }]
     # High-signal SBA terms (including short codes like 7a / 504)
     for keep in ("7a", "504", "microloan", "express", "eligibility", "rate", "rates"):
@@ -168,8 +171,10 @@ def _local_kb_sba_answer(question: str, max_chunks: int = 4):
             except Exception:
                 continue
             lower = text.lower()
-            compact = _normalize_kb_text(text)
-            score = sum(compact.count(tok) for tok in tokens) if tokens else 1
+            words = re.findall(r"[a-z0-9]+", lower)
+            score = sum(words.count(tok) for tok in tokens if tok != "7a")
+            if "7a" in tokens and re.search(r"(?<![a-z0-9])7\s*(?:\(\s*a\s*\)|-\s*a|a)(?![a-z0-9])", lower):
+                score += 1
             if score <= 0:
                 continue
             # Boost live API digests written when browsing parent→children
@@ -185,16 +190,19 @@ def _local_kb_sba_answer(question: str, max_chunks: int = 4):
             if tokens:
                 idx_candidates = []
                 for tok in tokens:
-                    pos = lower.find(tok)
-                    if pos >= 0:
-                        idx_candidates.append(pos)
-                    else:
-                        # Map compact match approx onto original via digit/letter run
-                        cpos = compact.find(tok)
-                        if cpos >= 0 and tok[:1].isdigit():
-                            m = re.search(r"7\s*[\(\-]?\s*a", lower)
-                            if m:
-                                idx_candidates.append(m.start())
+                    match = re.search(
+                        rf"(?<![a-z0-9]){re.escape(tok)}(?![a-z0-9])",
+                        lower,
+                    )
+                    if match:
+                        idx_candidates.append(match.start())
+                    elif tok == "7a":
+                        match = re.search(
+                            r"(?<![a-z0-9])7\s*(?:\(\s*a\s*\)|-\s*a)(?![a-z0-9])",
+                            lower,
+                        )
+                        if match:
+                            idx_candidates.append(match.start())
                 idx = min(idx_candidates) if idx_candidates else 0
                 start = max(0, idx - 120)
                 end = min(len(text), start + 600)
