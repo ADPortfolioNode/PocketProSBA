@@ -36,7 +36,7 @@ Set these in the host's secret store (Fly secrets, Render env, etc.), never in a
 | `RATELIMIT_AUTH`, `RATELIMIT_LLM` | optional | Limit strings for auth and LLM routes (defaults `10 per minute;100 per hour` and `30 per minute;500 per hour`). |
 | `MAX_CONTENT_LENGTH` | optional | Max request body in bytes, uploads included. Default 16 MB (`16777216`); larger requests get a 413. |
 | `DATABASE_URL` | recommended | SQLAlchemy URL. Default is SQLite in the working dir, which is lost on redeploy unless it sits on a persistent volume. Use Postgres (`postgresql://user:pass@host:5432/db`) for anything shared. |
-| `CHROMADB_HOST`, `CHROMADB_PORT` | if using Chroma | Chroma server. The server image must match the client pin (`chromadb==0.4.24` → `chromadb/chroma:0.4.24`). |
+| `CHROMADB_HOST`, `CHROMADB_PORT` | if using Chroma | Chroma server. Compose uses `chromadb/chroma:0.5.3` for the persisted 0.5.x database schema; the backend pins `chromadb==0.4.24` to retain its Pydantic v1 AI stack and uses the compatible HTTP CRUD/query API. Avoid opening the same data directory with Chroma 0.4.x. |
 | `PORT` | set by host | Port gunicorn binds (Procfile). |
 | `FLASK_DEBUG` (or `DEBUG`) | no | Debug is **off in every environment** unless `FLASK_DEBUG=1` (or `DEBUG=1`) is set. Never set it in production: debug mode logs password-reset tokens to the server log. |
 | `PASSWORD_RESET_DELIVERY` | yes, before enabling password reset | Not an env var: an `app.config` hook. Set `app.config["PASSWORD_RESET_DELIVERY"]` to a callable `(email, token) -> None` that sends the token (email gateway, queue). Reset tokens are never returned in the HTTP response; without this hook, production users never receive one (a warning is logged). |

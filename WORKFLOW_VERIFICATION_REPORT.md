@@ -1,7 +1,9 @@
 # PocketPro SBA Workflow Verification Report
 
 **Run date:** 2026-10-24  
-**Overall result:** Partial verification — core SBA navigation and chat respond, but vector-backed RAG is unavailable and the full test suites are not green.
+**Overall result:** Partial verification — core SBA navigation and chat respond. The Chroma compatibility fix is implemented and passed an isolated CRUD/retrieval check, but the live RAG service remains unavailable until the Chroma container is recreated with the updated image.
+
+**Health-check note (2026-10-25):** After the later `start.sh` run, the standalone health-check scripts were found probing stale endpoints (`/api/v2/heartbeat` and port `10000`). The running deployment exposed ChromaDB 0.4.24 at `/api/v1/heartbeat`, the backend at `/api/health` on port `5000`, and the frontend at port `3000`. Both root health-check scripts now use those endpoints and ASCII status markers for Windows console compatibility. Both scripts passed against the running services. A successful Chroma heartbeat verifies service availability only: `/api/info` still reports `rag_status: unavailable`, and `/api/rag/health` still returns 503.
 
 ## Executive summary
 
@@ -28,20 +30,28 @@
 
 ### RAG diagnosis
 
-Backend logs show Chroma collection initialization failing with:
+The persisted database records Chroma `sysdb` migration 5 (`00005-remove-topic`) and migration 7 (`config_json_str`), and its `collections` table has no `topic` column. The running server was Chroma 0.4.24, whose schema expectations do not match that 0.5.x database. Backend logs show collection initialization failing with:
 
 ```text
 OperationalError('no such column: collections.topic')
 Collection documents not initialized
 ```
 
-The ChromaDB service itself answers its heartbeat, but the app cannot initialize its documents collection. Treat chat answers as fallback/hybrid responses until the collection schema/client compatibility issue is resolved and RAG health returns healthy.
+The ChromaDB service itself answers its heartbeat, but the app cannot initialize its documents collection. Treat chat answers as fallback/hybrid responses until the updated Chroma server is running and RAG health returns healthy.
+
+### Compatibility fix and verification (2026-10-25)
+
+- Updated production Compose, development Compose, and `Dockerfile.chromadb` to use `chromadb/chroma:0.5.3`, matching the persistent database schema. The backend client remains pinned at 0.4.24 to retain the Pydantic v1-dependent AI stack.
+- Updated `DEPLOY.md` and the deployment-config test to document and enforce the intended client/server split.
+- On a disposable Chroma 0.5.3 server, the actual backend `ChromaService` using client 0.4.24 initialized both collections, passed heartbeat, added a document, retrieved the matching document, and deleted the probe successfully. The disposable server was stopped afterward; the persistent database was not modified.
+- The deployment-config test file passes: 53 passed.
+- The running production container is still `chromadb/chroma:0.4.24`; live `/api/rag/health` still returns 503. Recreate the Chroma service through the normal `start.sh` workflow, then repeat live health and chat ingest/retrieval checks. Do not downgrade the Chroma image or remove `chromadb_data`.
 
 ## Automated verification
 
 | Suite/check | Result | Notes |
 |---|---|---|
-| Backend, in the app container | FAIL: 344 passed, 37 failed, 10 skipped | All 37 reported failures are in `backend/tests/test_deploy_config.py`. Runtime: 529.75 seconds. |
+| Backend, in the app container (before Chroma config fix) | FAIL: 344 passed, 37 failed, 10 skipped | All 37 reported failures were in deployment-config assertions; the updated deployment-config file now passes all 53 tests. Runtime: 529.75 seconds. |
 | Backend, host Python collection attempt | BLOCKED | The host Python environment lacks `jwt` / PyJWT. The full backend suite was therefore run in the backend container. |
 | Frontend full Jest suite | FAIL: 13 suites passed, 28 failed; 85 tests passed | Jest exited 1. The targeted `RAGWorkflowInterface.test.js` suite fails during collection with `SyntaxError: Cannot use import statement outside a module` and runs zero tests. |
 | Chat component Jest suite | PASS: 5/5 tests | `ModernConciergeChat.test.js` passed. |
@@ -62,7 +72,7 @@ The running frontend container serves an immutable image and has no bind mount t
 
 ## Recommended follow-up
 
-1. Repair Chroma collection initialization/schema compatibility, then verify a document ingest followed by retrieval through chat.
+1. Recreate Chroma using the updated 0.5.3 image via `start.sh`, then verify live RAG health and a document ingest followed by retrieval through chat.
 2. Fix the Jest transform/configuration issue that prevents the RAG workflow suite from collecting.
 3. Review the 37 backend deployment-configuration assertions.
 4. Check the Resources sidebar overlay at tablet/narrow widths.

@@ -37,9 +37,9 @@ services:
     command: ["gunicorn", "wsgi:application", "--bind", "0.0.0.0:5000", "--reload", "--workers", "1", "--threads", "4", "--timeout", "120"]
 
   chromadb:
-    # Must match the chromadb client in backend/requirements.txt (0.4.24);
-    # a 0.5.x server breaks the 0.4.x client ('dimension' errors).
-    image: chromadb/chroma:0.4.24
+    # Keep the server aligned with the persistent Chroma 0.5.x data schema.
+    # The pinned 0.4.24 backend client uses CRUD/query operations, not list_collections.
+    image: chromadb/chroma:0.5.3
     container_name: chromadb-dev
     ports:
       - "8000:8000"

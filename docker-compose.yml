@@ -44,8 +44,9 @@ services:
       start_period: 30s
 
   chromadb:
-    # Must match the chromadb client in backend/requirements.txt (0.4.24).
-    image: chromadb/chroma:0.4.24
+    # Persistent data uses the Chroma 0.5.x schema (config_json_str, no topic column).
+    # The backend's 0.4.24 client supports the required CRUD/query calls with this server.
+    image: chromadb/chroma:0.5.3
     container_name: chromadb-production
     ports:
       - "8000:8000"

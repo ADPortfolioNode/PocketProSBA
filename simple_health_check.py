@@ -9,42 +9,43 @@ import urllib.error
 import time
 import json
 
+BACKEND_HEALTH_URL = "http://localhost:5000/api/health"
+FRONTEND_URL = "http://localhost:3000/"
+CHROMA_HEALTH_URL = "http://localhost:8000/api/v1/heartbeat"
+
+
 def check_service(name, url, timeout=10):
     """Check if a service is responding."""
     try:
         print(f"Checking {name} at {url}...")
         response = urllib.request.urlopen(url, timeout=timeout)
         if response.getcode() == 200:
-            print(f"✅ {name}: OK")
+            print(f"[OK] {name}: OK")
             return True
         else:
-            print(f"❌ {name}: HTTP {response.getcode()}")
+            print(f"[FAIL] {name}: HTTP {response.getcode()}")
             return False
     except urllib.error.URLError as e:
-        print(f"❌ {name}: Connection error - {e.reason}")
+        print(f"[FAIL] {name}: Connection error - {e.reason}")
         return False
     except socket.timeout:
-        print(f"❌ {name}: Timeout")
+        print(f"[FAIL] {name}: Timeout")
         return False
     except Exception as e:
-        print(f"❌ {name}: Error - {e}")
+        print(f"[FAIL] {name}: Error - {e}")
         return False
 
 def check_backend_health():
     """Check if the backend API is healthy."""
-    return check_service("Backend API", "http://localhost:5000/health")
-
-def check_docker_backend_health():
-    """Check if the Docker backend API is healthy."""
-    return check_service("Docker Backend API", "http://localhost:10000/health")
+    return check_service("Backend API", BACKEND_HEALTH_URL)
 
 def check_frontend():
     """Check if the frontend is available."""
-    return check_service("Frontend", "http://localhost:3000")
+    return check_service("Frontend", FRONTEND_URL)
 
 def check_chroma():
     """Check if ChromaDB is available."""
-    return check_service("ChromaDB", "http://localhost:8000/api/v2/heartbeat")
+    return check_service("ChromaDB", CHROMA_HEALTH_URL)
 
 def main():
     """Run health checks for all services."""
@@ -54,7 +55,6 @@ def main():
     
     results = {
         "Backend API": check_backend_health(),
-        "Docker Backend API": check_docker_backend_health(),
         "Frontend": check_frontend(),
         "ChromaDB": check_chroma()
     }
@@ -62,15 +62,15 @@ def main():
     # Print summary
     print("\nSummary:")
     for service, result in results.items():
-        status = "✅ Healthy" if result else "❌ Unhealthy"
+        status = "[OK] Healthy" if result else "[FAIL] Unhealthy"
         print(f"{service}: {status}")
     
     # Overall status
     if all(results.values()):
-        print("\n✅ All services are healthy!")
+        print("\n[OK] All services are healthy!")
         return 0
     else:
-        print("\n❌ Some services are unhealthy!")
+        print("\n[FAIL] Some services are unhealthy!")
         return 1
 
 if __name__ == "__main__":

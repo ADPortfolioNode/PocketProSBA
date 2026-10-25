@@ -114,17 +114,19 @@ def test_compose_services_have_healthchecks(rel):
         assert services[name].get("healthcheck"), f"{rel}:{name} has no healthcheck"
 
 
-def test_chroma_server_matches_client_pin():
+def test_chroma_server_matches_persistent_data_schema():
     m = re.search(r"^chromadb==([\d.]+)", _read("backend/requirements.txt"), flags=re.M)
     assert m, "chromadb is not pinned in backend/requirements.txt"
     client = m.group(1)
+    assert client == "0.4.24", "The backend client pin is constrained by the pydantic v1 AI stack."
+    server = "0.5.3"
     images = [
         _compose("docker-compose.yml")["services"]["chromadb"]["image"],
         _compose("docker-compose.dev.yml")["services"]["chromadb"]["image"],
         re.search(r"^FROM\s+(\S+)", _read("Dockerfile.chromadb"), flags=re.M).group(1),
     ]
     for image in images:
-        assert image == f"chromadb/chroma:{client}", f"{image} != client {client}"
+        assert image == f"chromadb/chroma:{server}", f"{image} != persistent data schema {server}"
 
 
 @pytest.mark.parametrize("rel,out", [("vercel.json", "frontend/build"),
