@@ -231,6 +231,32 @@ a:hover {
   width: 100%;
 }
 
+/* Chat full-screen layout (chat tab only; other tabs keep the capped shell).
+   Industry-standard app layout: header + nav stay fixed, the chat fills the
+   remaining viewport height, and only the message list scrolls. */
+.pp-app--chat {
+  height: 100dvh;
+  overflow: hidden;
+}
+
+.pp-app--chat .pp-main--chat {
+  padding: 0;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.pp-main-inner--chat {
+  max-width: none !important;
+  width: 100%;
+  padding: 0 !important;
+  min-height: 0;
+}
+
+.pp-main-inner--chat > .modern-chat-container {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
 .pp-footer {
   border-top: 1px solid var(--pp-line);
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.5), #ffffff);

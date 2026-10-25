@@ -194,23 +194,32 @@ function MainLayout({ useConnectionHook = useConnection }) {
     }
   };
 
+  // Chat is a full-screen app view (industry-standard chat layout):
+  // fluid width, full viewport height, message list scrolls internally and
+  // the composer stays pinned at the bottom. Other tabs keep the capped
+  // centered shell and the page footer.
+  const isChat = activeTab === 'chat';
+
   return (
-    <div className="pp-app d-flex flex-column min-vh-100">
+    <div className={`pp-app d-flex flex-column min-vh-100${isChat ? ' pp-app--chat' : ''}`}>
       <Header />
       <SBANavigation
         serverConnected={serverConnected}
         connectionStatus={status}
         apiUrl={apiUrl}
       />
-      <main className="pp-main flex-grow-1">
-        <Container className="pp-main-inner">
+      <main className={`pp-main flex-grow-1${isChat ? ' pp-main--chat d-flex flex-column' : ''}`}>
+        <Container
+          fluid={isChat}
+          className={isChat ? 'pp-main-inner pp-main-inner--chat p-0 d-flex flex-column flex-grow-1' : 'pp-main-inner'}
+        >
           {/* Per-tab boundary: header + nav stay usable; switching tabs resets it. */}
           <ErrorBoundary resetKey={activeTab}>
             {renderContent()}
           </ErrorBoundary>
         </Container>
       </main>
-      <Footer />
+      {!isChat && <Footer />}
     </div>
   );
 }
