@@ -30,6 +30,8 @@ export const NAV_ITEMS = [
     hardNav: true,
   },
   { to: '/orchestrator', label: 'Tasks', testId: 'nav-orchestrator' },
+  // Custom deploy prototype: Funkadelic Studios daily business functions.
+  { to: '/daily', label: 'Daily', testId: 'nav-daily' },
 ];
 
 const SBANavigation = ({ serverConnected, connectionStatus, apiUrl }) => {
