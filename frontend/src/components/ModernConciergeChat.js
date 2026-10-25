@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, Bot, User, AlertCircle, RefreshCw } from 'lucide-react';
+import { Send, Bot, User, AlertCircle, RefreshCw, ArrowUpRight } from 'lucide-react';
 import { formatMagazineHtml } from '../utils/magazineProse';
 import { friendlyError } from '../utils/friendlyError';
 import '../styles/modern-chat.css';
@@ -18,9 +18,18 @@ const sbaTips = [
 ];
 
 const STARTERS = [
-  'What is an SBA 7(a) loan?',
-  'How do I find a local lender?',
-  'Steps to start a small business',
+  {
+    question: 'What is an SBA 7(a) loan?',
+    description: 'Learn about uses, terms, and eligibility.',
+  },
+  {
+    question: 'How do I find a local lender?',
+    description: 'Get ready to connect with a lender.',
+  },
+  {
+    question: 'Steps to start a small business',
+    description: 'Plan your next steps from idea to launch.',
+  },
 ];
 
 const ModernConciergeChat = ({ onSend, messages = [], loading, userName, initialDraft }) => {
@@ -28,18 +37,18 @@ const ModernConciergeChat = ({ onSend, messages = [], loading, userName, initial
   const [tipIndex, setTipIndex] = useState(0);
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState(null);
-  const messagesEndRef = useRef(null);
+  const messagesContainerRef = useRef(null);
   const inputRef = useRef(null);
 
   const safeMessages = Array.isArray(messages) ? messages : [];
 
   const thinking = !!loading || isSending;
 
-  // Only follow the conversation once there is one; scrolling on mount pushed
-  // the welcome card's heading out of view.
+  // Keep follow-up messages in the conversation scroller, not the whole page.
   useEffect(() => {
     if (safeMessages.length === 0 && !thinking) return;
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    const messagesContainer = messagesContainerRef.current;
+    if (messagesContainer) messagesContainer.scrollTop = messagesContainer.scrollHeight;
   }, [safeMessages.length, thinking]);
 
   useEffect(() => {
@@ -111,37 +120,49 @@ const ModernConciergeChat = ({ onSend, messages = [], loading, userName, initial
           <Bot size={32} />
         </div>
         <div className="chat-title">
+          <span className="chat-eyebrow">YOUR SBA CONCIERGE</span>
           <h1>PocketPro SBA Assistant</h1>
-          <p>
-            Clear, magazine-style answers
-            {userName ? ` for ${userName}` : ''} — lists, steps, and plain English
-          </p>
+          <p>Straightforward guidance on loans, programs, and your next steps{userName ? `, ${userName}` : ''}.</p>
         </div>
+        <a href="/browse" className="chat-resources-link">
+          Browse SBA resources <ArrowUpRight size={16} aria-hidden="true" />
+        </a>
       </div>
 
-      <div className="chat-messages-modern" role="log" aria-live="polite" aria-relevant="additions">
+      <div
+        ref={messagesContainerRef}
+        className="chat-messages-modern"
+        role="log"
+        aria-label="Conversation"
+        aria-live="polite"
+        aria-relevant="additions"
+        aria-busy={thinking}
+      >
         {safeMessages.length === 0 && !thinking && (
           <div className="welcome-message">
             <div className="welcome-icon">
-              <Bot size={48} />
+              <Bot size={28} />
             </div>
-            <h2>Welcome — let&apos;s talk SBA clearly</h2>
+            <p className="welcome-kicker">Small business support, made simpler</p>
+            <h2>Welcome — what can we help you with?</h2>
             <p>
-              Ask about loans, certifications, disaster aid, or next steps.
-              Answers open as readable articles with itemized lists you can scan.
+              Ask a question or choose a place to start. We&apos;ll help you find
+              useful guidance and official SBA resources.
             </p>
             <ul className="mag-list mag-list-ul welcome-starters">
-              {STARTERS.map((q) => (
-                <li className="mag-li" key={q}>
+              {STARTERS.map(({ question, description }) => (
+                <li className="mag-li" key={question}>
                   <button
                     type="button"
                     className="mag-li-text welcome-starter-btn"
                     onClick={() => {
-                      setInput(q);
+                      setInput(question);
                       inputRef.current?.focus();
                     }}
                   >
-                    {q}
+                    <span className="starter-question">{question}</span>
+                    <span className="starter-description">{description}</span>
+                    <ArrowUpRight size={16} aria-hidden="true" />
                   </button>
                 </li>
               ))}
@@ -217,40 +238,48 @@ const ModernConciergeChat = ({ onSend, messages = [], loading, userName, initial
           </div>
         )}
 
-        <div ref={messagesEndRef} />
       </div>
 
       <div className="chat-input-modern">
-        <div className="sba-tip-modern">
-          <strong>SBA Tip:</strong> {sbaTips[tipIndex]}
-        </div>
-
-        <form onSubmit={handleSubmit} className="input-form-modern">
-          <div className="input-container">
-            <textarea
-              ref={inputRef}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Ask about SBA loans, grants, or business advice..."
-              className="modern-textarea"
-              rows={1}
-              disabled={thinking}
-              aria-label="Message input"
-            />
-            <button
-              type="submit"
-              className="send-button-modern"
-              disabled={!input.trim() || thinking}
-              aria-label="Send"
-            >
-              <Send size={20} />
-            </button>
+        <div className="composer-inner">
+          <div className="sba-tip-modern" title={sbaTips[tipIndex]}>
+            <strong>SBA tip</strong>
+            <span>{sbaTips[tipIndex]}</span>
           </div>
-        </form>
 
-        <div className="input-hints">
-          <span>Press Enter to send · Shift+Enter for a new line</span>
+          <form onSubmit={handleSubmit} className="input-form-modern">
+            <label className="visually-hidden" htmlFor="chat-message">
+              Message to PocketPro SBA Assistant
+            </label>
+            <div className="input-container">
+              <textarea
+                id="chat-message"
+                ref={inputRef}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Ask about SBA loans, grants, or business advice..."
+                className="modern-textarea"
+                rows={1}
+                disabled={thinking}
+                aria-label="Message input"
+              />
+              <button
+                type="submit"
+                className="send-button-modern"
+                disabled={!input.trim() || thinking}
+                aria-label="Send"
+              >
+                <Send size={19} aria-hidden="true" />
+              </button>
+            </div>
+          </form>
+
+          <div className="input-hints">
+            <span>Enter to send</span>
+            <span className="input-hint-separator" aria-hidden="true">·</span>
+            <span>Shift + Enter for a new line</span>
+          </div>
         </div>
       </div>
     </div>
