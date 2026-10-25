@@ -10,6 +10,7 @@ import ModernConciergeChat from './ModernConciergeChat';
 import UploadsManagerComponent from './UploadsManager';
 import SBAContent from './SBAContent';
 import TaskOrchestrator from './TaskOrchestrator';
+import FunkadelicDaily from './FunkadelicDaily';
 import Home from './Home';
 import LoadingBar from './LoadingBar';
 import ErrorBoundary from './ErrorBoundary';
@@ -27,7 +28,8 @@ const ROUTE_TAB_MAP = {
   rag: 'rag',
   documents: 'documents',
   sba: 'sba',
-  orchestrator: 'orchestrator'
+  orchestrator: 'orchestrator',
+  daily: 'daily'
 };
 
 function MainLayout({ useConnectionHook = useConnection }) {
@@ -192,6 +194,8 @@ function MainLayout({ useConnectionHook = useConnection }) {
         return <SBAContent />;
       case 'orchestrator':
         return <TaskOrchestrator />;
+      case 'daily':
+        return <FunkadelicDaily />;
       default:
         return <Home />;
     }
