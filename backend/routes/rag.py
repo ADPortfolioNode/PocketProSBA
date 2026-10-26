@@ -153,6 +153,7 @@ def _local_kb_sba_answer(question: str, max_chunks: int = 4):
         if keep in q_compact and keep not in tokens:
             tokens.append(keep)
 
+    high_signal_tokens = {"7a", "504", "microloan", "express", "eligibility", "rate", "rates"}
     scored = []
     seen_paths = set()
     for root in _knowledge_base_roots():
@@ -172,11 +173,19 @@ def _local_kb_sba_answer(question: str, max_chunks: int = 4):
                 continue
             lower = text.lower()
             words = re.findall(r"[a-z0-9]+", lower)
-            score = sum(words.count(tok) for tok in tokens if tok != "7a")
-            if "7a" in tokens and re.search(r"(?<![a-z0-9])7\s*(?:\(\s*a\s*\)|-\s*a|a)(?![a-z0-9])", lower):
-                score += 1
-            if score <= 0:
+            matched_tokens = {
+                tok for tok in tokens
+                if tok != "7a" and tok in words
+            }
+            if "7a" in tokens and re.search(
+                r"(?<![a-z0-9])7\s*(?:\(\s*a\s*\)|-\s*a|a)(?![a-z0-9])",
+                lower,
+            ):
+                matched_tokens.add("7a")
+            if len(matched_tokens) < 2 and not matched_tokens.intersection(high_signal_tokens):
                 continue
+            score = sum(words.count(tok) for tok in matched_tokens if tok != "7a")
+            score += int("7a" in matched_tokens)
             # Boost live API digests written when browsing parent→children
             path_str = str(path).replace("\\", "/")
             if "sba_api_live" in path_str or path.name.startswith("api_sba_"):

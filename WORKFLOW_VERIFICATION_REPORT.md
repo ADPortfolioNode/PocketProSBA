@@ -1,15 +1,15 @@
 # PocketPro SBA Workflow Verification Report
 
 **Run date:** 2026-10-24  
-**Overall result:** Core SBA navigation and live Chroma RAG are working. Health checks, retrieval, and a chat-to-Chroma round trip pass. The full test suites remain non-green, and the latest chat-routing source fix still needs to be deployed to the running backend.
+**Overall result:** The production backend was rebuilt and now runs the chat-routing fix. Chroma/RAG health and a rebuilt-backend chat-to-Chroma retrieval round trip pass. The full test suites remain non-green.
 
-**Recheck (2026-10-25):** After the user's rebuild, the production stack runs ChromaDB 0.5.3, backend and frontend are healthy, `/api/rag/health` returns `ok`, and the RAG corpus contains 1,790 documents. The root health-check scripts use the deployed endpoints and Windows-safe ASCII status markers.
+**Recheck (2026-10-25):** Pulled `main` first; it was up to date and the worktree was clean. Built the updated backend and recreated the production stack. ChromaDB 0.5.3, backend, and frontend are healthy; `/api/rag/health` returns `ok` with 1,790 documents.
 
 ## Executive summary
 
 - The frontend, backend, and ChromaDB are healthy; RAG health reports available with 1,790 documents.
 - Programs and Resources follow the expected parent → API → child flow. A program card opened Resources, and the SBA Loans parent opened the 7(a) child topic at a 1280 × 800 viewport.
-- The chat processing path retrieved a unique temporary document from Chroma and returned its confirmation phrase. The probe document was deleted and verified absent afterward.
+- The rebuilt backend's chat processing path retrieved a unique temporary document from live Chroma and returned its exact confirmation phrase. The probe was deleted and verified absent afterward; the document count returned to 1,790.
 - Backend and frontend full suites both exit non-zero. The focused chat component tests pass, and the production frontend build succeeds.
 
 ## Live workflow checks
@@ -17,7 +17,7 @@
 | Workflow | Result | Evidence |
 |---|---|---|
 | Frontend availability | PASS | `GET /` on port 3000 returned 200. Home page and primary navigation rendered. |
-| Chat interface and message send | PASS (service path) | `process_chat_message` retrieved a uniquely named temporary document from live Chroma and returned its exact confirmation phrase. The probe was deleted. Browser chat UI requires login; an unauthenticated navigation redirected to `/login`. |
+| Chat interface and message send | PASS (backend service path) | After the rebuild, `process_chat_message` retrieved a uniquely named temporary document from live Chroma and returned its exact confirmation phrase. The probe was deleted. Browser chat UI requires login; interactive sign-in was not performed. |
 | Programs → Resources | PASS | The SBA Loans program card opened `/browse` with `/api/sba/content/loans`. |
 | Resources parent → child | PASS at desktop width | The `7(a) loans` child opened `/browse` with `/api/sba/content/loans/7a`; the child topic rendered official-source and follow-on actions. |
 | Resources at narrower viewport | PARTIAL | At 957 × 658, browser clicks on a child action were intercepted by the sidebar. The same flow succeeded at 1280 × 800. |
@@ -45,10 +45,14 @@ The user rebuilt the service with Chroma 0.5.3; collection initialization now su
 - Updated `DEPLOY.md` and the deployment-config test to document and enforce the intended client/server split.
 - The running Chroma server is 0.5.3 and the backend client is 0.4.24. RAG health reports 1,790 documents.
 - Against the live database, the backend service passed heartbeat, add, query, and delete; the probe was confirmed absent after deletion.
-- A chat-to-RAG smoke test inserted a temporary document, asked chat for its unique confirmation phrase, verified the exact phrase in the response, and deleted the probe.
+- The Windows Bash shim had no installed WSL distribution, and the Windows startup PowerShell script had legacy UTF-8 parsing and substring service-name lookup issues. Its standard image build initially failed scanning a permission-restricted `.pytest_cache`; the backend was built from a temporary context exported from the pulled commit plus the routing fix. The Windows launcher’s Chroma service lookup was corrected to match exact service names, after which production service recreation and health checks completed.
+- The launcher's unauthenticated `/api/chat` smoke returned 401, consistent with chat route authentication. A chat-service round trip against the rebuilt backend retrieved a temporary document's unique phrase and deleted the probe.
+- Startup logs show the optional Gemini embedding integration cannot initialize: the configured `text-embedding-004` / `embedding-001` model calls return 404 for the current API. The Chroma HTTP service and default local embedding CRUD/query path are healthy; treat Gemini-backed embedding generation as unavailable until its model configuration is updated.
+- An earlier smoke test against the unpatched chat flow failed: local SBA digests intercepted a generic query. The failure was traced to the fallback accepting one incidental word ("review") and then applying a large SBA-source boost.
+- The local KB fallback now requires at least two matched query terms, or one explicit high-signal SBA term (7(a), 504, Microloan, Express, eligibility, or rate), before it can intercept vector RAG. Focused tests preserve relevant 7(a) matching and reject incidental single-word matches.
 - The deployment-config test file passes: 53 passed.
-- The chat smoke test exposed a second issue: generic terms and substring matching made local SBA digest search claim irrelevant queries and short-circuit Chroma retrieval. Updated `backend/routes/rag.py` to ignore generic query terms and match whole words, including the `7(a)`/`7a` spelling; added a regression test. Both focused routing tests pass.
-- The running backend container predates that final routing-source change. Rebuild/restart the backend via `start.sh` to deploy it, then verify chat once more in the signed-in UI. Do not downgrade Chroma or remove `chromadb_data`.
+- All four focused `TestRagMetadataPaths` tests pass. The live document count remained 1,790 after cleanup.
+- Interactive browser login was not performed, so signed-in UI chat remains for manual confirmation. Do not downgrade Chroma or remove `chromadb_data`.
 
 ## Automated verification
 
@@ -60,7 +64,7 @@ The user rebuilt the service with Chroma 0.5.3; collection initialization now su
 | Chat component Jest suite | PASS: 5/5 tests | `ModernConciergeChat.test.js` passed. |
 | Frontend production build | PASS | `npm run build --prefix frontend` completed with `GENERATE_SOURCEMAP=false`. Build emitted the bundle and injected API base `http://localhost:5000`. Browserslist data is stale; the build also reports existing Node deprecation warnings. |
 | Deployment configuration tests | PASS: 53/53 | Chroma server/client arrangement and remaining deployment assertions pass. |
-| RAG routing regression tests | PASS: 2/2 | Relevant 7(a) local KB matching remains intact, while unrelated document searches no longer get misrouted to SBA digests. |
+| RAG routing regression tests | PASS: 4/4 | Relevant 7(a) local KB matching remains intact, while an incidental single-word match no longer captures unrelated document searches. |
 | Whitespace validation | PASS | `git diff --check` completed without errors. |
 
 ## Chat UI update
@@ -73,12 +77,12 @@ The chat window now has:
 - Responsive chat sizing and styling aligned with the app’s blue-and-white theme.
 - Conversation auto-scroll contained within the message panel, avoiding page-level scrolling when a response arrives.
 
-The running frontend container serves an immutable image and has no bind mount to the generated build output. The updated source and local production bundle are ready, but the container on port 3000 was not rebuilt/replaced during this verification; redeploy/recreate that frontend service to publish the new chat UI there.
+The Windows startup process recreated the frontend container from its existing immutable image; this rebuild focused on the backend and did not rebuild frontend assets. Signed-in browser chat UI behavior was not manually validated.
 
 ## Recommended follow-up
 
-1. Rebuild/restart the backend via `start.sh` to deploy the final chat-routing fix, then repeat signed-in chat retrieval in the UI.
+1. Sign in to the chat UI and verify a relevant SBA question with useful sources; backend service-level Chroma retrieval is verified.
 2. Fix the Jest transform/configuration issue that prevents the RAG workflow suite from collecting.
 3. Review the 37 backend deployment-configuration assertions.
 4. Check the Resources sidebar overlay at tablet/narrow widths.
-5. Rebuild and recreate the frontend container to publish the chat UI update on port 3000.
+5. If frontend source changes are pending, build the frontend image before recreating it; the current restart reused the existing image.

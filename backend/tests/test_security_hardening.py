@@ -375,7 +375,8 @@ class TestRagMetadataPaths:
         live = tmp_path / "sba_api_live"
         live.mkdir()
         (live / "api_sba_content_loans_7a__combined.txt").write_text(
-            "SBA 7a loans help small businesses. 7a loan eligibility and rates.", encoding="utf-8"
+            "SBA 7a loans help small businesses. 7a loan eligibility and rates. Review the terms.",
+            encoding="utf-8",
         )
         (tmp_path / "general.txt").write_text("microloan basics for a small business", encoding="utf-8")
         monkeypatch.setattr(rag, "_knowledge_base_roots", lambda: [tmp_path])
@@ -396,10 +397,7 @@ class TestRagMetadataPaths:
     def test_generic_document_search_does_not_match_unrelated_sba_digests(self, kb):
         from backend.routes.rag import _local_kb_sba_answer
 
-        result = _local_kb_sba_answer(
-            "Find the document about PocketPro rebuild retrieval test sapphire paddle 8842 "
-            "and tell me its confirmation phrase."
-        )
+        result = _local_kb_sba_answer("Tell me about the review.")
         assert result["mode"] == "static_fallback"
         assert result["source_documents"] == []
 

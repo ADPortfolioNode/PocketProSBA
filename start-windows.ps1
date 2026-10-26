@@ -119,11 +119,11 @@ function Get-VectorServiceName {
     $names = @("chroma", "chromadb", "chromadb_service")
     foreach ($n in $names) {
         $ErrorActionPreference = 'Continue'
-        $svcs = & docker compose @script:ComposeFileArgs config --services 2>$null
+        $svcs = @(& docker compose @script:ComposeFileArgs config --services 2>$null)
         $ErrorActionPreference = "Stop"
-        if ($svcs -match [regex]::Escape($n)) { return $n }
+        if ($svcs -contains $n) { return $n }
     }
-    return "chroma"
+    throw "No supported Chroma service found in the selected Compose configuration."
 }
 
 function Repair-PortForwarding {
