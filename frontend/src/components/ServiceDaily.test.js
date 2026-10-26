@@ -66,6 +66,16 @@ describe('ServiceDaily', () => {
     expect(screen.getByText(/A quoted total and deposit/)).toBeInTheDocument();
   });
 
+  test('rooms tab states the published cancellation, deposit, and solo-evening terms', () => {
+    render(<ServiceDaily />);
+    expect(screen.getByText(/Rooms 1 and 10 require 5 days/)).toBeInTheDocument();
+    expect(screen.getByText(/Rooms 2–9 require 2 days/)).toBeInTheDocument();
+    expect(screen.getByText(/Solo evening bookings \(6–11pm\) must be made on the same day/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('tab', { name: /recording/i }));
+    expect(screen.getAllByText(/Bookings made within 5 days of the session require full payment/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/stored for 6 months/).length).toBeGreaterThan(0);
+  });
+
   test('repair tab shows its own task cards, and outline cards do not pretend to be forms', () => {
     render(<ServiceDaily />);
     fireEvent.click(screen.getByRole('tab', { name: /repair/i }));

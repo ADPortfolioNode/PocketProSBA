@@ -38,14 +38,29 @@ export const RECORDING = {
   productionRange: '100–125',
   depositPercent: 50,
   cancellation: '5-day cancellation policy',
+  fullPayment:
+    'Bookings made within 5 days of the session require full payment at the time of booking.',
+  filesStored: 'Session files are stored for 6 months unless instructed otherwise.',
+  bookingVia:
+    'For a real session, send project details on the booking form and wait for the studio to reply with availability.',
   note: 'Recording includes a professional sound engineer.',
 };
 
+// Cancellation, deposit, and booking terms, following the business's own
+// published rehearsal and recording terms (rooms numbered 1–10, as here):
+// Rooms 1 and 10 need 5 days' notice to cancel for a refund, Rooms 2–9 need
+// 2 days' notice; cancelling within 48 hours or not showing up charges the
+// full booking cost; a $25 fee applies when a drumset must be removed from
+// a room; solo evening bookings are same-day only, call after 11am.
 export const POLICIES = {
   depositPercent: 50,
   processingFeePercent: 4,
   cancellation:
-    'A minimum 50% deposit is required for all bookings. A 4% processing fee applies except for cash payments. Confirm cancellation terms with the business before booking.',
+    'Cancellation: Rooms 1 and 10 require 5 days’ notice to cancel for a refund; Rooms 2–9 require 2 days’ notice. Cancelling within 48 hours, or not showing up, charges the full booking cost. A $25 fee applies to any room rental requiring removal of the drumset.',
+  deposit:
+    'A minimum 50% deposit is required for all bookings. Bookings made inside the cancellation policy require full payment at the time of booking. For Rooms 2–9, bookings costing $100 or more require a $50 deposit at the time of booking. A 4% processing fee applies except for cash payments.',
+  soloEvening:
+    'Solo evening bookings (6–11pm) must be made on the same day. Call after 11am.',
 };
 
 export function roomRate(room, period, largeGroup = false) {
