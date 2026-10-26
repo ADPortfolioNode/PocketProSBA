@@ -490,6 +490,26 @@ def rag_health():
             'message': internal_error_message(e, public='Failed to check RAG health')
         }), 500
 
+@rag_bp.route('/daily-ingest', methods=['GET', 'POST'])
+@auth_required
+def daily_ingest():
+    """Daily workflows in RAG: GET status, POST (re)seed into Chroma.
+
+    Mirrors /api/sba/rag-ingest: local KB file only, hash-guarded, and
+    soft-fail (200 with ok=False) so a down Chroma never breaks the call.
+    """
+    try:
+        from backend.services.daily_rag_ingest import ingest_daily_workflows, ingest_status
+
+        if request.method == 'GET':
+            return jsonify({'status': 'ok', **ingest_status()}), 200
+        force = (request.get_json(silent=True) or {}).get('force') is True
+        return jsonify({'ok': True, **ingest_daily_workflows(force=force)}), 200
+    except Exception as e:
+        logger.warning(f"daily ingest soft-fail: {e}")
+        return jsonify({'ok': False, 'error': internal_error_message(e)}), 200
+
+
 @rag_bp.route('/decompose', methods=['POST'])
 @auth_required
 def decompose_task():
