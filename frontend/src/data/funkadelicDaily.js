@@ -37,8 +37,15 @@ export const SOLO_DUO_RATES = [
 ];
 
 export const RECORDING = {
-  hourly: 50,
-  tenHourBlock: 425,
+  // Corrected 2026-10-25 from the studio's current recording page:
+  // the old $50/hr was the videography basic rate, not recording.
+  // No ten-hour block is listed on that page, so none is shown.
+  hourlyRange: '80–100',
+  vocalMinimum: '2-hour minimum',
+  instrumentalMinimum: '3-hour minimum',
+  productionRange: '100–125',
+  depositPercent: 50,
+  cancellation: '5-day cancellation policy',
   note: 'Recording includes a professional sound engineer.',
 };
 
