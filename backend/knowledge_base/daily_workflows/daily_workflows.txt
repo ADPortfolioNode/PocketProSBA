@@ -23,6 +23,14 @@ Service: Rooms. What it does: price a session before anyone commits to it.
 Steps: 1. Pick the room, day or evening rate, and number of hours.
 2. Choose card or cash — card adds the 4% processing fee.
 3. Read the quote: base, fee, total, and 50% deposit due.
+4. Check the cancellation terms for the room: Rooms 1 and 10 need 5 days'
+notice, Rooms 2-9 need 2 days' notice. Cancelling within 48 hours, or not
+showing up, charges the full booking cost. A $25 fee applies to any room
+rental requiring removal of the drumset. A minimum 50% deposit is required
+for all bookings; bookings made inside the cancellation policy require full
+payment at the time of booking. For Rooms 2-9, bookings costing $100 or more
+require a $50 deposit at the time of booking. Solo evening bookings
+(6-11pm) must be made on the same day; call after 11am.
 Needs: Room, time of day, and hours. Result: A quoted total and deposit, with
 nothing booked yet.
 
@@ -40,8 +48,10 @@ in the day schedule and the bookings list.
 Service: Recording. What it does: hold the recording studio for a session in
 this demo. Steps: 1. Pick a date, start time, and hours inside operating
 hours. 2. Add a session name. 3. The page blocks it if the studio is already
-booked for part of that time. Needs: Date, start time, hours, and session
-name. Result: The session appears in the recording bookings list.
+booked for part of that time. 4. For a real session, send project details
+on the booking form and wait for the studio to reply with availability.
+Needs: Date, start time, hours, and session name. Result: The session
+appears in the recording bookings list.
 
 ## Task: Confirm engineer and deposit — Recording
 
@@ -49,9 +59,11 @@ Service: Recording. What it does: turn a held session into a confirmed booking
 with the studio. Steps: 1. Confirm engineer availability with the studio.
 2. Confirm the session minimum: vocal 2 hours, instrumental 3 hours.
 3. Take the 50% deposit; the 5-day recording cancellation policy applies.
+4. Bookings made within 5 days of the session require full payment at the
+time of booking.
 Needs: Engineer availability and the deposit. Result: A confirmed session,
-with its file kept with the booking. Status: Confirm with the studio — this
-step is not a form on this page.
+with its file stored for 6 months unless instructed otherwise.
+Status: Confirm with the studio — this step is not a form on this page.
 
 ## Task: Open a repair intake — Repair
 

@@ -34,7 +34,7 @@ const WORKFLOW_CARDS = {
     {
       title: 'Get a quote',
       what: 'Price a session before anyone commits to it.',
-      steps: ['Pick the room, day or evening rate, and number of hours.', 'Choose card or cash — card adds the 4% processing fee.', 'Read the quote: base, fee, total, and 50% deposit due.'],
+      steps: ['Pick the room, day or evening rate, and number of hours.', 'Choose card or cash — card adds the 4% processing fee.', 'Read the quote: base, fee, total, and 50% deposit due.', 'Check the cancellation terms for the room: Rooms 1 and 10 need 5 days’ notice, Rooms 2–9 need 2 days’ notice.'],
       needs: 'Room, time of day, and hours',
       result: 'A quoted total and deposit, with nothing booked yet.',
     },
@@ -51,7 +51,7 @@ const WORKFLOW_CARDS = {
     {
       title: 'Book a recording session',
       what: 'Hold the recording studio for a session in this demo.',
-      steps: ['Pick a date, start time, and hours inside operating hours.', 'Add a session name.', 'The page blocks it if the studio is already booked for part of that time.'],
+      steps: ['Pick a date, start time, and hours inside operating hours.', 'Add a session name.', 'The page blocks it if the studio is already booked for part of that time.', 'For a real session, send project details on the booking form and wait for the studio to reply with availability.'],
       needs: 'Date, start time, hours, and session name',
       result: 'The session appears in the recording bookings list.',
       target: 'recording-booking-form',
@@ -59,9 +59,9 @@ const WORKFLOW_CARDS = {
     {
       title: 'Confirm engineer and deposit',
       what: 'Turn a held session into a confirmed booking with the studio.',
-      steps: ['Confirm engineer availability with the studio.', 'Confirm the session minimum: vocal 2 hours, instrumental 3 hours.', 'Take the 50% deposit; the 5-day recording cancellation policy applies.'],
+      steps: ['Confirm engineer availability with the studio.', 'Confirm the session minimum: vocal 2 hours, instrumental 3 hours.', 'Take the 50% deposit; the 5-day recording cancellation policy applies.', 'Bookings made within 5 days of the session require full payment at the time of booking.'],
       needs: 'Engineer availability and the deposit',
-      result: 'A confirmed session, with its file kept with the booking.',
+      result: 'A confirmed session, with its file stored for 6 months unless instructed otherwise.',
       status: 'Confirm with the studio — this step is not a form on this page',
     },
   ],
@@ -353,13 +353,15 @@ function ServiceDaily() {
             ))}
           </ul>
           <p>{POLICIES.cancellation}</p>
+          <p>{POLICIES.deposit}</p>
+          <p>{POLICIES.soloEvening}</p>
         </section>
       )}
 
       {tab === 'Recording' && (
         <section>
           <h2>Recording studio</h2>
-          <p>${RECORDING.hourlyRange}/hour. Vocal sessions: {RECORDING.vocalMinimum}; instrumental sessions: {RECORDING.instrumentalMinimum}. Production ${RECORDING.productionRange}/hour. {RECORDING.cancellation}; {RECORDING.depositPercent}% deposit. {RECORDING.note}</p>
+          <p>${RECORDING.hourlyRange}/hour. Vocal sessions: {RECORDING.vocalMinimum}; instrumental sessions: {RECORDING.instrumentalMinimum}. Production ${RECORDING.productionRange}/hour. {RECORDING.cancellation}; {RECORDING.depositPercent}% deposit. {RECORDING.fullPayment} {RECORDING.filesStored} {RECORDING.note}</p>
           <p>Schedule a session inside operating hours, confirm engineer availability, and keep the session file with the booking.</p>
           {scheduleError && <p role="alert">{scheduleError}</p>}
           <form
