@@ -71,6 +71,22 @@ def test_decompose_task_service_returns_steps():
     assert result["response"]["text"]
 
 
+def test_info_request_is_a_task_with_expectation_and_limitation_notes():
+    concierge = _concierge()
+    result = concierge.handle_message(
+        "What is an SBA 7(a) loan?", "test-concierge-expectation"
+    )
+    text = result.get("text", "")
+    # Conversational task lead first, not a raw dump.
+    assert text.startswith("Got it")
+    assert "as a task" in text
+    # Funding answers must carry expectation / liability management.
+    assert "Expectation note:" in text
+    assert "not a loan approval" in text
+    # No Chroma in the test env, so the limitation must be stated.
+    assert "Limitation:" in text
+
+
 def test_rag_manager_unavailable_is_explicit():
     manager = RAGManager()
     assert manager.is_available() is False

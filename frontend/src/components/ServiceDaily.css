@@ -1,0 +1,83 @@
+.service-daily {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 1.5rem;
+  font-family: Inter, system-ui, sans-serif;
+  color: #0f172a;
+}
+
+.service-kicker {
+  color: #2563eb;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+}
+
+.service-header h1 {
+  margin: 0.25rem 0 0.5rem;
+}
+
+.service-note {
+  background: #eff6ff;
+  border: 1px solid #dbeafe;
+  border-radius: 0.75rem;
+  padding: 0.75rem 1rem;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.service-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 1rem 0;
+}
+
+.service-tabs button {
+  padding: 0.55rem 0.9rem;
+  border: 1px solid #dbe7f8;
+  border-radius: 999px;
+  background: #fff;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.service-tabs button.is-active {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #fff;
+}
+
+.service-daily label {
+  display: block;
+  margin: 0.6rem 0;
+  font-weight: 600;
+}
+
+.service-daily input,
+.service-daily select {
+  display: block;
+  margin-top: 0.25rem;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.6rem;
+  font-size: 0.95rem;
+}
+
+.service-daily button[type='submit'] {
+  padding: 0.6rem 1rem;
+  border: 0;
+  border-radius: 0.7rem;
+  background: #2563eb;
+  color: #fff;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.service-quote {
+  font-weight: 700;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  padding: 0.75rem 1rem;
+}
