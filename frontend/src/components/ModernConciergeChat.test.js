@@ -70,6 +70,22 @@ describe('ModernConciergeChat', () => {
     expect(screen.getByText('Links & resources')).toBeInTheDocument();
   });
 
+  test('resources tab links an API source to /browse, not raw JSON', () => {
+    const messages = [
+      {
+        role: 'assistant',
+        content: 'See SBA loans.',
+        sources: [{ title: 'SBA Loans', path: '/api/sba/content/loans' }],
+      },
+    ];
+    render(<ModernConciergeChat messages={messages} />);
+    const link = screen.getByText('SBA Loans');
+    expect(link).toHaveAttribute(
+      'href',
+      '/browse#r=%2Fapi%2Fsba%2Fcontent%2Floans&t=loans',
+    );
+  });
+
   test('shows an error when onSend is missing', () => {
     render(<ModernConciergeChat />);
     fireEvent.change(screen.getByRole('textbox'), { target: { value: 'x' } });
