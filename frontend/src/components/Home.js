@@ -1,10 +1,9 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import HeroWorkflowShowcase from './HeroWorkflowShowcase';
 
-/** Live real-world photos (Unsplash) — service-app hero & feature cards */
+/** Live real-world photos (Unsplash) — service-app feature cards */
 const IMG = {
-  hero:
-    'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?auto=format&fit=crop&w=1400&q=80',
   chat:
     'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&fit=crop&w=800&q=80',
   browse:
@@ -91,12 +90,7 @@ function Home() {
           </div>
         </div>
         <div className="svc-hero-media">
-          <img
-            src={IMG.hero}
-            alt="Small business team collaborating in a modern office"
-            className="svc-hero-img"
-            loading="eager"
-          />
+          <HeroWorkflowShowcase />
           <div className="svc-hero-glow" aria-hidden="true" />
         </div>
       </section>

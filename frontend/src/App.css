@@ -380,6 +380,73 @@ a:hover {
   z-index: -1;
   filter: blur(8px);
 }
+/* Hero workflow video slideshow: one video slot, one workflow per slide. */
+.svc-hero-showcase-media {
+  position: relative;
+}
+
+.svc-hero-video {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: var(--pp-radius-lg);
+  box-shadow: var(--pp-shadow-lg);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  background: #0f172a;
+  cursor: pointer;
+  display: block;
+}
+
+.svc-hero-sound {
+  position: absolute;
+  right: 0.75rem;
+  bottom: 0.75rem;
+  border: 0;
+  border-radius: 999px;
+  padding: 0.35rem 0.8rem;
+  font-size: 0.85rem;
+  background: rgba(15, 23, 42, 0.8);
+  color: #fff;
+  cursor: pointer;
+}
+
+.svc-hero-showcase-caption {
+  margin-top: 0.75rem;
+}
+
+.svc-hero-showcase-caption h2 {
+  margin: 0 0 0.25rem;
+  font-size: 1.15rem;
+}
+
+.svc-hero-showcase-caption p {
+  margin: 0 0 0.75rem;
+  color: var(--pp-muted, #475569);
+}
+
+.svc-hero-showcase-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.svc-hero-showcase-controls button {
+  border: 1px solid rgba(15, 23, 42, 0.15);
+  background: #fff;
+  border-radius: 999px;
+  padding: 0.3rem 0.7rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.svc-hero-showcase-controls button.is-active {
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+  color: #fff;
+}
+
 
 .svc-section {
   margin: 1.25rem 0 2.5rem;
