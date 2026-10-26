@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Send, Bot, User, AlertCircle, RefreshCw, ArrowUpRight } from 'lucide-react';
-import { formatMagazineHtml } from '../utils/magazineProse';
+import { formatMagazineHtml, normalizeHref } from '../utils/magazineProse';
 import { friendlyError } from '../utils/friendlyError';
 import '../styles/modern-chat.css';
 
@@ -36,9 +36,13 @@ const collectLinks = (msgs) => {
   const seen = new Set();
   const links = [];
   const push = (label, url) => {
-    if (!url || seen.has(url)) return;
-    seen.add(url);
-    links.push({ label: label || url, url });
+    // Chat fix: never link a raw API route from the Resources tab — a user
+    // clicking it would land on raw JSON, not a usable page. Reuse the same
+    // normalization the message body uses: /api/sba/* opens in /browse.
+    const normalized = normalizeHref(url);
+    if (!normalized || seen.has(normalized)) return;
+    seen.add(normalized);
+    links.push({ label: label || normalized, url: normalized });
   };
   msgs.forEach((msg) => {
     (msg.sources || []).forEach((s) => {
@@ -353,7 +357,14 @@ const ModernConciergeChat = ({ onSend, messages = [], loading, userName, initial
             <ul className="chat-resources-list">
               {conversationLinks.map((link) => (
                 <li key={link.url}>
-                  <a href={link.url}>{link.label}</a>
+                  <a
+                    href={link.url}
+                    {...(/^https?:\/\//i.test(link.url)
+                      ? { target: '_blank', rel: 'noopener noreferrer' }
+                      : {})}
+                  >
+                    {link.label}
+                  </a>
                 </li>
               ))}
             </ul>
