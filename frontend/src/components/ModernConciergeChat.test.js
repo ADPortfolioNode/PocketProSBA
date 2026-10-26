@@ -53,6 +53,39 @@ describe('ModernConciergeChat', () => {
     await waitFor(() => expect(screen.queryByLabelText(/thinking/i)).not.toBeInTheDocument());
   });
 
+  test('keeps chat visible and lists conversation links in the Resources tab', () => {
+    const messages = [
+      {
+        role: 'assistant',
+        content: 'See [SBA Loans](/browse) for details.',
+        sources: [{ title: 'SBA Loans', path: '/api/sba/content/loans' }],
+      },
+    ];
+    render(<ModernConciergeChat messages={messages} />);
+    // Chat itself is still present and usable.
+    expect(screen.getByRole('textbox')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /send/i })).toBeInTheDocument();
+    // Links live in the tabbed panel, not only inline.
+    expect(screen.getByRole('tab', { name: /^links$/i })).toBeInTheDocument();
+    expect(screen.getByText('Links & resources')).toBeInTheDocument();
+  });
+
+  test('resources tab links an API source to /browse, not raw JSON', () => {
+    const messages = [
+      {
+        role: 'assistant',
+        content: 'See SBA loans.',
+        sources: [{ title: 'SBA Loans', path: '/api/sba/content/loans' }],
+      },
+    ];
+    render(<ModernConciergeChat messages={messages} />);
+    const link = screen.getByText('SBA Loans');
+    expect(link).toHaveAttribute(
+      'href',
+      '/browse#r=%2Fapi%2Fsba%2Fcontent%2Floans&t=loans',
+    );
+  });
+
   test('shows an error when onSend is missing', () => {
     render(<ModernConciergeChat />);
     fireEvent.change(screen.getByRole('textbox'), { target: { value: 'x' } });

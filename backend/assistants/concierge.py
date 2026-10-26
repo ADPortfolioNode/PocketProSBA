@@ -11,6 +11,27 @@ from .base import BaseAssistant
 # Configure logging
 logger = logging.getLogger(__name__)
 
+# Concierge behaviour rules (user-directed, 2026-10-25):
+# - Expectation management: never present guidance as a loan approval,
+#   eligibility decision, or legal/financial advice. A lender and the SBA
+#   decide eligibility, amount, and timing, and will ask for documentation.
+# - Limitation awareness: say plainly when vector retrieval (Chroma) or
+#   another service is unavailable, instead of implying a full search ran.
+# - An information request is a task: conversational answer first, then
+#   SBA resources and next steps to complete it, with liability noted.
+EXPECTATION_NOTE = (
+    "\n\nExpectation note: This is SBA guidance only, not a loan approval, "
+    "eligibility decision, or legal or financial advice. A lender and the SBA "
+    "decide eligibility, amount, and timing, and will ask for documentation. "
+    "Check the official SBA page in Resources before acting."
+)
+LIMITATION_RAG_NOTE = (
+    "\n\nLimitation: Vector document retrieval is unavailable right now, so "
+    "this answer is not from vector search. Use the live SBA resources in "
+    "Resources to verify the current program details."
+)
+_FUNDING_WORDS = ("loan", "funding", "financing", "eligibility", "grant")
+
 # Lazy-load Gemini RAG service only when required
 def _load_gemini_rag_service():
     try:
@@ -106,7 +127,34 @@ class Concierge(BaseAssistant):
                 response = self._handle_follow_up_query(message, conversation)
             else:
                 response = self._generate_direct_response(message, conversation)
-                
+
+            # Concierge behaviour: an information request is a task.
+            # Conversational response first, then resources and next steps,
+            # with limitations and liability stated plainly — never implied
+            # as an approval or a complete search when a service is down.
+            response_text = response.get("text", "")
+            if intent in ("document_search", "simple_query", "follow_up_query"):
+                task_lead = (
+                    f"Got it — I'll take that as a task: find SBA guidance on "
+                    f"{message.strip()}, summarize it, and point you to the "
+                    f"official resources and next steps.\n\n"
+                )
+                if not response_text.startswith("Got it"):
+                    response_text = task_lead + response_text
+                try:
+                    rag_available = bool(
+                        self.rag_manager and self.rag_manager.is_available()
+                    )
+                except Exception:
+                    rag_available = False
+                if not rag_available and "Limitation:" not in response_text:
+                    response_text += LIMITATION_RAG_NOTE
+            if intent in ("document_search", "task_request", "simple_query"):
+                lowered = response_text.lower()
+                if any(w in lowered for w in _FUNDING_WORDS) and "Expectation note:" not in response_text:
+                    response_text += EXPECTATION_NOTE
+            response["text"] = response_text
+
             # Add assistant response to conversation
             conversation["messages"].append({
                 "role": "assistant",
@@ -426,7 +474,10 @@ class Concierge(BaseAssistant):
 
         if "error" in results:
             return {
-                "text": f"I encountered an error while searching: {results['error']}",
+                "text": (
+                    f"I encountered an error while searching: {results['error']}."
+                    + LIMITATION_RAG_NOTE
+                ),
                 "sources": [],
             }
 

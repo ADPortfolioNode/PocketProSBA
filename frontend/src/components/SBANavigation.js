@@ -30,6 +30,8 @@ export const NAV_ITEMS = [
     hardNav: true,
   },
   { to: '/orchestrator', label: 'Tasks', testId: 'nav-orchestrator' },
+  // Daily operations for a service business: calendar scheduling by room and hour.
+  { to: '/daily', label: 'Daily', testId: 'nav-daily' },
 ];
 
 const SBANavigation = ({ serverConnected, connectionStatus, apiUrl }) => {
