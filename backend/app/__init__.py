@@ -411,6 +411,26 @@ def create_app(config_name=None):
     # Rate limits on auth + LLM routes. Applied last so every view is registered.
     init_rate_limiting(app)
 
+    # Seed Daily operations workflows into RAG (daemon thread, soft-fail
+    # only — never blocks startup or a request). The seed is hash-guarded,
+    # so it is a no-op after the first successful run. Even if Chroma is
+    # down, the concierge can still answer Daily questions from the KB
+    # file via keyword search; see services/daily_rag_ingest.py.
+    try:
+        import threading
+
+        def _seed_daily():
+            try:
+                from backend.services.daily_rag_ingest import ingest_daily_workflows
+
+                ingest_daily_workflows()
+            except Exception as e:
+                logger.warning(f"Daily workflows RAG seed soft-fail: {e}")
+
+        threading.Thread(target=_seed_daily, name="daily-rag-seed", daemon=True).start()
+    except Exception as e:
+        logger.warning(f"Daily workflows RAG seed not started: {e}")
+
     # SBA content freshness: on-connect refresh + daily quiet sync.
     # Daemon thread, lock-guarded across workers, soft-fail only — it
     # must never block startup or a request. See services/sba_sync.py.

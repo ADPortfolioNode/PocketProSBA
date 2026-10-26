@@ -81,3 +81,58 @@
   border-radius: 0.75rem;
   padding: 0.75rem 1rem;
 }
+
+.service-workflows {
+  margin: 1.25rem 0 0.5rem;
+}
+
+.service-workflows h2 {
+  margin-bottom: 0.25rem;
+}
+
+.service-task-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.service-task-card {
+  border: 1px solid #dbe7f8;
+  border-radius: 0.75rem;
+  background: #fff;
+  padding: 0.9rem 1rem;
+}
+
+.service-task-card h3 {
+  margin: 0 0 0.25rem;
+}
+
+.service-task-card ol {
+  padding-left: 1.25rem;
+  line-height: 1.5;
+}
+
+.service-task-status {
+  display: inline-block;
+  background: #fef3c7;
+  border: 1px solid #fde68a;
+  border-radius: 999px;
+  padding: 0.15rem 0.6rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.service-task-card a,
+.service-task-card button {
+  font-weight: 650;
+  color: #2563eb;
+}
+
+.service-task-card button {
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  font-size: 0.95rem;
+}

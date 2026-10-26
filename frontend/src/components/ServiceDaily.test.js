@@ -56,6 +56,33 @@ describe('ServiceDaily', () => {
     expect(hasConflict(bookings, { date: '2026-10-27', service: 'Room 3', startHour: 15, endHour: 17 })).toBe(false);
   });
 
+  test('rooms tab shows one card per task with steps, needs, and result', () => {
+    render(<ServiceDaily />);
+    expect(screen.getByText('Workflows in Rooms — one card per task')).toBeInTheDocument();
+    expect(screen.getByText('Check availability')).toBeInTheDocument();
+    expect(screen.getByText('Get a quote')).toBeInTheDocument();
+    expect(screen.getByText('Add a demo booking')).toBeInTheDocument();
+    expect(screen.getByText(/A free start time inside operating hours/)).toBeInTheDocument();
+    expect(screen.getByText(/A quoted total and deposit/)).toBeInTheDocument();
+  });
+
+  test('repair tab shows its own task cards, and outline cards do not pretend to be forms', () => {
+    render(<ServiceDaily />);
+    fireEvent.click(screen.getByRole('tab', { name: /repair/i }));
+    expect(screen.getByText('Workflows in Repair — one card per task')).toBeInTheDocument();
+    expect(screen.getByText('Open a repair intake')).toBeInTheDocument();
+    expect(screen.getByText(/Workflow outline/)).toBeInTheDocument();
+    expect(screen.queryByText('Check availability')).not.toBeInTheDocument();
+  });
+
+  test('rentals tab cards are workflow outlines, not working booking forms', () => {
+    render(<ServiceDaily />);
+    fireEvent.click(screen.getByRole('tab', { name: /rentals/i }));
+    expect(screen.getByText('Rent gear')).toBeInTheDocument();
+    expect(screen.getByText('Sell retail')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Add demo booking' })).not.toBeInTheDocument();
+  });
+
   test('adding a booking shows it in the day schedule and blocks a double booking', () => {
     render(<ServiceDaily />);
     const nameInput = screen.getByPlaceholderText('Band / artist name');

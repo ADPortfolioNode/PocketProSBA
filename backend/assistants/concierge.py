@@ -377,6 +377,34 @@ class Concierge(BaseAssistant):
         """Handle a document search request — human-readable answer + clickable links."""
         self._update_status("searching", 50, "Searching for relevant documents...")
 
+        # Daily operations workflows first: a question about booking a room,
+        # a recording session, or a repair intake is answered from the Daily
+        # task cards, not from SBA loan documents. This also seeds the
+        # conversation — follow-ups can build on the task answer just given.
+        # Generic only, no client branding, and demo-only limits are stated.
+        try:
+            from backend.services.daily_rag_ingest import search_daily_workflows
+
+            daily = search_daily_workflows(message, max_results=2)
+            if daily and daily[0].get("score", 0) >= 3:
+                parts = [
+                    "Here is how that Daily task works:\n",
+                ]
+                sources = []
+                for hit in daily:
+                    parts.append(f"**{hit['title']}**\n{hit['body']}\n")
+                    sources.append(
+                        {"title": hit["title"], "path": "/daily", "url": "/daily"}
+                    )
+                parts.append(
+                    "\nDemo only: Daily workflows take no payments and make no real "
+                    "reservations. Open Daily to try the task, and verify rates and "
+                    "policies with the business before booking."
+                )
+                return {"text": "\n".join(parts), "sources": sources}
+        except Exception as daily_err:
+            logger.debug("daily workflows search soft-fail: %s", daily_err)
+
         # Prefer live SBA API digests (parent→child explore) when keyword match is strong
         try:
             from backend.routes.rag import _local_kb_sba_answer
