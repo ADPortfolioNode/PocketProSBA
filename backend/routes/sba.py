@@ -934,6 +934,51 @@ def sba_rag_ingest():
         return jsonify({'ok': False, 'error': internal_error_message(e), 'path': path}), 200
 
 
+@sba_bp.route('/sync/status', methods=['GET'])
+def sba_sync_status():
+    """Operational freshness status: last sync, per-route ages, next run.
+
+    Read-only metadata, no secrets. Use it to answer "is this current?"
+    without trusting an undated page.
+    """
+    try:
+        from backend.services.sba_sync import sync_status
+
+        return jsonify({'status': 'ok', **sync_status()}), 200
+    except Exception as e:
+        logger.warning('sba sync status soft-fail: %s', e)
+        return jsonify({'status': 'degraded', 'error': internal_error_message(e)}), 200
+
+
+@sba_bp.route('/sync', methods=['POST'])
+def sba_sync_trigger():
+    """Manually trigger a quiet content sync (background thread).
+
+    Token-gated: set SBA_SYNC_TOKEN in the server environment and send
+    it as X-SBA-Sync-Token. When no token is configured, this endpoint
+    refuses — the in-app daily scheduler and the CLI are the normal
+    paths, so an open trigger cannot be used to hammer the SBA feed.
+    """
+    import os
+    import threading
+
+    token = os.getenv('SBA_SYNC_TOKEN', '').strip()
+    if not token or request.headers.get('X-SBA-Sync-Token', '') != token:
+        return jsonify({'ok': False, 'error': 'sync token required'}), 403
+    force = (request.get_json(silent=True) or {}).get('force') is True
+
+    def _run():
+        try:
+            from backend.services.sba_sync import run_sync
+
+            run_sync(force=force)
+        except Exception as e:
+            logger.warning('manual sba sync soft-fail: %s', e)
+
+    threading.Thread(target=_run, name='sba-manual-sync', daemon=True).start()
+    return jsonify({'ok': True, 'accepted': True, 'force': force}), 202
+
+
 @sba_bp.route('/resources', methods=['GET'])
 def list_resources():
     """

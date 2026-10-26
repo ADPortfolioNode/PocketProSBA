@@ -80,15 +80,33 @@ class RAGManager:
         """Check if RAG system is available"""
         return self.available and self.chroma_service and self.chroma_service.is_available()
     
-    def add_document(self, text, metadata=None):
-        """Add a document to the RAG system"""
+    def add_document(self, text, metadata=None, doc_id=None):
+        """Add a document to the RAG system.
+
+        When doc_id is given, the document is replaced in place on
+        re-ingest (upsert) instead of appended as a duplicate, so a
+        refreshed route cannot leave its stale copy behind.
+        """
         if not self.is_available():
             return {"error": "RAG system not available"}
-        
+
         try:
-            result = self.chroma_service.add_documents([text], [metadata or {}])
+            if doc_id and hasattr(self.chroma_service, "upsert_documents"):
+                return self.chroma_service.upsert_documents(
+                    [text], [metadata or {}], ids=[doc_id]
+                )
+            if doc_id:
+                try:
+                    self.chroma_service.delete_document(doc_id)
+                except Exception:
+                    pass
+                result = self.chroma_service.add_documents(
+                    [text], [metadata or {}], ids=[doc_id]
+                )
+            else:
+                result = self.chroma_service.add_documents([text], [metadata or {}])
             return result
-            
+
         except Exception as e:
             logger.error(f"Failed to add document: {str(e)}")
             return {"error": str(e)}
