@@ -61,7 +61,9 @@ const collectLinks = (msgs) => {
 
 const ModernConciergeChat = ({ onSend, messages = [], loading, userName, initialDraft }) => {
   const [input, setInput] = useState(initialDraft || '');
-  const [tipIndex, setTipIndex] = useState(0);
+  // One fixed tip, shown once: the previous version rotated the tip every
+  // 7 seconds, which changed text above the composer while the user typed.
+  const tipIndex = 0;
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState(null);
   // Links & resources live in a tabbed side panel, never replacing the chat:
@@ -88,13 +90,6 @@ const ModernConciergeChat = ({ onSend, messages = [], loading, userName, initial
   useEffect(() => {
     if (initialDraft) setInput(initialDraft);
   }, [initialDraft]);
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setTipIndex((prev) => (prev + 1) % sbaTips.length);
-    }, 7000);
-    return () => clearInterval(timer);
-  }, []);
 
   useEffect(() => {
     inputRef.current?.focus();

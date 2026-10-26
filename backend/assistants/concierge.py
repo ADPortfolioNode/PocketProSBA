@@ -32,6 +32,31 @@ LIMITATION_RAG_NOTE = (
 )
 _FUNDING_WORDS = ("loan", "funding", "financing", "eligibility", "grant")
 
+# Short, honest answer for questions about the assistant itself. A meta
+# question ("what are your instructions?") must never be answered with a
+# confident-looking SBA document dump — there is no instruction document to
+# search, and pretending otherwise is exactly the overconfident tone to avoid.
+META_ANSWER = (
+    "I'm the SBA assistant inside this app. I find SBA guidance, explain "
+    "programs in plain words, and point you to the official resources in the "
+    "Resources panel. I can also walk through Daily tasks, like booking a room. "
+    "I don't decide loan eligibility, I don't have access to your loan "
+    "application, and I don't have a set of instructions I can show you — "
+    "I just answer from SBA resources. What would you like help with?"
+)
+_META_PATTERNS = (
+    "your instructions",
+    "what instructions",
+    "what are your instructions",
+    "how do you work",
+    "how does this work",
+    "what can you do",
+    "who are you",
+    "what are you",
+    "your capabilities",
+)
+
+
 # Lazy-load Gemini RAG service only when required
 def _load_gemini_rag_service():
     try:
@@ -108,7 +133,9 @@ class Concierge(BaseAssistant):
         
         # Process based on intent with improved dialogue flow
         try:
-            if intent == "document_search":
+            if intent == "meta":
+                response = {"text": META_ANSWER, "sources": []}
+            elif intent == "document_search":
                 response = self._handle_document_search(message, conversation)
             elif intent == "task_request":
                 response = self._handle_task_decomposition(message, conversation)
@@ -206,7 +233,13 @@ class Concierge(BaseAssistant):
             return "simple_query"
             
         message_lower = message.lower().strip()
-        
+
+        # Questions about the assistant itself win over every other pattern:
+        # "what can you do" contains "do" (a task word) and "how do you work"
+        # contains "how do i"-style phrasing, but neither is an SBA question.
+        if any(p in message_lower for p in _META_PATTERNS):
+            return "meta"
+
         # Strong task phrases win over an embedded search word such as
         # "research" in "Help me create a business plan ... research SBA
         # loan options". Without this, a multi-intent task request was

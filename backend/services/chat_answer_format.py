@@ -264,71 +264,49 @@ def normalize_hits(
 
 def format_hits_as_answer(query: str, hits: List[Dict[str, Any]]) -> Tuple[str, List[dict]]:
     """
-    Build magazine-friendly answer with:
-      - short intro
-      - distinct topics (no Source 1: sba_api spam)
-      - bullet takeaways
-      - ## Links with markdown hyperlinks
+    Build a plain, human-readable chat answer:
+
+      - one short intro sentence
+      - each resource as a bold title plus one short paragraph
+      - no headings, no per-item action lines, no in-bubble link list
+
+    Links are deliberately NOT repeated inside the bubble: the message's
+    sources are returned alongside the text, and the chat's Resources panel
+    collects them into the Links tab (links live in the tab until selected).
+    The only section appended afterwards is "Use this information", and only
+    when there is a real form, tool, or program page to use.
     """
     if not hits:
         return (
-            "I couldn't find a clear SBA resource for that yet.\n\n"
-            "## Links\n"
-            f"- {_md('Browse SBA Loans (in app)', _browse_link('/api/sba/content/loans', 'SBA Loans'))}\n"
-            f"- {_md('SBA Programs (in app)', '/sba')}\n"
-            f"- {_md('SBA Loans (official)', 'https://www.sba.gov/funding-programs/loans')}",
+            "I couldn't find a clear SBA resource for that yet. "
+            "Try the Resources panel for SBA Loans and Programs, "
+            "or ask the same question in different words.",
             [],
         )
 
     q = _clean(query) or "your question"
     lines = [
-        f"Here’s a clear summary from live SBA resources about **{q}**:",
+        f"Here is what I found on {q}:",
         "",
     ]
 
     sources_out = []
-    link_pairs: List[Tuple[str, str]] = []
 
-    for i, hit in enumerate(hits[:5], start=1):
+    for hit in hits[:5]:
         title = hit["title"]
         body = hit["body"]
-        # First sentence / short blurb
-        blurb = body
-        # Prefer first paragraph
+        # Prefer first paragraph, kept short
         para = re.split(r"\n\s*\n", body)[0] if body else ""
-        if para:
-            blurb = para
-        blurb = _clean(blurb)
+        blurb = _clean(para or body)
         if len(blurb) > 320:
             blurb = blurb[:317].rsplit(" ", 1)[0] + "…"
 
-        # Title itself becomes a link when we have a useful target
         path = hit.get("path") if _valid_api_path(hit.get("path") or "") else ""
         hit["path"] = path
-        title_href = hit.get("url") or (
-            _browse_link(path, title) if path else ""
-        )
-        if title_href:
-            lines.append(f"### {i}. {_md(title, title_href)}")
-        else:
-            lines.append(f"### {i}. {title}")
-        if hit.get("type") and hit["type"] not in ("content", "sba api", "child item"):
-            lines.append(f"*{hit['type']}*")
+        lines.append(f"**{title}**")
         if blurb:
             lines.append("")
-            # Link known program phrases inside the blurb
-            lines.append(_linkify_program_mentions(blurb))
-        # Per-item action links (always visible, always useful)
-        actions = []
-        if hit.get("url"):
-            actions.append(_md("Official page", hit["url"]))
-            link_pairs.append((f"{title} (official)", hit["url"]))
-        if hit.get("path"):
-            actions.append(_md("Open in Resources", _browse_link(hit["path"], title)))
-            link_pairs.append((f"Open “{title}” in Resources", _browse_link(hit["path"], title)))
-        if actions:
-            lines.append("")
-            lines.append(" → " + " · ".join(actions))
+            lines.append(blurb)
         lines.append("")
 
         sources_out.append(
@@ -349,36 +327,12 @@ def format_hits_as_answer(query: str, hits: List[Dict[str, Any]]) -> Tuple[str, 
             }
         )
 
-    # Topic-level defaults
-    link_pairs.append(("SBA Loans (official)", "https://www.sba.gov/funding-programs/loans"))
-    link_pairs.append(("Browse all SBA Loans (in app)", _browse_link("/api/sba/content/loans", "SBA Loans")))
-    link_pairs.append(("SBA Programs (in app)", "/sba"))
-
-    lines.append("## Links")
-    lines.append("")
-    lines.append("Click a link to open the full resource:")
-    lines.append("")
-    seen_href = set()
-    for label, href in link_pairs:
-        if not href or href in seen_href:
-            continue
-        seen_href.add(href)
-        lines.append(f"- {_md(label, href)}")
-
     try:
-        from backend.services.link_enrichment import enrich_answer_with_links
         from backend.services.actionable_content import attach_actionable_section
 
-        text = enrich_answer_with_links("\n".join(lines), sources_out)
-        text = attach_actionable_section(text, query=query, hits=hits)
+        text = attach_actionable_section("\n".join(lines).rstrip(), query=query, hits=hits)
     except Exception:
-        text = "\n".join(lines)
-        try:
-            from backend.services.actionable_content import attach_actionable_section
-
-            text = attach_actionable_section(text, query=query, hits=hits)
-        except Exception:
-            pass
+        text = "\n".join(lines).rstrip()
 
     return text, sources_out
 
