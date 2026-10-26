@@ -152,7 +152,7 @@ function FunkadelicDaily() {
       {tab === 'Recording' && (
         <section>
           <h2>Recording studio</h2>
-          <p>${RECORDING.hourly}/hour, or ${RECORDING.tenHourBlock} for a ten-hour session. {RECORDING.note}</p>
+          <p>${RECORDING.hourlyRange}/hour. Vocal sessions: {RECORDING.vocalMinimum}; instrumental sessions: {RECORDING.instrumentalMinimum}. Production ${RECORDING.productionRange}/hour. {RECORDING.cancellation}; {RECORDING.depositPercent}% deposit. {RECORDING.note}</p>
           <p>Daily function: book a recording session, confirm engineer availability, and keep the session file with the booking.</p>
         </section>
       )}
