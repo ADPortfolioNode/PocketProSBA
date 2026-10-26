@@ -86,6 +86,13 @@ describe('ModernConciergeChat', () => {
     );
   });
 
+  test('shows one fixed SBA tip instead of rotating it while typing', () => {
+    render(<ModernConciergeChat />);
+    expect(
+      screen.getByText(/SBA offers resources for business planning/),
+    ).toBeInTheDocument();
+  });
+
   test('shows an error when onSend is missing', () => {
     render(<ModernConciergeChat />);
     fireEvent.change(screen.getByRole('textbox'), { target: { value: 'x' } });
