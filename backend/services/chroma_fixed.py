@@ -112,25 +112,55 @@ class ChromaService:
         """Add documents to the documents collection"""
         if not self.initialized or "documents" not in self.collections:
             return {"error": "ChromaDB not initialized"}
-        
+
         try:
             if not ids:
                 ids = [str(uuid.uuid4()) for _ in range(len(texts))]
-            
+
             self.collections["documents"].add(
                 documents=texts,
                 metadatas=metadatas,
                 ids=ids
             )
-            
+
             return {
                 "success": True,
                 "count": len(texts),
                 "ids": ids
             }
-            
+
         except Exception as e:
             logger.error(f"Failed to add documents: {str(e)}")
+            return {"error": str(e)}
+
+    def upsert_documents(self, texts, metadatas=None, ids=None):
+        """Replace-or-add documents by stable id.
+
+        This is what keeps stored content current: re-ingesting the same
+        route replaces its previous vector instead of appending a second,
+        stale copy next to the fresh one. Falls back to delete+add on
+        clients without an upsert operation.
+        """
+        if not self.initialized or "documents" not in self.collections:
+            return {"error": "ChromaDB not initialized"}
+        if not ids:
+            return self.add_documents(texts, metadatas=metadatas, ids=None)
+        collection = self.collections["documents"]
+        try:
+            if hasattr(collection, "upsert"):
+                collection.upsert(documents=texts, metadatas=metadatas, ids=ids)
+                return {"success": True, "count": len(texts), "ids": ids, "mode": "upsert"}
+        except Exception as e:
+            logger.warning(f"Chroma upsert failed, falling back to delete+add: {e}")
+        try:
+            try:
+                collection.delete(ids=ids)
+            except Exception:
+                pass
+            collection.add(documents=texts, metadatas=metadatas, ids=ids)
+            return {"success": True, "count": len(texts), "ids": ids, "mode": "delete+add"}
+        except Exception as e:
+            logger.error(f"Failed to upsert documents: {str(e)}")
             return {"error": str(e)}
     
     def query_documents(self, query_text, n_results=5):

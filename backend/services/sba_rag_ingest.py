@@ -301,6 +301,7 @@ def _ingest_chroma(docs: List[Tuple[str, Dict[str, Any]]], route: str) -> Dict[s
 
     added = 0
     errors = 0
+    fetched_at = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
     # Skip giant combined for vector store (duplicate content); keep overview + children
     for text, meta in docs:
         if (meta or {}).get("kind") == "combined":
@@ -308,17 +309,34 @@ def _ingest_chroma(docs: List[Tuple[str, Dict[str, Any]]], route: str) -> Dict[s
         # Cap chunk size for chroma
         chunk = text[:8000]
         m = {k: v for k, v in (meta or {}).items() if isinstance(v, (str, int, float, bool))}
-        m["ingested_at"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
-        # Stable-ish id in metadata for debugging
-        m["doc_hash"] = hashlib.sha1(
-            f"{route}|{m.get('kind')}|{m.get('item_id')}|{chunk[:120]}".encode("utf-8")
-        ).hexdigest()[:16]
+        m["ingested_at"] = fetched_at
+        m["fetched_at"] = fetched_at
+        m["content_hash"] = hashlib.sha256(chunk.encode("utf-8")).hexdigest()[:16]
+        # Stable id per route+kind+item: re-ingesting the same route
+        # REPLACES its vector (upsert) instead of appending a stale copy.
+        # Deliberately not derived from chunk text, so a changed chunk
+        # still replaces the old one under the same id.
+        stable_key = "|".join(
+            str(x) for x in (route, m.get("kind"), m.get("item_id") or m.get("title") or "")
+        )
+        doc_id = "sba-" + hashlib.sha1(stable_key.encode("utf-8")).hexdigest()[:24]
+        m["doc_hash"] = doc_id
         try:
-            result = rag.add_document(chunk, m)
+            result = rag.add_document(chunk, m, doc_id=doc_id)
             if isinstance(result, dict) and result.get("error"):
                 errors += 1
             else:
                 added += 1
+        except TypeError:
+            # Older RAGManager without doc_id support: fall back to add.
+            try:
+                result = rag.add_document(chunk, m)
+                if isinstance(result, dict) and result.get("error"):
+                    errors += 1
+                else:
+                    added += 1
+            except Exception:
+                errors += 1
         except Exception:
             errors += 1
     return {"ok": added > 0, "added": added, "errors": errors}

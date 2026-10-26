@@ -411,4 +411,14 @@ def create_app(config_name=None):
     # Rate limits on auth + LLM routes. Applied last so every view is registered.
     init_rate_limiting(app)
 
+    # SBA content freshness: on-connect refresh + daily quiet sync.
+    # Daemon thread, lock-guarded across workers, soft-fail only — it
+    # must never block startup or a request. See services/sba_sync.py.
+    try:
+        from backend.services.sba_sync import start_scheduler
+
+        start_scheduler()
+    except Exception as e:
+        logger.warning(f"SBA sync scheduler not started: {e}")
+
     return app

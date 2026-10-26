@@ -135,6 +135,30 @@ class ChromaService:
             logger.error(f"Failed to add documents: {str(e)}")
             return {"error": str(e)}
     
+    def upsert_documents(self, texts, metadatas=None, ids=None):
+        """Replace-or-add documents by stable id (see chroma_fixed.py)."""
+        if not self.initialized or "documents" not in self.collections:
+            return {"error": "ChromaDB not initialized"}
+        if not ids:
+            return self.add_documents(texts, metadatas=metadatas, ids=None)
+        collection = self.collections["documents"]
+        try:
+            if hasattr(collection, "upsert"):
+                collection.upsert(documents=texts, metadatas=metadatas, ids=ids)
+                return {"success": True, "count": len(texts), "ids": ids, "mode": "upsert"}
+        except Exception as e:
+            logger.warning(f"Chroma upsert failed, falling back to delete+add: {e}")
+        try:
+            try:
+                collection.delete(ids=ids)
+            except Exception:
+                pass
+            collection.add(documents=texts, metadatas=metadatas, ids=ids)
+            return {"success": True, "count": len(texts), "ids": ids, "mode": "delete+add"}
+        except Exception as e:
+            logger.error(f"Failed to upsert documents: {str(e)}")
+            return {"error": str(e)}
+
     def query_documents(self, query_text, n_results=5):
         """Query documents collection"""
         if not self.initialized or "documents" not in self.collections:
