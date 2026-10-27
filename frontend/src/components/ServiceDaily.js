@@ -137,40 +137,91 @@ const WORKFLOW_CARDS = {
   ],
 };
 
+// How each tab's cards relate to each other. 'sequence' tabs are one
+// workflow executed in order (do step 1, then step 2); 'choice' tabs hold
+// separate workflows — pick the one you need, they are not steps of each
+// other. This distinction is shown in the UI so the order is never guessed.
+const WORKFLOW_MODE = {
+  Rooms: 'sequence',
+  Recording: 'sequence',
+  Repair: 'sequence',
+  'Rentals & Retail': 'choice',
+  Events: 'choice',
+  Growth: 'sequence',
+};
+
+const WORKFLOW_DEFINITIONS = {
+  Rooms: 'Take a room from a free hour to a held booking.',
+  Recording: 'Take a recording session from a hold to a confirmed booking.',
+  Repair: 'Take a broken item from intake to an approved estimate.',
+  'Rentals & Retail': 'Lend gear or sell retail to a service customer.',
+  Events: 'Put on an event in the space, or host a rehearsal block.',
+  Growth: 'Talk growth through only when the business asks for it, then show financing guidance.',
+};
+
 function WorkflowCards({ tab, setTab }) {
   const cards = WORKFLOW_CARDS[tab] || [];
+  const mode = WORKFLOW_MODE[tab] || 'sequence';
+  const isSequence = mode === 'sequence';
+  const unit = isSequence ? 'Step' : 'Workflow';
   return (
     <section className="service-workflows" aria-label={`Workflows in ${tab}`}>
-      <h2>Workflows in {tab} — one card per task</h2>
+      <h2>Workflows in {tab}</h2>
+      <p>{WORKFLOW_DEFINITIONS[tab]}</p>
       <p>
-        Each tab above is a service. Each card below is one task you can do in
-        that service: what it does, the steps, what you need, and what you get.
+        {isSequence
+          ? 'Follow these steps in order — each step builds on the last:'
+          : 'Pick the workflow you need — these are separate jobs, not steps of each other:'}
       </p>
-      <div className="service-task-grid">
+      <ol className="service-workflow-sequence">
         {cards.map((card) => (
-          <article key={card.title} className="service-task-card">
-            <h3>{card.title}</h3>
-            {card.status && <p className="service-task-status">{card.status}</p>}
-            <p>{card.what}</p>
-            <ol>
-              {card.steps.map((step) => (
-                <li key={step}>{step}</li>
-              ))}
-            </ol>
-            <p>
-              <strong>Needs:</strong> {card.needs}
-            </p>
-            <p>
-              <strong>Result:</strong> {card.result}
-            </p>
-            {card.target && <a href={`#${card.target}`}>Start this task →</a>}
-            {card.actionTab && (
-              <button type="button" onClick={() => setTab(card.actionTab)}>
-                Go to {card.actionTab} →
-              </button>
-            )}
-          </article>
+          <li key={card.title}>{card.title}</li>
         ))}
+      </ol>
+      <div className="service-task-grid">
+        {cards.map((card, index) => {
+          const isLast = index === cards.length - 1;
+          const next = !isLast ? cards[index + 1] : null;
+          return (
+            <article key={card.title} className="service-task-card">
+              <p className="service-task-number">
+                {unit} {index + 1} of {cards.length}
+              </p>
+              <h3>{card.title}</h3>
+              {card.status && <p className="service-task-status">{card.status}</p>}
+              <p>{card.what}</p>
+              <ol aria-label="Steps in order">
+                {card.steps.map((step) => (
+                  <li key={step}>{step}</li>
+                ))}
+              </ol>
+              <p>
+                <strong>Needs:</strong> {card.needs}
+              </p>
+              <p>
+                <strong>Result:</strong> {card.result}
+              </p>
+              {card.target && (
+                <a href={`#${card.target}`}>
+                  Do {unit.toLowerCase()} {index + 1} →
+                </a>
+              )}
+              {card.actionTab && (
+                <button type="button" onClick={() => setTab(card.actionTab)}>
+                  Go to {card.actionTab} →
+                </button>
+              )}
+              {isSequence && next && (
+                <p className="service-task-next">
+                  Next: {unit} {index + 2} — {next.title}
+                </p>
+              )}
+              {isSequence && isLast && (
+                <p className="service-task-next">Workflow complete.</p>
+              )}
+            </article>
+          );
+        })}
       </div>
     </section>
   );
