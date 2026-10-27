@@ -201,24 +201,26 @@ function MainLayout({ useConnectionHook = useConnection }) {
     }
   };
 
-  // Chat is a full-screen app view (industry-standard chat layout):
-  // fluid width, full viewport height, message list scrolls internally and
-  // the composer stays pinned at the bottom. Other tabs keep the capped
-  // centered shell and the page footer.
+  // Chat and Daily are full-screen app views (industry-standard layout):
+  // fluid width, full viewport height, content scrolls internally, and the
+  // page footer is hidden so the app feels like a product, not a page.
+  // Other tabs keep the capped centered shell and the page footer.
   const isChat = activeTab === 'chat';
+  const isDaily = activeTab === 'daily';
+  const isFullScreen = isChat || isDaily;
 
   return (
-    <div className={`pp-app d-flex flex-column min-vh-100${isChat ? ' pp-app--chat' : ''}`}>
+    <div className={`pp-app d-flex flex-column min-vh-100${isFullScreen ? ' pp-app--chat' : ''}`}>
       <Header />
       <SBANavigation
         serverConnected={serverConnected}
         connectionStatus={status}
         apiUrl={apiUrl}
       />
-      <main className={`pp-main flex-grow-1${isChat ? ' pp-main--chat d-flex flex-column' : ''}`}>
+      <main className={`pp-main flex-grow-1${isFullScreen ? ' pp-main--chat d-flex flex-column' : ''}`}>
         <Container
-          fluid={isChat}
-          className={isChat ? 'pp-main-inner pp-main-inner--chat p-0 d-flex flex-column flex-grow-1' : 'pp-main-inner'}
+          fluid={isFullScreen}
+          className={isFullScreen ? 'pp-main-inner pp-main-inner--chat p-0 d-flex flex-column flex-grow-1' : 'pp-main-inner'}
         >
           {/* Per-tab boundary: header + nav stay usable; switching tabs resets it. */}
           <ErrorBoundary resetKey={activeTab}>
@@ -226,7 +228,7 @@ function MainLayout({ useConnectionHook = useConnection }) {
           </ErrorBoundary>
         </Container>
       </main>
-      {!isChat && <Footer />}
+      {!isFullScreen && <Footer />}
     </div>
   );
 }
