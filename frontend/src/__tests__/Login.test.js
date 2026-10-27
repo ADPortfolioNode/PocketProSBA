@@ -48,7 +48,8 @@ describe('Login Component', () => {
     fireEvent.click(screen.getByRole('button', { name: /Log In/i }));
 
     expect(await screen.findByText('Home page')).toBeInTheDocument();
-    expect(apiClient.post).toHaveBeenCalledWith('/api/login', { email: 'test@example.com', password: 'password123' });
+    // Remember me is on by default, so login sends remember_me: true.
+    expect(apiClient.post).toHaveBeenCalledWith('/api/login', { email: 'test@example.com', password: 'password123', remember_me: true });
   });
 
   test('shows the server error message when login fails', async () => {

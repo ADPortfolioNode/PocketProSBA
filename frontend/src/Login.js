@@ -8,6 +8,7 @@ import { safeReturnPath } from './utils/authStorage';
 function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(true);
   const [error, setError] = useState('');
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -27,7 +28,7 @@ function Login() {
     }
 
     try {
-      await login(email, password);
+      await login(email, password, rememberMe);
       alert('Login successful!');
       navigate(returnTo, { replace: true }); // back to the page that needed sign-in (or Home)
     } catch (err) {
@@ -69,6 +70,17 @@ function Login() {
             onChange={(e) => setPassword(e.target.value)}
             required
           />
+        </div>
+        <div className="mb-3 form-check">
+          <input
+            type="checkbox"
+            className="form-check-input"
+            id="rememberMe"
+            checked={rememberMe}
+            onChange={(e) => setRememberMe(e.target.checked)}
+          />
+          <label className="form-check-label" htmlFor="rememberMe">Remember me on this device</label>
+          <div className="form-text">Stay signed in for 30 days, even after closing the browser. Your password is never stored — only a secure sign-in token is kept, and signing out deletes it.</div>
         </div>
         <button type="submit" className="btn btn-primary w-100" disabled={loading} aria-busy={loading}>
           {loading ? <LoadingBar inline label="Signing in…" /> : 'Log In'}

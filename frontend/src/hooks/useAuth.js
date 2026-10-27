@@ -9,19 +9,21 @@ export const useAuth = () => {
   const { setUser } = useApp();
 
   // Token + user go to authStorage; apiClient sends the token as a Bearer header.
-  const persistSession = (user, token, expiresAt) => {
-    setSession({ token, user, expiresAt });
+  // With rememberMe, the server also returns a long-lived refresh token,
+  // stored so the session survives closing the browser (never the password).
+  const persistSession = (user, token, expiresAt, refreshToken) => {
+    setSession({ token, user, expiresAt, refreshToken });
     if (user && setUser) setUser(user);
   };
 
-  const login = async (email, password) => {
+  const login = async (email, password, rememberMe = false) => {
     setLoading(true);
     setError(null);
     try {
-      const response = await apiClient.post('/api/login', { email, password });
+      const response = await apiClient.post('/api/login', { email, password, remember_me: rememberMe });
       const user = response.data.user;
       const token = response.data.token;
-      persistSession(user, token, response.data.expires_at);
+      persistSession(user, token, response.data.expires_at, response.data.refresh_token);
       return response.data;
     } catch (err) {
       const msg = err.response?.data?.error || 'Login failed';
