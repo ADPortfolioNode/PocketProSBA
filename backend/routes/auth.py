@@ -14,7 +14,15 @@ from flask import Blueprint, request, jsonify, current_app
 from sqlalchemy.exc import IntegrityError
 from werkzeug.security import generate_password_hash
 
-from backend.app.auth import create_access_token, get_current_user, token_required
+from backend.app.auth import (
+    AuthError,
+    create_access_token,
+    create_refresh_token,
+    decode_refresh_token,
+    get_current_user,
+    password_version,
+    token_required,
+)
 from backend.routes._errors import internal_error_message
 
 logger = logging.getLogger(__name__)
@@ -173,12 +181,19 @@ def login():
         # Signed, expiring access token (HS256 JWT); send it as
         # "Authorization: Bearer <token>" to protected routes.
         issued = create_access_token(user)
-        return jsonify({
+        body = {
             "success": True,
             "message": "Login successful",
             **issued,
             "user": user.to_public_dict(),
-        }), 200
+        }
+        # Remember me: a long-lived refresh token lets the app restore the
+        # session after the browser is closed, without storing the password.
+        if data.get("remember_me"):
+            refreshed = create_refresh_token(user)
+            body["refresh_token"] = refreshed["token"]
+            body["refresh_expires_at"] = refreshed["expires_at"]
+        return jsonify(body), 200
     except Exception as e:
         return jsonify({"error": internal_error_message(e, public="Login failed. Please try again.")}), 500
 
@@ -199,6 +214,42 @@ def refresh():
     """
     issued = create_access_token(get_current_user())
     return jsonify({"success": True, **issued}), 200
+
+
+@auth_bp.route("/refresh-token", methods=["POST"])
+def refresh_token():
+    """Swap a valid remember-me refresh token for a fresh access token.
+
+    No access token is needed (that is the point: the access token has
+    expired). An access token presented here is rejected, as is an expired,
+    tampered, or password-invalidated refresh token. A fresh refresh token
+    is rotated in, so each use replaces the previous one.
+    """
+    data = _json()
+    if not data or not data.get("refresh_token"):
+        return jsonify({"error": "Refresh token is required"}), 401
+    try:
+        claims = decode_refresh_token(str(data["refresh_token"]))
+    except AuthError as err:
+        return jsonify({"error": "Refresh token is no longer valid. Please log in again.", "code": err.code}), 401
+    User, db = _get_user_model()
+    try:
+        user = db.session.get(User, int(claims["sub"]))
+    except (TypeError, ValueError):
+        return jsonify({"error": "Refresh token is no longer valid. Please log in again."}), 401
+    if user is None or not user.is_active:
+        return jsonify({"error": "Refresh token is no longer valid. Please log in again."}), 401
+    if not hmac.compare_digest(str(claims.get("pv") or ""), password_version(user)):
+        return jsonify({"error": "Refresh token is no longer valid. Please log in again."}), 401
+    issued = create_access_token(user)
+    rotated = create_refresh_token(user)
+    return jsonify({
+        "success": True,
+        **issued,
+        "refresh_token": rotated["token"],
+        "refresh_expires_at": rotated["expires_at"],
+        "user": user.to_public_dict(),
+    }), 200
 
 
 @auth_bp.route("/forgot-password", methods=["POST"])

@@ -406,6 +406,97 @@ class Concierge(BaseAssistant):
         
         return "good"
     
+    # --- Your own uploaded documents, before SBA content ----------------
+    # Previously a document question fell through to the SBA knowledge base
+    # first, so the concierge answered from SBA pages instead of the file
+    # the user actually uploaded — and for PDF/DOCX uploads the file's text
+    # was never extracted at all. Now the user's own documents are checked
+    # first (RAG chunks, with a direct-file fallback when RAG is down), and
+    # only if nothing of theirs matches does the SBA path run. This is what
+    # makes chat + documents work as one app instead of two silos.
+    def _uploaded_document_answer(self, message):
+        """Answer from the user's uploaded documents, or None if no match."""
+        stopwords = {
+            "what", "does", "says", "about", "tell", "show", "find", "search",
+            "look", "from", "file", "document", "uploaded", "upload", "please",
+            "there", "that", "this", "with", "your", "says",
+        }
+        words = [w for w in re.findall(r"[a-z0-9]+", message.lower()) if len(w) >= 4 and w not in stopwords]
+        if not words:
+            return None
+        lower_msg = message.lower()
+
+        def _score(text):
+            hay = (text or "").lower()
+            return sum(1 for w in words if w in hay)
+
+        def _build(filename, text):
+            excerpt = " ".join((text or "").split())[:900]
+            return {
+                "text": (
+                    f"From your uploaded document **{filename}**:\n\n{excerpt}\n\n"
+                    "Open Documents to see the full file."
+                ),
+                "sources": [{"title": filename, "path": "/documents", "url": "/documents"}],
+            }
+
+        # 1) RAG chunks (filename metadata marks a user upload)
+        try:
+            if self.rag_manager:
+                results = self.rag_manager.query_documents(message, n_results=6)
+                documents = results.get("documents") if isinstance(results, dict) else None
+                metadatas = results.get("metadatas") if isinstance(results, dict) else None
+                if documents and isinstance(documents[0], list):
+                    documents = documents[0]
+                if metadatas and isinstance(metadatas[0], list):
+                    metadatas = metadatas[0]
+                if documents and metadatas:
+                    best = None
+                    for doc, meta in zip(documents, metadatas):
+                        meta = meta or {}
+                        filename = meta.get("filename")
+                        if not filename:
+                            continue
+                        score = _score(doc)
+                        name_hit = filename.lower() in lower_msg
+                        # One distinctive word is enough when the user is
+                        # clearly asking about their own file ("my lease",
+                        # "my document"); two words are enough on their own.
+                        mine = any(w in lower_msg for w in ("my ", "my\u2019", "uploaded", "document", "file"))
+                        if name_hit or score >= 2 or (score >= 1 and mine):
+                            if best is None or score > best[0]:
+                                best = (score, filename, doc)
+                    if best:
+                        return _build(best[1], best[2])
+        except Exception as rag_err:
+            logger.debug("uploaded-document RAG check soft-fail: %s", rag_err)
+
+        # 2) Direct file fallback (works even when Chroma is down)
+        try:
+            from backend.routes.files import _read_text
+            from backend.routes import files as files_routes
+            folder = getattr(files_routes, "UPLOAD_FOLDER", "uploads")
+            if os.path.isdir(folder):
+                best = None
+                for filename in sorted(os.listdir(folder)):
+                    filepath = os.path.join(folder, filename)
+                    if not os.path.isfile(filepath):
+                        continue
+                    text = _read_text(filepath, filename)
+                    if not text.strip():
+                        continue
+                    score = _score(text)
+                    name_hit = filename.lower() in lower_msg
+                    mine = any(w in lower_msg for w in ("my ", "my\u2019", "uploaded", "document", "file"))
+                    if name_hit or score >= 2 or (score >= 1 and mine):
+                        if best is None or score > best[0]:
+                            best = (score, filename, text)
+                if best:
+                    return _build(best[1], best[2])
+        except Exception as file_err:
+            logger.debug("uploaded-document file check soft-fail: %s", file_err)
+        return None
+
     def _handle_document_search(self, message, conversation):
         """Handle a document search request — human-readable answer + clickable links."""
         self._update_status("searching", 50, "Searching for relevant documents...")
@@ -438,7 +529,15 @@ class Concierge(BaseAssistant):
         except Exception as daily_err:
             logger.debug("daily workflows search soft-fail: %s", daily_err)
 
-        # Prefer live SBA API digests (parent→child explore) when keyword match is strong
+        # Your own files are checked now, but NOT returned on their own:
+        # the conversation leads with the SBA answer, and a matching file
+        # is added afterwards as supporting bonus material, with its link
+        # in the Resources panel (sources), never as a link list in the bubble.
+        uploaded = self._uploaded_document_answer(message)
+
+        # Live SBA API digests (parent→child explore) when keyword match is strong
+        sba_text = None
+        sba_sources = []
         try:
             from backend.routes.rag import _local_kb_sba_answer
             from backend.services.link_enrichment import enrich_answer_with_links
@@ -497,8 +596,7 @@ class Concierge(BaseAssistant):
                     )
                 hits = normalize_hits(full_docs, full_meta)
                 if hits:
-                    text, sources = format_hits_as_answer(message, hits)
-                    return {"text": text, "sources": sources}
+                    sba_text, sba_sources = format_hits_as_answer(message, hits)
                 # Last resort: cleaned text + links (never raw Source N: sba_api)
                 text = re.sub(
                     r"^Based on (live SBA API digests|the local SBA knowledge base)[^\n]*\n+",
@@ -506,13 +604,34 @@ class Concierge(BaseAssistant):
                     kb.get("answer") or "",
                     flags=re.I,
                 )
-                text = enrich_answer_with_links(
+                sba_text = enrich_answer_with_links(
                     f"Here’s a clear summary from live SBA resources about **{message.strip()}**:\n\n{text}",
                     sources,
                 )
-                return {"text": text, "sources": sources}
+                sba_sources = list(sources)
         except Exception as kb_err:
             logger.debug("local KB path soft-fail in document search: %s", kb_err)
+
+        # Combine: conversation first (SBA), supporting files as a bonus.
+        # Any link list the enrich fallback appended is stripped — those
+        # links live in the Resources panel via sources, not in the bubble.
+        if sba_text:
+            sba_text = re.sub(r"\n##\s*Links\b.*$", "", sba_text, flags=re.S)
+            sba_text = re.sub(r"\n###\s*More links\b.*$", "", sba_text, flags=re.S)
+            sba_text = sba_text.rstrip()
+            if uploaded:
+                combined = (
+                    f"{sba_text}\n\n"
+                    "As a bonus, your own files also cover this:\n\n"
+                    f"{uploaded['text']}"
+                )
+                return {
+                    "text": combined,
+                    "sources": list(sba_sources) + list(uploaded.get("sources") or []),
+                }
+            return {"text": sba_text, "sources": sba_sources}
+        if uploaded:
+            return uploaded
 
         if not self.rag_manager:
             try:

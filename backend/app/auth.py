@@ -13,6 +13,16 @@ one (sliding session); once it has expired the user logs in again. Tokens are
 bound to the user's current password hash, so a password reset ends every
 session issued before it, and a disabled account is rejected immediately.
 
+Remember me: when the user ticks "Remember me" at login, the server also
+issues a long-lived refresh token (JWT_REFRESH_TTL_SECONDS, default 30 days,
+typ="refresh", signed with a separate derived key so it can never be used
+as an access token). POST /api/auth/refresh-token swaps a valid refresh
+token for a fresh access token (and a rotated refresh token), so a user who
+closes the browser and comes back days later stays signed in without
+re-entering their password. The password itself is never stored on the
+client — only these signed tokens are, and logging out deletes them.
+A password change invalidates refresh tokens exactly like access tokens.
+
 AUTH_REQUIRED (default true) turns enforcement off for local demos only:
 ``AUTH_REQUIRED=false``. Login still issues real tokens either way.
 """
@@ -33,7 +43,9 @@ logger = logging.getLogger(__name__)
 TOKEN_ALGORITHM = "HS256"
 TOKEN_ISSUER = "pocketpro-sba"
 TOKEN_TYPE = "access"
+TOKEN_TYPE_REFRESH = "refresh"
 DEFAULT_ACCESS_TTL_SECONDS = 3600
+DEFAULT_REFRESH_TTL_SECONDS = 30 * 24 * 3600
 
 # Machine-readable reasons, returned as "code" in 401 bodies.
 TOKEN_MISSING = "token_missing"
@@ -60,12 +72,13 @@ def auth_enabled(app=None) -> bool:
     return bool(app.config.get("AUTH_REQUIRED", True))
 
 
-def _signing_key(app=None) -> bytes:
+def _signing_key(app=None, kind="access") -> bytes:
     """Derive the token key from SECRET_KEY (or JWT_SECRET_KEY if set).
 
     HMAC-SHA256 derivation gives a full 32-byte key whatever the length of the
     configured secret, and keeps token signatures separate from Flask's own
-    session signing.
+    session signing. Refresh tokens use a different derivation label, so an
+    access token can never be presented as a refresh token or vice versa.
     """
     app = app or current_app
     secret = app.config.get("JWT_SECRET_KEY") or app.config.get("SECRET_KEY")
@@ -73,7 +86,8 @@ def _signing_key(app=None) -> bytes:
         raise RuntimeError("SECRET_KEY must be set to issue or verify access tokens")
     if isinstance(secret, str):
         secret = secret.encode("utf-8")
-    return hmac.new(secret, b"pocketpro-sba access token v1", hashlib.sha256).digest()
+    label = b"pocketpro-sba refresh token v1" if kind == "refresh" else b"pocketpro-sba access token v1"
+    return hmac.new(secret, label, hashlib.sha256).digest()
 
 
 def _access_ttl(app=None) -> int:
@@ -83,6 +97,65 @@ def _access_ttl(app=None) -> int:
     except (TypeError, ValueError):
         ttl = DEFAULT_ACCESS_TTL_SECONDS
     return max(ttl, 1)
+
+
+def _refresh_ttl(app=None) -> int:
+    app = app or current_app
+    try:
+        ttl = int(app.config.get("JWT_REFRESH_TTL_SECONDS") or DEFAULT_REFRESH_TTL_SECONDS)
+    except (TypeError, ValueError):
+        ttl = DEFAULT_REFRESH_TTL_SECONDS
+    return max(ttl, 1)
+
+
+def create_refresh_token(user, app=None) -> dict:
+    """Sign a long-lived refresh token for ``user`` (remember-me only).
+
+    Returns {"token", "token_type", "expires_in", "expires_at"}.
+    Bound to the password version like access tokens, so a password change
+    invalidates it.
+    """
+    app = app or current_app
+    now = int(time.time())
+    ttl = _refresh_ttl(app)
+    payload = {
+        "sub": str(user.id),
+        "iss": TOKEN_ISSUER,
+        "typ": TOKEN_TYPE_REFRESH,
+        "iat": now,
+        "nbf": now,
+        "exp": now + ttl,
+        "pv": password_version(user),
+        "jti": secrets.token_urlsafe(16),
+    }
+    token = jwt.encode(payload, _signing_key(app, kind="refresh"), algorithm=TOKEN_ALGORITHM)
+    return {
+        "token": token,
+        "token_type": "Bearer",
+        "expires_in": ttl,
+        "expires_at": now + ttl,
+    }
+
+
+def decode_refresh_token(token: str, app=None) -> dict:
+    """Verify a refresh token's signature, expiry, issuer and type."""
+    app = app or current_app
+    try:
+        claims = jwt.decode(
+            token,
+            _signing_key(app, kind="refresh"),
+            algorithms=[TOKEN_ALGORITHM],
+            issuer=TOKEN_ISSUER,
+            options={"require": ["exp", "iat", "sub", "iss"]},
+            leeway=5,
+        )
+    except jwt.ExpiredSignatureError:
+        raise AuthError(TOKEN_EXPIRED)
+    except jwt.InvalidTokenError:
+        raise AuthError(TOKEN_INVALID)
+    if claims.get("typ") != TOKEN_TYPE_REFRESH:
+        raise AuthError(TOKEN_INVALID)
+    return claims
 
 
 def password_version(user) -> str:

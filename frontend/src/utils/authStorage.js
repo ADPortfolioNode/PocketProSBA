@@ -9,6 +9,10 @@
 export const TOKEN_KEY = 'pocketpro_auth_token';
 export const USER_KEY = 'pocketpro_auth_user';
 export const EXPIRES_KEY = 'pocketpro_auth_expires_at';
+// Remember-me token: a long-lived refresh token, stored only when the user
+// ticks "Remember me". It is a signed token, never the password, and it is
+// deleted on logout (clearSession) and when the server rejects it.
+export const REFRESH_KEY = 'pocketpro_auth_refresh_token';
 
 const listeners = new Set();
 
@@ -49,6 +53,8 @@ const expiryMs = (token) => {
 
 export const getToken = () => read(TOKEN_KEY);
 
+export const getRefreshToken = () => read(REFRESH_KEY);
+
 export const getUser = () => {
   const raw = read(USER_KEY);
   if (!raw) return null;
@@ -72,10 +78,13 @@ export const isAuthenticated = () => {
   return !!token && !isTokenExpired(token);
 };
 
-export const setSession = ({ token, user, expiresAt } = {}) => {
+export const setSession = ({ token, user, expiresAt, refreshToken } = {}) => {
   if (token) write(TOKEN_KEY, token);
   if (user) write(USER_KEY, JSON.stringify(user));
   write(EXPIRES_KEY, expiresAt ? String(expiresAt) : null);
+  // refreshToken === undefined means "leave the stored one alone" (plain
+  // access-token refreshes must not wipe remember-me); null removes it.
+  if (refreshToken !== undefined) write(REFRESH_KEY, refreshToken);
   notify();
 };
 
@@ -83,6 +92,7 @@ export const clearSession = () => {
   write(TOKEN_KEY, null);
   write(USER_KEY, null);
   write(EXPIRES_KEY, null);
+  write(REFRESH_KEY, null);
   notify();
 };
 
@@ -93,7 +103,7 @@ export const subscribe = (fn) => {
 
 if (typeof window !== 'undefined') {
   window.addEventListener('storage', (e) => {
-    if (!e.key || [TOKEN_KEY, USER_KEY, EXPIRES_KEY].includes(e.key)) notify();
+    if (!e.key || [TOKEN_KEY, USER_KEY, EXPIRES_KEY, REFRESH_KEY].includes(e.key)) notify();
   });
 }
 
