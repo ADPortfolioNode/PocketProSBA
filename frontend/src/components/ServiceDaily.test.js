@@ -58,10 +58,10 @@ describe('ServiceDaily', () => {
 
   test('rooms tab shows one card per task with steps, needs, and result', () => {
     render(<ServiceDaily />);
-    expect(screen.getByText('Workflows in Rooms — one card per task')).toBeInTheDocument();
-    expect(screen.getByText('Check availability')).toBeInTheDocument();
-    expect(screen.getByText('Get a quote')).toBeInTheDocument();
-    expect(screen.getByText('Add a demo booking')).toBeInTheDocument();
+    expect(screen.getByText('Workflows in Rooms')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Check availability' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Get a quote' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Add a demo booking' })).toBeInTheDocument();
     expect(screen.getByText(/A free start time inside operating hours/)).toBeInTheDocument();
     expect(screen.getByText(/A quoted total and deposit/)).toBeInTheDocument();
   });
@@ -79,17 +79,37 @@ describe('ServiceDaily', () => {
   test('repair tab shows its own task cards, and outline cards do not pretend to be forms', () => {
     render(<ServiceDaily />);
     fireEvent.click(screen.getByRole('tab', { name: /repair/i }));
-    expect(screen.getByText('Workflows in Repair — one card per task')).toBeInTheDocument();
-    expect(screen.getByText('Open a repair intake')).toBeInTheDocument();
+    expect(screen.getByText('Workflows in Repair')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Open a repair intake' })).toBeInTheDocument();
     expect(screen.getByText(/Workflow outline/)).toBeInTheDocument();
     expect(screen.queryByText('Check availability')).not.toBeInTheDocument();
+  });
+
+  test('rooms workflow is defined and numbered for execution, in order', () => {
+    render(<ServiceDaily />);
+    expect(screen.getByText('Take a room from a free hour to a held booking.')).toBeInTheDocument();
+    expect(screen.getByText('Follow these steps in order — each step builds on the last:')).toBeInTheDocument();
+    expect(screen.getByText('Step 1 of 3')).toBeInTheDocument();
+    expect(screen.getByText('Step 2 of 3')).toBeInTheDocument();
+    expect(screen.getByText('Step 3 of 3')).toBeInTheDocument();
+    expect(screen.getByText('Next: Step 2 — Get a quote')).toBeInTheDocument();
+    expect(screen.getByText('Workflow complete.')).toBeInTheDocument();
+  });
+
+  test('choice tabs number separate workflows instead of pretending they are steps', () => {
+    render(<ServiceDaily />);
+    fireEvent.click(screen.getByRole('tab', { name: /events/i }));
+    expect(screen.getByText('Pick the workflow you need — these are separate jobs, not steps of each other:')).toBeInTheDocument();
+    expect(screen.getByText('Workflow 1 of 2')).toBeInTheDocument();
+    expect(screen.getByText('Workflow 2 of 2')).toBeInTheDocument();
+    expect(screen.queryByText(/Next: Step/)).not.toBeInTheDocument();
   });
 
   test('rentals tab cards are workflow outlines, not working booking forms', () => {
     render(<ServiceDaily />);
     fireEvent.click(screen.getByRole('tab', { name: /rentals/i }));
-    expect(screen.getByText('Rent gear')).toBeInTheDocument();
-    expect(screen.getByText('Sell retail')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Rent gear' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Sell retail' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Add demo booking' })).not.toBeInTheDocument();
   });
 
