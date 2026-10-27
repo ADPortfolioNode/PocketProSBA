@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { clearSession, getToken, loginPathFor } from '../utils/authStorage';
+import { clearSession, getRefreshToken, getToken, loginPathFor, setSession } from '../utils/authStorage';
 
 const getBackendHost = () => {
   const envHost = process.env.REACT_APP_API_URL || process.env.REACT_APP_BACKEND_URL;
@@ -99,16 +99,56 @@ const setUnauthorizedHandler = (fn) => {
 /** True when a request opted out of the 401 -> /login redirect (config.skipAuthRedirect). */
 const isQuietUnauthorized = (error) => error?.response?.status === 401 && !!error?.config?.skipAuthRedirect;
 
-const handleUnauthorized = (error) => {
+// Remember me: a 401 on an expired access token is first retried after a
+// silent refresh-token exchange (one attempt per request). Only when there
+// is no refresh token, or the server rejects it, is the session cleared and
+// the user sent to /login. This is what makes "leave and come back" work
+// without re-entering a password, while a password change still ends every
+// session (the server rejects the refresh token too).
+let refreshPromise = null;
+const tryRefresh = async () => {
+  const refreshToken = getRefreshToken();
+  if (!refreshToken) return null;
+  if (!refreshPromise) {
+    refreshPromise = (async () => {
+      try {
+        const res = await axiosInstance.post('/api/auth/refresh-token', { refresh_token: refreshToken }, { skipAuthRedirect: true });
+        const data = res.data || {};
+        if (!data.token) return null;
+        setSession({ token: data.token, user: data.user, expiresAt: data.expires_at, refreshToken: data.refresh_token });
+        return data.token;
+      } catch (_) {
+        return null;
+      } finally {
+        refreshPromise = null;
+      }
+    })();
+  }
+  return refreshPromise;
+};
+
+const handleUnauthorized = async (error) => {
   const url = String(error?.config?.url || '');
-  if (error?.response?.status !== 401 || AUTH_ENDPOINT_RE.test(url)) return;
+  if (error?.response?.status !== 401 || AUTH_ENDPOINT_RE.test(url)) return null;
   // Optional, background calls (e.g. diagnostics) must not log the user out or redirect.
-  if (error?.config?.skipAuthRedirect) return;
+  if (error?.config?.skipAuthRedirect) return null;
+  const config = error.config || {};
+  if (!config._retriedAfterRefresh) {
+    const freshToken = await tryRefresh();
+    if (freshToken) {
+      config._retriedAfterRefresh = true;
+      config.headers = config.headers || {};
+      if (typeof config.headers.set === 'function') config.headers.set('Authorization', `Bearer ${freshToken}`);
+      else config.headers.Authorization = `Bearer ${freshToken}`;
+      return axiosInstance(config);
+    }
+  }
   clearSession();
-  if (typeof window === 'undefined' || !window.location) return;
+  if (typeof window === 'undefined' || !window.location) return null;
   const { pathname = '/', search = '', hash = '' } = window.location;
-  if (/^\/login(\/|$)/i.test(pathname)) return;
+  if (/^\/login(\/|$)/i.test(pathname)) return null;
   unauthorizedHandler(loginPathFor(`${pathname}${search}${hash}`));
+  return null;
 };
 
 axiosInstance.interceptors.request.use((config) => {
@@ -129,8 +169,9 @@ axiosInstance.interceptors.request.use((config) => {
 
 axiosInstance.interceptors.response.use(
   (response) => response,
-  (error) => {
-    handleUnauthorized(error);
+  async (error) => {
+    const retried = await handleUnauthorized(error);
+    if (retried) return retried;
     return Promise.reject(error);
   }
 );

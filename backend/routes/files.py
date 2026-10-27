@@ -35,18 +35,75 @@ def _allowed(filename: str) -> bool:
 
 
 def _read_text(filepath: str, filename: str) -> str:
+    """Extract searchable text from an uploaded file.
+
+    Previously every file was read as UTF-8, so PDF and DOCX uploads were
+    ingested into RAG as binary garbage and the concierge could never answer
+    questions about them — the text was never actually in the index. Now:
+    PDF via pypdf, DOCX via python-docx (both already in requirements),
+    plain text/markdown as before. Legacy .doc binaries cannot be extracted
+    with the installed libraries and return "" (upload still succeeds, but
+    RAG ingest is skipped instead of storing garbage).
+    """
+    ext = filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
     try:
+        if ext == "pdf":
+            from pypdf import PdfReader
+            reader = PdfReader(filepath)
+            return "\n".join((page.extract_text() or "") for page in reader.pages)
+        if ext == "docx":
+            from docx import Document
+            doc = Document(filepath)
+            parts = [para.text for para in doc.paragraphs]
+            for table in doc.tables:
+                for row in table.rows:
+                    parts.append(" | ".join(cell.text for cell in row.cells))
+            return "\n".join(parts)
         with open(filepath, "r", encoding="utf-8", errors="replace") as f:
             return f.read()
-    except Exception:
-        return f"Uploaded file: {filename}"
+    except Exception as exc:
+        logger.warning("Text extraction failed for %s: %s", filename, exc)
+        return ""
+
+
+def _chunk_text(content: str, size: int = 1200) -> list:
+    """Split extracted text into retrievable chunks (was: one whole doc).
+
+    One giant document embeds poorly and rarely surfaces for a specific
+    question; ~1200-char paragraph-aware chunks let the concierge find the
+    exact passage about, say, a lease term or a loan amount.
+    """
+    text = (content or "").strip()
+    if not text:
+        return []
+    chunks, current = [], ""
+    for para in text.split("\n"):
+        para = para.strip()
+        if not para:
+            continue
+        if len(current) + len(para) + 1 > size and current:
+            chunks.append(current)
+            current = para
+        else:
+            current = f"{current}\n{para}" if current else para
+    if current:
+        chunks.append(current)
+    # A single over-long paragraph still gets hard-split so nothing is lost.
+    out = []
+    for chunk in chunks:
+        while len(chunk) > size:
+            out.append(chunk[:size])
+            chunk = chunk[size:]
+        if chunk:
+            out.append(chunk)
+    return out
 
 
 def _estimate_chunks(content: str, size: int) -> int:
-    if content and not content.startswith("Uploaded file:"):
-        # rough chunk estimate ~800 chars
-        return max(1, (len(content) + 799) // 800)
-    # binary / unreadable
+    chunks = _chunk_text(content)
+    if chunks:
+        return len(chunks)
+    # binary / unreadable / nothing extractable
     return max(1, (size + 4095) // 4096)
 
 
@@ -88,32 +145,41 @@ def process_upload():
 
     rag_status = "not_available"
     doc_id = f"doc_{int(datetime.now(timezone.utc).timestamp())}_{filename}"
-    chunks = _estimate_chunks(content, size)
+    text_chunks = _chunk_text(content)
+    chunks = len(text_chunks) if text_chunks else _estimate_chunks(content, size)
     pages = "Unknown"
 
-    # Soft RAG ingest — never fail the upload if Chroma/Gemini is slow or down
+    # Soft RAG ingest — never fail the upload if Chroma/Gemini is slow or down.
+    # Nothing extractable (e.g. legacy .doc binary, scanned image PDF) means
+    # save-only: the file is kept and listed, but no garbage is indexed.
     try:
         from backend.services.rag import get_rag_manager
         rag_manager = get_rag_manager()
-        if rag_manager and rag_manager.is_available():
-            metadata = {
-                "filename": filename,
-                # basename only: never store/return absolute server paths
-                "filepath": filename,
-                "size": size,
-                "uploaded_at": datetime.now(timezone.utc).isoformat(),
-            }
-            result = rag_manager.add_document(content, metadata)
-            if isinstance(result, dict) and result.get("error"):
-                logger.warning("RAG ingest soft-fail: %s", result.get("error"))
-                rag_status = "save_only"
-            else:
-                rag_status = "added"
-                if isinstance(result, dict) and result.get("ids"):
-                    ids = result["ids"]
-                    doc_id = ids[0] if isinstance(ids, list) and ids else ids
-                elif isinstance(result, dict) and result.get("id"):
-                    doc_id = result["id"]
+        if not text_chunks:
+            rag_status = "save_only"
+        elif rag_manager and rag_manager.is_available():
+            failed = False
+            for i, chunk in enumerate(text_chunks):
+                metadata = {
+                    "filename": filename,
+                    # basename only: never store/return absolute server paths
+                    "filepath": filename,
+                    "size": size,
+                    "uploaded_at": datetime.now(timezone.utc).isoformat(),
+                    "chunk_index": i,
+                    "chunk_count": len(text_chunks),
+                    "source": "upload",
+                }
+                # Stable id per chunk: re-uploading replaces, never duplicates.
+                result = rag_manager.add_document(
+                    chunk, metadata, doc_id=f"doc_{filename}_{i}"
+                )
+                if isinstance(result, dict) and result.get("error"):
+                    logger.warning("RAG ingest soft-fail: %s", result.get("error"))
+                    failed = True
+                    break
+            rag_status = "save_only" if failed else "added"
+            doc_id = f"doc_{filename}_0"
         else:
             rag_status = "not_available"
     except Exception as e:
