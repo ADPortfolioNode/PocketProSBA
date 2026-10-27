@@ -12,12 +12,17 @@ import {
 } from '../data/serviceDaily';
 
 describe('ServiceDaily', () => {
-  test('renders generic daily operations with no client brand name', () => {
-    const { container } = render(<ServiceDaily />);
+  // Branded branch only: this Daily is intentionally themed after
+  // Funkadelic Studios (their logo and purple/dark theme), reversing the
+  // generic app's no-brand rule for this build. The generic main app keeps
+  // the no-brand assertion; this branch asserts the brand is present.
+  test('renders branded daily operations with the Funkadelic header', () => {
+    render(<ServiceDaily />);
     expect(screen.getByText('Daily operations')).toBeInTheDocument();
     expect(screen.getByText(/Bookable rooms/)).toBeInTheDocument();
     expect(screen.getByText(/Demo only/)).toBeInTheDocument();
-    expect(container.textContent).not.toMatch(/Funkadelic/i);
+    expect(screen.getByAltText('Funkadelic Studios logo')).toBeInTheDocument();
+    expect(screen.getByText(/FUNKADELIC STUDIOS/)).toBeInTheDocument();
   });
 
   test('room quote includes deposit and card fee', () => {

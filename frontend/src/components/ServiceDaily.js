@@ -15,6 +15,11 @@ import {
 import './ServiceDaily.css';
 
 const TABS = ['Rooms', 'Recording', 'Repair', 'Rentals & Retail', 'Events', 'Growth'];
+
+// Logo as published on funkadelicstudios.com (Squarespace CDN, purple wordmark
+// with white 30 anniversary mark, designed to sit on a dark banner).
+const LOGO_URL =
+  'https://images.squarespace-cdn.com/content/v1/58fa6ab446c3c493b8941bae/f980aa3c-fb6b-4c09-b54f-1c166f95be5e/Funk30logo+purple+white.png?format=1500w';
 const today = () => new Date().toISOString().slice(0, 10);
 
 // One card per task. A tab is a service area; a card is the actual job a
@@ -288,10 +293,12 @@ function ServiceDaily() {
   };
 
   return (
-    <div className="service-daily">
-      <header className="service-header">
-        <p className="service-kicker">DAILY OPERATIONS — SERVICE BUSINESS</p>
-        <h1>Daily operations</h1>
+    <div className="service-daily service-daily--branded">
+      <header className="service-brand-header">
+        <img src={LOGO_URL} alt="Funkadelic Studios logo" className="service-brand-logo" />
+        <div className="service-brand-copy">
+          <p className="service-kicker">FUNKADELIC STUDIOS · TIMES SQUARE, NYC</p>
+          <h1>Daily operations</h1>
         <p>
           Calendar scheduling for the services a business offers, down to the room and
           the hour, within operating hours ({OPERATING_HOURS.label}). Example rates and
@@ -303,9 +310,13 @@ function ServiceDaily() {
           is not a loan approval — a lender and the SBA decide eligibility, amount,
           and timing.
         </p>
+        </div>
+        <p className="service-brand-hours">Open daily · 11am–11pm<br />(212) 696-2513</p>
       </header>
 
-      <div className="service-tabs" role="tablist" aria-label="Daily business functions">
+      <div className="service-layout">
+        <nav className="service-sidebar" aria-label="Daily services">
+          <div className="service-tabs" role="tablist" aria-label="Daily business functions">
         {TABS.map((t) => (
           <button
             key={t}
@@ -318,9 +329,10 @@ function ServiceDaily() {
             {t}
           </button>
         ))}
-      </div>
-
-      <WorkflowCards tab={tab} setTab={setTab} />
+          </div>
+        </nav>
+        <div className="service-main">
+          <WorkflowCards tab={tab} setTab={setTab} />
 
       {tab === 'Rooms' && (
         <section>
@@ -529,6 +541,8 @@ function ServiceDaily() {
           <a href="/chat">Ask the concierge about growth →</a>
         </section>
       )}
+        </div>
+      </div>
     </div>
   );
 }
