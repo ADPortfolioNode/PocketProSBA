@@ -4,9 +4,13 @@ Regression for the 2026-10-26 readability fix: a RAG answer used to stack
 a bold intro, one "### N. Title" heading per hit, a per-item
 "Official page / Open in Resources" line, a full "## Links" list, a
 "### More links" list, and a "## Use this information" section — with the
-same links a third time in the Resources panel. The bubble now carries
-plain titles and short paragraphs only; links live in the Resources panel
-via the returned sources.
+same links a third time in the Resources panel.
+
+2026-10-27 message-only rule (screenshot report): the bubble carries
+ONLY the conversational message — no resource titles, no per-resource
+paragraphs, no "Current link on sba.gov" pointer lines. Every resource
+and its link lives in the Resources panel via the returned sources,
+deduplicated there, so a link already shown is never listed again.
 """
 
 from backend.assistants.concierge import Concierge, META_ANSWER
@@ -39,16 +43,45 @@ def _hits():
 
 def test_rag_answer_is_plain_text_without_link_sections():
     text, sources = format_hits_as_answer("7(a) loans", _hits())
-    assert "SBA 7(a) loans" in text
-    assert "working capital" in text
-    # No per-hit headings, no per-item action lines, no Links / More-links
-    # lists. The one section still allowed in the bubble is the house-required
-    # "Use this information" section, only when it has real actions.
+    # Message only: no resource titles, no per-resource paragraphs, no
+    # link-pointer lines, no headings, no markdown links, no URLs.
+    assert "SBA 7(a) loans" not in text
+    assert "SBA Microloans" not in text
+    assert "working capital" not in text
+    assert "Current link" not in text
+    assert "sba.gov" not in text
     assert "## Links" not in text
     assert "###" not in text
+    assert "##" not in text
+    assert "](" not in text
     assert "→" not in text
     assert "Official page" not in text
-    assert text.count("## ") <= 1
+    assert "Use this information" not in text
+    # But the message still says resources were found and where to open them.
+    assert "2 SBA resources" in text
+    assert "Links & resources panel" in text
+
+
+def test_rag_answer_bubble_never_repeats_screenshot_link_lines():
+    # Body text exactly like the SBA API snapshots in the reported
+    # screenshot: a "Current link on sba.gov" pointer line must not leak
+    # into the bubble even when it is the resource's whole paragraph.
+    hits = [
+        {
+            "id": "9",
+            "title": "Write your business plan",
+            "body": "Current link on sba.gov — open source for full official details.",
+            "path": "/api/sba/content/articles/123",
+            "url": "https://www.sba.gov/business-guide/plan-your-business/write-your-business-plan",
+            "type": "article",
+            "metadata": {},
+        },
+    ]
+    text, sources = format_hits_as_answer("business plan", hits)
+    assert "Current link" not in text
+    assert "Write your business plan" not in text
+    assert sources[0]["title"] == "Write your business plan"
+    assert sources[0]["url"].startswith("https://www.sba.gov/")
 
 
 def test_rag_answer_sources_still_carry_links_for_resources_panel():
