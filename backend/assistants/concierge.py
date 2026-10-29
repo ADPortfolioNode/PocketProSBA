@@ -57,6 +57,47 @@ _META_PATTERNS = (
 )
 
 
+# Words that mark a question as about an SBA topic, not a person. SBA API
+# endpoints return program content only — they hold no person records —
+# so a "who is <name>" question must never be answered from them.
+_SBA_TOPIC_WORDS = {
+    "sba", "loan", "loans", "administrator", "program", "programs",
+    "lender", "lenders", "business", "funding", "grant", "grants",
+    "microloan", "microloans", "express", "eligibility",
+}
+
+
+def _person_name_from(message):
+    """Return (display_name, name_tokens) for a "who is <name>" question.
+
+    Returns None for anything else — including "who are you" (the
+    assistant itself, handled by the meta path) and SBA-role questions
+    such as "who is the SBA administrator", which SBA content can answer.
+    """
+    if not message:
+        return None
+    m = re.match(
+        r"\s*who\s+(?:is|was|['\u2019]s)\s+(.+?)\s*[?.!]*\s*$",
+        message.strip(),
+        flags=re.I,
+    )
+    if not m:
+        return None
+    name = m.group(1).strip()
+    if not name or name.lower() in ("you", "yourself"):
+        return None
+    tokens = [
+        w
+        for w in re.findall(r"[a-z0-9]+", name.lower())
+        if len(w) >= 3 and w not in ("the", "a", "an", "of", "for")
+    ]
+    if not tokens:
+        return None
+    if any(t in _SBA_TOPIC_WORDS for t in tokens):
+        return None
+    return name, tokens
+
+
 # Lazy-load Gemini RAG service only when required
 def _load_gemini_rag_service():
     try:
@@ -133,7 +174,36 @@ class Concierge(BaseAssistant):
         
         # Process based on intent with improved dialogue flow
         try:
-            if intent == "meta":
+            # Person questions are answered from the user's own documents
+            # only, before any SBA path runs. SBA API endpoints return
+            # program content, not person records, so their results are
+            # not an answer to "who is <name>" — and must not be shown as
+            # one. If no uploaded document covers the person, say so
+            # plainly instead of falling through to SBA documents.
+            person = _person_name_from(message)
+            if person:
+                display_name, name_tokens = person
+                uploaded = self._uploaded_document_answer(
+                    message, require_words=name_tokens
+                )
+                if uploaded:
+                    response = dict(uploaded)
+                    response["person_answer"] = True
+                else:
+                    response = {
+                        "text": (
+                            f"I don't have information about {display_name} "
+                            "in your uploaded documents, and SBA program "
+                            "resources don't hold person records, so I won't "
+                            "guess. If you upload a document that covers "
+                            f"{display_name}, I can answer from it. I can "
+                            "help with SBA loans, programs, and business "
+                            "guidance in the meantime."
+                        ),
+                        "sources": [],
+                        "person_answer": True,
+                    }
+            elif intent == "meta":
                 response = {"text": META_ANSWER, "sources": []}
             elif intent == "document_search":
                 response = self._handle_document_search(message, conversation)
@@ -160,7 +230,10 @@ class Concierge(BaseAssistant):
             # with limitations and liability stated plainly — never implied
             # as an approval or a complete search when a service is down.
             response_text = response.get("text", "")
-            if intent in ("document_search", "simple_query", "follow_up_query"):
+            # A person answer is already a direct answer from the user's
+            # own documents — it must not gain an "SBA guidance" task lead
+            # or a RAG limitation note that would misdescribe it.
+            if not response.get("person_answer") and intent in ("document_search", "simple_query", "follow_up_query"):
                 task_lead = (
                     f"Got it — I'll take that as a task: find SBA guidance on "
                     f"{message.strip()}, summarize it, and point you to the "
@@ -176,7 +249,7 @@ class Concierge(BaseAssistant):
                     rag_available = False
                 if not rag_available and "Limitation:" not in response_text:
                     response_text += LIMITATION_RAG_NOTE
-            if intent in ("document_search", "task_request", "simple_query"):
+            if not response.get("person_answer") and intent in ("document_search", "task_request", "simple_query"):
                 lowered = response_text.lower()
                 if any(w in lowered for w in _FUNDING_WORDS) and "Expectation note:" not in response_text:
                     response_text += EXPECTATION_NOTE
@@ -414,8 +487,19 @@ class Concierge(BaseAssistant):
     # first (RAG chunks, with a direct-file fallback when RAG is down), and
     # only if nothing of theirs matches does the SBA path run. This is what
     # makes chat + documents work as one app instead of two silos.
-    def _uploaded_document_answer(self, message):
-        """Answer from the user's uploaded documents, or None if no match."""
+    def _uploaded_document_answer(self, message, require_words=None):
+        """Answer from the user's uploaded documents, or None if no match.
+
+        require_words (e.g. a person's full name tokens) narrows the match:
+        only a document containing EVERY required word counts. Without it,
+        the previous scoring applies (two distinctive words, or one word
+        when the user is clearly asking about their own file).
+
+        The RAG check reads a wide result set on purpose: a top-6 query can
+        be crowded out by SBA documents, so an uploaded file that answers
+        the question must not lose to program content it never competed
+        with — local uploads and remote SBA results are both checked.
+        """
         stopwords = {
             "what", "does", "says", "about", "tell", "show", "find", "search",
             "look", "from", "file", "document", "uploaded", "upload", "please",
@@ -443,7 +527,7 @@ class Concierge(BaseAssistant):
         # 1) RAG chunks (filename metadata marks a user upload)
         try:
             if self.rag_manager:
-                results = self.rag_manager.query_documents(message, n_results=6)
+                results = self.rag_manager.query_documents(message, n_results=20)
                 documents = results.get("documents") if isinstance(results, dict) else None
                 metadatas = results.get("metadatas") if isinstance(results, dict) else None
                 if documents and isinstance(documents[0], list):
@@ -456,6 +540,10 @@ class Concierge(BaseAssistant):
                         meta = meta or {}
                         filename = meta.get("filename")
                         if not filename:
+                            continue
+                        if require_words and not all(
+                            w in (doc or "").lower() for w in require_words
+                        ):
                             continue
                         score = _score(doc)
                         name_hit = filename.lower() in lower_msg
@@ -484,6 +572,10 @@ class Concierge(BaseAssistant):
                         continue
                     text = _read_text(filepath, filename)
                     if not text.strip():
+                        continue
+                    if require_words and not all(
+                        w in text.lower() for w in require_words
+                    ):
                         continue
                     score = _score(text)
                     name_hit = filename.lower() in lower_msg
