@@ -10,6 +10,16 @@ from backend.services.api_service import (
     query_documents_service,
 )
 from backend.services.rag import get_rag_manager
+
+try:
+    from backend.services.llm_chain import LLMChain, ChainConfig, build_sba_prompt
+    _LLM_CHAIN_AVAILABLE = True
+except Exception as _llm_chain_import_error:  # pragma: no cover - chain file missing
+    LLMChain = None
+    ChainConfig = None
+    build_sba_prompt = None
+    _LLM_CHAIN_AVAILABLE = False
+    _llm_chain_import_error = _llm_chain_import_error
 from backend.routes._errors import internal_error_message
 from backend.app.auth import auth_required
 
@@ -280,6 +290,64 @@ def _local_kb_sba_answer(question: str, max_chunks: int = 4):
         "source_documents": sources,
         "mode": kb_mode,
     }
+
+# --- LLM provider chain (Gemini -> Groq -> Ollama -> retrieved text) ---
+# Single insertion point for the chain: POST /api/rag/sba-query below.
+# Why here, not inside either Gemini service or the concierge: sba-query is
+# the only HTTP surface that already owns the retrieved-text rung
+# (_local_kb_sba_answer) and a mode field, and it is reached whether or not
+# the enhanced service initialized. The chain module itself
+# (backend/services/llm_chain.py) is shared and importable by the concierge
+# task path later without changing this wiring. SBA prompts, retrieval, and
+# content are untouched: the Gemini rung reuses the existing Gemini services
+# (their own prompts/retrieval), and Groq/Ollama get SBA's own enhanced
+# prompt template filled with the same retrieved context.
+_last_chain = None
+
+
+def _gemini_answer(question):
+    """Gemini rung: enhanced service first, legacy service second.
+
+    Raises RuntimeError (with the service error) when neither answers, so
+    the chain falls through to Groq instead of silently returning a soft
+    error dict. Never raises with a key value: services log their own
+    errors; the chain strips keys from whatever message reaches it.
+    """
+    errors = []
+    if getattr(enhanced_rag_service, 'is_initialized', False):
+        try:
+            result = enhanced_rag_service.query_sba_loans(question)
+            if isinstance(result, dict) and result.get('answer') and not result.get('error'):
+                return result
+            errors.append(str(result.get('error')) if isinstance(result, dict) else 'enhanced service returned no answer')
+        except Exception as e:
+            errors.append(str(e))
+    try:
+        from backend.gemini_rag_service import gemini_rag_service
+        result = gemini_rag_service.query_sba_loans(question)
+        if isinstance(result, dict) and result.get('answer') and not result.get('error'):
+            return result
+        errors.append(str(result.get('error')) if isinstance(result, dict) else 'legacy service returned no answer')
+    except Exception as e:
+        errors.append(str(e))
+    raise RuntimeError('; '.join(errors) if errors else 'Gemini service unavailable')
+
+
+def _build_chain():
+    """Chain with env config (see backend/config.py) + Gemini rung."""
+    return LLMChain(ChainConfig(), gemini_callable=_gemini_answer)
+
+
+@rag_bp.route('/llm-status', methods=['GET'])
+@auth_required
+def llm_status():
+    """Provider chain status. Never includes keys: availability + model
+    names + the last (key-stripped) chain error only."""
+    if not _LLM_CHAIN_AVAILABLE:
+        return jsonify({'provider': None, 'providers': [], 'last_error': 'LLM chain module unavailable', 'error': 'LLM chain module unavailable'})
+    chain = _last_chain or _build_chain()
+    return jsonify(chain.status())
+
 
 @rag_bp.route('', methods=['POST', 'OPTIONS'])
 @rag_bp.route('/', methods=['POST', 'OPTIONS'])
@@ -638,20 +706,33 @@ def query_sba_documents():
             )
             return payload
 
-        # Prefer enhanced Gemini RAG when fully initialized
-        if getattr(enhanced_rag_service, 'is_initialized', False):
-            try:
-                result = enhanced_rag_service.query_sba_loans(query)
-                # If the service returns a soft error, fall back to local KB
-                if isinstance(result, dict) and result.get('error') and not result.get('answer'):
-                    logger.warning("Enhanced RAG returned error; using local KB fallback: %s", result.get('error'))
-                    return jsonify(_mark_rag(_local_kb_sba_answer(query), 'local_kb_fallback'))
-                return jsonify(_mark_rag(result if isinstance(result, dict) else {'answer': result}, 'gemini_rag'))
-            except Exception as rag_err:
-                logger.warning("Enhanced RAG query failed; using local KB fallback: %s", rag_err)
+        # Retrieved context first: it feeds Groq/Ollama AND is the last
+        # rung, so every provider answers from the same context.
+        retrieved = _local_kb_sba_answer(query)
+        if _LLM_CHAIN_AVAILABLE:
+            global _last_chain
+            context_text = "\n\n".join(
+                (doc.get('content') or '')
+                for doc in (retrieved.get('source_documents') or [])
+            ) or (retrieved.get('answer') or '')
+            chain = _build_chain()
+            _last_chain = chain
+            result = chain.run(
+                query,
+                prompt=build_sba_prompt(query, context_text),
+                context_text=context_text,
+                source_documents=retrieved.get('source_documents') or [],
+                retrieved_fallback=lambda q: retrieved,
+            )
+            # result already carries provider + mode (gemini/groq/ollama, or
+            # the retrieved rung's own mode); _mark_rag preserves mode and
+            # records it as `source`. llm_error is key-stripped, <=1000 chars.
+            if result.get('llm_error'):
+                logger.warning("LLM chain note for sba-query: %s", result['llm_error'])
+            return jsonify(_mark_rag(result, result.get('mode') or 'retrieved'))
 
-        # Soft degrade: keyword search over on-disk knowledge base (no Gemini required)
-        return jsonify(_mark_rag(_local_kb_sba_answer(query), 'local_kb_fallback'))
+        # Chain module unavailable: previous behaviour (local KB only).
+        return jsonify(_mark_rag(retrieved, retrieved.get('mode') or 'local_kb_fallback'))
 
     except Exception as e:
         logger.error(f"Error querying SBA documents: {str(e)}")
