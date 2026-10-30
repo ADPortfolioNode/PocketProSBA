@@ -22,7 +22,7 @@ class GeminiRAGService:
         self.chunk_size = 1000
         self.chunk_overlap = 200
         self.gemini_api_key = os.getenv("GEMINI_API_KEY")
-        self.model_name = "gemini-pro"
+        self.model_name = os.getenv("GEMINI_MODEL", os.getenv("GEMINI_CHAT_MODEL", "gemini-3.8-flash"))
         self.temperature = 0.7
         self.vector_store = None
         self.qa_chain = None

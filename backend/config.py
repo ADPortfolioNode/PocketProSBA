@@ -52,6 +52,18 @@ class Config:
 
     # Gemini API configuration (if used)
     GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
+    # LLM provider chain (backend/services/llm_chain.py): Gemini first, then
+    # Groq, then local Ollama only if enabled, then retrieved text.
+    # GEMINI_MODEL wins over the legacy GEMINI_CHAT_MODEL name; both default
+    # to gemini-3.8-flash. A stale GEMINI_CHAT_MODEL / GROQ_MODEL line in a
+    # local .env still overrides these defaults -- delete/update it there.
+    GEMINI_MODEL = os.environ.get('GEMINI_MODEL') or os.environ.get('GEMINI_CHAT_MODEL') or 'gemini-3.8-flash'
+    GROQ_API_KEY = os.environ.get('GROQ_API_KEY')
+    GROQ_MODEL = os.environ.get('GROQ_MODEL') or 'openai/gpt-oss-20b'
+    GROQ_BASE_URL = os.environ.get('GROQ_BASE_URL') or 'https://api.groq.com/openai/v1'
+    OLLAMA_ENABLED = env_bool('OLLAMA_ENABLED', False)
+    OLLAMA_BASE_URL = os.environ.get('OLLAMA_BASE_URL') or 'http://host.docker.internal:11434/v1'
+    OLLAMA_MODEL = os.environ.get('OLLAMA_MODEL') or 'llama3.1:8b'
 
     # Logging configuration
     LOG_LEVEL = os.environ.get('LOG_LEVEL', 'INFO')

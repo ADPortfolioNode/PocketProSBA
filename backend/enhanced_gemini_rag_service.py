@@ -39,7 +39,7 @@ class EnhancedGeminiRAGService:
         self.chunk_overlap = 300
         self.gemini_api_key = os.getenv("GEMINI_API_KEY")
         # Prefer a current Gemini model; gemini-pro is often unavailable on new API keys.
-        self.model_name = os.getenv("GEMINI_CHAT_MODEL", "gemini-1.5-flash")
+        self.model_name = os.getenv("GEMINI_MODEL", os.getenv("GEMINI_CHAT_MODEL", "gemini-3.8-flash"))
         self.temperature = 0.3
         self.vector_store = None
         self.qa_chain = None
