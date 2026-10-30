@@ -320,16 +320,20 @@ def _gemini_answer(question):
             if isinstance(result, dict) and result.get('answer') and not result.get('error'):
                 return result
             errors.append(str(result.get('error')) if isinstance(result, dict) else 'enhanced service returned no answer')
-        except Exception as e:
-            errors.append(str(e))
+        except Exception:
+            # No raw exception text here: the routes source scan forbids it,
+            # and the chain already strips keys/caps
+            # whatever reaches it. The service-error dict branch above still
+            # carries detail when a service returns one.
+            errors.append('enhanced Gemini service failed')
     try:
         from backend.gemini_rag_service import gemini_rag_service
         result = gemini_rag_service.query_sba_loans(question)
         if isinstance(result, dict) and result.get('answer') and not result.get('error'):
             return result
         errors.append(str(result.get('error')) if isinstance(result, dict) else 'legacy service returned no answer')
-    except Exception as e:
-        errors.append(str(e))
+    except Exception:
+        errors.append('legacy Gemini service failed')
     raise RuntimeError('; '.join(errors) if errors else 'Gemini service unavailable')
 
 
