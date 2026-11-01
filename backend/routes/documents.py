@@ -88,3 +88,53 @@ def list_files():
     except Exception as e:
         logger.error(f"Error listing files: {str(e)}")
         return jsonify({'error': internal_error_message(e)}), 500
+
+# Cap viewer text so one huge file cannot blow up the response or the modal.
+MAX_VIEW_TEXT = 200000
+
+
+@documents_bp.route('/view/<path:filename>', methods=['GET'])
+@auth_required
+def view_file(filename):
+    """Return an uploaded file for in-app inspection.
+
+    Uses the same extraction path as upload (routes/files._read_text: PDF via
+    pypdf, DOCX via python-docx, plain text otherwise), so the viewer shows
+    exactly what the app already extracted for RAG. Types with no extractable
+    text (e.g. legacy .doc binaries) return extractable=false and no invented
+    content -- the frontend shows an honest "preview not available" state.
+    """
+    try:
+        safe = secure_filename(filename)
+        if not safe or safe != filename or '/' in filename or '\\' in filename:
+            return jsonify({'error': 'File not found'}), 404
+        folder = _upload_folder()
+        filepath = os.path.join(folder, safe)
+        if not os.path.isfile(filepath):
+            return jsonify({'error': 'File not found'}), 404
+        from backend.routes.files import _read_text
+        text = _read_text(filepath, safe) or ''
+        # Legacy .doc binaries cannot be extracted with the installed
+        # libraries (files._read_text would only decode them as
+        # replacement characters): report honestly instead of showing garbage.
+        ext_first = safe.rsplit('.', 1)[-1].lower() if '.' in safe else ''
+        if ext_first == 'doc':
+            text = ''
+        extractable = bool(text.strip())
+        truncated = len(text) > MAX_VIEW_TEXT
+        if truncated:
+            text = text[:MAX_VIEW_TEXT]
+        ext = safe.rsplit('.', 1)[-1].lower() if '.' in safe else ''
+        return jsonify({
+            'filename': safe,
+            'size': os.path.getsize(filepath),
+            'modified': os.path.getmtime(filepath),
+            'type': ext,
+            'extractable': extractable,
+            'truncated': truncated,
+            'text': text if extractable else '',
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Error viewing file: {str(e)}")
+        return jsonify({'error': internal_error_message(e)}), 500

@@ -121,3 +121,55 @@ describe('UploadsManager (Docs tab)', () => {
     }
   });
 });
+
+describe('UploadsManager file viewer (click a file -> view modal)', () => {
+  const viewBody = {
+    filename: 'plan.txt',
+    size: 2048,
+    modified: 1762000000,
+    type: 'txt',
+    extractable: true,
+    truncated: false,
+    text: 'hello sba viewer content',
+  };
+
+  const renderWithFiles = () => {
+    apiClient.get.mockImplementation((url) =>
+      String(url).includes('/view/') ? ok(viewBody) : ok({ files: [{ filename: 'plan.txt', size: 2048 }] })
+    );
+    render(<UploadsManager />);
+  };
+
+  test('clicking a listed file opens a viewer modal with its content', async () => {
+    renderWithFiles();
+    await screen.findByText('plan.txt');
+    fireEvent.click(screen.getByRole('button', { name: /View plan\.txt/i }));
+    expect(await screen.findByRole('dialog')).toBeInTheDocument();
+    expect(await screen.findByText('hello sba viewer content')).toBeInTheDocument();
+    expect(apiClient.get).toHaveBeenCalledWith('/api/documents/view/plan.txt', {}, { quiet: true });
+  });
+
+  test('closing the viewer returns to the list', async () => {
+    renderWithFiles();
+    await screen.findByText('plan.txt');
+    fireEvent.click(screen.getByRole('button', { name: /View plan\.txt/i }));
+    await screen.findByText('hello sba viewer content');
+    // Footer Close button (the modal header's × button also carries the
+    // name "Close", so match the footer's visible text, not the role name).
+    fireEvent.click(screen.getByText('Close'));
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(screen.getByText('plan.txt')).toBeInTheDocument();
+  });
+
+  test('a file with no extractable text shows an honest preview-not-available state', async () => {
+    apiClient.get.mockImplementation((url) =>
+      String(url).includes('/view/')
+        ? ok({ ...viewBody, filename: 'old.doc', type: 'doc', extractable: false, text: '' })
+        : ok({ files: [{ filename: 'old.doc', size: 1024 }] })
+    );
+    render(<UploadsManager />);
+    await screen.findByText('old.doc');
+    fireEvent.click(screen.getByRole('button', { name: /View old\.doc/i }));
+    expect(await screen.findByText(/Preview not available for this type/i)).toBeInTheDocument();
+  });
+});
