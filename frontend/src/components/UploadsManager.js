@@ -6,6 +6,7 @@ import apiClient, { BASE_URL, handleUnauthorized } from "../api/apiClient";
 import { authHeaders } from "../utils/authStorage";
 import { useAsync } from "../hooks/useAsync";
 import { friendlyError } from "../utils/friendlyError";
+import FileViewerModal from "./FileViewerModal";
 
 export const DOCUMENTS_LIST_ENDPOINT = "/api/documents/list";
 
@@ -34,6 +35,8 @@ const UploadsManagerComponent = ({ files: filesProp, onUpload, onRefresh: onRefr
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
+  // File-view rule: clicking a listed file opens it in a viewer modal.
+  const [viewingFile, setViewingFile] = useState(null);
 
   const handleFileChange = (e) => {
     setSelectedFile(e.target.files[0]);
@@ -107,7 +110,14 @@ const UploadsManagerComponent = ({ files: filesProp, onUpload, onRefresh: onRefr
         <ListGroup>
           {files && files.length > 0 ? (
             files.map((file, idx) => (
-              <ListGroup.Item key={file.filename || file.name || idx}>
+              <ListGroup.Item
+                key={file.filename || file.name || idx}
+                action
+                as="button"
+                type="button"
+                aria-label={`View ${file.filename || file.name}`}
+                onClick={() => setViewingFile(file)}
+              >
                 {file.filename || file.name} <span className="text-muted">({Math.round((file.size || 0) / 1024)} KB)</span>
               </ListGroup.Item>
             ))
@@ -119,6 +129,7 @@ const UploadsManagerComponent = ({ files: filesProp, onUpload, onRefresh: onRefr
       <Button variant="secondary" size="sm" className="mt-2" onClick={onRefresh} disabled={!onRefresh || listLoading}>
         Refresh List
       </Button>
+      <FileViewerModal file={viewingFile} onClose={() => setViewingFile(null)} />
     </div>
   );
 };
