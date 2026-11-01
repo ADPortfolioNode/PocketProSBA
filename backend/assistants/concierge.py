@@ -39,7 +39,7 @@ _FUNDING_WORDS = ("loan", "funding", "financing", "eligibility", "grant")
 META_ANSWER = (
     "I'm the SBA assistant inside this app. I find SBA guidance, explain "
     "programs in plain words, and point you to the official resources in the "
-    "Resources panel. I can also walk through Daily tasks, like booking a room. "
+    "Resources panel. "
     "I don't decide loan eligibility, I don't have access to your loan "
     "application, and I don't have a set of instructions I can show you — "
     "I just answer from SBA resources. What would you like help with?"
@@ -500,34 +500,6 @@ class Concierge(BaseAssistant):
     def _handle_document_search(self, message, conversation):
         """Handle a document search request — human-readable answer + clickable links."""
         self._update_status("searching", 50, "Searching for relevant documents...")
-
-        # Daily operations workflows first: a question about booking a room,
-        # a recording session, or a repair intake is answered from the Daily
-        # task cards, not from SBA loan documents. This also seeds the
-        # conversation — follow-ups can build on the task answer just given.
-        # Generic only, no client branding, and demo-only limits are stated.
-        try:
-            from backend.services.daily_rag_ingest import search_daily_workflows
-
-            daily = search_daily_workflows(message, max_results=2)
-            if daily and daily[0].get("score", 0) >= 3:
-                parts = [
-                    "Here is how that Daily task works:\n",
-                ]
-                sources = []
-                for hit in daily:
-                    parts.append(f"**{hit['title']}**\n{hit['body']}\n")
-                    sources.append(
-                        {"title": hit["title"], "path": "/daily", "url": "/daily"}
-                    )
-                parts.append(
-                    "\nDemo only: Daily workflows take no payments and make no real "
-                    "reservations. Open Daily to try the task, and verify rates and "
-                    "policies with the business before booking."
-                )
-                return {"text": "\n".join(parts), "sources": sources}
-        except Exception as daily_err:
-            logger.debug("daily workflows search soft-fail: %s", daily_err)
 
         # Your own files are checked now, but NOT returned on their own:
         # the conversation leads with the SBA answer, and a matching file
