@@ -187,7 +187,16 @@ function MainLayout({ useConnectionHook = useConnection }) {
       case 'browse':
         return <SBAContentExplorer />;
       case 'rag':
-        return <RAGWorkflowInterface />;
+        // Same concierge conversation as the Chat tab: the RAG page chat
+        // sends through handleChatSend and shares `messages`, so a question
+        // asked here continues in /chat and vice versa.
+        return (
+          <RAGWorkflowInterface
+            chatMessages={messages}
+            chatPending={chatPending}
+            onChatSend={handleChatSend}
+          />
+        );
       case 'documents':
         return <UploadsManagerComponent />; // loads its own list from /api/documents/list
       case 'sba':
