@@ -60,13 +60,33 @@ def process_chat_message(user_id, message, session_id=None):
         try:
             from backend.services.link_enrichment import enrich_answer_with_links
 
-            already_formatted = bool(
+            # The concierge checks the user's own uploaded documents FIRST
+            # (PR #25 design: SBA answer first, uploaded document as supporting
+            # bonus material). That answer must never be replaced wholesale
+            # by generic SBA hits here: that is exactly how /api/chat lost
+            # uploaded documents in a keyless environment. An answer that
+            # already carries an uploaded document is kept as-is, whatever
+            # else it looks like.
+            lower_text = text.lower() if text else ""
+            has_uploaded_answer = bool(
+                "from your uploaded document" in lower_text
+                or any(
+                    isinstance(s, dict) and s.get("path") == "/documents"
+                    for s in (sources or [])
+                )
+            )
+            # NOTE: the formatted checks below must all run against the
+            # lowercased text. The previous version compared "clear summary
+            # from live SBA" (mixed case) against text.lower(), which could
+            # never match, so every SBA-summary answer was wrongly treated
+            # as unformatted and overwritten with generic SBA hits.
+            already_formatted = bool(has_uploaded_answer) or bool(
                 text
                 and (
-                    "## Links" in text
-                    or "clear summary from live SBA" in text.lower()
-                    or "Open in Resources" in text
-                    or "Official page" in text
+                    "## links" in lower_text
+                    or "clear summary from live sba" in lower_text
+                    or "open in resources" in lower_text
+                    or "official page" in lower_text
                     or re.search(r"\[.+\]\(https?://", text)
                 )
             )

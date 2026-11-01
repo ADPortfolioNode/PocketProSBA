@@ -86,7 +86,9 @@ describe('RAGWorkflowInterface', () => {
     await waitFor(() => screen.getByText(/Step validated/i));
     fireEvent.click(screen.getByText(/Query Documents/i));
     fireEvent.change(screen.getByPlaceholderText(/What types of SBA loans/i), { target: { value: 'What types of SBA loans are available?' } });
-    const form = container.querySelector('form');
+    // The RAG-page chat form now precedes the wizard in DOM order, so
+    // select the query form by its own textarea, not "the first form".
+    const form = screen.getByPlaceholderText(/What types of SBA loans/i).closest('form');
     fireEvent.submit(form);
     await waitFor(() => expect(apiClient.post).toHaveBeenCalledWith('/api/query', { query: 'What types of SBA loans are available?', top_k: 5 }));
     // The button is always rendered but stays disabled until results arrive.
@@ -119,6 +121,78 @@ describe('RAGWorkflowInterface', () => {
     expect(await screen.findByRole('button', { name: /Execute Step 1/i })).toBeInTheDocument();
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     expect(apiClient.post).toHaveBeenCalledTimes(2);
+    console.error.mockRestore();
+  });
+});
+
+describe('RAGWorkflowInterface concierge chat', () => {
+  it('renders the chat section and an idle process panel without a chat handler', () => {
+    render(<RAGWorkflowInterface documents={[]} searchResults={[]} ragResponse={null} />);
+    expect(screen.getByText(/Chat with your documents/i)).toBeInTheDocument();
+    expect(screen.getByText(/RAG process/i)).toBeInTheDocument();
+    expect(screen.getByText(/Ask a question in the chat above/i)).toBeInTheDocument();
+    expect(screen.getByText(/Chat connects through the concierge/i)).toBeInTheDocument();
+  });
+
+  it('sends through onChatSend and reports the sources in the panel, not the bubble', async () => {
+    const onChatSend = jest.fn().mockResolvedValue({
+      sources: [{ title: 'Lease.txt', path: '/documents' }],
+    });
+    const { rerender } = render(
+      <RAGWorkflowInterface
+        documents={[]}
+        searchResults={[]}
+        ragResponse={null}
+        chatMessages={[]}
+        onChatSend={onChatSend}
+      />
+    );
+    fireEvent.change(screen.getByPlaceholderText(/Ask about your documents/i), {
+      target: { value: 'What does my lease say?' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /^Send$/i }));
+    await waitFor(() => expect(onChatSend).toHaveBeenCalledWith('What does my lease say?'));
+    // Wait for the sources themselves: the "Answer ready" step label renders
+    // in every non-idle stage, so it cannot prove the request finished.
+    // The source title appears in the process panel + Links & resources,
+    // once each — never duplicated, and never inside the bubble text.
+    await waitFor(() => expect(screen.getAllByText('Lease.txt')).toHaveLength(2));
+    expect(screen.getByText('Done')).toBeInTheDocument();
+
+    rerender(
+      <RAGWorkflowInterface
+        documents={[]}
+        searchResults={[]}
+        ragResponse={null}
+        chatMessages={[
+          { role: 'user', content: 'What does my lease say?' },
+          { role: 'assistant', content: 'Your lease runs for two years.', sources: [{ title: 'Lease.txt', path: '/documents' }] },
+        ]}
+        onChatSend={onChatSend}
+      />
+    );
+    expect(screen.getByText(/Your lease runs for two years\./)).toBeInTheDocument();
+  });
+
+  it('keeps the draft and shows a friendly failure when sending fails', async () => {
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    const onChatSend = jest.fn().mockRejectedValue(new Error('boom'));
+    render(
+      <RAGWorkflowInterface
+        documents={[]}
+        searchResults={[]}
+        ragResponse={null}
+        chatMessages={[]}
+        onChatSend={onChatSend}
+      />
+    );
+    fireEvent.change(screen.getByPlaceholderText(/Ask about your documents/i), {
+      target: { value: 'What does my lease say?' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /^Send$/i }));
+    await waitFor(() => expect(screen.getByText(/Failed/)).toBeInTheDocument());
+    expect(screen.getByDisplayValue('What does my lease say?')).toBeInTheDocument();
+    expect(screen.queryByText(/boom/)).not.toBeInTheDocument();
     console.error.mockRestore();
   });
 });
