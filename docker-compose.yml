@@ -5,7 +5,7 @@ services:
       dockerfile: Dockerfile.production
     container_name: pocketpro-backend
     ports:
-      - "5000:5000"
+      - "${BACKEND_HOST_PORT:-5000}:5000"
     environment:
       - FLASK_ENV=production
       - PYTHONUNBUFFERED=1
@@ -49,7 +49,7 @@ services:
     image: chromadb/chroma:0.5.3
     container_name: chromadb-production
     ports:
-      - "8000:8000"
+      - "${CHROMA_HOST_PORT:-8000}:8000"
     volumes:
       - ./chromadb_data:/chroma/chroma
     environment:
@@ -73,7 +73,7 @@ services:
       dockerfile: Dockerfile.frontend
     container_name: pocketpro-frontend
     ports:
-      - "3000:80"
+      - "${FRONTEND_HOST_PORT:-3000}:80"
     depends_on:
       - backend
     restart: always

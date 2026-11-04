@@ -196,6 +196,93 @@ docker_prune() {
   docker_daemon_ready || wait_for_docker 60 3
 }
 
+# Port-conflict rule: a port held by another app is never freed by killing
+# it — the SBA host port bumps +1 until a free port is found (up to +10).
+# A holder that is one of this stack's own containers is stale, so it is
+# stopped and removed and the original port is kept. This runs immediately
+# before compose up (not at the top of the script), so a holder that appears
+# during a long --build cannot break the startup. The probe uses a plain TCP
+# connect, so it works in Git Bash where lsof is not available.
+SBA_CONTAINERS=(pocketpro-backend pocketpro-frontend chromadb-production pocketpro-backend-dev pocketpro-frontend-dev chromadb-dev)
+
+port_in_use() {
+  local port="$1"
+  if (exec 3<>"/dev/tcp/127.0.0.1/$port") 2>/dev/null; then
+    exec 3>&- 3<&- 2>/dev/null || true
+    return 0
+  fi
+  return 1
+}
+
+docker_holder_for_port() {
+  local port="$1"
+  command -v docker >/dev/null 2>&1 || return 0
+  docker ps --format '{{.ID}} {{.Names}} {{.Ports}}' 2>/dev/null \
+    | grep -E "(:|\\s)${port}->" | head -n 1 || true
+}
+
+# resolve_host_port VAR DEFAULT LABEL — sets $VAR to a free host port.
+resolve_host_port() {
+  local var_name="$1" default_port="$2" label="$3"
+  local port="$default_port" tries=0 stops=0 holder name
+  while (( tries <= 10 )); do
+    holder=$(docker_holder_for_port "$port")
+    if [[ -n "$holder" ]]; then
+      name=$(awk '{print $2}' <<< "$holder")
+      if [[ " ${SBA_CONTAINERS[*]} " == *" $name "* ]]; then
+        # If stopping twice still leaves the holder there (e.g. something
+        # recreates it), bump instead of looping forever.
+        if (( stops >= 2 )); then
+          echo "[WARN] $name still holds port $port after stopping — bumping +1..."
+          port=$((port + 1)); tries=$((tries + 1)); continue
+        fi
+        echo "[INFO] Stopping stale SBA container $name holding port $port..."
+        docker stop "$name" >/dev/null 2>&1 || true
+        docker rm "$name" >/dev/null 2>&1 || true
+        stops=$((stops + 1))
+        sleep 1
+        continue
+      fi
+      echo "[INFO] Port $port ($label) is held by $name — bumping +1..."
+      port=$((port + 1)); tries=$((tries + 1)); continue
+    fi
+    if port_in_use "$port"; then
+      echo "[INFO] Port $port ($label) is already in use — bumping +1..."
+      port=$((port + 1)); tries=$((tries + 1)); continue
+    fi
+    break
+  done
+  if (( tries > 10 )); then
+    echo "[ERROR] No free port found for $label near $default_port"
+    return 1
+  fi
+  printf -v "$var_name" '%s' "$port"
+  if [[ "$port" != "$default_port" ]]; then
+    echo "[INFO] $label will use host port $port (was $default_port)"
+  fi
+  return 0
+}
+
+resolve_host_ports() {
+  resolve_host_port FRONTEND_HOST_PORT 3000 frontend || return 1
+  resolve_host_port BACKEND_HOST_PORT 5000 backend || return 1
+  resolve_host_port CHROMA_HOST_PORT 8000 chromadb || return 1
+  export FRONTEND_HOST_PORT BACKEND_HOST_PORT CHROMA_HOST_PORT
+  # FRONTEND_URL is a CORS origin in the backend: if the frontend host port
+  # bumped, the default localhost:3000 origin would no longer match the page
+  # the browser actually loaded. Follow the bump, but never override a
+  # custom FRONTEND_URL the user set (e.g. a deployed URL).
+  if [[ -z "${FRONTEND_URL:-}" || "$FRONTEND_URL" == "http://localhost:3000" ]]; then
+    export FRONTEND_URL="http://localhost:${FRONTEND_HOST_PORT}"
+  fi
+  # Health/smoke URLs and the final ready line must follow the bumped ports.
+  HEALTH_URL="http://localhost:${BACKEND_HOST_PORT}/api/health"
+  CHAT_URL="http://localhost:${BACKEND_HOST_PORT}/api/chat"
+  INIT_URL="http://localhost:${BACKEND_HOST_PORT}/api/startup_init"
+  FRONT_URL="http://localhost:${FRONTEND_HOST_PORT}"
+  echo "[INFO] Ports: frontend=${FRONTEND_HOST_PORT} backend=${BACKEND_HOST_PORT} chromadb=${CHROMA_HOST_PORT}"
+}
+
 ensure_env() {
   if [[ ! -f .env ]]; then
     if [[ -f "$ENV_TEMPLATE" ]]; then
@@ -374,9 +461,24 @@ DOCKER_COMPOSE_CMD="$(compose_cmd)"
 [[ -n "$DOCKER_COMPOSE_CMD" ]] || { echo "[ERROR] docker compose not found"; exit 1; }
 
 UP_ARGS=(up -d)
-[[ "$BUILD" == true ]] && UP_ARGS=(up --build -d)
+# Build first, on its own: with `up --build` the port check would run before
+# a ~16-minute build, and a holder appearing during the build would still
+# break container startup. Building separately means resolve_host_ports below
+# runs immediately before `up`.
+if [[ "$BUILD" == true ]]; then
+  echo "[INFO] Building images..."
+  if [[ "$BUILD_DIAG_LOG" == true ]]; then
+    [[ -z "$LOG_FILE" ]] && LOG_FILE="logs/build-diag-$(date +%Y%m%d-%H%M%S).log"
+    mkdir -p "$(dirname "$LOG_FILE")"
+    echo "[INFO] Diagnostic log: $LOG_FILE"
+    $DOCKER_COMPOSE_CMD -f "$COMPOSE_FILE" build 2>&1 | tee -a "$LOG_FILE"
+  else
+    $DOCKER_COMPOSE_CMD -f "$COMPOSE_FILE" build
+  fi
+fi
 
 echo "[INFO] ${APP_NAME} compose=$COMPOSE_FILE mode=$MODE"
+resolve_host_ports || exit 1
 if [[ "$BUILD_DIAG_LOG" == true ]]; then
   [[ -z "$LOG_FILE" ]] && LOG_FILE="logs/build-diag-$(date +%Y%m%d-%H%M%S).log"
   mkdir -p "$(dirname "$LOG_FILE")"

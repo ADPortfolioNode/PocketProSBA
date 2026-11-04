@@ -5,7 +5,7 @@ services:
       dockerfile: Dockerfile.dev
     container_name: pocketpro-backend-dev
     ports:
-      - "5000:5000"
+      - "${BACKEND_HOST_PORT:-5000}:5000"
     # Optional: a fresh clone has no .env and compose still starts.
     env_file:
       - path: .env
@@ -16,7 +16,7 @@ services:
       - PORT=5000
       - CHROMADB_HOST=chromadb
       - CHROMADB_PORT=8000
-      - FRONTEND_URL=http://localhost:3000
+      - FRONTEND_URL=${FRONTEND_URL:-http://localhost:3000}
       - SQLALCHEMY_DATABASE_URI=sqlite:////app/app.db
       - GEMINI_API_KEY=${GEMINI_API_KEY:-}
     volumes:
@@ -42,7 +42,7 @@ services:
     image: chromadb/chroma:0.5.3
     container_name: chromadb-dev
     ports:
-      - "8000:8000"
+      - "${CHROMA_HOST_PORT:-8000}:8000"
     volumes:
       - ./chromadb_data:/chroma/chroma
     environment:
@@ -64,7 +64,7 @@ services:
     image: nginx:alpine
     container_name: pocketpro-frontend-dev
     ports:
-      - "3000:80"
+      - "${FRONTEND_HOST_PORT:-3000}:80"
     volumes:
       - ./frontend/build:/usr/share/nginx/html
       # Live SBA HTML UIs (API nav + dual detail modes); not rebuilt into CRA bundle
