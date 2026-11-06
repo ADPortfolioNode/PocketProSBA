@@ -266,15 +266,17 @@ def format_hits_as_answer(query: str, hits: List[Dict[str, Any]]) -> Tuple[str, 
     """
     Build a plain, human-readable chat answer:
 
-      - one short intro sentence
-      - each resource as a bold title plus one short paragraph
-      - no headings, no per-item action lines, no in-bubble link list
+      - the bubble carries ONLY the conversational message — no resource
+        titles, no per-resource paragraphs, no link lines, no headings,
+        no "Use this information" section, no markdown links, no URLs
+      - every resource and every usable action is returned in sources
+        instead, so the chat's Resources panel (Links tab) is the one
+        place links live, deduplicated by the panel
 
-    Links are deliberately NOT repeated inside the bubble: the message's
-    sources are returned alongside the text, and the chat's Resources panel
-    collects them into the Links tab (links live in the tab until selected).
-    The only section appended afterwards is "Use this information", and only
-    when there is a real form, tool, or program page to use.
+    The panel keeps the answer usable (the house standard's Links and
+    actions are preserved, just not inside the bubble): a resource's
+    official page and its in-app route, plus any curated action for the
+    topic, all surface as panel sources.
     """
     if not hits:
         return (
@@ -285,17 +287,21 @@ def format_hits_as_answer(query: str, hits: List[Dict[str, Any]]) -> Tuple[str, 
         )
 
     q = _clean(query) or "your question"
-    lines = [
-        f"Here is what I found on {q}:",
-        "",
-    ]
+    shown = hits[:5]
+    count = len(shown)
+    noun = "resource" if count == 1 else "resources"
+    text = (
+        f"I found {count} SBA {noun} on {q}. "
+        "Open the Links & resources panel to read them — "
+        "that's where the links live, so this chat stays just conversation."
+    )
 
     sources_out = []
 
-    for hit in hits[:5]:
+    for hit in shown:
         title = hit["title"]
         body = hit["body"]
-        # Prefer first paragraph, kept short
+        # Kept for the panel source entry only — never rendered in the bubble.
         para = re.split(r"\n\s*\n", body)[0] if body else ""
         blurb = _clean(para or body)
         if len(blurb) > 320:
@@ -303,11 +309,6 @@ def format_hits_as_answer(query: str, hits: List[Dict[str, Any]]) -> Tuple[str, 
 
         path = hit.get("path") if _valid_api_path(hit.get("path") or "") else ""
         hit["path"] = path
-        lines.append(f"**{title}**")
-        if blurb:
-            lines.append("")
-            lines.append(blurb)
-        lines.append("")
 
         sources_out.append(
             {
@@ -327,12 +328,12 @@ def format_hits_as_answer(query: str, hits: List[Dict[str, Any]]) -> Tuple[str, 
             }
         )
 
-    try:
-        from backend.services.actionable_content import attach_actionable_section
-
-        text = attach_actionable_section("\n".join(lines).rstrip(), query=query, hits=hits)
-    except Exception:
-        text = "\n".join(lines).rstrip()
+    # Deliberately NOT appending the old "Use this information" actions
+    # here: that collector adds generic topic links (forms library, every
+    # loan program, Lender Match) that would flood the panel with links
+    # unrelated to this answer. The panel shows exactly this answer's
+    # resources, deduplicated by the panel itself — a link already shown
+    # there is never listed a second time.
 
     return text, sources_out
 
