@@ -29,8 +29,6 @@ INIT_URL_DEV="${INIT_URL_DEV:-http://localhost:5000/api/startup_init}"
 INIT_URL_PROD="${INIT_URL_PROD:-http://localhost:5000/api/startup_init}"
 FRONT_URL_DEV="${FRONT_URL_DEV:-http://localhost:3000}"
 FRONT_URL_PROD="${FRONT_URL_PROD:-http://localhost:3000}"
-DOCKER_PORTS=(80 3000 5000 8000)
-LOCAL_PORTS=(80 3000 5000 8000)
 HEALTH_ATTEMPTS="${HEALTH_ATTEMPTS:-30}"
 HEALTH_DELAY="${HEALTH_DELAY:-2}"
 
@@ -155,39 +153,6 @@ wait_for_docker() {
   return 1
 }
 
-clear_docker_ports() {
-  command -v docker >/dev/null 2>&1 || return 0
-  local port
-  for port in "$@"; do
-    local containers
-    containers=$(docker ps --format '{{.ID}} {{.Names}} {{.Ports}}' | grep -E "(:|\s)${port}->" || true)
-    [[ -z "$containers" ]] && continue
-    echo "[INFO] Freeing Docker port ${port}..."
-    while IFS= read -r line; do
-      local container_id
-      container_id=$(awk '{print $1}' <<< "$line")
-      docker stop "$container_id" >/dev/null 2>&1 || true
-      docker rm "$container_id" >/dev/null 2>&1 || true
-    done <<< "$containers"
-  done
-}
-
-clear_local_ports() {
-  local port
-  for port in "$@"; do
-    if command -v lsof >/dev/null 2>&1; then
-      local pids
-      pids=$(lsof -ti tcp:"$port" 2>/dev/null || true)
-      [[ -z "$pids" ]] && continue
-      echo "[INFO] Freeing local port ${port}..."
-      while IFS= read -r pid; do
-        [[ -z "$pid" ]] && continue
-        kill -9 "$pid" >/dev/null 2>&1 || true
-      done <<< "$pids"
-    fi
-  done
-}
-
 docker_prune() {
   wait_for_docker 15 2 || { echo "[ERROR] Skip prune; Docker unavailable."; return 1; }
   echo "[INFO] Pruning unused Docker resources (volumes kept)..."
@@ -201,23 +166,103 @@ docker_prune() {
 # A holder that is one of this stack's own containers is stale, so it is
 # stopped and removed and the original port is kept. This runs immediately
 # before compose up (not at the top of the script), so a holder that appears
-# during a long --build cannot break the startup. The probe uses a plain TCP
-# connect, so it works in Git Bash where lsof is not available.
+# during a long --build cannot break the startup. There is deliberately no
+# separate "clear the ports first" step: an unconditional clear would kill
+# other apps' containers and processes before this resolver ever runs.
 SBA_CONTAINERS=(pocketpro-backend pocketpro-frontend chromadb-production pocketpro-backend-dev pocketpro-frontend-dev chromadb-dev)
+
+# Find a real Python 3 interpreter, as an array in PY_CMD (empty when none
+# works). On Windows, `python3` is often the Microsoft Store stub (an App
+# execution alias): `command -v` finds it, but running it only prints
+# "Python was not found..." and exits non-zero. So a candidate only counts
+# when it actually runs Python code. Tries python3, then python, then the
+# py launcher. The result is cached for the life of the shell.
+PY_CMD=()
+
+find_python() {
+  if [ "${#PY_CMD[@]}" -gt 0 ]; then
+    return 0
+  fi
+  local cand
+  for cand in python3 python; do
+    if command -v "$cand" >/dev/null 2>&1 \
+        && "$cand" -c "import sys; sys.exit(0 if sys.version_info[0] == 3 else 1)" >/dev/null 2>&1; then
+      PY_CMD=("$cand")
+      return 0
+    fi
+  done
+  if command -v py >/dev/null 2>&1 \
+      && py -3 -c "import sys; sys.exit(0 if sys.version_info[0] == 3 else 1)" >/dev/null 2>&1; then
+    PY_CMD=(py -3)
+    return 0
+  fi
+  PY_CMD=()
+  return 1
+}
 
 port_in_use() {
   local port="$1"
-  if (exec 3<>"/dev/tcp/127.0.0.1/$port") 2>/dev/null; then
-    exec 3>&- 3<&- 2>/dev/null || true
-    return 0
+
+  # 1. Real bind test. We try to bind the port exactly as our server will:
+  # a bind fails only when the port is really held. A connect test would be
+  # wrong here — when a holder's accept queue is full, the connect times
+  # out and looks "free" even though the port is taken.
+  if find_python; then
+    "${PY_CMD[@]}" -c 'import errno, socket, sys
+port = int(sys.argv[1])
+for family, addr in ((socket.AF_INET, ("127.0.0.1", port)),
+                     (socket.AF_INET6, ("::1", port, 0, 0))):
+    try:
+        s = socket.socket(family, socket.SOCK_STREAM)
+    except OSError:
+        continue
+    try:
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        s.bind(addr)
+    except OSError as e:
+        s.close()
+        if e.errno == errno.EADDRINUSE:
+            sys.exit(0)
+        continue
+    s.close()
+sys.exit(1)' "$port" 2>/dev/null
+    return $?
   fi
+
+  # 2. ss / netstat listener listings.
+  if command -v ss >/dev/null 2>&1; then
+    ss -ltn 2>/dev/null | grep -qE ":${port}[[:space:]]"
+    return $?
+  fi
+
+  if command -v netstat >/dev/null 2>&1; then
+    netstat -ltn 2>/dev/null | grep -qE ":${port}[[:space:]]"
+    return $?
+  fi
+
+  # 3. Windows (Git Bash): ask PowerShell for a listener on the port.
+  case "$(uname -s 2>/dev/null || echo unknown)" in
+    MINGW*|MSYS*|CYGWIN*)
+      if command -v powershell.exe >/dev/null 2>&1; then
+        powershell.exe -NoProfile -Command \
+          "if (Get-NetTCPConnection -LocalPort ${port} -State Listen -ErrorAction SilentlyContinue | Select-Object -First 1) { exit 0 } else { exit 1 }" \
+          >/dev/null 2>&1
+        return $?
+      fi
+      ;;
+  esac
+
   return 1
 }
 
 docker_holder_for_port() {
   local port="$1"
   command -v docker >/dev/null 2>&1 || return 0
-  docker ps --format '{{.ID}} {{.Names}} {{.Ports}}' 2>/dev/null \
+  # `docker ps -a`, not `docker ps`: a created-but-not-running container
+  # still holds its port mapping in Docker's allocator, so it is invisible
+  # to `docker ps` (running only) yet compose would still fail to bind.
+  # An exited container shows an empty Ports column, so it never matches.
+  docker ps -a --format '{{.ID}} {{.Names}} {{.Ports}}' 2>/dev/null \
     | grep -E "(:|\\s)${port}->" | head -n 1 || true
 }
 
@@ -417,9 +462,6 @@ ensure_env
 if [[ "$PRUNE" == true ]]; then
   docker_prune || exit 1
 fi
-
-clear_docker_ports "${DOCKER_PORTS[@]}"
-clear_local_ports "${LOCAL_PORTS[@]}"
 
 if [[ "$LOCAL" == true ]]; then
   echo "[INFO] Starting ${APP_NAME} locally..."
