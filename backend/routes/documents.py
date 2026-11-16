@@ -73,14 +73,25 @@ def list_files():
         if not os.path.exists(folder):
             return jsonify({'files': []}), 200
 
+        try:
+            from backend.services import doc_index
+            indexed = doc_index.index(folder).documents()
+        except Exception as idx_err:
+            logger.warning("Document index unavailable: %s", idx_err)
+            indexed = {}
         files = []
         for filename in sorted(os.listdir(folder)):
             filepath = os.path.join(folder, filename)
-            if os.path.isfile(filepath):
+            # dotfiles are internal (e.g. the search index), not uploads
+            if os.path.isfile(filepath) and not filename.startswith('.'):
+                info = indexed.get(filename) or {}
                 files.append({
                     'filename': filename,
                     'size': os.path.getsize(filepath),
-                    'modified': os.path.getmtime(filepath)
+                    'modified': os.path.getmtime(filepath),
+                    'indexed': bool(info),
+                    'chunks': info.get('chunks'),
+                    'pages': info.get('pages'),
                 })
 
         return jsonify({'files': files}), 200

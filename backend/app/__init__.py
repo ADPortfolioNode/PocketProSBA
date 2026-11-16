@@ -92,6 +92,7 @@ def create_app(config_name=None):
                 from backend.models.user import User  # noqa: F401
             except Exception as model_err:
                 logger.warning("User model import deferred: %s", model_err)
+            from backend.models.planner import Appointment, Todo  # noqa: F401
             db.create_all()
             logger.info("Database tables created successfully")
         except Exception as e:
@@ -130,6 +131,7 @@ def create_app(config_name=None):
     from backend.routes.rag import rag_bp
     from backend.routes.orchestrator import orchestrator_bp
     from backend.routes.auth import auth_bp
+    from backend.routes.planner import planner_bp
     try:
         from backend.routes.documents import documents_bp
     except Exception as docs_import_err:
@@ -148,6 +150,8 @@ def create_app(config_name=None):
     app.register_blueprint(sba_bp, url_prefix='/api/sba')
     app.register_blueprint(rag_bp, url_prefix='/api/rag')
     app.register_blueprint(orchestrator_bp, url_prefix='/api/orchestrator')
+    # Calendar (appointments) + Tasks (to-dos): /api/appointments, /api/todos, /api/planner/summary
+    app.register_blueprint(planner_bp, url_prefix='/api')
     if documents_bp is not None:
         app.register_blueprint(documents_bp, url_prefix='/api/documents')
     # Prebuilt RAG upload: POST /api/files (and /api/api/files via middleware rewrite)
