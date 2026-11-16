@@ -149,6 +149,25 @@ def process_upload():
     chunks = len(text_chunks) if text_chunks else _estimate_chunks(content, size)
     pages = "Unknown"
 
+    # Built-in keyword index next to the uploads: chat can discuss the file
+    # (with citations) even when Chroma or the embedding model is down.
+    indexed = False
+    if content.strip():
+        try:
+            from backend.services import doc_index
+            try:  # page-aware text, so answers can cite "p. N"
+                idx_text, page_count = doc_index.extract_text(filepath, filename)
+            except Exception:
+                idx_text, page_count = content, None
+            doc_index.index(UPLOAD_FOLDER).add_document(
+                filename, idx_text or content, pages=page_count
+            )
+            if page_count:
+                pages = page_count
+            indexed = True
+        except Exception as e:
+            logger.warning("Built-in document index skipped for %s: %s", filename, e)
+
     # Soft RAG ingest — never fail the upload if Chroma/Gemini is slow or down.
     # Nothing extractable (e.g. legacy .doc binary, scanned image PDF) means
     # save-only: the file is kept and listed, but no garbage is indexed.
@@ -197,6 +216,7 @@ def process_upload():
         "uploadTime": datetime.now(timezone.utc).isoformat(),
         "path": filename,
         "rag_status": rag_status,
+        "indexed": indexed,
     }
 
     # Always 200 when file is on disk — SPA treats non-2xx as hard failure
@@ -206,6 +226,7 @@ def process_upload():
         "filename": filename,
         "size": size,
         "rag_status": rag_status,
+        "indexed": indexed,
         "document": document,
         # aliases some clients use
         "file": document,

@@ -565,7 +565,7 @@ REAL ESTATE FINANCING:
             )
             
             # Create enhanced prompt
-            template = """You are PocketPro SBA, an expert SBA loan advisor. Use the context to answer accurately.
+            template = """You are PocketPro, a friendly, plain-English small business concierge. Busy owners are experts at their trade, not at paperwork: be warm and concise, avoid jargon, answer accurately from the context, and end with one practical next step.
 
 Context: {context}
 

@@ -226,6 +226,9 @@ def query_documents_service(query, top_k):
                     'relevance_score': 1.0 - (results["distances"][0][i] if "distances" in results else 0.0)
                 })
         
+        if not formatted_results:
+            formatted_results = _local_index_results(query, top_k)
+
         return {
             'success': True,
             'query': query,
@@ -234,4 +237,26 @@ def query_documents_service(query, top_k):
         }
     except Exception as e:
         logger.error(f"Error querying documents: {str(e)}")
+        # Chroma down/broken: the built-in index of uploads still answers.
+        local = _local_index_results(query, top_k)
+        if local:
+            return {'success': True, 'query': query, 'results': local, 'count': len(local), 'source': 'local_index'}
         raise Exception(f'Search failed: {str(e)}')
+
+
+def _local_index_results(query, top_k):
+    """Search the built-in uploads index (services/doc_index.py) in /api/query's shape."""
+    try:
+        from backend.services import doc_index
+        hits = doc_index.index().search(query, k=top_k)
+    except Exception as err:
+        logger.warning("Local document index search failed: %s", err)
+        return []
+    top = max((h['score'] for h in hits), default=1.0) or 1.0
+    return [{
+        'id': f"{h['doc']}#{h['n']}",
+        'content': h['text'],
+        'metadata': {'filename': h['doc'], 'section': h['n'], 'page': h.get('page'), 'source': 'local_index'},
+        'distance': round(1.0 - h['score'] / top, 4),
+        'relevance_score': round(h['score'] / top, 4),
+    } for h in hits]

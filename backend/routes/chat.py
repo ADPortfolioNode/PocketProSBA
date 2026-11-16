@@ -43,6 +43,21 @@ def post_message():
             logger.warning("Message content is required for chat message")
             return jsonify({'error': 'Message content is required'}), 400
 
+        if not session_id:
+            import uuid
+            session_id = str(uuid.uuid4())
+
+        # Calendar/task requests and questions about uploaded documents are
+        # answered here (proposals only: the UI confirms before saving).
+        try:
+            from backend.services.concierge_actions import pre_route
+            routed = pre_route(str(message).strip(), data, session_id)
+        except Exception as route_err:
+            logger.warning("Concierge action routing soft-fail: %s", route_err)
+            routed = None
+        if routed:
+            return jsonify(routed), 200
+
         # Process the message with Concierge assistant (soft-degrade if slow/unavailable)
         try:
             response = process_chat_message(user_id, str(message).strip(), session_id)
@@ -103,6 +118,14 @@ def post_message():
             response['message'] = body
         except Exception as link_err:
             logger.debug('chat link normalize soft-fail: %s', link_err)
+        # End with one concrete next step the concierge can take (confirm in UI).
+        try:
+            from backend.services.concierge_actions import add_next_step
+            from backend.services.planner_nlp import parse_client_now
+            response = add_next_step(response, str(message).strip(), data.get('workflow'), session_id,
+                                     parse_client_now(data.get('client_now')))
+        except Exception as step_err:
+            logger.debug('next step soft-fail: %s', step_err)
         # Return the processed response
         return jsonify(response), 200 if response.get('success', True) else 500
 
